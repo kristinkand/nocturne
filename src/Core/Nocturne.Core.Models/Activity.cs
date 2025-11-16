@@ -1,0 +1,93 @@
+using System.Text.Json.Serialization;
+
+namespace Nocturne.Core.Models;
+
+/// <summary>
+/// Represents a Nightscout activity record for the API
+/// Compatible with the legacy Nightscout activity collection
+/// </summary>
+public class Activity : ProcessableDocumentBase
+{
+    /// <summary>
+    /// Gets or sets the MongoDB ObjectId
+    /// </summary>
+    [JsonPropertyName("_id")]
+    public override string? Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ISO 8601 formatted creation timestamp
+    /// </summary>
+    [JsonPropertyName("created_at")]
+    public override string? CreatedAt { get; set; } =
+        DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
+    /// <summary>
+    /// Gets or sets the optional timestamp in milliseconds since Unix epoch
+    /// </summary>
+    [JsonPropertyName("timestamp")]
+    public long? Timestamp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp in milliseconds since Unix epoch
+    /// </summary>
+    [JsonPropertyName("mills")]
+    public override long Mills { get; set; }
+
+    /// <summary>
+    /// Gets or sets the UTC offset in minutes
+    /// </summary>
+    [JsonPropertyName("utcOffset")]
+    public override int? UtcOffset { get; set; }
+
+    /// <summary>
+    /// Gets or sets the activity type or category
+    /// </summary>
+    [JsonPropertyName("type")]
+    [Sanitizable]
+    public string? Type { get; set; }
+
+    /// <summary>
+    /// Gets or sets the activity description or notes
+    /// </summary>
+    [JsonPropertyName("description")]
+    [Sanitizable]
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Gets or sets the duration of the activity in minutes
+    /// </summary>
+    [JsonPropertyName("duration")]
+    public double? Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the intensity level of the activity
+    /// </summary>
+    [JsonPropertyName("intensity")]
+    public string? Intensity { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional notes about the activity
+    /// </summary>
+    [JsonPropertyName("notes")]
+    [Sanitizable]
+    public string? Notes { get; set; }
+
+    /// <summary>
+    /// Gets or sets who entered this activity record
+    /// </summary>
+    [JsonPropertyName("enteredBy")]
+    [Sanitizable]
+    public string? EnteredBy { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user-friendly date string representation
+    /// </summary>
+    [JsonPropertyName("dateString")]
+    public string? DateString { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional properties as a dynamic object
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, object>? AdditionalProperties { get; set; }
+}

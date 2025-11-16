@@ -1,0 +1,36 @@
+{
+  "name": "@nocturne/bridge",
+  "version": "1.0.0",
+  "description": "WebSocket bridge library for translating SignalR to Socket.IO",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "nightscout",
+    "websocket",
+    "signalr",
+    "socket.io",
+    "bridge"
+  ],
+  "author": "Nocturne Project",
+  "license": "MIT",
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.0",
+    "socket.io": "^4.7.5",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

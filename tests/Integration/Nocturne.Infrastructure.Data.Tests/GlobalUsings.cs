@@ -1,0 +1,9 @@
+global using System.Text.Json;
+global using FluentAssertions;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Logging;
+global using Nocturne.Core.Models;
+global using Nocturne.Infrastructure.Data;
+global using Nocturne.Infrastructure.Data.Entities;
+global using Nocturne.Infrastructure.Data.Repositories;
+global using Xunit;

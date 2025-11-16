@@ -1,0 +1,278 @@
+using Microsoft.EntityFrameworkCore;
+using Nocturne.Core.Contracts;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Data.Entities;
+using Nocturne.Infrastructure.Data.Mappers;
+
+namespace Nocturne.Infrastructure.Data.Repositories;
+
+/// <summary>
+/// PostgreSQL repository for Treatment operations
+/// </summary>
+public class TreatmentRepository
+{
+    private readonly NocturneDbContext _context;
+    private readonly IQueryParser _queryParser;
+
+    /// <summary>
+    /// Initializes a new instance of the TreatmentRepository class
+    /// </summary>
+    /// <param name="context">The database context</param>
+    /// <param name="queryParser">MongoDB query parser for advanced filtering</param>
+    public TreatmentRepository(NocturneDbContext context, IQueryParser queryParser)
+    {
+        _context = context;
+        _queryParser = queryParser;
+    }
+
+    /// <summary>
+    /// Get treatments with optional filtering and pagination
+    /// </summary>
+    public async Task<IEnumerable<Treatment>> GetTreatmentsAsync(
+        string? eventType = null,
+        int count = 10,
+        int skip = 0,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Treatments.AsQueryable();
+
+        // Apply event type filter if specified
+        if (!string.IsNullOrEmpty(eventType))
+        {
+            query = query.Where(t => t.EventType == eventType);
+        }
+
+        // Order by Mills descending (most recent first), then apply pagination
+        var entities = await query
+            .OrderByDescending(t => t.Mills)
+            .Skip(skip)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(TreatmentMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Get a specific treatment by ID
+    /// </summary>
+    public async Task<Treatment?> GetTreatmentByIdAsync(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by OriginalId first (MongoDB ObjectId), then by GUID
+        var entity = await _context.Treatments.FirstOrDefaultAsync(
+            t => t.OriginalId == id,
+            cancellationToken
+        );
+
+        if (entity == null && Guid.TryParse(id, out var guidId))
+        {
+            entity = await _context.Treatments.FirstOrDefaultAsync(
+                t => t.Id == guidId,
+                cancellationToken
+            );
+        }
+
+        return entity != null ? TreatmentMapper.ToDomainModel(entity) : null;
+    }
+
+    /// <summary>
+    /// Create new treatments
+    /// </summary>
+    public async Task<IEnumerable<Treatment>> CreateTreatmentsAsync(
+        IEnumerable<Treatment> treatments,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entities = treatments.Select(TreatmentMapper.ToEntity).ToList();
+
+        _context.Treatments.AddRange(entities);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return entities.Select(TreatmentMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Update an existing treatment
+    /// </summary>
+    public async Task<Treatment?> UpdateTreatmentAsync(
+        string id,
+        Treatment treatment,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by OriginalId first (MongoDB ObjectId), then by GUID
+        var entity = await _context.Treatments.FirstOrDefaultAsync(
+            t => t.OriginalId == id,
+            cancellationToken
+        );
+
+        if (entity == null && Guid.TryParse(id, out var guidId))
+        {
+            entity = await _context.Treatments.FirstOrDefaultAsync(
+                t => t.Id == guidId,
+                cancellationToken
+            );
+        }
+
+        if (entity == null)
+            return null;
+
+        TreatmentMapper.UpdateEntity(entity, treatment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return TreatmentMapper.ToDomainModel(entity);
+    }
+
+    /// <summary>
+    /// Delete a treatment
+    /// </summary>
+    public async Task<bool> DeleteTreatmentAsync(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by OriginalId first (MongoDB ObjectId), then by GUID
+        var entity = await _context.Treatments.FirstOrDefaultAsync(
+            t => t.OriginalId == id,
+            cancellationToken
+        );
+
+        if (entity == null && Guid.TryParse(id, out var guidId))
+        {
+            entity = await _context.Treatments.FirstOrDefaultAsync(
+                t => t.Id == guidId,
+                cancellationToken
+            );
+        }
+
+        if (entity == null)
+            return false;
+
+        _context.Treatments.Remove(entity);
+        var result = await _context.SaveChangesAsync(cancellationToken);
+        return result > 0;
+    }
+
+    /// <summary>
+    /// Delete multiple treatments with optional filtering
+    /// </summary>
+    public async Task<long> DeleteTreatmentsAsync(
+        string? eventType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Treatments.AsQueryable();
+
+        // Apply event type filter if specified
+        if (!string.IsNullOrEmpty(eventType))
+        {
+            query = query.Where(t => t.EventType == eventType);
+        }
+
+        var deletedCount = await query.ExecuteDeleteAsync(cancellationToken);
+        return deletedCount;
+    }
+
+    /// <summary>
+    /// Get treatments with advanced filtering (simplified version for now)
+    /// </summary>
+    /// <remarks>
+    /// TODO: Complex MongoDB-style query parsing is not yet implemented.
+    /// Currently supports basic type and date filtering.
+    /// </remarks>
+    public async Task<IEnumerable<Treatment>> GetTreatmentsWithAdvancedFilterAsync(
+        string? eventType = null,
+        int count = 10,
+        int skip = 0,
+        string? findQuery = null,
+        string? dateString = null,
+        bool reverseResults = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Treatments.AsQueryable();
+
+        // Apply event type filter if specified
+        if (!string.IsNullOrEmpty(eventType))
+        {
+            query = query.Where(t => t.EventType == eventType);
+        }
+
+        // Apply date filter if specified
+        if (!string.IsNullOrEmpty(dateString) && DateTime.TryParse(dateString, out var filterDate))
+        {
+            var filterMills = ((DateTimeOffset)filterDate).ToUnixTimeMilliseconds();
+            query = query.Where(t => t.Mills >= filterMills);
+        }
+
+        // Apply advanced MongoDB-style query filtering
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            var options = new QueryOptions
+            {
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4)
+            };
+
+            query = await _queryParser.ApplyQueryAsync(query, findQuery, options, cancellationToken);
+        }
+        else
+        {
+            // Apply default date filter when no find query is specified
+            var options = new QueryOptions
+            {
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4)
+            };
+
+            query = _queryParser.ApplyDefaultDateFilter(query, findQuery, dateString, options);
+        }
+
+        // Apply ordering
+        if (reverseResults)
+        {
+            query = query.OrderBy(t => t.Mills);
+        }
+        else
+        {
+            query = query.OrderByDescending(t => t.Mills);
+        }
+
+        // Apply pagination
+        var entities = await query.Skip(skip).Take(count).ToListAsync(cancellationToken);
+
+        return entities.Select(TreatmentMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Count treatments with optional filtering
+    /// </summary>
+    public async Task<long> CountTreatmentsAsync(
+        string? findQuery = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Treatments.AsQueryable();
+
+        // Apply advanced MongoDB-style query filtering
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            var options = new QueryOptions
+            {
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4),
+                DisableDefaultDateFilter = true // Count queries don't need auto date filtering
+            };
+
+            query = await _queryParser.ApplyQueryAsync(query, findQuery, options, cancellationToken);
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+}

@@ -1,0 +1,362 @@
+using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
+using Nocturne.Core.Contracts;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Cache.Constants;
+
+namespace Nocturne.Infrastructure.Cache.Services;
+
+/// <summary>
+/// In-memory implementation of processing status service for development and testing
+/// </summary>
+public class MemoryProcessingStatusService : IProcessingStatusService
+{
+    private readonly ILogger<MemoryProcessingStatusService> _logger;
+    private readonly ConcurrentDictionary<string, ProcessingStatus> _statusCache;
+    private readonly Timer _cleanupTimer;
+    private readonly TimeSpan _defaultTtl = CacheConstants.DefaultTtl.ProcessingStatus;
+
+    public MemoryProcessingStatusService(ILogger<MemoryProcessingStatusService> logger)
+    {
+        _logger = logger;
+        _statusCache = new ConcurrentDictionary<string, ProcessingStatus>();
+
+        // Setup cleanup timer to remove expired entries every 5 minutes
+        _cleanupTimer = new Timer(
+            CleanupExpiredEntries,
+            null,
+            CacheConstants.CleanupIntervals.StatusCleanup,
+            CacheConstants.CleanupIntervals.StatusCleanup
+        );
+    }
+
+    /// <inheritdoc />
+    public Task<ProcessingStatus?> GetStatusAsync(
+        string correlationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            if (_statusCache.TryGetValue(correlationId, out var status))
+            {
+                // Check if expired
+                if (status.StartedAt.Add(_defaultTtl) < DateTime.UtcNow)
+                {
+                    _statusCache.TryRemove(correlationId, out _);
+                    return Task.FromResult<ProcessingStatus?>(null);
+                }
+
+                return Task.FromResult<ProcessingStatus?>(status);
+            }
+
+            return Task.FromResult<ProcessingStatus?>(null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error retrieving processing status for correlation ID: {CorrelationId}",
+                correlationId
+            );
+            return Task.FromResult<ProcessingStatus?>(null);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task UpdateStatusAsync(
+        string correlationId,
+        ProcessingStatus status,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            _statusCache.AddOrUpdate(correlationId, status, (key, existing) => status);
+
+            _logger.LogDebug(
+                "Updated processing status for correlation ID: {CorrelationId} to {Status}",
+                correlationId,
+                status.Status
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error updating processing status for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public async Task MarkCompletedAsync(
+        string correlationId,
+        object? results = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var status = await GetStatusAsync(correlationId, cancellationToken);
+            if (status == null)
+            {
+                _logger.LogWarning(
+                    "Cannot mark as completed - processing status not found for correlation ID: {CorrelationId}",
+                    correlationId
+                );
+                return;
+            }
+
+            status.Status = CacheConstants.ProcessingStatus.Completed;
+            status.CompletedAt = DateTime.UtcNow;
+            status.Progress = 100;
+            if (results != null)
+            {
+                status.Results = results;
+            }
+
+            await UpdateStatusAsync(correlationId, status, cancellationToken);
+
+            _logger.LogInformation(
+                "Marked processing as completed for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error marking processing as completed for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task MarkFailedAsync(
+        string correlationId,
+        IEnumerable<string> errors,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var status = await GetStatusAsync(correlationId, cancellationToken);
+            if (status == null)
+            {
+                _logger.LogWarning(
+                    "Cannot mark as failed - processing status not found for correlation ID: {CorrelationId}",
+                    correlationId
+                );
+                return;
+            }
+
+            status.Status = CacheConstants.ProcessingStatus.Failed;
+            status.CompletedAt = DateTime.UtcNow;
+            status.Errors = errors.ToList();
+
+            await UpdateStatusAsync(correlationId, status, cancellationToken);
+
+            _logger.LogWarning(
+                "Marked processing as failed for correlation ID: {CorrelationId} with {ErrorCount} errors",
+                correlationId,
+                status.Errors.Count
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error marking processing as failed for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+    }
+
+    /// <inheritdoc />
+    public Task InitializeAsync(
+        string correlationId,
+        int totalCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var status = new ProcessingStatus
+            {
+                CorrelationId = correlationId,
+                Status = CacheConstants.ProcessingStatus.Pending,
+                Progress = 0,
+                ProcessedCount = 0,
+                TotalCount = totalCount,
+                StartedAt = DateTime.UtcNow,
+            };
+
+            _statusCache.AddOrUpdate(correlationId, status, (key, existing) => status);
+
+            _logger.LogDebug(
+                "Initialized processing status for correlation ID: {CorrelationId} with {TotalCount} items",
+                correlationId,
+                totalCount
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error initializing processing status for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateProgressAsync(
+        string correlationId,
+        int processedCount,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var status = await GetStatusAsync(correlationId, cancellationToken);
+            if (status == null)
+            {
+                _logger.LogWarning(
+                    "Cannot update progress - processing status not found for correlation ID: {CorrelationId}",
+                    correlationId
+                );
+                return;
+            }
+
+            status.ProcessedCount = processedCount;
+            status.Status = CacheConstants.ProcessingStatus.Processing;
+
+            // Calculate progress percentage
+            if (status.TotalCount > 0)
+            {
+                status.Progress = Math.Min((processedCount * 100) / status.TotalCount, 100);
+            }
+
+            await UpdateStatusAsync(correlationId, status, cancellationToken);
+
+            _logger.LogDebug(
+                "Updated progress for correlation ID: {CorrelationId} to {ProcessedCount}/{TotalCount} ({Progress}%)",
+                correlationId,
+                processedCount,
+                status.TotalCount,
+                status.Progress
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error updating progress for correlation ID: {CorrelationId}",
+                correlationId
+            );
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ProcessingStatus?> WaitForCompletionAsync(
+        string correlationId,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(timeout);
+
+            var startTime = DateTime.UtcNow;
+            while (!cts.Token.IsCancellationRequested)
+            {
+                var status = await GetStatusAsync(correlationId, cts.Token);
+                if (
+                    status?.Status
+                    is CacheConstants.ProcessingStatus.Completed
+                        or CacheConstants.ProcessingStatus.Failed
+                )
+                {
+                    _logger.LogDebug(
+                        "Processing completed for correlation ID: {CorrelationId} after {ElapsedTime}ms",
+                        correlationId,
+                        (DateTime.UtcNow - startTime).TotalMilliseconds
+                    );
+                    return status;
+                }
+
+                // Wait 1 second before checking again
+                try
+                {
+                    await Task.Delay(1000, cts.Token);
+                }
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+
+            _logger.LogWarning(
+                "Timeout waiting for processing completion for correlation ID: {CorrelationId} after {Timeout}ms",
+                correlationId,
+                timeout.TotalMilliseconds
+            );
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error waiting for processing completion for correlation ID: {CorrelationId}",
+                correlationId
+            );
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Cleanup expired entries from the cache
+    /// </summary>
+    private void CleanupExpiredEntries(object? state)
+    {
+        try
+        {
+            var cutoffTime = DateTime.UtcNow.Subtract(_defaultTtl);
+            var expiredKeys = _statusCache
+                .Where(kvp => kvp.Value.StartedAt < cutoffTime)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in expiredKeys)
+            {
+                _statusCache.TryRemove(key, out _);
+            }
+
+            if (expiredKeys.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Cleaned up {Count} expired processing status entries",
+                    expiredKeys.Count
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during processing status cleanup");
+        }
+    }
+
+    public void Dispose()
+    {
+        _cleanupTimer?.Dispose();
+    }
+}

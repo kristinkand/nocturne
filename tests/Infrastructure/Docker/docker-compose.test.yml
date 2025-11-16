@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # MongoDB for testing
+  mongodb-test:
+    image: mongo:7
+    container_name: nocturne-mongodb-test
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: testpass123
+      MONGO_INITDB_DATABASE: nocturne_test
+    volumes:
+      - mongodb_test_data:/data/db
+      - ./mongodb-init:/docker-entrypoint-initdb.d
+    networks:
+      - nocturne-test-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for testing
+  postgresql-test:
+    image: postgres:15
+    container_name: nocturne-postgresql-test
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: nocturne_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgresql_test_data:/var/lib/postgresql/data
+      - ./postgresql-init:/docker-entrypoint-initdb.d
+    networks:
+      - nocturne-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d nocturne_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB for performance testing (separate instance)
+  mongodb-performance:
+    image: mongo:7
+    container_name: nocturne-mongodb-performance
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: perfpass123
+      MONGO_INITDB_DATABASE: nocturne_perf
+    volumes:
+      - mongodb_perf_data:/data/db
+    networks:
+      - nocturne-test-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Performance optimizations for testing
+    command: >
+      mongod --wiredTigerCacheSizeGB 1
+             --wiredTigerStatisticsLogDelaySecs 0
+             --profile 0
+             --slowms 100
+
+  # PostgreSQL for performance testing (separate instance)
+  postgresql-performance:
+    image: postgres:15
+    container_name: nocturne-postgresql-performance
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: nocturne_perf
+      POSTGRES_USER: perfuser
+      POSTGRES_PASSWORD: perfpass123
+    volumes:
+      - postgresql_perf_data:/var/lib/postgresql/data
+      - ./postgresql-performance.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - nocturne-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U perfuser -d nocturne_perf"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Performance optimizations
+    command: >
+      postgres -c shared_buffers=256MB
+               -c effective_cache_size=1GB
+               -c maintenance_work_mem=64MB
+               -c checkpoint_completion_target=0.9
+               -c wal_buffers=16MB
+               -c default_statistics_target=100
+
+  # Monitoring and metrics for performance tests
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nocturne-prometheus-test
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - nocturne-test-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # Grafana for performance visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nocturne-grafana-test
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - nocturne-test-network
+
+volumes:
+  mongodb_test_data:
+  postgresql_test_data:
+  mongodb_perf_data:
+  postgresql_perf_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  nocturne-test-network:
+    driver: bridge

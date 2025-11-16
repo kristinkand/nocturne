@@ -1,0 +1,861 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Data.Entities;
+using Nocturne.Infrastructure.Data.ValueGenerators;
+
+namespace Nocturne.Infrastructure.Data;
+
+/// <summary>
+/// Entity Framework DbContext for PostgreSQL database operations
+/// Single-tenant architecture for main Nocturne application
+/// </summary>
+public class NocturneDbContext : DbContext
+{
+    /// <summary>
+    /// Initializes a new instance of the NocturneDbContext class
+    /// </summary>
+    /// <param name="options">The options for this context</param>
+    public NocturneDbContext(DbContextOptions<NocturneDbContext> options)
+        : base(options) { }
+
+    /// <summary>
+    /// Gets or sets the Entries table for glucose entries
+    /// </summary>
+    public DbSet<EntryEntity> Entries { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Treatments table for diabetes treatments
+    /// </summary>
+    public DbSet<TreatmentEntity> Treatments { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DeviceStatuses table for device status information
+    /// </summary>
+    public DbSet<DeviceStatusEntity> DeviceStatuses { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Foods table for food database
+    /// </summary>
+    public DbSet<FoodEntity> Foods { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Settings table for application settings
+    /// </summary>
+    public DbSet<SettingsEntity> Settings { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Profiles table for user profiles
+    /// </summary>
+    public DbSet<ProfileEntity> Profiles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Activities table for user activities
+    /// </summary>
+    public DbSet<ActivityEntity> Activities { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DiscrepancyAnalyses table for response comparison analysis
+    /// </summary>
+    public DbSet<DiscrepancyAnalysisEntity> DiscrepancyAnalyses { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DiscrepancyDetails table for detailed discrepancy information
+    /// </summary>
+    public DbSet<DiscrepancyDetailEntity> DiscrepancyDetails { get; set; }
+
+    /// <summary>
+    /// Gets or sets the AlertRules table for notification alert rules
+    /// </summary>
+    public DbSet<AlertRuleEntity> AlertRules { get; set; }
+
+    /// <summary>
+    /// Gets or sets the AlertHistory table for notification alert history
+    /// </summary>
+    public DbSet<AlertHistoryEntity> AlertHistory { get; set; }
+
+    /// <summary>
+    /// Gets or sets the NotificationPreferences table for user notification preferences
+    /// </summary>
+    public DbSet<NotificationPreferencesEntity> NotificationPreferences { get; set; }
+
+    /// <summary>
+    /// Gets or sets the EmergencyContacts table for escalation contact management
+    /// </summary>
+    public DbSet<EmergencyContactEntity> EmergencyContacts { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DeviceHealth table for device health monitoring and maintenance alerts
+    /// </summary>
+    public DbSet<DeviceHealthEntity> DeviceHealth { get; set; }
+
+    /// <summary>
+    /// Configure the database model and relationships
+    /// </summary>
+    /// <param name="modelBuilder">The model builder to configure</param>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Configure indexes for performance optimization
+        ConfigureIndexes(modelBuilder);
+
+        // Configure table-specific settings
+        ConfigureEntities(modelBuilder);
+    }
+
+    private static void ConfigureIndexes(ModelBuilder modelBuilder)
+    {
+        // Entries indexes - optimized for common queries
+        modelBuilder
+            .Entity<EntryEntity>()
+            .HasIndex(e => e.Mills)
+            .HasDatabaseName("ix_entries_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder.Entity<EntryEntity>().HasIndex(e => e.Type).HasDatabaseName("ix_entries_type");
+
+        modelBuilder
+            .Entity<EntryEntity>()
+            .HasIndex(e => new { e.Type, e.Mills })
+            .HasDatabaseName("ix_entries_type_mills")
+            .IsDescending(false, true); // Type asc, Mills desc
+
+        // Composite index for duplicate detection
+        modelBuilder
+            .Entity<EntryEntity>()
+            .HasIndex(e => new { e.Device, e.Type, e.Sgv, e.Mills })
+            .HasDatabaseName("ix_entries_duplicate_detection");
+
+        // Treatments indexes - optimized for common queries
+        modelBuilder
+            .Entity<TreatmentEntity>()
+            .HasIndex(t => t.Mills)
+            .HasDatabaseName("ix_treatments_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<TreatmentEntity>()
+            .HasIndex(t => t.EventType)
+            .HasDatabaseName("ix_treatments_event_type");
+
+        modelBuilder
+            .Entity<TreatmentEntity>()
+            .HasIndex(t => new { t.EventType, t.Mills })
+            .HasDatabaseName("ix_treatments_event_type_mills")
+            .IsDescending(false, true); // EventType asc, Mills desc
+
+        // DeviceStatus indexes
+        modelBuilder
+            .Entity<DeviceStatusEntity>()
+            .HasIndex(d => d.Mills)
+            .HasDatabaseName("ix_devicestatus_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<DeviceStatusEntity>()
+            .HasIndex(d => d.Device)
+            .HasDatabaseName("ix_devicestatus_device");
+
+        modelBuilder
+            .Entity<DeviceStatusEntity>()
+            .HasIndex(d => new { d.Device, d.Mills })
+            .HasDatabaseName("ix_devicestatus_device_mills")
+            .IsDescending(false, true); // Device asc, Mills desc
+
+        // System tracking indexes for maintenance operations
+        modelBuilder
+            .Entity<EntryEntity>()
+            .HasIndex(e => e.SysCreatedAt)
+            .HasDatabaseName("ix_entries_sys_created_at");
+
+        modelBuilder
+            .Entity<TreatmentEntity>()
+            .HasIndex(t => t.SysCreatedAt)
+            .HasDatabaseName("ix_treatments_sys_created_at");
+
+        modelBuilder
+            .Entity<DeviceStatusEntity>()
+            .HasIndex(d => d.SysCreatedAt)
+            .HasDatabaseName("ix_devicestatus_sys_created_at");
+
+        // Food indexes - optimized for common queries
+        modelBuilder.Entity<FoodEntity>().HasIndex(f => f.Name).HasDatabaseName("ix_foods_name");
+
+        modelBuilder.Entity<FoodEntity>().HasIndex(f => f.Type).HasDatabaseName("ix_foods_type");
+
+        modelBuilder
+            .Entity<FoodEntity>()
+            .HasIndex(f => f.Category)
+            .HasDatabaseName("ix_foods_category");
+
+        modelBuilder
+            .Entity<FoodEntity>()
+            .HasIndex(f => new { f.Type, f.Name })
+            .HasDatabaseName("ix_foods_type_name");
+
+        modelBuilder
+            .Entity<FoodEntity>()
+            .HasIndex(f => f.SysCreatedAt)
+            .HasDatabaseName("ix_foods_sys_created_at");
+
+        // Settings indexes - optimized for common queries
+        modelBuilder
+            .Entity<SettingsEntity>()
+            .HasIndex(s => s.Key)
+            .HasDatabaseName("ix_settings_key")
+            .IsUnique(); // Settings keys should be unique
+
+        modelBuilder
+            .Entity<SettingsEntity>()
+            .HasIndex(s => s.Mills)
+            .HasDatabaseName("ix_settings_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<SettingsEntity>()
+            .HasIndex(s => s.IsActive)
+            .HasDatabaseName("ix_settings_is_active");
+
+        modelBuilder
+            .Entity<SettingsEntity>()
+            .HasIndex(s => s.SysCreatedAt)
+            .HasDatabaseName("ix_settings_sys_created_at");
+
+        // Profile indexes - optimized for common queries
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .HasIndex(p => p.Mills)
+            .HasDatabaseName("ix_profiles_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .HasIndex(p => p.DefaultProfile)
+            .HasDatabaseName("ix_profiles_default_profile");
+
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .HasIndex(p => p.Units)
+            .HasDatabaseName("ix_profiles_units");
+
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .HasIndex(p => p.CreatedAtPg)
+            .HasDatabaseName("ix_profiles_sys_created_at");
+
+        // Activity indexes - optimized for common queries
+        modelBuilder
+            .Entity<ActivityEntity>()
+            .HasIndex(a => a.Mills)
+            .HasDatabaseName("ix_activities_mills")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<ActivityEntity>()
+            .HasIndex(a => a.Type)
+            .HasDatabaseName("ix_activities_type");
+
+        modelBuilder
+            .Entity<ActivityEntity>()
+            .HasIndex(a => new { a.Type, a.Mills })
+            .HasDatabaseName("ix_activities_type_mills")
+            .IsDescending(false, true); // Type asc, Mills desc
+
+        modelBuilder
+            .Entity<ActivityEntity>()
+            .HasIndex(a => a.SysCreatedAt)
+            .HasDatabaseName("ix_activities_sys_created_at");
+
+        // Discrepancy analysis indexes - optimized for dashboard queries
+        modelBuilder
+            .Entity<DiscrepancyAnalysisEntity>()
+            .HasIndex(d => d.AnalysisTimestamp)
+            .HasDatabaseName("ix_discrepancy_analyses_timestamp")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<DiscrepancyAnalysisEntity>()
+            .HasIndex(d => d.CorrelationId)
+            .HasDatabaseName("ix_discrepancy_analyses_correlation_id");
+
+        modelBuilder
+            .Entity<DiscrepancyAnalysisEntity>()
+            .HasIndex(d => d.RequestPath)
+            .HasDatabaseName("ix_discrepancy_analyses_request_path");
+
+        modelBuilder
+            .Entity<DiscrepancyAnalysisEntity>()
+            .HasIndex(d => d.OverallMatch)
+            .HasDatabaseName("ix_discrepancy_analyses_overall_match");
+
+        modelBuilder
+            .Entity<DiscrepancyAnalysisEntity>()
+            .HasIndex(d => new { d.RequestPath, d.AnalysisTimestamp })
+            .HasDatabaseName("ix_discrepancy_analyses_path_timestamp")
+            .IsDescending(false, true); // Path asc, Timestamp desc
+
+        // Discrepancy details indexes
+        modelBuilder
+            .Entity<DiscrepancyDetailEntity>()
+            .HasIndex(d => d.AnalysisId)
+            .HasDatabaseName("ix_discrepancy_details_analysis_id");
+
+        modelBuilder
+            .Entity<DiscrepancyDetailEntity>()
+            .HasIndex(d => d.Severity)
+            .HasDatabaseName("ix_discrepancy_details_severity");
+
+        modelBuilder
+            .Entity<DiscrepancyDetailEntity>()
+            .HasIndex(d => d.DiscrepancyType)
+            .HasDatabaseName("ix_discrepancy_details_type");
+
+        // Alert Rules indexes - optimized for user queries
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .HasIndex(a => a.UserId)
+            .HasDatabaseName("ix_alert_rules_user_id");
+
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .HasIndex(a => a.IsEnabled)
+            .HasDatabaseName("ix_alert_rules_is_enabled");
+
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .HasIndex(a => new { a.UserId, a.IsEnabled })
+            .HasDatabaseName("ix_alert_rules_user_enabled");
+
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .HasIndex(a => a.CreatedAt)
+            .HasDatabaseName("ix_alert_rules_created_at");
+
+        // Alert History indexes - optimized for monitoring and dashboard queries
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => h.UserId)
+            .HasDatabaseName("ix_alert_history_user_id");
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => h.Status)
+            .HasDatabaseName("ix_alert_history_status");
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => h.AlertType)
+            .HasDatabaseName("ix_alert_history_alert_type");
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => h.TriggerTime)
+            .HasDatabaseName("ix_alert_history_trigger_time")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => new { h.UserId, h.Status })
+            .HasDatabaseName("ix_alert_history_user_status");
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => new { h.UserId, h.TriggerTime })
+            .HasDatabaseName("ix_alert_history_user_trigger_time")
+            .IsDescending(false, true); // UserId asc, TriggerTime desc
+
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .HasIndex(h => h.AlertRuleId)
+            .HasDatabaseName("ix_alert_history_alert_rule_id");
+
+        // Notification Preferences indexes - optimized for user lookups
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .HasIndex(p => p.UserId)
+            .HasDatabaseName("ix_notification_preferences_user_id")
+            .IsUnique(); // One preference set per user
+
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .HasIndex(p => p.EmailEnabled)
+            .HasDatabaseName("ix_notification_preferences_email_enabled");
+
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .HasIndex(p => p.PushoverEnabled)
+            .HasDatabaseName("ix_notification_preferences_pushover_enabled");
+
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .HasIndex(p => p.SmsEnabled)
+            .HasDatabaseName("ix_notification_preferences_sms_enabled");
+
+        // Emergency Contacts indexes - optimized for escalation queries
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .HasIndex(c => c.UserId)
+            .HasDatabaseName("ix_emergency_contacts_user_id");
+
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .HasIndex(c => c.IsActive)
+            .HasDatabaseName("ix_emergency_contacts_is_active");
+
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .HasIndex(c => c.Priority)
+            .HasDatabaseName("ix_emergency_contacts_priority");
+
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .HasIndex(c => c.ContactType)
+            .HasDatabaseName("ix_emergency_contacts_contact_type");
+
+        // Device Health indexes - optimized for device monitoring and maintenance queries
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.UserId)
+            .HasDatabaseName("ix_device_health_user_id");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.DeviceId)
+            .HasDatabaseName("ix_device_health_device_id")
+            .IsUnique(); // One health record per device
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.DeviceType)
+            .HasDatabaseName("ix_device_health_device_type");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.Status)
+            .HasDatabaseName("ix_device_health_status");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => new { d.UserId, d.DeviceType })
+            .HasDatabaseName("ix_device_health_user_device_type");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => new { d.UserId, d.Status })
+            .HasDatabaseName("ix_device_health_user_status");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.LastDataReceived)
+            .HasDatabaseName("ix_device_health_last_data_received")
+            .IsDescending(); // Most recent first
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.SensorExpiration)
+            .HasDatabaseName("ix_device_health_sensor_expiration");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.LastMaintenanceAlert)
+            .HasDatabaseName("ix_device_health_last_maintenance_alert");
+
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .HasIndex(d => d.CreatedAt)
+            .HasDatabaseName("ix_device_health_created_at");
+    }
+
+    private static void ConfigureEntities(ModelBuilder modelBuilder)
+    {
+        // Configure UUID Version 7 value generators for all entity primary keys
+        modelBuilder.Entity<EntryEntity>().Property(e => e.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<TreatmentEntity>().Property(t => t.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<DeviceStatusEntity>().Property(d => d.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<FoodEntity>().Property(f => f.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<SettingsEntity>().Property(s => s.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<ProfileEntity>().Property(p => p.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<ActivityEntity>().Property(a => a.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<DiscrepancyAnalysisEntity>().Property(d => d.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<DiscrepancyDetailEntity>().Property(d => d.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<AlertRuleEntity>().Property(a => a.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<AlertHistoryEntity>().Property(a => a.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<NotificationPreferencesEntity>().Property(n => n.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<EmergencyContactEntity>().Property(e => e.Id).HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder.Entity<DeviceHealthEntity>().Property(d => d.Id).HasValueGenerator<GuidV7ValueGenerator>();
+
+        // Configure automatic timestamp updates
+        modelBuilder
+            .Entity<EntryEntity>()
+            .Property(e => e.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<TreatmentEntity>()
+            .Property(t => t.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<DeviceStatusEntity>()
+            .Property(d => d.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<FoodEntity>()
+            .Property(f => f.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<SettingsEntity>()
+            .Property(s => s.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<ActivityEntity>()
+            .Property(a => a.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure JSON column defaults and constraints
+        modelBuilder.Entity<EntryEntity>().Property(e => e.ScaledJson).HasDefaultValue("null");
+
+        modelBuilder.Entity<EntryEntity>().Property(e => e.MetaJson).HasDefaultValue("{}");
+
+        modelBuilder.Entity<TreatmentEntity>().Property(t => t.BolusCalcJson).HasDefaultValue("{}");
+
+        modelBuilder.Entity<TreatmentEntity>().Property(t => t.ProfileJson).HasDefaultValue("null");
+
+        // Configure required fields and defaults
+        modelBuilder.Entity<EntryEntity>().Property(e => e.Type).HasDefaultValue("sgv");
+
+        modelBuilder.Entity<EntryEntity>().Property(e => e.IsDemo).HasDefaultValue(false);
+
+        modelBuilder.Entity<FoodEntity>().Property(f => f.Type).HasDefaultValue("food");
+
+        modelBuilder.Entity<FoodEntity>().Property(f => f.Gi).HasDefaultValue(GlycemicIndex.Medium);
+
+        modelBuilder.Entity<FoodEntity>().Property(f => f.Unit).HasDefaultValue("g");
+
+        modelBuilder.Entity<FoodEntity>().Property(f => f.Position).HasDefaultValue(99999);
+
+        // Settings defaults
+        modelBuilder.Entity<SettingsEntity>().Property(s => s.IsActive).HasDefaultValue(true);
+
+        // Profile defaults
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .Property(p => p.DefaultProfile)
+            .HasDefaultValue("Default");
+        modelBuilder.Entity<ProfileEntity>().Property(p => p.Units).HasDefaultValue("mg/dl");
+        modelBuilder.Entity<ProfileEntity>().Property(p => p.StoreJson).HasDefaultValue("{}");
+
+        // Profile automatic timestamps
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .Property(p => p.CreatedAtPg)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder
+            .Entity<ProfileEntity>()
+            .Property(p => p.UpdatedAtPg)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure DeviceStatus JSON fields with default empty objects
+        foreach (
+            var jsonProperty in new[]
+            {
+                nameof(DeviceStatusEntity.UploaderJson),
+                nameof(DeviceStatusEntity.PumpJson),
+                nameof(DeviceStatusEntity.OpenApsJson),
+                nameof(DeviceStatusEntity.LoopJson),
+                nameof(DeviceStatusEntity.XDripJsJson),
+                nameof(DeviceStatusEntity.RadioAdapterJson),
+                nameof(DeviceStatusEntity.ConnectJson),
+                nameof(DeviceStatusEntity.OverrideJson),
+                nameof(DeviceStatusEntity.CgmJson),
+                nameof(DeviceStatusEntity.MeterJson),
+                nameof(DeviceStatusEntity.InsulinPenJson),
+            }
+        )
+        {
+            modelBuilder
+                .Entity<DeviceStatusEntity>()
+                .Property(jsonProperty)
+                .HasDefaultValue("null");
+        }
+
+        // Configure AlertRule defaults and constraints
+        modelBuilder.Entity<AlertRuleEntity>().Property(a => a.IsEnabled).HasDefaultValue(true);
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.EscalationDelayMinutes)
+            .HasDefaultValue(15);
+        modelBuilder.Entity<AlertRuleEntity>().Property(a => a.MaxEscalations).HasDefaultValue(3);
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.DefaultSnoozeMinutes)
+            .HasDefaultValue(30);
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.MaxSnoozeMinutes)
+            .HasDefaultValue(120);
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.NotificationChannels)
+            .HasDefaultValue("[]");
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder
+            .Entity<AlertRuleEntity>()
+            .Property(a => a.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure AlertHistory defaults and constraints
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .Property(h => h.EscalationLevel)
+            .HasDefaultValue(0);
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .Property(h => h.NotificationsSent)
+            .HasDefaultValue("[]");
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .Property(h => h.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder
+            .Entity<AlertHistoryEntity>()
+            .Property(h => h.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure NotificationPreferences defaults
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.EmailEnabled)
+            .HasDefaultValue(true);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.PushoverEnabled)
+            .HasDefaultValue(false);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.SmsEnabled)
+            .HasDefaultValue(false);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.WebhookEnabled)
+            .HasDefaultValue(false);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.QuietHoursEnabled)
+            .HasDefaultValue(false);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.EmergencyOverrideQuietHours)
+            .HasDefaultValue(true);
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder
+            .Entity<NotificationPreferencesEntity>()
+            .Property(p => p.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure EmergencyContacts defaults and constraints
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .Property(c => c.IsActive)
+            .HasDefaultValue(true);
+        modelBuilder.Entity<EmergencyContactEntity>().Property(c => c.Priority).HasDefaultValue(1);
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .Property(c => c.AlertTypes)
+            .HasDefaultValue("[]");
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .Property(c => c.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder
+            .Entity<EmergencyContactEntity>()
+            .Property(c => c.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        // Configure DeviceHealth defaults and constraints
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.DeviceType)
+            .HasDefaultValue(DeviceType.Unknown);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.Status)
+            .HasDefaultValue(DeviceStatusType.Active);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.BatteryWarningThreshold)
+            .HasDefaultValue(20.0m);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.SensorExpirationWarningHours)
+            .HasDefaultValue(24);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.DataGapWarningMinutes)
+            .HasDefaultValue(30);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.CalibrationReminderHours)
+            .HasDefaultValue(12);
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder
+            .Entity<DeviceHealthEntity>()
+            .Property(d => d.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+    }
+
+    /// <summary>
+    /// Saves all changes made in this context to the database
+    /// </summary>
+    /// <returns>The number of state entries written to the database</returns>
+    public override int SaveChanges()
+    {
+        UpdateTimestamps();
+        return base.SaveChanges();
+    }
+
+    /// <summary>
+    /// Asynchronously saves all changes made in this context to the database
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete</param>
+    /// <returns>A task that represents the asynchronous save operation. The task result contains the number of state entries written to the database</returns>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        UpdateTimestamps();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Update system tracking timestamps before saving
+    /// </summary>
+    private void UpdateTimestamps()
+    {
+        var utcNow = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is EntryEntity entryEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    entryEntity.SysCreatedAt = utcNow;
+                }
+                entryEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is TreatmentEntity treatmentEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    treatmentEntity.SysCreatedAt = utcNow;
+                }
+                treatmentEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is DeviceStatusEntity deviceStatusEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    deviceStatusEntity.SysCreatedAt = utcNow;
+                }
+                deviceStatusEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is FoodEntity foodEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    foodEntity.SysCreatedAt = utcNow;
+                }
+                foodEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is SettingsEntity settingsEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    settingsEntity.SysCreatedAt = utcNow;
+                }
+                settingsEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is ActivityEntity activityEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    activityEntity.SysCreatedAt = utcNow;
+                }
+                activityEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is ProfileEntity profileEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    profileEntity.CreatedAtPg = utcNow;
+                }
+                profileEntity.UpdatedAtPg = utcNow;
+            }
+            else if (entry.Entity is AlertRuleEntity alertRuleEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    alertRuleEntity.CreatedAt = utcNow;
+                }
+                alertRuleEntity.UpdatedAt = utcNow;
+            }
+            else if (entry.Entity is AlertHistoryEntity alertHistoryEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    alertHistoryEntity.CreatedAt = utcNow;
+                }
+                alertHistoryEntity.UpdatedAt = utcNow;
+            }
+            else if (entry.Entity is NotificationPreferencesEntity notificationPreferencesEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    notificationPreferencesEntity.CreatedAt = utcNow;
+                }
+                notificationPreferencesEntity.UpdatedAt = utcNow;
+            }
+            else if (entry.Entity is EmergencyContactEntity emergencyContactEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    emergencyContactEntity.CreatedAt = utcNow;
+                }
+                emergencyContactEntity.UpdatedAt = utcNow;
+            }
+            else if (entry.Entity is DeviceHealthEntity deviceHealthEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    deviceHealthEntity.CreatedAt = utcNow;
+                }
+                deviceHealthEntity.UpdatedAt = utcNow;
+            }
+        }
+    }
+}

@@ -1,0 +1,68 @@
+using System.Reflection;
+
+namespace Nocturne.Core.Models;
+
+/// <summary>
+/// Base class providing default implementation for sanitization methods using reflection
+/// </summary>
+public abstract class ProcessableDocumentBase : IProcessableDocument
+{
+    /// <inheritdoc />
+    public abstract string? Id { get; set; }
+
+    /// <inheritdoc />
+    public abstract string? CreatedAt { get; set; }
+
+    /// <inheritdoc />
+    public abstract long Mills { get; set; }
+
+    /// <inheritdoc />
+    public abstract int? UtcOffset { get; set; }
+
+    /// <inheritdoc />
+    public virtual Dictionary<string, string?> GetSanitizableFields()
+    {
+        var fields = new Dictionary<string, string?>();
+        var sanitizableProperties = GetSanitizableProperties();
+
+        foreach (var property in sanitizableProperties)
+        {
+            var value = property.GetValue(this) as string;
+            if (!string.IsNullOrEmpty(value))
+            {
+                fields.Add(property.Name, value);
+            }
+        }
+
+        return fields;
+    }
+
+    /// <inheritdoc />
+    public virtual void SetSanitizedField(string fieldName, string? sanitizedValue)
+    {
+        var sanitizableProperties = GetSanitizableProperties();
+        var property = sanitizableProperties.FirstOrDefault(p => p.Name == fieldName);
+
+        property?.SetValue(this, sanitizedValue);
+    }
+
+    /// <summary>
+    /// Gets the properties that should be sanitized. Properties marked with [Sanitizable] attribute will be included.
+    /// If no properties have the attribute, falls back to all public string properties.
+    /// </summary>
+    /// <returns>Collection of properties that should be sanitized</returns>
+    protected virtual IEnumerable<PropertyInfo> GetSanitizableProperties()
+    {
+        var allStringProperties = GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.PropertyType == typeof(string) && p.CanRead && p.CanWrite)
+            .ToList();
+
+        var attributeMarkedProperties = allStringProperties
+            .Where(p => p.GetCustomAttribute<SanitizableAttribute>() != null)
+            .ToList();
+
+        // If any properties have the attribute, use only those. Otherwise, use all string properties.
+        return attributeMarkedProperties.Any() ? attributeMarkedProperties : allStringProperties;
+    }
+}

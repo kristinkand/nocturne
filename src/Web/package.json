@@ -1,0 +1,35 @@
+{
+  "name": "@nocturne/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nocturne web monorepo - SvelteKit app and WebSocket bridge",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @nocturne/app dev",
+    "build": "pnpm --recursive build",
+    "lint": "pnpm --recursive lint",
+    "format": "pnpm --recursive format",
+    "check": "pnpm --recursive check",
+    "test": "pnpm --recursive test",
+    "clean": "pnpm --recursive clean && rm -rf node_modules",
+    "transform-api-client": "node --experimental-transform-types utils/transformApiClient/index.ts",
+    "generate-api-client": "cd ../API/Nocturne.API && nswag run nswag.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.3",
+    "prettier": "^3.6.2"
+  },
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "overrides": {
+      "@sveltejs/vite-plugin-svelte": "^5.0.3",
+      "svelte": "^5.37.0",
+      "vite": "^6.3.5"
+    }
+  }
+}

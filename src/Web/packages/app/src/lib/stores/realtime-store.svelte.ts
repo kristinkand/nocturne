@@ -1,0 +1,352 @@
+// Real-time data store using Svelte 5 Runes and WebSocket integration
+import { WebSocketClient } from "$lib/websocket/websocket-client.svelte";
+import type {
+  Entry,
+  Treatment,
+  WebSocketConfig,
+  DataUpdateEvent,
+  StorageEvent,
+  AnnouncementEvent,
+  AlarmEvent,
+} from "$lib/websocket/types";
+import { toast } from "svelte-sonner";
+import { getEntries, getTreatments } from "$lib/data/entries.remote";
+import { getContext, setContext } from "svelte";
+
+const REALTIME_STORE_KEY = Symbol("realtime-store");
+
+export class RealtimeStore {
+  private websocketClient!: WebSocketClient;
+  private initialized = false;
+
+  /** Reactive state using Svelte 5 runes */
+  entries = $state<Entry[]>([]);
+  treatments = $state<Treatment[]>([]);
+
+  /** Connection state (with safe initialization) */
+  connectionStatus = $derived(
+    this.websocketClient?.connectionStatus || "disconnected"
+  );
+  isConnected = $derived(this.websocketClient?.isConnected || false);
+  connectionError = $derived(this.websocketClient?.lastError || null);
+  connectionStats = $derived(
+    this.websocketClient?.stats || {
+      connectedClients: 0,
+      uptime: 0,
+      serverPort: 0,
+      messageCount: 0,
+      reconnectCount: 0,
+    }
+  );
+
+  /** Latest glucose data computations */
+  currentEntry = $derived.by(() => {
+    const sorted = [...this.entries].sort(
+      (a, b) => (b.mills || 0) - (a.mills || 0)
+    );
+    return sorted[0] || null;
+  });
+
+  demoMode = $derived(this.entries.some((e) => e.is_demo));
+
+  previousEntry = $derived.by(() => {
+    const sorted = [...this.entries].sort(
+      (a, b) => (b.mills || 0) - (a.mills || 0)
+    );
+    return sorted[1] || null;
+  });
+
+  /** Current glucose values */
+  currentBG = $derived(this.currentEntry?.sgv ?? this.currentEntry?.mgdl ?? 0);
+  previousBG = $derived(
+    this.previousEntry?.sgv ?? this.previousEntry?.mgdl ?? 0
+  );
+
+  /** Delta calculation - prefer entry delta, fallback to computed */
+  bgDelta = $derived.by(() => {
+    if (this.currentEntry?.delta !== undefined) {
+      return this.currentEntry.delta;
+    }
+    return this.currentBG - this.previousBG;
+  });
+
+  /** Direction and trend */
+  direction = $derived(this.currentEntry?.direction || "Flat");
+
+  /** Time since last update */
+  lastUpdated = $derived(this.currentEntry?.mills || Date.now());
+  timeSinceUpdate = $derived.by(() => {
+    return Date.now() - this.lastUpdated;
+  });
+
+  /** Recent treatments */
+  recentTreatments = $derived.by(() => {
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    return this.treatments
+      .filter((t) => (t.mills || 0) > oneDayAgo)
+      .sort((a, b) => (b.mills || 0) - (a.mills || 0));
+  });
+
+  constructor(config: WebSocketConfig) {
+    this.websocketClient = new WebSocketClient(config);
+    this.setupEventHandlers();
+  }
+
+  /** Initialize with server data and start WebSocket connection */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    // Set initial data from server
+    this.entries = await getEntries({
+      dateRange: {
+        from: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+        to: new Date(),
+      },
+    });
+    this.treatments = await getTreatments({
+      dateRange: {
+        from: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+        to: new Date(),
+      },
+    });
+
+    // Connect to WebSocket bridge
+    this.websocketClient.connect();
+    this.initialized = true;
+  }
+
+  /** Setup WebSocket event handlers */
+  private setupEventHandlers(): void {
+    this.websocketClient.on("connect", (info) => {
+      console.log("WebSocket connected:", info.clientId);
+      toast.success("Connected to real-time data");
+    });
+
+    this.websocketClient.on("disconnect", (reason) => {
+      console.log("WebSocket disconnected:", reason);
+      toast.warning("Real-time data disconnected");
+    });
+
+    this.websocketClient.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      toast.error("Failed to connect to real-time data");
+    });
+
+    this.websocketClient.on("dataUpdate", (event: DataUpdateEvent) => {
+      console.log(event);
+      this.handleDataUpdate(event);
+    });
+
+    this.websocketClient.on("create", (event: StorageEvent) => {
+      this.handleCreate(event);
+    });
+
+    this.websocketClient.on("update", (event: StorageEvent) => {
+      this.handleUpdate(event);
+    });
+
+    this.websocketClient.on("delete", (event: StorageEvent) => {
+      this.handleDelete(event);
+    });
+
+    this.websocketClient.on("announcement", (event: AnnouncementEvent) => {
+      this.handleAnnouncement(event);
+    });
+
+    this.websocketClient.on("alarm", (event: AlarmEvent) => {
+      this.handleAlarm(event);
+    });
+
+    this.websocketClient.on("clear_alarm", () => {
+      this.handleClearAlarm();
+    });
+  }
+
+  /** Handle real-time data updates */
+  private handleDataUpdate(event: DataUpdateEvent): void {
+    if (!Array.isArray(event.data)) return;
+
+    // Merge new entries with existing ones, avoiding duplicates
+    const newEntries = event.data.filter(
+      (newEntry) =>
+        !this.entries.some(
+          (existing) =>
+            existing._id === newEntry._id ||
+            (existing.mills === newEntry.mills && existing.sgv === newEntry.sgv)
+        )
+    );
+
+    if (newEntries.length > 0) {
+      this.entries = [...this.entries, ...newEntries]
+        .sort((a, b) => (b.mills || 0) - (a.mills || 0))
+        .slice(0, 1000); // Keep last 1000 entries
+    }
+  }
+
+  /** Handle storage create events */
+  private handleCreate(event: StorageEvent): void {
+    const { colName, doc } = event;
+
+    if (colName === "entries" && this.isEntry(doc)) {
+      // Check for duplicates
+      const exists = this.entries.some(
+        (entry) =>
+          entry._id === doc._id ||
+          (entry.mills === doc.mills && entry.sgv === doc.sgv)
+      );
+
+      if (!exists) {
+        this.entries = [doc, ...this.entries]
+          .sort((a, b) => (b.mills || 0) - (a.mills || 0))
+          .slice(0, 1000);
+      }
+    } else if (colName === "treatments" && this.isTreatment(doc)) {
+      const exists = this.treatments.some(
+        (treatment) =>
+          treatment._id === doc._id ||
+          (treatment.mills === doc.mills &&
+            treatment.eventType === doc.eventType)
+      );
+
+      if (!exists) {
+        this.treatments = [doc, ...this.treatments]
+          .sort((a, b) => (b.mills || 0) - (a.mills || 0))
+          .slice(0, 500);
+      }
+    }
+  }
+
+  /** Handle storage update events */
+  private handleUpdate(event: StorageEvent): void {
+    const { colName, doc } = event;
+
+    if (colName === "entries" && this.isEntry(doc)) {
+      const index = this.entries.findIndex((entry) => entry._id === doc._id);
+      if (index !== -1) {
+        this.entries = [
+          ...this.entries.slice(0, index),
+          doc,
+          ...this.entries.slice(index + 1),
+        ];
+      } else {
+        // If not found, treat as create
+        this.handleCreate(event);
+      }
+    } else if (colName === "treatments" && this.isTreatment(doc)) {
+      const index = this.treatments.findIndex(
+        (treatment) => treatment._id === doc._id
+      );
+      if (index !== -1) {
+        this.treatments = [
+          ...this.treatments.slice(0, index),
+          doc,
+          ...this.treatments.slice(index + 1),
+        ];
+      } else {
+        this.handleCreate(event);
+      }
+    }
+  }
+
+  /** Handle storage delete events */
+  private handleDelete(event: StorageEvent): void {
+    const { colName, doc } = event;
+
+    if (colName === "entries") {
+      this.entries = this.entries.filter((entry) => entry._id !== doc._id);
+    } else if (colName === "treatments") {
+      this.treatments = this.treatments.filter(
+        (treatment) => treatment._id !== doc._id
+      );
+    }
+  }
+
+  /** Handle system announcements */
+  private handleAnnouncement(event: AnnouncementEvent): void {
+    const level =
+      event.level === "warn"
+        ? "warning"
+        : event.level === "error"
+          ? "error"
+          : "info";
+
+    toast[level](event.message, {
+      description: event.title !== "Announcement" ? event.title : undefined,
+    });
+  }
+
+  /** Handle alarms */
+  private handleAlarm(event: AlarmEvent): void {
+    const isUrgent = event.level === "urgent";
+    const toastMethod = isUrgent ? "error" : "warning";
+
+    toast[toastMethod](event.message || "Glucose alarm", {
+      description: event.title,
+      duration: isUrgent ? 10000 : 5000,
+    });
+  }
+
+  /** Handle alarm clearing */
+  private handleClearAlarm(): void {
+    toast.success("Glucose alarm cleared");
+  }
+
+  /* Type guards for runtime type checking */
+  private isEntry(obj: any): obj is Entry {
+    return (
+      obj &&
+      typeof obj === "object" &&
+      ("sgv" in obj || "mgdl" in obj || "mmol" in obj)
+    );
+  }
+
+  private isTreatment(obj: any): obj is Treatment {
+    return obj && typeof obj === "object" && "eventType" in obj;
+  }
+
+  /** Authenticate with API secret */
+  authenticate(apiSecret: string): void {
+    this.websocketClient.authenticate(apiSecret);
+  }
+
+  /** Join specific data rooms for targeted updates */
+  joinRoom(room: string): void {
+    this.websocketClient.joinRoom(room);
+  }
+
+  /** Get connection info */
+  getConnectionInfo() {
+    return this.websocketClient.getConnectionInfo();
+  }
+
+  /** Manual reconnection */
+  reconnect(): void {
+    this.websocketClient.disconnect();
+    setTimeout(() => {
+      this.websocketClient.connect();
+    }, 1000);
+  }
+
+  /** Cleanup */
+  destroy(): void {
+    this.websocketClient.destroy();
+  }
+}
+
+/** Creates a realtime store and sets it in context */
+export function createRealtimeStore(config: WebSocketConfig): RealtimeStore {
+  const store = new RealtimeStore(config);
+  setContext(REALTIME_STORE_KEY, store);
+  return store;
+}
+
+/** Gets the realtime store from context */
+export function getRealtimeStore(): RealtimeStore {
+  const store = getContext<RealtimeStore>(REALTIME_STORE_KEY);
+  if (!store) {
+    throw new Error(
+      "Realtime store not found. Make sure to call createRealtimeStore in a parent component."
+    );
+  }
+  return store;
+}

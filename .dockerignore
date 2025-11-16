@@ -1,0 +1,84 @@
+# Ignore node_modules directories
+**/node_modules/
+node_modules/
+
+# Ignore build outputs
+**/bin/
+**/obj/
+**/dist/
+**/build/
+**/out/
+**/target/
+
+# Ignore package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore IDE and editor files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ignore git files
+.git/
+.gitignore
+
+# Ignore Docker files
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Ignore test results
+TestResults/
+**/*.trx
+**/*.coverage
+
+# Ignore logs
+*.log
+logs/
+**/*.log
+
+# Ignore temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Ignore documentation
+README.md
+docs/
+*.md
+
+# Ignore configuration files that shouldn't be in container
+# Development and example configs are excluded
+appsettings.Development.json
+appsettings.*.example.json
+appsettings.pushover.example.json
+
+# Ignore Azure and deployment files
+azure.yaml
+infra/
+scripts/
+
+# Ignore test projects (since we only want to build the API)
+tests/
+
+
+# Keep only what's needed for the API build
+!src/API/
+!src/Core/
+!src/Infrastructure/
+!src/Connectors/

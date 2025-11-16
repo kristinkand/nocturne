@@ -1,0 +1,346 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/nocturne.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/nocturne.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["watch", "run", "--project", "${workspaceFolder}/nocturne.sln"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "start-api",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["run", "--project", "${workspaceFolder}/src/API/Nocturne.API"],
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Now listening on.*$",
+          "endsPattern": "^.*Application started.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "env": {
+          "NIGHTSCOUT_TARGET_URL": "https://your-nightscout.example.com"
+        }
+      }
+    },
+    {
+      "label": "start-proxy-custom",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/src/API/Nocturne.API",
+        "--target-url=${input:nightscoutUrl}"
+      ],
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Now listening on.*$",
+          "endsPattern": "^.*Application started.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "start-proxy-localhost",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/src/API/Nocturne.API",
+        "--target-url=http://localhost:1337"
+      ],
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Now listening on.*$",
+          "endsPattern": "^.*Application started.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "websocket-bridge-build",
+      "command": "pnpm",
+      "type": "process",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/WebSocketBridge"
+      },
+      "group": "build",
+      "problemMatcher": "$tsc",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "websocket-bridge-start",
+      "command": "pnpm",
+      "type": "process",
+      "args": ["start"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/WebSocketBridge"
+      },
+      "group": "build",
+      "isBackground": true,
+      "dependsOn": "websocket-bridge-build",
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Starting WebSocket Bridge Server.*$",
+          "endsPattern": "^.*Ready to bridge SignalR messages to Socket.IO clients.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "websocket-bridge-dev",
+      "command": "pnpm",
+      "type": "process",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/WebSocketBridge"
+      },
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Starting WebSocket Bridge Server.*$",
+          "endsPattern": "^.*Ready to bridge SignalR messages to Socket.IO clients.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "websocket-bridge-watch",
+      "command": "pnpm",
+      "type": "process",
+      "args": ["run", "watch"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/WebSocketBridge"
+      },
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Starting WebSocket Bridge Server.*$",
+          "endsPattern": "^.*Ready to bridge SignalR messages to Socket.IO clients.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "start-full-stack",
+      "dependsOrder": "parallel",
+      "dependsOn": ["start-api", "websocket-bridge-start"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "start-aspire",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/src/Aspire/Nocturne.Aspire.Host"
+      ],
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Building|Starting",
+          "endsPattern": "Now listening on:|Application started"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "generate-typescript-client",
+      "command": "nswag",
+      "type": "shell",
+      "args": ["run", "nswag.json"],
+      "group": "build",
+      "isBackground": false,
+      "options": {
+        "cwd": "${workspaceFolder}/src/API/Nocturne.API"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "generate-typescript-client-with-transform",
+      "type": "shell",
+      "command": "cd src/API/Nocturne.API && nswag run nswag.json && cd ../../Web/utils/transformApiClient && node index.js",
+      "group": "build",
+      "isBackground": false,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "nightscoutUrl",
+      "description": "Enter your Nightscout URL",
+      "default": "https://your-nightscout.herokuapp.com",
+      "type": "promptString"
+    }
+  ]
+}

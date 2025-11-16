@@ -1,0 +1,110 @@
+namespace Nocturne.Core.Models;
+
+/// <summary>
+/// V3 Status response model that maintains 1:1 compatibility with Nightscout /api/v3/status endpoint
+/// Includes extended status information with permissions and authorization details
+/// </summary>
+public class V3StatusResponse
+{
+    /// <summary>
+    /// Server status - typically "ok"
+    /// </summary>
+    public string Status { get; set; } = "ok";
+
+    /// <summary>
+    /// Server name/title
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Server version
+    /// </summary>
+    public string Version { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Current server time in ISO 8601 format
+    /// </summary>
+    public DateTime ServerTime { get; set; }
+
+    /// <summary>
+    /// API enabled status - typically true
+    /// </summary>
+    public bool ApiEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Care Portal enabled status
+    /// </summary>
+    public bool CareportalEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Head of repository
+    /// </summary>
+    public string Head { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Public settings that can be shared with clients
+    /// </summary>
+    public Dictionary<string, object> Settings { get; set; } = new();
+
+    /// <summary>
+    /// Extended V3 status properties
+    /// </summary>
+    public ExtendedStatusInfo Extended { get; set; } = new();
+}
+
+/// <summary>
+/// Extended status information for V3 API
+/// </summary>
+public class ExtendedStatusInfo
+{
+    /// <summary>
+    /// Authorization information
+    /// </summary>
+    public AuthorizationInfo Authorization { get; set; } = new();
+
+    /// <summary>
+    /// API permissions and capabilities
+    /// </summary>
+    public Dictionary<string, bool> Permissions { get; set; } = new();
+
+    /// <summary>
+    /// System uptime in milliseconds
+    /// </summary>
+    public long UptimeMs { get; set; }
+
+    /// <summary>
+    /// Available API collections
+    /// </summary>
+    public List<string> Collections { get; set; } = new();
+
+    /// <summary>
+    /// API version support matrix
+    /// </summary>
+    public Dictionary<string, bool> ApiVersions { get; set; } = new();
+}
+
+/// <summary>
+/// Authorization information for the current session
+/// </summary>
+public class AuthorizationInfo
+{
+    /// <summary>
+    /// Whether the request is authorized
+    /// </summary>
+    public bool IsAuthorized { get; set; }
+
+    /// <summary>
+    /// Authorization scope/permissions
+    /// </summary>
+    public List<string> Scope { get; set; } = new();
+
+    /// <summary>
+    /// Subject identifier (if authenticated)
+    /// </summary>
+    public string? Subject { get; set; }
+
+    /// <summary>
+    /// Roles assigned to the current session
+    /// </summary>
+    public List<string> Roles { get; set; } = new();
+}

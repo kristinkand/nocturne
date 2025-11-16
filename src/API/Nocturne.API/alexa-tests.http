@@ -1,0 +1,214 @@
+###
+# Nocturne API - Alexa Skills Kit Endpoint Tests
+# Use this file with the REST Client extension in VS Code
+###
+
+@baseUrl = https://localhost:7195
+@alexaEndpoint = {{baseUrl}}/api/alexa
+
+### Test 1: Launch Request
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": true,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "LaunchRequest",
+    "requestId": "amzn1.echo-api.request.test123",
+    "timestamp": "2025-06-13T12:00:00.000Z",
+    "locale": "en-US"
+  }
+}
+
+### Test 2: Intent Request - NSStatus
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "amzn1.echo-api.request.test456",
+    "timestamp": "2025-06-13T12:01:00.000Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "NSStatus"
+    }
+  }
+}
+
+### Test 3: Intent Request - NSBg (Blood Glucose)
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "amzn1.echo-api.request.test789",
+    "timestamp": "2025-06-13T12:02:00.000Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "NSBg"
+    }
+  }
+}
+
+### Test 4: Intent Request - Help
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "amzn1.echo-api.request.test999",
+    "timestamp": "2025-06-13T12:03:00.000Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "AMAZON.HelpIntent"
+    }
+  }
+}
+
+### Test 5: Intent Request - Stop
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "amzn1.echo-api.request.test111",
+    "timestamp": "2025-06-13T12:04:00.000Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "AMAZON.StopIntent"
+    }
+  }
+}
+
+### Test 6: Session Ended Request
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "SessionEndedRequest",
+    "requestId": "amzn1.echo-api.request.test222",
+    "timestamp": "2025-06-13T12:05:00.000Z",
+    "locale": "en-US"
+  }
+}
+
+### Test 7: Intent Request with Spanish locale
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "LaunchRequest",
+    "requestId": "amzn1.echo-api.request.test333",
+    "timestamp": "2025-06-13T12:06:00.000Z",
+    "locale": "es-ES"
+  }
+}
+
+### Test 8: Unknown Intent Request
+POST {{alexaEndpoint}}
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "session": {
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.test123",
+    "application": {
+      "applicationId": "amzn1.ask.skill.test"
+    },
+    "user": {
+      "userId": "amzn1.ask.account.test"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "amzn1.echo-api.request.test444",
+    "timestamp": "2025-06-13T12:07:00.000Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "UnknownIntent"
+    }
+  }
+}

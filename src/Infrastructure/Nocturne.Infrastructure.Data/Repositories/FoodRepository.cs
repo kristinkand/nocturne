@@ -1,0 +1,312 @@
+using Microsoft.EntityFrameworkCore;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Data.Entities;
+using Nocturne.Infrastructure.Data.Mappers;
+
+namespace Nocturne.Infrastructure.Data.Repositories;
+
+/// <summary>
+/// PostgreSQL repository for Food operations
+/// </summary>
+public class FoodRepository
+{
+    private readonly NocturneDbContext _context;
+
+    /// <summary>
+    /// Initializes a new instance of the FoodRepository class
+    /// </summary>
+    /// <param name="context">The database context</param>
+    public FoodRepository(NocturneDbContext context)
+    {
+        _context = context;
+    }
+
+    /// <summary>
+    /// Get all food entries
+    /// </summary>
+    public async Task<IEnumerable<Food>> GetFoodAsync(CancellationToken cancellationToken = default)
+    {
+        var entities = await _context.Foods.OrderBy(f => f.Name).ToListAsync(cancellationToken);
+
+        return entities.Select(FoodMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Get a specific food by ID
+    /// </summary>
+    public async Task<Food?> GetFoodByIdAsync(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by original ID first (MongoDB ObjectId)
+        var entity = await _context.Foods.FirstOrDefaultAsync(
+            f => f.OriginalId == id,
+            cancellationToken
+        );
+
+        // If not found by original ID, try by GUID
+        if (entity == null && Guid.TryParse(id, out var guid))
+        {
+            entity = await _context.Foods.FirstOrDefaultAsync(f => f.Id == guid, cancellationToken);
+        }
+
+        return entity != null ? FoodMapper.ToDomainModel(entity) : null;
+    }
+
+    /// <summary>
+    /// Get food entries by type
+    /// </summary>
+    public async Task<IEnumerable<Food>> GetFoodByTypeAsync(
+        string type,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entities = await _context
+            .Foods.Where(f => f.Type == type)
+            .OrderBy(f => f.Name)
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(FoodMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Get food entries with advanced filtering
+    /// </summary>
+    public async Task<IEnumerable<Food>> GetFoodWithAdvancedFilterAsync(
+        int count = 10,
+        int skip = 0,
+        string? findQuery = null,
+        bool reverseResults = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Foods.AsQueryable();
+
+        // Apply find query filter if specified
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Simple text search across name, category, and subcategory
+            query = query.Where(f =>
+                f.Name.Contains(findQuery)
+                || f.Category.Contains(findQuery)
+                || f.Subcategory.Contains(findQuery)
+            );
+        }
+
+        // Apply ordering
+        query = reverseResults ? query.OrderByDescending(f => f.Name) : query.OrderBy(f => f.Name);
+
+        // Apply pagination
+        var entities = await query.Skip(skip).Take(count).ToListAsync(cancellationToken);
+
+        return entities.Select(FoodMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Get food entries with advanced filtering including type filter
+    /// </summary>
+    public async Task<IEnumerable<Food>> GetFoodWithAdvancedFilterAsync(
+        int count = 10,
+        int skip = 0,
+        string? findQuery = null,
+        string? type = null,
+        bool reverseResults = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Foods.AsQueryable();
+
+        // Apply type filter if specified
+        if (!string.IsNullOrEmpty(type))
+        {
+            query = query.Where(f => f.Type == type);
+        }
+
+        // Apply find query filter if specified
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Simple text search across name, category, and subcategory
+            query = query.Where(f =>
+                f.Name.Contains(findQuery)
+                || f.Category.Contains(findQuery)
+                || f.Subcategory.Contains(findQuery)
+            );
+        }
+
+        // Apply ordering
+        query = reverseResults ? query.OrderByDescending(f => f.Name) : query.OrderBy(f => f.Name);
+
+        // Apply pagination
+        var entities = await query.Skip(skip).Take(count).ToListAsync(cancellationToken);
+
+        return entities.Select(FoodMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Create multiple food entries
+    /// </summary>
+    public async Task<IEnumerable<Food>> CreateFoodAsync(
+        IEnumerable<Food> foods,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entities = foods.Select(FoodMapper.ToEntity).ToList();
+
+        _context.Foods.AddRange(entities);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return entities.Select(FoodMapper.ToDomainModel);
+    }
+
+    /// <summary>
+    /// Update an existing food entry
+    /// </summary>
+    public async Task<Food?> UpdateFoodAsync(
+        string id,
+        Food food,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by original ID first (MongoDB ObjectId)
+        var entity = await _context.Foods.FirstOrDefaultAsync(
+            f => f.OriginalId == id,
+            cancellationToken
+        );
+
+        // If not found by original ID, try by GUID
+        if (entity == null && Guid.TryParse(id, out var guid))
+        {
+            entity = await _context.Foods.FirstOrDefaultAsync(f => f.Id == guid, cancellationToken);
+        }
+
+        if (entity == null)
+        {
+            return null;
+        }
+
+        FoodMapper.UpdateEntity(entity, food);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return FoodMapper.ToDomainModel(entity);
+    }
+
+    /// <summary>
+    /// Delete a food entry by ID
+    /// </summary>
+    public async Task<bool> DeleteFoodAsync(
+        string id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Try to find by original ID first (MongoDB ObjectId)
+        var entity = await _context.Foods.FirstOrDefaultAsync(
+            f => f.OriginalId == id,
+            cancellationToken
+        );
+
+        // If not found by original ID, try by GUID
+        if (entity == null && Guid.TryParse(id, out var guid))
+        {
+            entity = await _context.Foods.FirstOrDefaultAsync(f => f.Id == guid, cancellationToken);
+        }
+
+        if (entity == null)
+        {
+            return false;
+        }
+
+        _context.Foods.Remove(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Bulk delete food entries with query
+    /// </summary>
+    public async Task<long> BulkDeleteFoodAsync(
+        string findQuery,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Foods.AsQueryable();
+
+        // Apply find query filter
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Simple text search across name, category, and subcategory
+            query = query.Where(f =>
+                f.Name.Contains(findQuery)
+                || f.Category.Contains(findQuery)
+                || f.Subcategory.Contains(findQuery)
+            );
+        }
+
+        var entities = await query.ToListAsync(cancellationToken);
+        var count = entities.Count;
+
+        if (count > 0)
+        {
+            _context.Foods.RemoveRange(entities);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Count food entries
+    /// </summary>
+    public async Task<long> CountFoodAsync(
+        string? findQuery = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Foods.AsQueryable();
+
+        // Apply find query filter if specified
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Simple text search across name, category, and subcategory
+            query = query.Where(f =>
+                f.Name.Contains(findQuery)
+                || f.Category.Contains(findQuery)
+                || f.Subcategory.Contains(findQuery)
+            );
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Count food entries with type filter
+    /// </summary>
+    public async Task<long> CountFoodAsync(
+        string? findQuery = null,
+        string? type = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Foods.AsQueryable();
+
+        // Apply type filter if specified
+        if (!string.IsNullOrEmpty(type))
+        {
+            query = query.Where(f => f.Type == type);
+        }
+
+        // Apply find query filter if specified
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Simple text search across name, category, and subcategory
+            query = query.Where(f =>
+                f.Name.Contains(findQuery)
+                || f.Category.Contains(findQuery)
+                || f.Subcategory.Contains(findQuery)
+            );
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+}

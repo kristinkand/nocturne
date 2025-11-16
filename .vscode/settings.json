@@ -1,0 +1,22 @@
+{
+  "html.suggest.html5": false,
+  "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+  "emmet.showSuggestionsAsSnippets": true,
+  "editor.snippetSuggestions": "top",
+  "html.completion.attributeDefaultValue": "empty",
+  "svelte.plugin.html.completions.enable": true,
+  "svelte.plugin.html.completions.emmet": false,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "editor.formatOnSave": true,
+  "[csharp]": {
+    "editor.defaultFormatter": "csharpier.csharpier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[xml]": {
+    "editor.formatOnSave": true
+  },
+  "files.associations": {
+    "appsettings*.json": "jsonc"
+  }
+}

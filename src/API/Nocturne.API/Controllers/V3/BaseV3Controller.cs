@@ -1,0 +1,530 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Nocturne.API.Attributes;
+using Nocturne.Core.Contracts;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Data.Abstractions;
+
+namespace Nocturne.API.Controllers.V3;
+
+/// <summary>
+/// Base controller for V3 API endpoints providing common V3 functionality
+/// Implements pagination, field selection, sorting, filtering, and ETag support
+/// </summary>
+[ApiController]
+public abstract class BaseV3Controller<T> : ControllerBase
+    where T : class
+{
+    protected readonly IPostgreSqlService _postgreSqlService;
+    protected readonly IDataFormatService _dataFormatService;
+    protected readonly IDocumentProcessingService _documentProcessingService;
+    protected readonly ILogger _logger;
+
+    protected BaseV3Controller(
+        IPostgreSqlService postgreSqlService,
+        IDataFormatService dataFormatService,
+        IDocumentProcessingService documentProcessingService,
+        ILogger logger
+    )
+    {
+        _postgreSqlService = postgreSqlService;
+        _dataFormatService = dataFormatService;
+        _documentProcessingService = documentProcessingService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Parse V3 query parameters from the request
+    /// </summary>
+    /// <returns>Parsed V3 query parameters</returns>
+    protected V3QueryParameters ParseV3QueryParameters()
+    {
+        var query = HttpContext.Request.Query;
+
+        var parameters = new V3QueryParameters
+        {
+            Limit = ParseIntParameter(query, "limit", 100),
+            Offset = ParseIntParameter(query, "offset", 0),
+            Fields = ParseStringArrayParameter(query, "fields"),
+            Sort = ParseStringParameter(query, "sort"),
+            Filter = ParseJsonParameter(query, "filter"),
+            IfModifiedSince = ParseDateTimeParameter(query, "if-modified-since"),
+            IfNoneMatch = ParseStringParameter(query, "if-none-match"),
+        };
+
+        // Validate limits to prevent abuse
+        const int MaxEntriesLimit = 1_000; // Align with Nightscout API v3 legacy limit
+        if (parameters.Limit < 1)
+            parameters.Limit = 1;
+        if (parameters.Limit > MaxEntriesLimit)
+            parameters.Limit = MaxEntriesLimit;
+        if (parameters.Offset < 0)
+            parameters.Offset = 0;
+
+        return parameters;
+    }
+
+    /// <summary>
+    /// Apply field selection to a collection of objects
+    /// </summary>
+    /// <param name="data">Data to filter</param>
+    /// <param name="fields">Fields to include</param>
+    /// <returns>Filtered data with only selected fields</returns>
+    protected IEnumerable<object> ApplyFieldSelection(IEnumerable<T> data, string[]? fields)
+    {
+        if (fields == null || fields.Length == 0)
+        {
+            return data;
+        }
+
+        return data.Select(item =>
+        {
+            var json = JsonSerializer.Serialize(item);
+            var document = JsonDocument.Parse(json);
+            var filteredObject = new Dictionary<string, object?>();
+
+            foreach (var field in fields)
+            {
+                if (document.RootElement.TryGetProperty(field, out var property))
+                {
+                    filteredObject[field] = JsonSerializer.Deserialize<object>(property);
+                }
+            }
+
+            return filteredObject;
+        });
+    }
+
+    /// <summary>
+    /// Generate ETag for a collection of data
+    /// </summary>
+    /// <param name="data">Data to generate ETag for</param>
+    /// <returns>ETag value</returns>
+    protected string GenerateETag(IEnumerable<T> data)
+    {
+        var json = JsonSerializer.Serialize(data);
+        var hash = System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(json)
+        );
+        return Convert.ToHexString(hash)[..16]; // Use first 16 characters
+    }
+
+    /// <summary>
+    /// Set V3 response headers including pagination, ETag, and caching
+    /// </summary>
+    /// <param name="data">Response data</param>
+    /// <param name="parameters">Query parameters</param>
+    /// <param name="totalCount">Total count of items (for pagination)</param>
+    protected void SetV3ResponseHeaders(
+        IEnumerable<T> data,
+        V3QueryParameters parameters,
+        long totalCount
+    )
+    {
+        // Set ETag header
+        var etag = GenerateETag(data);
+        Response.Headers["ETag"] = $"\"{etag}\"";
+
+        // Set pagination headers
+        Response.Headers["X-Total-Count"] = totalCount.ToString();
+        Response.Headers["X-Limit"] = parameters.Limit.ToString();
+        Response.Headers["X-Offset"] = parameters.Offset.ToString();
+
+        // Set Link header for pagination
+        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
+        var links = new List<string>();
+
+        if (parameters.Offset > 0)
+        {
+            var prevOffset = Math.Max(0, parameters.Offset - parameters.Limit);
+            links.Add($"<{baseUrl}?limit={parameters.Limit}&offset={prevOffset}>; rel=\"prev\"");
+        }
+
+        if (parameters.Offset + parameters.Limit < totalCount)
+        {
+            var nextOffset = parameters.Offset + parameters.Limit;
+            links.Add($"<{baseUrl}?limit={parameters.Limit}&offset={nextOffset}>; rel=\"next\"");
+        }
+
+        if (links.Count > 0)
+        {
+            Response.Headers["Link"] = string.Join(", ", links);
+        }
+
+        // Set cache control headers
+        Response.Headers["Cache-Control"] = "public, max-age=60";
+        Response.Headers["Last-Modified"] = DateTimeOffset.UtcNow.ToString("R");
+        Response.Headers["Vary"] = "Accept, If-Modified-Since, If-None-Match";
+    }
+
+    /// <summary>
+    /// Check if the request can return a 304 Not Modified response
+    /// </summary>
+    /// <param name="etag">Current ETag</param>
+    /// <param name="lastModified">Last modified timestamp</param>
+    /// <param name="parameters">Query parameters</param>
+    /// <returns>True if 304 should be returned</returns>
+    protected bool ShouldReturn304(
+        string etag,
+        DateTimeOffset lastModified,
+        V3QueryParameters parameters
+    )
+    {
+        // Check If-None-Match header
+        if (!string.IsNullOrEmpty(parameters.IfNoneMatch))
+        {
+            var clientETag = parameters.IfNoneMatch.Trim('"');
+            if (clientETag == etag)
+            {
+                return true;
+            }
+        }
+
+        // Check If-Modified-Since header
+        if (parameters.IfModifiedSince.HasValue)
+        {
+            if (lastModified <= parameters.IfModifiedSince.Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Create a standardized V3 error response
+    /// </summary>
+    /// <param name="statusCode">HTTP status code</param>
+    /// <param name="message">Error message</param>
+    /// <param name="details">Additional error details</param>
+    /// <returns>Standardized error response</returns>
+    protected ActionResult CreateV3ErrorResponse(
+        int statusCode,
+        string message,
+        object? details = null
+    )
+    {
+        var error = new V3ErrorResponse
+        {
+            Status = "error",
+            Code = statusCode.ToString(),
+            Message = message,
+            Timestamp = DateTimeOffset.UtcNow,
+            Path = Request.Path,
+            Details = details as Dictionary<string, object>,
+        };
+
+        return StatusCode(statusCode, error);
+    }
+
+    /// <summary>
+    /// Create a standardized V3 success response with metadata
+    /// </summary>
+    /// <param name="data">Response data</param>
+    /// <param name="parameters">Query parameters</param>
+    /// <param name="totalCount">Total count for pagination</param>
+    /// <returns>Standardized success response</returns>
+    protected ActionResult<V3CollectionResponse<object>> CreateV3CollectionResponse(
+        IEnumerable<T> data,
+        V3QueryParameters parameters,
+        long totalCount
+    )
+    {
+        // Apply field selection
+        var responseData =
+            parameters.Fields != null
+                ? ApplyFieldSelection(data, parameters.Fields)
+                : data.Cast<object>();
+
+        var response = new V3CollectionResponse<object>
+        {
+            Data = responseData.ToList(),
+            Meta = new V3ResponseMetadata
+            {
+                TotalCount = (int)totalCount,
+                Limit = parameters.Limit,
+                Offset = parameters.Offset,
+                Timestamp = DateTimeOffset.UtcNow,
+                Version = "3.0",
+            },
+        };
+
+        // Set response headers
+        SetV3ResponseHeaders(data, parameters, totalCount);
+
+        return Ok(response);
+    }
+
+    #region Parameter Parsing Helpers
+
+    private int ParseIntParameter(IQueryCollection query, string key, int defaultValue)
+    {
+        if (
+            query.TryGetValue(key, out var values)
+            && int.TryParse(values.FirstOrDefault(), out var result)
+        )
+        {
+            return result;
+        }
+        return defaultValue;
+    }
+
+    private string? ParseStringParameter(IQueryCollection query, string key)
+    {
+        if (query.TryGetValue(key, out var values))
+        {
+            return values.FirstOrDefault();
+        }
+        return null;
+    }
+
+    private string[]? ParseStringArrayParameter(IQueryCollection query, string key)
+    {
+        if (query.TryGetValue(key, out var values))
+        {
+            var value = values.FirstOrDefault();
+            if (!string.IsNullOrEmpty(value))
+            {
+                return value
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .ToArray();
+            }
+        }
+        return null;
+    }
+
+    private JsonElement? ParseJsonParameter(IQueryCollection query, string key)
+    {
+        if (query.TryGetValue(key, out var values))
+        {
+            var value = values.FirstOrDefault();
+            if (!string.IsNullOrEmpty(value))
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize<JsonElement>(value);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to parse JSON parameter {Key}: {Value}",
+                        key,
+                        value
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    private DateTimeOffset? ParseDateTimeParameter(IQueryCollection query, string key)
+    {
+        if (query.TryGetValue(key, out var values))
+        {
+            var value = values.FirstOrDefault();
+            if (!string.IsNullOrEmpty(value))
+            {
+                if (DateTimeOffset.TryParse(value, out var result))
+                {
+                    return result;
+                }
+            }
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region Protected Helper Methods
+
+    /// <summary>
+    /// Convert V3 filter to V1 find query string
+    /// </summary>
+    /// <param name="filter">V3 filter object</param>
+    /// <returns>V1 find query string</returns>
+    protected string? ConvertV3FilterToV1Find(JsonElement? filter)
+    {
+        if (filter == null || !filter.HasValue)
+            return null;
+
+        try
+        {
+            // Convert JSON filter to MongoDB query string
+            return filter.Value.GetRawText();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to convert V3 filter to V1 find query");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Extract sort direction from V3 sort parameter
+    /// </summary>
+    /// <param name="sort">V3 sort parameter</param>
+    /// <returns>True for reverse sorting (ascending), false for default (descending)</returns>
+    protected bool ExtractSortDirection(string? sort)
+    {
+        if (string.IsNullOrEmpty(sort))
+            return false;
+
+        // Check if sort starts with '-' (descending) or '+' (ascending)
+        return sort.StartsWith('+') || sort.StartsWith("asc", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Extract type filter from V3 filter
+    /// </summary>
+    /// <param name="filter">V3 filter object</param>
+    /// <returns>Type value or null</returns>
+    protected string? ExtractTypeFromFilter(JsonElement? filter)
+    {
+        if (filter == null || !filter.HasValue)
+            return null;
+
+        try
+        {
+            if (
+                filter.Value.ValueKind == JsonValueKind.Object
+                && filter.Value.TryGetProperty("type", out var typeProperty)
+            )
+            {
+                return typeProperty.GetString();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to extract type from V3 filter");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get last modified timestamp from collection
+    /// </summary>
+    /// <param name="items">Collection of items</param>
+    /// <returns>Last modified timestamp or null</returns>
+    protected DateTimeOffset? GetLastModified(IEnumerable<object> items)
+    {
+        if (!items.Any())
+            return null;
+
+        try
+        {
+            DateTimeOffset? lastModified = null;
+
+            foreach (var item in items)
+            {
+                DateTimeOffset? itemModified = null;
+
+                // Try to get timestamp from various possible properties
+                var itemType = item.GetType();
+
+                // Check for Mills property
+                var millsProperty = itemType.GetProperty("Mills");
+                if (millsProperty != null && millsProperty.GetValue(item) is long mills)
+                {
+                    itemModified = DateTimeOffset.FromUnixTimeMilliseconds(mills);
+                }
+
+                // Check for SrvModified property
+                var srvModifiedProperty = itemType.GetProperty("SrvModified");
+                if (
+                    srvModifiedProperty != null
+                    && srvModifiedProperty.GetValue(item) is DateTimeOffset srvModified
+                )
+                {
+                    itemModified = srvModified;
+                }
+
+                // Check for CreatedAt property
+                var createdAtProperty = itemType.GetProperty("CreatedAt");
+                if (
+                    createdAtProperty != null
+                    && createdAtProperty.GetValue(item) is DateTimeOffset createdAt
+                )
+                {
+                    if (itemModified == null || createdAt > itemModified)
+                        itemModified = createdAt;
+                }
+
+                if (itemModified != null && (lastModified == null || itemModified > lastModified))
+                {
+                    lastModified = itemModified;
+                }
+            }
+
+            return lastModified;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get last modified timestamp");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parse create request from request body
+    /// </summary>
+    /// <typeparam name="TRequest">Type of the request object</typeparam>
+    /// <returns>Parsed request object or null</returns>
+    protected async Task<TRequest?> ParseCreateRequest<TRequest>()
+        where TRequest : class
+    {
+        try
+        {
+            if (Request.ContentLength == 0)
+                return null;
+
+            using var reader = new StreamReader(Request.Body);
+            var body = await reader.ReadToEndAsync();
+
+            if (string.IsNullOrEmpty(body))
+                return null;
+
+            return JsonSerializer.Deserialize<TRequest>(
+                body,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse create request");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Create V3 collection response
+    /// </summary>
+    /// <typeparam name="TData">Type of the data</typeparam>
+    /// <param name="data">Response data</param>
+    /// <param name="totalCount">Total count for pagination</param>
+    /// <param name="lastModified">Last modified timestamp</param>
+    /// <returns>V3 collection response</returns>
+    protected ActionResult<V3CollectionResponse<object>> CreateV3Response<TData>(
+        IEnumerable<TData> data,
+        long? totalCount = null,
+        DateTimeOffset? lastModified = null
+    )
+    {
+        var response = new V3CollectionResponse<object>
+        {
+            Data = data.Cast<object>().ToList(),
+            Meta = new V3ResponseMetadata
+            {
+                TotalCount = (int)(totalCount ?? 0),
+                Timestamp = lastModified ?? DateTimeOffset.UtcNow,
+            },
+        };
+
+        return Ok(response);
+    }
+
+    #endregion
+}

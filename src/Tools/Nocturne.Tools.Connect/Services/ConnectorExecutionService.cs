@@ -1,0 +1,542 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.Connectors.Core.Models;
+using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Dexcom.Models;
+using Nocturne.Connectors.Dexcom.Services;
+using Nocturne.Connectors.FreeStyle.Models;
+using Nocturne.Connectors.FreeStyle.Services;
+using Nocturne.Connectors.Glooko.Models;
+using Nocturne.Connectors.Glooko.Services;
+using Nocturne.Connectors.MiniMed.Models;
+using Nocturne.Connectors.MiniMed.Services;
+using Nocturne.Connectors.Nightscout.Models;
+using Nocturne.Connectors.Nightscout.Services;
+using Nocturne.Core.Models;
+using Nocturne.Tools.Connect.Configuration;
+
+namespace Nocturne.Tools.Connect.Services;
+
+/// <summary>
+/// Service for executing connector synchronization operations
+/// </summary>
+public class ConnectorExecutionService
+{
+    private readonly ILogger<ConnectorExecutionService> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly DaemonStatusService? _daemonStatusService;
+
+    public ConnectorExecutionService(
+        ILogger<ConnectorExecutionService> logger,
+        ILoggerFactory loggerFactory,
+        DaemonStatusService? daemonStatusService = null
+    )
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _daemonStatusService = daemonStatusService; // Optional dependency
+    }
+
+    /// <summary>
+    /// Executes the connector synchronization operation
+    /// </summary>
+    /// <param name="config">Connect configuration</param>
+    /// <param name="daemon">Whether to run in daemon mode</param>
+    /// <param name="once">Whether to run only once</param>
+    /// <param name="interval">Sync interval in minutes for daemon mode</param>
+    /// <param name="dryRun">Whether this is a dry run</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if successful, false otherwise</returns>
+    public async Task<bool> ExecuteConnectorAsync(
+        ConnectConfiguration config,
+        bool daemon = false,
+        bool once = false,
+        int interval = 5,
+        bool dryRun = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var connectorConfig = CreateConnectorConfiguration(config);
+            if (connectorConfig == null)
+            {
+                _logger.LogError(
+                    "Failed to create connector configuration for source: {Source}",
+                    config.ConnectSource
+                );
+                return false;
+            }
+
+            using var connector = CreateConnectorService(connectorConfig);
+            if (connector == null)
+            {
+                _logger.LogError(
+                    "Failed to create connector service for source: {Source}",
+                    config.ConnectSource
+                );
+                return false;
+            }
+
+            _logger.LogInformation(
+                "Created {ConnectorType} connector for source: {Source}",
+                connector.GetType().Name,
+                config.ConnectSource
+            );
+
+            // Authenticate with the data source
+            _logger.LogInformation("Authenticating with data source...");
+            var authResult = await connector.AuthenticateAsync();
+            if (!authResult)
+            {
+                _logger.LogError(
+                    "Authentication failed for connector: {Source}",
+                    config.ConnectSource
+                );
+                return false;
+            }
+
+            _logger.LogInformation("Authentication successful");
+
+            if (daemon)
+            {
+                // Register daemon process for status monitoring
+                if (_daemonStatusService != null)
+                {
+                    await _daemonStatusService.RegisterDaemonAsync(
+                        config.ConnectSource,
+                        interval,
+                        cancellationToken
+                    );
+                }
+
+                return await RunDaemonModeAsync(
+                    connector,
+                    connectorConfig,
+                    interval,
+                    dryRun,
+                    cancellationToken
+                );
+            }
+            else
+            {
+                return await RunOnceModeAsync(
+                    connector,
+                    connectorConfig,
+                    dryRun,
+                    cancellationToken
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error executing connector for source: {Source}",
+                config.ConnectSource
+            );
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Runs the connector in daemon mode with periodic sync
+    /// </summary>
+    private async Task<bool> RunDaemonModeAsync(
+        IConnectorService<IConnectorConfiguration> connector,
+        IConnectorConfiguration config,
+        int intervalMinutes,
+        bool dryRun,
+        CancellationToken cancellationToken
+    )
+    {
+        _logger.LogInformation(
+            "Starting daemon mode with {Interval} minute intervals",
+            intervalMinutes
+        );
+
+        var interval = TimeSpan.FromMinutes(intervalMinutes);
+        var syncCount = 0;
+        var lastSyncTime = DateTime.MinValue;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                syncCount++;
+                _logger.LogInformation("Starting sync operation #{SyncCount}", syncCount);
+
+                var syncStartTime = DateTime.UtcNow;
+                bool syncResult;
+
+                if (dryRun)
+                {
+                    _logger.LogInformation("Dry run mode - fetching data without uploading");
+                    var entries = await connector.FetchGlucoseDataAsync();
+                    var entryCount = System.Linq.Enumerable.Count(entries);
+                    _logger.LogInformation(
+                        "Dry run: Would have uploaded {Count} entries",
+                        entryCount
+                    );
+                    syncResult = true;
+                }
+                else
+                {
+                    syncResult = await PerformSyncAsync(connector, config);
+                }
+
+                var syncDuration = DateTime.UtcNow - syncStartTime;
+                lastSyncTime = DateTime.UtcNow;
+
+                if (syncResult)
+                {
+                    _logger.LogInformation(
+                        "Sync operation #{SyncCount} completed successfully in {Duration:F1}s",
+                        syncCount,
+                        syncDuration.TotalSeconds
+                    );
+
+                    // Update daemon status with successful sync
+                    if (_daemonStatusService != null)
+                    {
+                        await _daemonStatusService.RecordSyncSuccessAsync(cancellationToken);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Sync operation #{SyncCount} failed after {Duration:F1}s",
+                        syncCount,
+                        syncDuration.TotalSeconds
+                    );
+
+                    // Update daemon status with error
+                    if (_daemonStatusService != null)
+                    {
+                        await _daemonStatusService.RecordSyncErrorAsync(
+                            $"Sync operation #{syncCount} failed",
+                            cancellationToken
+                        );
+                    }
+                }
+
+                // Wait for the next interval
+                _logger.LogDebug("Next sync in {Interval} minutes", intervalMinutes);
+
+                // Update heartbeat periodically during the wait
+                var heartbeatInterval = TimeSpan.FromMinutes(1);
+                var elapsed = TimeSpan.Zero;
+
+                while (elapsed < interval && !cancellationToken.IsCancellationRequested)
+                {
+                    var waitTime =
+                        interval - elapsed < heartbeatInterval
+                            ? interval - elapsed
+                            : heartbeatInterval;
+                    await Task.Delay(waitTime, cancellationToken);
+                    elapsed += waitTime;
+
+                    // Update heartbeat
+                    if (_daemonStatusService != null && !cancellationToken.IsCancellationRequested)
+                    {
+                        await _daemonStatusService.UpdateHeartbeatAsync(cancellationToken);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation(
+                    "Daemon mode cancelled after {SyncCount} sync operations",
+                    syncCount
+                );
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in daemon mode sync operation #{SyncCount}", syncCount);
+
+                // Record error in daemon status
+                if (_daemonStatusService != null)
+                {
+                    await _daemonStatusService.RecordSyncErrorAsync(ex.Message, cancellationToken);
+                }
+
+                // Continue daemon mode even after individual sync failures
+                await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+            }
+        }
+
+        _logger.LogInformation(
+            "Daemon mode stopped. Completed {SyncCount} sync operations",
+            syncCount
+        );
+
+        // Clean up daemon status when stopping
+        if (_daemonStatusService != null)
+        {
+            await _daemonStatusService.RemoveDaemonStatusAsync(cancellationToken);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Runs the connector once and exits
+    /// </summary>
+    private async Task<bool> RunOnceModeAsync(
+        IConnectorService<IConnectorConfiguration> connector,
+        IConnectorConfiguration config,
+        bool dryRun,
+        CancellationToken cancellationToken
+    )
+    {
+        _logger.LogInformation("Running one-time sync operation");
+
+        try
+        {
+            if (dryRun)
+            {
+                _logger.LogInformation("Dry run mode - fetching data without uploading");
+                var entries = await connector.FetchGlucoseDataAsync();
+                var entryCount = System.Linq.Enumerable.Count(entries);
+                _logger.LogInformation("Dry run: Would have uploaded {Count} entries", entryCount);
+                return true;
+            }
+            else
+            {
+                return await PerformSyncAsync(connector, config);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in one-time sync operation");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Performs the actual sync operation using the connector's SyncDataAsync method
+    /// </summary>
+    private async Task<bool> PerformSyncAsync(
+        IConnectorService<IConnectorConfiguration> connector,
+        IConnectorConfiguration config
+    )
+    {
+        // For now, use the individual connector's sync method by calling their specific methods
+        // This avoids the generic variance issue while maintaining functionality
+        try
+        {
+            var connectorType = connector.GetType().Name;
+            _logger.LogDebug("Performing sync with connector: {ConnectorType}", connectorType);
+
+            // Get glucose data and upload to Nightscout
+            var entries = await connector.FetchGlucoseDataAsync();
+            return await connector.UploadToNightscoutAsync(entries, config);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during sync operation");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Creates the appropriate connector configuration based on the source
+    /// </summary>
+    private IConnectorConfiguration? CreateConnectorConfiguration(ConnectConfiguration config)
+    {
+        try
+        {
+            var source = config.ConnectSource?.ToLowerInvariant();
+
+            return source switch
+            {
+                "glooko" => new GlookoConnectorConfiguration
+                {
+                    ConnectSource = ConnectSource.Glooko,
+                    GlookoEmail = config.GlookoEmail ?? string.Empty,
+                    GlookoPassword = config.GlookoPassword ?? string.Empty,
+                    GlookoServer = config.GlookoServer,
+                    GlookoTimezoneOffset = config.GlookoTimezoneOffset,
+                    Mode = ConnectorMode.Standalone,
+                    NightscoutUrl = config.NightscoutUrl,
+                    NightscoutApiSecret = config.NightscoutApiSecret,
+                },
+                "minimedcarelink" or "carelink" => new CareLinkConnectorConfiguration
+                {
+                    ConnectSource = ConnectSource.CareLink,
+                    CarelinkUsername = config.CarelinkUsername ?? string.Empty,
+                    CarelinkPassword = config.CarelinkPassword ?? string.Empty,
+                    CarelinkRegion = config.CarelinkRegion,
+                    Mode = ConnectorMode.Standalone,
+                    NightscoutUrl = config.NightscoutUrl,
+                    NightscoutApiSecret = config.NightscoutApiSecret,
+                },
+                "dexcomshare" or "dexcom" => new DexcomConnectorConfiguration
+                {
+                    ConnectSource = ConnectSource.Dexcom,
+                    DexcomUsername = config.DexcomUsername ?? string.Empty,
+                    DexcomPassword = config.DexcomPassword ?? string.Empty,
+                    DexcomRegion = config.DexcomRegion,
+                    Mode = ConnectorMode.Standalone,
+                    NightscoutUrl = config.NightscoutUrl,
+                    NightscoutApiSecret = config.NightscoutApiSecret,
+                },
+                "linkup" or "librelinkup" => new LibreLinkUpConnectorConfiguration
+                {
+                    ConnectSource = ConnectSource.LibreLinkUp,
+                    LibreUsername = config.LibreUsername ?? string.Empty,
+                    LibrePassword = config.LibrePassword ?? string.Empty,
+                    LibreRegion = config.LibreRegion,
+                    Mode = ConnectorMode.Standalone,
+                    NightscoutUrl = config.NightscoutUrl,
+                    NightscoutApiSecret = config.NightscoutApiSecret,
+                },
+                "nightscout" => new NightscoutConnectorConfiguration
+                {
+                    ConnectSource = ConnectSource.Nightscout,
+                    SourceEndpoint = config.SourceEndpoint ?? string.Empty,
+                    SourceApiSecret = config.SourceApiSecret ?? string.Empty,
+                    Mode = ConnectorMode.Standalone,
+                    NightscoutUrl = config.NightscoutUrl,
+                    NightscoutApiSecret = config.NightscoutApiSecret,
+                },
+                _ => null,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error creating connector configuration for source: {Source}",
+                config.ConnectSource
+            );
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Creates the appropriate connector service based on the configuration
+    /// </summary>
+    private IConnectorService<IConnectorConfiguration>? CreateConnectorService(
+        IConnectorConfiguration config
+    )
+    {
+        try
+        {
+            var source = config.ConnectSource.ToString().ToLowerInvariant();
+
+            return source switch
+            {
+                "glooko" => CreateGlookoWrapper((GlookoConnectorConfiguration)config),
+                "minimedcarelink" or "carelink" => CreateCareLinkWrapper(
+                    (CareLinkConnectorConfiguration)config
+                ),
+                "dexcomshare" or "dexcom" => CreateDexcomWrapper(
+                    (DexcomConnectorConfiguration)config
+                ),
+                "linkup" or "librelinkup" => CreateLibreWrapper(
+                    (LibreLinkUpConnectorConfiguration)config
+                ),
+                "nightscout" => CreateNightscoutWrapper((NightscoutConnectorConfiguration)config),
+                _ => null,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error creating connector service for source: {Source}",
+                config.ConnectSource
+            );
+            return null;
+        }
+    }
+
+    private IConnectorService<IConnectorConfiguration> CreateGlookoWrapper(
+        GlookoConnectorConfiguration config
+    )
+    {
+        var service = new GlookoConnectorService(
+            config,
+            _loggerFactory.CreateLogger<GlookoConnectorService>()
+        );
+        return new ConnectorServiceWrapper<GlookoConnectorConfiguration>(service);
+    }
+
+    private IConnectorService<IConnectorConfiguration> CreateCareLinkWrapper(
+        CareLinkConnectorConfiguration config
+    )
+    {
+        var service = new CareLinkConnectorService(
+            config,
+            _loggerFactory.CreateLogger<CareLinkConnectorService>()
+        );
+        return new ConnectorServiceWrapper<CareLinkConnectorConfiguration>(service);
+    }
+
+    private IConnectorService<IConnectorConfiguration> CreateDexcomWrapper(
+        DexcomConnectorConfiguration config
+    )
+    {
+        var service = new DexcomConnectorService(
+            config,
+            _loggerFactory.CreateLogger<DexcomConnectorService>()
+        );
+        return new ConnectorServiceWrapper<DexcomConnectorConfiguration>(service);
+    }
+
+    private IConnectorService<IConnectorConfiguration> CreateLibreWrapper(
+        LibreLinkUpConnectorConfiguration config
+    )
+    {
+        var service = new LibreConnectorService(
+            config,
+            _loggerFactory.CreateLogger<LibreConnectorService>()
+        );
+        return new ConnectorServiceWrapper<LibreLinkUpConnectorConfiguration>(service);
+    }
+
+    private IConnectorService<IConnectorConfiguration> CreateNightscoutWrapper(
+        NightscoutConnectorConfiguration config
+    )
+    {
+        var service = new NightscoutConnectorService(
+            config,
+            _loggerFactory.CreateLogger<NightscoutConnectorService>()
+        );
+        return new ConnectorServiceWrapper<NightscoutConnectorConfiguration>(service);
+    }
+}
+
+/// <summary>
+/// Wrapper class to handle the generic variance issue with connector services
+/// </summary>
+internal class ConnectorServiceWrapper<TConfig> : IConnectorService<IConnectorConfiguration>
+    where TConfig : class, IConnectorConfiguration
+{
+    private readonly IConnectorService<TConfig> _innerService;
+
+    public ConnectorServiceWrapper(IConnectorService<TConfig> innerService)
+    {
+        _innerService = innerService ?? throw new ArgumentNullException(nameof(innerService));
+    }
+
+    public string ServiceName => _innerService.ServiceName;
+
+    public Task<bool> AuthenticateAsync() => _innerService.AuthenticateAsync();
+
+    public Task<IEnumerable<Entry>> FetchGlucoseDataAsync(DateTime? since = null) =>
+        _innerService.FetchGlucoseDataAsync(since);
+
+    public Task<bool> UploadToNightscoutAsync(
+        IEnumerable<Entry> entries,
+        IConnectorConfiguration config
+    ) => _innerService.UploadToNightscoutAsync(entries, (TConfig)config);
+
+    public void Dispose() => _innerService.Dispose();
+}

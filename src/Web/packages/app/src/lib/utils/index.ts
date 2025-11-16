@@ -1,0 +1,253 @@
+import { getLocalTimeZone, now, fromDate } from "@internationalized/date";
+
+import {
+  MoveUp,
+  MoveUpRight,
+  MoveDown,
+  MoveDownRight,
+  MoveRight,
+  HelpCircle,
+  AlertTriangle,
+} from "lucide-svelte";
+
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SvelteComponent = any;
+
+/** Time utility functions */
+export const times = {
+  mins: (mins: number) => ({ msecs: mins * 60 * 1000 }),
+  hours: (hours: number) => ({ msecs: hours * 60 * 60 * 1000 }),
+  days: (days: number) => ({ msecs: days * 24 * 60 * 60 * 1000 }),
+};
+
+/** Unit conversion utilities */
+export const units = {
+  mgdlToMMOL: (mgdl: number): number => {
+    return Math.round((mgdl / 18.01559) * 10) / 10;
+  },
+  mmolToMGDL: (mmol: number): number => {
+    return Math.round(mmol * 18.01559);
+  },
+};
+
+/** Format time based on user settings */
+export function formatTime(
+  date: Date | number,
+  timeFormat: number = 12,
+  compact: boolean = false
+): string {
+  const options: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+  };
+  date = typeof date === "number" ? new Date(date) : date;
+
+  if (timeFormat === 24) {
+    options.hour12 = false;
+    return date.toLocaleTimeString("en-US", options);
+  }
+
+  if (compact) {
+    options.minute = "numeric";
+  }
+
+  return date.toLocaleTimeString("en-US", options).toLowerCase();
+}
+
+/** Calculate BG trend direction based on raw delta value */
+export function calculateDirection(delta: number): string {
+  if (delta > 8) return "DoubleUp";
+  if (delta > 5) return "SingleUp";
+  if (delta > 2) return "FortyFiveUp";
+  if (delta < -8) return "DoubleDown";
+  if (delta < -5) return "SingleDown";
+  if (delta < -2) return "FortyFiveDown";
+  return "Flat";
+}
+
+/** Get BG trend direction information */
+export function getDirectionInfo(direction?: string) {
+  const directions: Record<
+    string,
+    { label: string; icon: SvelteComponent; css: string }
+  > = {
+    DoubleUp: {
+      label: "rising very fast",
+      icon: MoveUp,
+      css: "text-red-500",
+    },
+    SingleUp: { label: "rising", icon: MoveUpRight, css: "text-orange-500" },
+    FortyFiveUp: {
+      label: "rising slowly",
+      icon: MoveUp,
+      css: "text-yellow-500",
+    },
+    Flat: { label: "stable", icon: MoveRight, css: "text-green-500" },
+    FortyFiveDown: {
+      label: "falling slowly",
+      icon: MoveDown,
+      css: "text-yellow-500",
+    },
+    SingleDown: {
+      label: "falling",
+      icon: MoveDownRight,
+      css: "text-orange-500",
+    },
+    DoubleDown: {
+      label: "falling very fast",
+      icon: MoveDown,
+      css: "text-red-500",
+    },
+    "NOT COMPUTABLE": {
+      label: "unknown",
+      icon: HelpCircle,
+      css: "text-gray-500",
+    },
+    "RATE OUT OF RANGE": {
+      label: "out of range",
+      icon: AlertTriangle,
+      css: "text-gray-500",
+    },
+  };
+
+  return directions[direction || "Flat"] || directions["Flat"];
+}
+
+/** Determine BG status level based on thresholds */
+export function getBGStatus(value: number, thresholds: any) {
+  if (!thresholds) {
+    thresholds = {
+      bgHigh: 180,
+      bgTargetTop: 140,
+      bgTargetBottom: 80,
+      bgLow: 55,
+    };
+  }
+
+  if (value >= thresholds.bgHigh) return "urgent-high";
+  if (value <= thresholds.bgLow) return "urgent-low";
+  if (value > thresholds.bgTargetTop) return "high";
+  if (value < thresholds.bgTargetBottom) return "low";
+  return "in-range";
+}
+
+/** Get color class for BG status */
+export function getBGColorClass(status: string) {
+  const colors: Record<string, string> = {
+    "urgent-high": "bg-red-500 text-white",
+    "urgent-low": "bg-red-500 text-white",
+    high: "bg-orange-500 text-white",
+    low: "bg-yellow-500 text-black",
+    "in-range": "bg-green-500 text-white",
+  };
+
+  return colors[status] || "bg-gray-500 text-white";
+}
+
+/** Check if data is stale based on timestamp */
+export function isDataStale(
+  timestamp: number,
+  thresholdMinutes: number = 15
+): boolean {
+  const now = Date.now();
+  const diffMinutes = (now - timestamp) / (60 * 1000);
+  return diffMinutes > thresholdMinutes;
+}
+
+/** Enhanced relative time formatting with internationalization support */
+const getRelativeTimeFormatter = (() => {
+  let formatter: Intl.RelativeTimeFormat | null = null;
+  return (locale?: string) => {
+    if (
+      !formatter ||
+      (locale && locale !== formatter.resolvedOptions().locale)
+    ) {
+      formatter = new Intl.RelativeTimeFormat(locale || "en", {
+        numeric: "auto",
+        style: "long",
+      });
+    }
+    return formatter;
+  };
+})();
+
+/** Generate human-readable time ago string with enhanced internationalization */
+export function timeAgo(timestamp: number | string, locale?: string): string {
+  // Validate input timestamp
+  const timestampNum =
+    typeof timestamp === "string" ? parseInt(timestamp) : timestamp;
+  if (!isFinite(timestampNum) || isNaN(timestampNum) || timestampNum <= 0) {
+    return "Unknown";
+  }
+
+  // Convert to DateValue using @internationalized/date for better timezone handling
+  const inputDate = fromDate(new Date(timestampNum), getLocalTimeZone());
+  const currentDate = now(getLocalTimeZone());
+
+  // Calculate difference in milliseconds
+  const diffMs = currentDate.toDate().getTime() - inputDate.toDate().getTime();
+  const absDiffMs = Math.abs(diffMs);
+
+  // Get the relative time formatter for the specified locale
+  const rtf = getRelativeTimeFormatter(locale);
+
+  // Convert to appropriate time units and format
+  if (absDiffMs < 60 * 1000) {
+    // Less than 1 minute
+    const seconds = Math.floor(diffMs / 1000);
+    return rtf.format(-seconds, "second");
+  } else if (absDiffMs < 60 * 60 * 1000) {
+    // Less than 1 hour
+    const minutes = Math.floor(diffMs / (60 * 1000));
+    return rtf.format(-minutes, "minute");
+  } else if (absDiffMs < 24 * 60 * 60 * 1000) {
+    // Less than 1 day
+    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+    return rtf.format(-hours, "hour");
+  } else if (absDiffMs < 7 * 24 * 60 * 60 * 1000) {
+    // Less than 1 week
+    const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    return rtf.format(-days, "day");
+  } else if (absDiffMs < 30 * 24 * 60 * 60 * 1000) {
+    // Less than 1 month (approximately)
+    const weeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+    return rtf.format(-weeks, "week");
+  } else if (absDiffMs < 365 * 24 * 60 * 60 * 1000) {
+    // Less than 1 year
+    const months = Math.floor(diffMs / (30 * 24 * 60 * 60 * 1000));
+    return rtf.format(-months, "month");
+  } else {
+    // 1 year or more
+    const years = Math.floor(diffMs / (365 * 24 * 60 * 60 * 1000));
+    return rtf.format(-years, "year");
+  }
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChildren<T> = T extends { children?: any }
+  ? Omit<T, "children">
+  : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
+  ref?: U | null;
+};
+
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
+
+export interface DateRange {
+  /** ISO 8601 */
+  start: string;
+  /** ISO 8601 */
+  end: string;
+}

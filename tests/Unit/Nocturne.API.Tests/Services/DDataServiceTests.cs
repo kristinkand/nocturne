@@ -1,0 +1,230 @@
+using Microsoft.Extensions.Logging;
+using Moq;
+using Nocturne.API.Services;
+using Nocturne.Core.Contracts;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Data.Abstractions;
+using Xunit;
+
+namespace Nocturne.API.Tests.Services;
+
+/// <summary>
+/// Tests for DDataService with 1:1 legacy compatibility
+/// </summary>
+public class DDataServiceTests
+{
+    private readonly Mock<IPostgreSqlService> _mockPostgreSqlService;
+    private readonly Mock<ILogger<DDataService>> _mockLogger;
+    private readonly DDataService _ddataService;
+
+    public DDataServiceTests()
+    {
+        _mockPostgreSqlService = new Mock<IPostgreSqlService>();
+        _mockLogger = new Mock<ILogger<DDataService>>();
+        _ddataService = new DDataService(_mockPostgreSqlService.Object, _mockLogger.Object);
+    }
+
+    [Fact]
+    public async Task GetCurrentDDataAsync_ShouldReturnDDataStructure()
+    { // Arrange
+        _mockPostgreSqlService
+            .Setup(x =>
+                x.GetEntriesAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(Array.Empty<Entry>());
+        _mockPostgreSqlService
+            .Setup(x =>
+                x.GetTreatmentsAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(Array.Empty<Treatment>());
+        _mockPostgreSqlService
+            .Setup(x =>
+                x.GetDeviceStatusAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(Array.Empty<DeviceStatus>());
+        _mockPostgreSqlService
+            .Setup(x =>
+                x.GetProfilesAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(Array.Empty<Profile>());
+        _mockPostgreSqlService
+            .Setup(x => x.GetFoodAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<Food>());
+        _mockPostgreSqlService
+            .Setup(x =>
+                x.GetActivitiesAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(Array.Empty<Activity>());
+
+        // Act
+        var result = await _ddataService.GetCurrentDDataAsync(CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Sgvs);
+        Assert.NotNull(result.Treatments);
+        Assert.NotNull(result.Mbgs);
+        Assert.NotNull(result.Cals);
+        Assert.NotNull(result.Profiles);
+        Assert.NotNull(result.DeviceStatus);
+        Assert.NotNull(result.Food);
+        Assert.NotNull(result.Activity);
+        Assert.NotNull(result.DbStats);
+        Assert.True(result.LastUpdated > 0);
+    }
+
+    [Fact]
+    public void ProcessDurations_ShouldRemoveDuplicatesByMills()
+    {
+        // Arrange
+        var treatments = new List<Treatment>
+        {
+            new() { Mills = 1000, Duration = 30 },
+            new() { Mills = 1000, Duration = 45 }, // Duplicate mills
+            new() { Mills = 2000, Duration = 60 },
+        };
+
+        // Act
+        var result = _ddataService.ProcessDurations(treatments, true);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal(1000, result[0].Mills);
+        Assert.Equal(2000, result[1].Mills);
+    }
+
+    [Fact]
+    public void ProcessDurations_ShouldCutOverlappingDurations()
+    {
+        // Arrange
+        var treatments = new List<Treatment>
+        {
+            new() { Mills = 1000, Duration = 60 }, // 1000-61000 (60 minutes)
+            new() { Mills = 30000, Duration = 0 }, // End event at 30000
+        };
+
+        // Act
+        var result = _ddataService.ProcessDurations(treatments, false);
+
+        // Assert
+        var baseTreatment = result.FirstOrDefault(t => t.Mills == 1000);
+        Assert.NotNull(baseTreatment);
+        Assert.True(baseTreatment.Duration < 60); // Should be cut by end event
+    }
+
+    [Fact]
+    public void ConvertTempTargetUnits_ShouldConvertMmolToMgdl()
+    {
+        // Arrange
+        var treatments = new List<Treatment>
+        {
+            new()
+            {
+                TargetTop = 10.0,
+                TargetBottom = 5.0,
+                Units = "mmol",
+            },
+            new() { TargetTop = 15.0, TargetBottom = 8.0 }, // Below 20, should be converted
+        };
+
+        // Act
+        var result = _ddataService.ConvertTempTargetUnits(treatments);
+
+        // Assert
+        Assert.All(
+            result,
+            t =>
+            {
+                Assert.True(t.TargetTop > 20); // Should be converted to mg/dl
+                Assert.True(t.TargetBottom > 20);
+                Assert.Equal("mg/dl", t.Units);
+            }
+        );
+    }
+
+    [Fact]
+    public void GetRecentDeviceStatus_ShouldReturnRecentStatuses()
+    {
+        // Arrange
+        var deviceStatuses = new List<DeviceStatus>
+        {
+            new()
+            {
+                Id = "1",
+                Device = "test",
+                Mills = 1000,
+                Pump = new PumpStatus(),
+            },
+            new()
+            {
+                Id = "2",
+                Device = "test",
+                Mills = 2000,
+                Pump = new PumpStatus(),
+            },
+            new()
+            {
+                Id = "3",
+                Device = "test",
+                Mills = 3000,
+                Uploader = new UploaderStatus(),
+            },
+        };
+
+        // Act
+        var result = _ddataService.GetRecentDeviceStatus(deviceStatuses, 2500);
+
+        // Assert
+        Assert.NotEmpty(result);
+        Assert.All(result, ds => Assert.True(ds.Mills <= 2500));
+    }
+
+    [Fact]
+    public void IdMergePreferNew_ShouldPreferNewDataWhenCollisionFound()
+    {
+        // Arrange
+        var oldData = new List<TestDataWithId>
+        {
+            new() { Id = "1", Value = "old1" },
+            new() { Id = "2", Value = "old2" },
+        };
+
+        var newData = new List<TestDataWithId>
+        {
+            new() { Id = "1", Value = "new1" }, // Collision
+            new() { Id = "3", Value = "new3" },
+        };
+
+        // Act
+        var result = _ddataService.IdMergePreferNew(oldData, newData);
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.Equal("new1", result.First(x => x.Id == "1").Value); // Should prefer new
+        Assert.Equal("old2", result.First(x => x.Id == "2").Value); // Should keep old
+        Assert.Equal("new3", result.First(x => x.Id == "3").Value); // Should include new
+    }
+
+    private class TestDataWithId
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json.schemastore.org/aspire-8.0.json",
+  "resources": {
+    "postgres-username": {
+      "type": "parameter.v0",
+      "value": "{postgres-username.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "postgres-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-db-name": {
+      "type": "parameter.v0",
+      "value": "{postgres-db-name.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "postgres": {
+      "type": "container.v0",
+      "connectionString": "Host={postgres.bindings.tcp.host};Port={postgres.bindings.tcp.port};Username={postgres-username.value};Password={postgres-password.value}",
+      "image": "docker.io/library/postgres:17.6",
+      "volumes": [
+        {
+          "name": "nocturne-postgres-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "{postgres-username.value}",
+        "POSTGRES_PASSWORD": "{postgres-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "nocturne": {
+      "type": "value.v0",
+      "connectionString": "{postgres.connectionString};Database=nocturne"
+    },
+    "nocturne-api": {
+      "type": "project.v0",
+      "path": "src/API/Nocturne.API/Nocturne.API.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES": "true",
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES": "true",
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{nocturne-api.bindings.http.targetPort}",
+        "ConnectionStrings__nocturne": "{nocturne.connectionString}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "external": true
+        }
+      }
+    },
+    "api-secret": {
+      "type": "parameter.v0",
+      "value": "{api-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "SignalRHubUrl": {
+      "type": "parameter.v0",
+      "value": "{SignalRHubUrl.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "nocturne-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "src/Web",
+        "dockerfile": "src/Web/packages/app/Dockerfile"
+      },
+      "env": {
+        "API_SECRET": "{api-secret.value}",
+        "SIGNALR_HUB_URL": "{SignalRHubUrl.value}",
+        "PUBLIC_API_URL": "{nocturne-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5173,
+          "external": true
+        }
+      }
+    }
+  }
+}

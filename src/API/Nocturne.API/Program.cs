@@ -1,0 +1,507 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.ServiceDiscovery;
+using Microsoft.IdentityModel.Tokens;
+using Nocturne.API.Configuration;
+using Nocturne.API.Extensions;
+using Nocturne.API.Hubs;
+using Nocturne.API.Middleware;
+using Nocturne.API.Services;
+using Nocturne.API.Services.BackgroundServices;
+using Nocturne.API.Services.Compatibility;
+using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Dexcom.Models;
+using Nocturne.Connectors.Dexcom.Services;
+using Nocturne.Connectors.FreeStyle.Models;
+using Nocturne.Connectors.FreeStyle.Services;
+using Nocturne.Connectors.Glooko.Models;
+using Nocturne.Connectors.Glooko.Services;
+using Nocturne.Connectors.MiniMed.Models;
+using Nocturne.Connectors.MiniMed.Services;
+using Nocturne.Connectors.MyFitnessPal.Models;
+using Nocturne.Connectors.MyFitnessPal.Services;
+using Nocturne.Connectors.Nightscout.Models;
+using Nocturne.Connectors.Nightscout.Services;
+using Nocturne.Core.Constants;
+using Nocturne.Core.Contracts;
+using Nocturne.Core.Models;
+using Nocturne.Infrastructure.Cache.Extensions;
+using Nocturne.Infrastructure.Data.Abstractions;
+using Nocturne.Infrastructure.Data.Extensions;
+using NSwag;
+using OpenTelemetry.Logs;
+using Scalar.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Try to find appsettings.json in solution root first, fallback to current directory
+var configPath = Directory.GetCurrentDirectory();
+var solutionRoot = Path.GetFullPath(Path.Combine(configPath, "..", "..", ".."));
+
+if (File.Exists(Path.Combine(solutionRoot, "appsettings.json")))
+{
+    // Local development - use solution root
+    builder.Environment.ContentRootPath = solutionRoot;
+    configPath = solutionRoot;
+}
+
+// else: Docker or other deployment - use current directory (where files are copied)
+
+builder.Configuration.SetBasePath(configPath);
+
+// Add additional configuration
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile(
+    $"appsettings.{builder.Environment.EnvironmentName}.json",
+    optional: true,
+    reloadOnChange: true
+);
+
+builder.AddServiceDefaults();
+
+// Configure PostgreSQL database
+var aspirePostgreSqlConnection = builder.Configuration.GetConnectionString("nocturne");
+
+if (string.IsNullOrWhiteSpace(aspirePostgreSqlConnection))
+{
+    throw new InvalidOperationException(
+        "PostgreSQL connection string 'nocturne' not found. Ensure Aspire is properly configured."
+    );
+}
+
+Console.WriteLine("Using Aspire PostgreSQL connection");
+builder.Services.AddPostgreSqlInfrastructure(
+    aspirePostgreSqlConnection,
+    config =>
+    {
+        config.EnableDetailedErrors = builder.Environment.IsDevelopment();
+        config.EnableSensitiveDataLogging = builder.Environment.IsDevelopment();
+    }
+);
+
+builder.Services.AddDiscrepancyAnalysisRepository();
+builder.Services.AddScoped<ICompatibilityReportService, CompatibilityReportService>();
+
+// Add compatibility proxy services
+builder.Services.AddCompatibilityProxyServices(builder.Configuration);
+
+// Use in-memory cache for single-user deployments
+builder.Services.AddNocturneMemoryCache();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(logging => logging.AddConsoleExporter());
+
+// Configure Loop settings
+builder.Services.Configure<LoopConfiguration>(options =>
+{
+    // Read from environment variables (matches legacy env.extendedSettings.loop)
+    options.ApnsKey = Environment.GetEnvironmentVariable("LOOP_APNS_KEY");
+    options.ApnsKeyId = Environment.GetEnvironmentVariable("LOOP_APNS_KEY_ID");
+    options.DeveloperTeamId = Environment.GetEnvironmentVariable("LOOP_DEVELOPER_TEAM_ID");
+    options.PushServerEnvironment =
+        Environment.GetEnvironmentVariable("LOOP_PUSH_SERVER_ENVIRONMENT") ?? "development";
+});
+
+var loopApnsKeyId = Environment.GetEnvironmentVariable("LOOP_APNS_KEY_ID");
+Console.WriteLine(
+    $"Loop configuration loaded - APNS Key ID: {(string.IsNullOrEmpty(loopApnsKeyId) ? "Not configured" : $"{loopApnsKeyId[..Math.Min(4, loopApnsKeyId.Length)]}****")}"
+);
+
+// Add services
+
+// Add native API services for strangler pattern
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+// Note: Using NSwag instead of Microsoft.AspNetCore.OpenApi for better compatibility
+builder.Services.AddOpenApi();
+
+// Add OpenAPI document generation with NSwag
+builder.Services.AddOpenApiDocument(config =>
+{
+    config.PostProcess = document =>
+    {
+        document.Info.Version = "v1";
+        document.Info.Title = "Nocturne API";
+        document.Info.Description = "Modern C# rewrite of Nightscout API with 1:1 compatibility";
+        document.Info.Contact = new NSwag.OpenApiContact
+        {
+            Name = "Nocturne API",
+            Url = "https://github.com/ryceg/nocturne",
+        };
+        document.Info.License = new NSwag.OpenApiLicense
+        {
+            Name = "Use under LICX",
+            Url = "https://example.com/license",
+        };
+    };
+});
+
+// Register native API services with proper dependency injection
+builder.Services.AddScoped<IStatusService, StatusService>();
+builder.Services.AddScoped<IVersionService, VersionService>();
+builder.Services.AddScoped<IDataFormatService, DataFormatService>();
+builder.Services.AddSingleton<IXmlDocumentationService, XmlDocumentationService>();
+builder.Services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
+builder.Services.AddScoped<ITreatmentProcessingService, TreatmentProcessingService>();
+
+builder.Services.AddScoped<IBraceExpansionService, BraceExpansionService>();
+builder.Services.AddScoped<ITimeQueryService, TimeQueryService>();
+
+builder.Services.AddScoped<IDDataService, DDataService>();
+builder.Services.AddScoped<IPropertiesService, PropertiesService>();
+builder.Services.AddScoped<ISummaryService, SummaryService>();
+builder.Services.AddScoped<IIobService, IobService>();
+builder.Services.AddScoped<ICobService, CobService>();
+builder.Services.AddScoped<IAr2Service, Ar2Service>();
+builder.Services.AddScoped<IBolusWizardService, BolusWizardService>();
+builder.Services.AddScoped<IDirectionService, DirectionService>();
+builder.Services.AddScoped<INotificationV2Service, NotificationV2Service>();
+builder.Services.AddScoped<INotificationV1Service, NotificationV1Service>();
+builder.Services.AddScoped<ILoopService, LoopService>();
+builder.Services.AddScoped<IOpenApsService, OpenApsService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<IAlexaService, AlexaService>();
+
+// Statistics service for analytics and calculations
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+
+// Device age tracking services
+builder.Services.AddScoped<ICannulaAgeService, CannulaAgeService>();
+builder.Services.AddScoped<ISensorAgeService, SensorAgeService>();
+builder.Services.AddScoped<IBatteryAgeService, BatteryAgeService>();
+builder.Services.AddScoped<ICalibrationAgeService, CalibrationAgeService>();
+
+// Configure JWT authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? "DefaultSecretKeyForNocturneWhichShouldBeChanged";
+var key = Encoding.ASCII.GetBytes(secretKey);
+
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Configure CORS for frontend
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
+
+// Add HTTP client for dotAPNS (Apple Push Notifications)
+builder.Services.AddHttpClient(
+    "dotAPNS",
+    client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(30); // APNS-specific timeout
+    }
+);
+
+// Add SignalR for real-time communication
+builder.Services.AddSignalR();
+
+// Register SignalR broadcast service
+builder.Services.AddScoped<ISignalRBroadcastService, SignalRBroadcastService>();
+
+// Register domain services for WebSocket broadcasting
+builder.Services.AddScoped<ITreatmentService, TreatmentService>();
+builder.Services.AddScoped<IEntryService, EntryService>();
+builder.Services.AddScoped<IDeviceStatusService, DeviceStatusService>();
+builder.Services.AddScoped<IProfileDataService, ProfileDataService>();
+builder.Services.AddScoped<IFoodService, FoodService>();
+builder.Services.AddScoped<IActivityService, ActivityService>();
+
+// Note: Processing status service is registered by AddNocturneMemoryCache
+
+// Register demo data services
+builder.Services.AddScoped<IDemoDataService, DemoDataService>();
+builder.Services.AddHostedService<DemoDataBackgroundService>();
+builder.Services.AddHostedService<DemoDataCleanupService>();
+
+// Configure device health settings
+builder.Services.Configure<DeviceHealthOptions>(
+    builder.Configuration.GetSection(DeviceHealthOptions.SectionName)
+);
+
+// Register device health services
+builder.Services.AddScoped<IDeviceRegistryService, DeviceRegistryService>();
+builder.Services.AddScoped<IDeviceHealthAnalysisService, DeviceHealthAnalysisService>();
+builder.Services.AddScoped<IDeviceAlertEngine, DeviceAlertEngine>();
+
+// Register device health monitoring background service
+builder.Services.AddHostedService<DeviceHealthMonitoringService>();
+
+// Configure analytics settings
+builder.Services.Configure<AnalyticsConfiguration>(
+    builder.Configuration.GetSection(AnalyticsConfiguration.SectionName)
+);
+
+// Register analytics services
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+// Configure and register connector services as background workers
+ConfigureConnectorServices(builder);
+
+var app = builder.Build();
+
+// Configure middleware pipeline
+app.UseCors();
+
+// Add JSON extension middleware to handle .json suffixes for legacy compatibility
+app.UseMiddleware<JsonExtensionMiddleware>();
+
+// Add Nightscout authentication middleware
+app.UseMiddleware<AuthenticationMiddleware>();
+
+// Add authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map native API controllers
+app.MapControllers();
+
+// Map SignalR hubs for real-time communication
+app.MapHub<DataHub>("/hubs/data");
+app.MapHub<AlarmHub>("/hubs/alarms");
+
+// Note: Using NSwag instead of Microsoft.AspNetCore.OpenApi for better compatibility
+app.MapOpenApi();
+
+// Add NSwag OpenAPI document
+// app.UseOpenApi(options =>
+// {
+//     options.Path = "/openapi/{documentName}.json";
+// });
+
+// app.UseSwaggerUi(settings =>
+// {
+//     settings.Path = "/swagger";
+//     settings.DocumentPath = "/openapi/v1.json";
+// });
+// app.MapScalarApiReference();
+
+// app.MapScalarApiReference(options =>
+//     {
+//         options
+//             .WithTitle("Nocturne API Reference")
+//             .WithTheme(ScalarTheme.Mars)
+//             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+//             .WithDocumentDownloadType(DocumentDownloadType.Json)
+//             .AddApiKeyAuthentication(
+//                 "ApiKey",
+//                 x => x.Value = builder.Configuration.GetValue<string>("ApiKey")
+//             )
+//             .WithOpenApiRoutePattern("/openapi/{documentName}.json");
+//     })
+//     .AllowAnonymous();
+
+// Add a redirect from /scalar to /scalar/v1 for convenience
+// app.MapGet("/scalar", () => Results.Redirect("/scalar/v1"));
+
+// Add root endpoint to serve a basic info page
+app.MapGet(
+    "/",
+    async (IPostgreSqlService postgreSqlService) =>
+    {
+        // Check database connection by fetching the latest entry
+        string databaseStatus = "unknown";
+        object? latestEntry = null;
+
+        try
+        {
+            var entry = await postgreSqlService.GetCurrentEntryAsync();
+
+            if (entry != null)
+            {
+                databaseStatus = "connected";
+                latestEntry = new
+                {
+                    date = entry.Date,
+                    dateString = entry.DateString,
+                    sgv = entry.Sgv,
+                    mbg = entry.Mbg,
+                    direction = entry.Direction,
+                };
+            }
+            else
+            {
+                databaseStatus = "connected_no_data";
+            }
+        }
+        catch (Exception)
+        {
+            databaseStatus = "disconnected";
+        }
+
+        return Results.Json(
+            new
+            {
+                name = "Nocturne API",
+                version = "1.0.0",
+                description = "Modern C# rewrite of Nightscout API",
+                api_documentation = "/scalar/v1",
+                database_status = databaseStatus,
+                latest_entry = latestEntry,
+                endpoints = new
+                {
+                    status = "/api/v1/status",
+                    entries = "/api/v1/entries",
+                    treatments = "/api/v1/treatments",
+                    profile = "/api/v1/profile",
+                    versions = "/api/versions",
+                },
+            }
+        );
+    }
+);
+
+app.MapDefaultEndpoints();
+
+// Initialize PostgreSQL database with migrations
+try
+{
+    Console.WriteLine("Running PostgreSQL database migrations...");
+    await app.Services.MigrateDatabaseAsync();
+    Console.WriteLine("PostgreSQL database migrations completed successfully.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Failed to run PostgreSQL database migrations: {ex.Message}");
+    Console.WriteLine("The application will continue, but database operations may fail.");
+}
+
+app.Run();
+
+/// <summary>
+/// Configures connector services as background workers within the API
+/// </summary>
+static void ConfigureConnectorServices(WebApplicationBuilder builder)
+{
+    var connectorsSection = builder.Configuration.GetSection("Connectors");
+    if (!connectorsSection.Exists())
+    {
+        Console.WriteLine("No connectors configured - skipping connector initialization");
+        return;
+    }
+
+    var apiUrl = builder.Configuration["NocturneApiUrl"];
+    var apiSecret = builder.Configuration["ApiSecret"];
+
+    // Register API data submitter for HTTP-based data submission
+    builder.Services.AddSingleton<IApiDataSubmitter>(sp =>
+    {
+        var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
+        var logger = sp.GetRequiredService<ILogger<ApiDataSubmitter>>();
+        return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
+    });
+
+    // Dexcom Connector
+    var dexcomConfig = connectorsSection.GetSection("Dexcom").Get<DexcomConnectorConfiguration>();
+    if (dexcomConfig != null && dexcomConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring Dexcom connector with {dexcomConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(dexcomConfig);
+        builder.Services.AddScoped<DexcomConnectorService>();
+        builder.Services.AddHostedService<DexcomConnectorBackgroundService>();
+    }
+
+    // Glooko Connector
+    var glookoConfig = connectorsSection.GetSection("Glooko").Get<GlookoConnectorConfiguration>();
+    if (glookoConfig != null && glookoConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring Glooko connector with {glookoConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(glookoConfig);
+        builder.Services.AddScoped<GlookoConnectorService>();
+        builder.Services.AddHostedService<GlookoConnectorBackgroundService>();
+    }
+
+    // FreeStyle LibreLinkUp Connector
+    var libreConfig = connectorsSection
+        .GetSection("LibreLinkUp")
+        .Get<LibreLinkUpConnectorConfiguration>();
+    if (libreConfig != null && libreConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring FreeStyle LibreLinkUp connector with {libreConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(libreConfig);
+        builder.Services.AddScoped<LibreConnectorService>();
+        builder.Services.AddHostedService<FreeStyleConnectorBackgroundService>();
+    }
+
+    // MiniMed CareLink Connector
+    var carelinkConfig = connectorsSection
+        .GetSection("CareLink")
+        .Get<CareLinkConnectorConfiguration>();
+    if (carelinkConfig != null && carelinkConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring MiniMed CareLink connector with {carelinkConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(carelinkConfig);
+        builder.Services.AddScoped<CareLinkConnectorService>();
+        builder.Services.AddHostedService<MiniMedConnectorBackgroundService>();
+    }
+
+    // Nightscout Connector
+    var nightscoutConfig = connectorsSection
+        .GetSection("Nightscout")
+        .Get<NightscoutConnectorConfiguration>();
+    if (nightscoutConfig != null && nightscoutConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring Nightscout connector with {nightscoutConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(nightscoutConfig);
+        builder.Services.AddScoped<NightscoutConnectorService>();
+        builder.Services.AddHostedService<NightscoutConnectorBackgroundService>();
+    }
+
+    // MyFitnessPal Connector
+    var mfpConfig = connectorsSection
+        .GetSection("MyFitnessPal")
+        .Get<MyFitnessPalConnectorConfiguration>();
+    if (mfpConfig != null && mfpConfig.SyncIntervalMinutes > 0)
+    {
+        Console.WriteLine(
+            $"Configuring MyFitnessPal connector with {mfpConfig.SyncIntervalMinutes} minute interval"
+        );
+        builder.Services.AddSingleton(mfpConfig);
+        builder.Services.AddScoped<MyFitnessPalConnectorService>();
+        builder.Services.AddHostedService<MyFitnessPalConnectorBackgroundService>();
+    }
+}
+
+// Make Program accessible for testing
+namespace Nocturne.API
+{
+    public partial class Program { }
+}
