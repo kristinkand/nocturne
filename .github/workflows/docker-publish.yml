@@ -65,7 +65,7 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Publish Aspire manifest
+      - name: Publish Aspire manifest and push images
         working-directory: src/Aspire/Nocturne.Aspire.Host
         run: |
           dotnet publish \
@@ -75,13 +75,8 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }} \
-            -p:ContainerImageTag=${{ steps.version.outputs.version }}
-
-      - name: Push images to GitHub Packages
-        if: github.event_name != 'pull_request'
-        run: |
-          # Aspire publish generates and pushes images automatically when authenticated
-          echo "Images published via Aspire manifest"
+            -p:ContainerImageTag=${{ steps.version.outputs.version }} \
+            -p:ContainerRegistryPushEnabled=${{ github.event_name != 'pull_request' }}
 
   publish-manifest:
     needs: build-and-push
