@@ -8,7 +8,7 @@ public class CompatibilityProxyConfiguration
     /// <summary>
     /// Configuration section name for compatibility proxy settings
     /// </summary>
-    public const string ConfigurationSection = "CompatibilityProxy";
+    public const string ConfigurationSection = "Parameters:CompatibilityProxy";
 
     /// <summary>
     /// Nightscout target URL

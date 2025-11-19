@@ -29,7 +29,6 @@ class Program
             reloadOnChange: true
         );
 
-
         // Add PostgreSQL database - use remote database connection or local container
         var useRemoteDb = builder.Configuration.GetValue<bool>("UseRemoteDatabase", false);
 
@@ -86,7 +85,8 @@ class Program
             postgres.WithDataVolume(ServiceNames.Volumes.PostgresData);
 
             nocturnedb = postgres.AddDatabase(
-                builder.Configuration["Parameters:postgres-database"] ?? ServiceNames.Defaults.PostgresDatabase
+                builder.Configuration["Parameters:postgres-database"]
+                    ?? ServiceNames.Defaults.PostgresDatabase
             );
             postgresUsername.WithParentRelationship(postgres);
             postgresPassword.WithParentRelationship(postgres);
@@ -123,192 +123,404 @@ class Program
         // Add connector services as independent services based on Parameters configuration
         var connectors = builder.Configuration.GetSection("Parameters:Connectors");
 
-        // Shared Nightscout configuration parameters
-        var nightscoutUrl = builder.AddParameter(
-            "nightscout-url",
-            secret: false
-        );
-        var nightscoutApiSecret = builder.AddParameter(
-            "nightscout-api-secret",
-            secret: true
-        );
-
         // Dexcom Connector Service
         var dexcomEnabled = connectors.GetValue<bool>("Dexcom:Enabled", false);
         if (dexcomEnabled)
         {
-            var dexcomUsername = builder.AddParameter("dexcom-username",
-                value: builder.Configuration["Parameters:Connectors:Dexcom:Username"], secret: true);
-            var dexcomPassword = builder.AddParameter("dexcom-password",
-                value: builder.Configuration["Parameters:Connectors:Dexcom:Password"], secret: true);
-            var dexcomRegion = builder.AddParameter("dexcom-region",
-                value: builder.Configuration["Parameters:Connectors:Dexcom:Region"], secret: false);
-            var dexcomServer = builder.AddParameter("dexcom-server",
-                value: builder.Configuration["Parameters:Connectors:Dexcom:Server"], secret: false);
-            var dexcomSyncInterval = builder.AddParameter("dexcom-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:Dexcom:SyncIntervalMinutes"], secret: false);
+            var dexcomUsername = builder.AddParameter(
+                "dexcom-username",
+                value: builder.Configuration["Parameters:Connectors:Dexcom:Username"],
+                secret: true
+            );
+            var dexcomPassword = builder.AddParameter(
+                "dexcom-password",
+                value: builder.Configuration["Parameters:Connectors:Dexcom:Password"],
+                secret: true
+            );
+            var dexcomRegion = builder.AddParameter(
+                "dexcom-region",
+                value: builder.Configuration["Parameters:Connectors:Dexcom:Region"],
+                secret: false
+            );
+            var dexcomServer = builder.AddParameter(
+                "dexcom-server",
+                value: builder.Configuration["Parameters:Connectors:Dexcom:Server"],
+                secret: false
+            );
+            var dexcomSyncInterval = builder.AddParameter(
+                "dexcom-sync-interval",
+                value: builder.Configuration["Parameters:Connectors:Dexcom:SyncIntervalMinutes"],
+                secret: false
+            );
 
             var dexcom = builder
                 .AddProject<Projects.Nocturne_Connectors_Dexcom>(ServiceNames.DexcomConnector)
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomUsername", dexcomUsername)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomPassword", dexcomPassword)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomRegion", dexcomRegion)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomServer", dexcomServer)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}SyncIntervalMinutes", dexcomSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.DexcomPrefix}ConnectSource", ConnectSource.Dexcom.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomUsername",
+                    dexcomUsername
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomPassword",
+                    dexcomPassword
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomRegion",
+                    dexcomRegion
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}DexcomServer",
+                    dexcomServer
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}SyncIntervalMinutes",
+                    dexcomSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.DexcomPrefix}ConnectSource",
+                    ConnectSource.Dexcom.ToString()
+                );
         }
 
         // Glooko Connector Service
         var glookoEnabled = connectors.GetValue<bool>("Glooko:Enabled", false);
         if (glookoEnabled)
         {
-            var glookoEmail = builder.AddParameter("glooko-email",
-                value: builder.Configuration["Parameters:Connectors:Glooko:Email"], secret: true);
-            var glookoPassword = builder.AddParameter("glooko-password",
-                value: builder.Configuration["Parameters:Connectors:Glooko:Password"], secret: true);
-            var glookoServer = builder.AddParameter("glooko-server",
-                value: builder.Configuration["Parameters:Connectors:Glooko:Server"], secret: false);
-            var glookoTimezoneOffset = builder.AddParameter("glooko-timezone-offset",
-                value: builder.Configuration["Parameters:Connectors:Glooko:TimezoneOffset"], secret: false);
-            var glookoSyncInterval = builder.AddParameter("glooko-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:Glooko:SyncIntervalMinutes"], secret: false);
+            var glookoEmail = builder.AddParameter(
+                "glooko-email",
+                value: builder.Configuration["Parameters:Connectors:Glooko:Email"],
+                secret: true
+            );
+            var glookoPassword = builder.AddParameter(
+                "glooko-password",
+                value: builder.Configuration["Parameters:Connectors:Glooko:Password"],
+                secret: true
+            );
+            var glookoServer = builder.AddParameter(
+                "glooko-server",
+                value: builder.Configuration["Parameters:Connectors:Glooko:Server"],
+                secret: false
+            );
+            var glookoTimezoneOffset = builder.AddParameter(
+                "glooko-timezone-offset",
+                value: builder.Configuration["Parameters:Connectors:Glooko:TimezoneOffset"],
+                secret: false
+            );
+            var glookoSyncInterval = builder.AddParameter(
+                "glooko-sync-interval",
+                value: builder.Configuration["Parameters:Connectors:Glooko:SyncIntervalMinutes"],
+                secret: false
+            );
 
             var glooko = builder
                 .AddProject<Projects.Nocturne_Connectors_Glooko>(ServiceNames.GlookoConnector)
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoEmail", glookoEmail)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoPassword", glookoPassword)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoServer", glookoServer)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoTimezoneOffset", glookoTimezoneOffset)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}SyncIntervalMinutes", glookoSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.GlookoPrefix}ConnectSource", ConnectSource.Glooko.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoEmail",
+                    glookoEmail
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoPassword",
+                    glookoPassword
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoServer",
+                    glookoServer
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}GlookoTimezoneOffset",
+                    glookoTimezoneOffset
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}SyncIntervalMinutes",
+                    glookoSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.GlookoPrefix}ConnectSource",
+                    ConnectSource.Glooko.ToString()
+                );
         }
 
         // FreeStyle LibreLink Connector Service
         var libreEnabled = connectors.GetValue<bool>("LibreLinkUp:Enabled", false);
         if (libreEnabled)
         {
-            var libreUsername = builder.AddParameter("librelinkup-username",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Username"], secret: true);
-            var librePassword = builder.AddParameter("librelinkup-password",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Password"], secret: true);
-            var libreRegion = builder.AddParameter("librelinkup-region",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Region"], secret: false);
-            var librePatientId = builder.AddParameter("librelinkup-patient-id",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:PatientId"], secret: false);
-            var libreServer = builder.AddParameter("librelinkup-server",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Server"], secret: false);
-            var libreSyncInterval = builder.AddParameter("librelinkup-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:SyncIntervalMinutes"], secret: false);
+            var libreUsername = builder.AddParameter(
+                "librelinkup-username",
+                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Username"],
+                secret: true
+            );
+            var librePassword = builder.AddParameter(
+                "librelinkup-password",
+                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Password"],
+                secret: true
+            );
+            var libreRegion = builder.AddParameter(
+                "librelinkup-region",
+                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Region"],
+                secret: false
+            );
+            var librePatientId = builder.AddParameter(
+                "librelinkup-patient-id",
+                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:PatientId"],
+                secret: false
+            );
+            var libreServer = builder.AddParameter(
+                "librelinkup-server",
+                value: builder.Configuration["Parameters:Connectors:LibreLinkUp:Server"],
+                secret: false
+            );
+            var libreSyncInterval = builder.AddParameter(
+                "librelinkup-sync-interval",
+                value: builder.Configuration[
+                    "Parameters:Connectors:LibreLinkUp:SyncIntervalMinutes"
+                ],
+                secret: false
+            );
 
             var libre = builder
                 .AddProject<Projects.Nocturne_Connectors_FreeStyle>(ServiceNames.LibreConnector)
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreUsername", libreUsername)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibrePassword", librePassword)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreRegion", libreRegion)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibrePatientId", librePatientId)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreServer", libreServer)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}SyncIntervalMinutes", libreSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}ConnectSource", ConnectSource.LibreLinkUp.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreUsername",
+                    libreUsername
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibrePassword",
+                    librePassword
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreRegion",
+                    libreRegion
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibrePatientId",
+                    librePatientId
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}LibreServer",
+                    libreServer
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}SyncIntervalMinutes",
+                    libreSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.FreeStylePrefix}ConnectSource",
+                    ConnectSource.LibreLinkUp.ToString()
+                );
         }
 
         // MiniMed CareLink Connector Service
         var carelinkEnabled = connectors.GetValue<bool>("CareLink:Enabled", false);
         if (carelinkEnabled)
         {
-            var carelinkUsername = builder.AddParameter("carelink-username",
-                value: builder.Configuration["Parameters:Connectors:CareLink:Username"], secret: true);
-            var carelinkPassword = builder.AddParameter("carelink-password",
-                value: builder.Configuration["Parameters:Connectors:CareLink:Password"], secret: true);
-            var carelinkRegion = builder.AddParameter("carelink-region",
-                value: builder.Configuration["Parameters:Connectors:CareLink:Region"], secret: false);
-            var carelinkCountryCode = builder.AddParameter("carelink-country-code",
-                value: builder.Configuration["Parameters:Connectors:CareLink:CountryCode"], secret: false);
-            var carelinkPatientUsername = builder.AddParameter("carelink-patient-username",
-                value: builder.Configuration["Parameters:Connectors:CareLink:PatientUsername"], secret: false);
-            var carelinkSyncInterval = builder.AddParameter("carelink-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:CareLink:SyncIntervalMinutes"], secret: false);
+            var carelinkUsername = builder.AddParameter(
+                "carelink-username",
+                value: builder.Configuration["Parameters:Connectors:CareLink:Username"],
+                secret: true
+            );
+            var carelinkPassword = builder.AddParameter(
+                "carelink-password",
+                value: builder.Configuration["Parameters:Connectors:CareLink:Password"],
+                secret: true
+            );
+            var carelinkRegion = builder.AddParameter(
+                "carelink-region",
+                value: builder.Configuration["Parameters:Connectors:CareLink:Region"],
+                secret: false
+            );
+            var carelinkCountryCode = builder.AddParameter(
+                "carelink-country-code",
+                value: builder.Configuration["Parameters:Connectors:CareLink:CountryCode"],
+                secret: false
+            );
+            var carelinkPatientUsername = builder.AddParameter(
+                "carelink-patient-username",
+                value: builder.Configuration["Parameters:Connectors:CareLink:PatientUsername"],
+                secret: false
+            );
+            var carelinkSyncInterval = builder.AddParameter(
+                "carelink-sync-interval",
+                value: builder.Configuration["Parameters:Connectors:CareLink:SyncIntervalMinutes"],
+                secret: false
+            );
 
             var carelink = builder
                 .AddProject<Projects.Nocturne_Connectors_MiniMed>(ServiceNames.MiniMedConnector)
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkUsername", carelinkUsername)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkPassword", carelinkPassword)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkRegion", carelinkRegion)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkCountryCode", carelinkCountryCode)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkPatientUsername", carelinkPatientUsername)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}SyncIntervalMinutes", carelinkSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}ConnectSource", ConnectSource.CareLink.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkUsername",
+                    carelinkUsername
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkPassword",
+                    carelinkPassword
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkRegion",
+                    carelinkRegion
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkCountryCode",
+                    carelinkCountryCode
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}CarelinkPatientUsername",
+                    carelinkPatientUsername
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}SyncIntervalMinutes",
+                    carelinkSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MiniMedPrefix}ConnectSource",
+                    ConnectSource.CareLink.ToString()
+                );
         }
 
         // Nightscout Connector Service
         var nightscoutConnectorEnabled = connectors.GetValue<bool>("Nightscout:Enabled", false);
         if (nightscoutConnectorEnabled)
         {
-            var nightscoutSourceEndpoint = builder.AddParameter("nightscout-source-endpoint",
-                value: builder.Configuration["Parameters:Connectors:Nightscout:SourceEndpoint"], secret: false);
-            var nightscoutSourceApiSecret = builder.AddParameter("nightscout-source-api-secret",
-                value: builder.Configuration["Parameters:Connectors:Nightscout:SourceApiSecret"], secret: true);
-            var nightscoutSyncInterval = builder.AddParameter("nightscout-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:Nightscout:SyncIntervalMinutes"], secret: false);
+            var nightscoutSourceEndpoint = builder
+                .AddParameter(
+                    "nightscout-source-endpoint",
+                    value: builder.Configuration["Parameters:Connectors:Nightscout:SourceEndpoint"],
+                    secret: false
+                )
+                .WithDescription(
+                    "URL of external Nightscout instance to sync data FROM (e.g., https://other-nightscout.herokuapp.com)"
+                );
+            var nightscoutSourceApiSecret = builder
+                .AddParameter(
+                    "nightscout-source-api-secret",
+                    value: builder.Configuration[
+                        "Parameters:Connectors:Nightscout:SourceApiSecret"
+                    ],
+                    secret: true
+                )
+                .WithDescription("API secret for the external Nightscout instance to sync FROM");
+            var nightscoutSyncInterval = builder.AddParameter(
+                "nightscout-sync-interval",
+                value: builder.Configuration[
+                    "Parameters:Connectors:Nightscout:SyncIntervalMinutes"
+                ],
+                secret: false
+            );
 
             var nightscoutConnector = builder
-                .AddProject<Projects.Nocturne_Connectors_Nightscout>(ServiceNames.NightscoutConnector)
+                .AddProject<Projects.Nocturne_Connectors_Nightscout>(
+                    ServiceNames.NightscoutConnector
+                )
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SourceEndpoint", nightscoutSourceEndpoint)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SourceApiSecret", nightscoutSourceApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SyncIntervalMinutes", nightscoutSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}ConnectSource", ConnectSource.Nightscout.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SourceEndpoint",
+                    nightscoutSourceEndpoint
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SourceApiSecret",
+                    nightscoutSourceApiSecret
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}SyncIntervalMinutes",
+                    nightscoutSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}ConnectSource",
+                    ConnectSource.Nightscout.ToString()
+                );
         }
 
         // MyFitnessPal Connector Service
         var myFitnessPalEnabled = connectors.GetValue<bool>("MyFitnessPal:Enabled", false);
         if (myFitnessPalEnabled)
         {
-            var myFitnessPalUsername = builder.AddParameter("myfitnesspal-username",
-                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:Username"], secret: true);
-            var myFitnessPalPassword = builder.AddParameter("myfitnesspal-password",
-                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:Password"], secret: true);
-            var myFitnessPalSyncDays = builder.AddParameter("myfitnesspal-sync-days",
-                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:SyncDays"], secret: false);
-            var myFitnessPalSyncInterval = builder.AddParameter("myfitnesspal-sync-interval",
-                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:SyncIntervalMinutes"], secret: false);
+            var myFitnessPalUsername = builder.AddParameter(
+                "myfitnesspal-username",
+                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:Username"],
+                secret: true
+            );
+            var myFitnessPalPassword = builder.AddParameter(
+                "myfitnesspal-password",
+                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:Password"],
+                secret: true
+            );
+            var myFitnessPalSyncDays = builder.AddParameter(
+                "myfitnesspal-sync-days",
+                value: builder.Configuration["Parameters:Connectors:MyFitnessPal:SyncDays"],
+                secret: false
+            );
+            var myFitnessPalSyncInterval = builder.AddParameter(
+                "myfitnesspal-sync-interval",
+                value: builder.Configuration[
+                    "Parameters:Connectors:MyFitnessPal:SyncIntervalMinutes"
+                ],
+                secret: false
+            );
 
             var myFitnessPal = builder
-                .AddProject<Projects.Nocturne_Connectors_MyFitnessPal>(ServiceNames.MyFitnessPalConnector)
+                .AddProject<Projects.Nocturne_Connectors_MyFitnessPal>(
+                    ServiceNames.MyFitnessPalConnector
+                )
                 .WithExternalHttpEndpoints()
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}MyFitnessPalUsername", myFitnessPalUsername)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}MyFitnessPalPassword", myFitnessPalPassword)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}SyncDays", myFitnessPalSyncDays)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}SyncIntervalMinutes", myFitnessPalSyncInterval)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}NightscoutUrl", nightscoutUrl)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}NightscoutApiSecret", nightscoutApiSecret)
-                .WithEnvironment($"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}ConnectSource", ConnectSource.MyFitnessPal.ToString());
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}MyFitnessPalUsername",
+                    myFitnessPalUsername
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}MyFitnessPalPassword",
+                    myFitnessPalPassword
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}SyncDays",
+                    myFitnessPalSyncDays
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}SyncIntervalMinutes",
+                    myFitnessPalSyncInterval
+                )
+                .WithEnvironment(
+                    $"{ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix}ConnectSource",
+                    ConnectSource.MyFitnessPal.ToString()
+                );
+        }
+
+        // Compatibility Proxy parameters (for "try before you buy" migration testing)
+        var compatProxyEnabled = builder.Configuration.GetValue<bool>(
+            "Parameters:CompatibilityProxy:Enabled",
+            false
+        );
+        if (compatProxyEnabled)
+        {
+            var compatProxyNightscoutUrl = builder
+                .AddParameter(
+                    "compat-proxy-nightscout-url",
+                    value: builder.Configuration["Parameters:CompatibilityProxy:NightscoutUrl"],
+                    secret: false
+                )
+                .WithDescription(
+                    "URL of your existing/production Nightscout instance to forward writes TO during migration testing (e.g., https://my-nightscout.herokuapp.com)"
+                );
+            var compatProxyNightscoutSecret = builder
+                .AddParameter(
+                    "compat-proxy-nightscout-secret",
+                    value: builder.Configuration[
+                        "Parameters:CompatibilityProxy:NightscoutApiSecret"
+                    ],
+                    secret: true
+                )
+                .WithDescription("API secret for your existing/production Nightscout instance");
+
+            // Note: CompatibilityProxy configuration is passed through appsettings, not as individual parameters
+            // The parameters above are defined for visibility in Aspire dashboard and secret management
         }
 
         // Add API_SECRET parameter for authentication
-        var apiSecret = builder.AddParameter(
-            ServiceNames.Parameters.ApiSecret,
-            secret: true
-        );
+        var apiSecret = builder.AddParameter(ServiceNames.Parameters.ApiSecret, secret: true);
 
         // Add SignalR Hub URL parameter for the web app's integrated WebSocket bridge
-        var signalrHubUrl = builder.AddParameter(
-            "signalr-hub-url",
-            secret: false
-        );
+        var signalrHubUrl = builder.AddParameter("signalr-hub-url", secret: false);
 
         // Add the SvelteKit web application (with integrated WebSocket bridge)
         // For Azure deployment, use container. For local dev, use JavaScript app with pnpm.
@@ -360,5 +572,4 @@ class Program
 
         app.Run();
     }
-
 }

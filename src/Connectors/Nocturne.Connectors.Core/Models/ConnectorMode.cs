@@ -1,20 +1,20 @@
-namespace Nocturne.Connectors.Core.Models
+using System.Text.Json.Serialization;
+
+namespace Nocturne.Connectors.Core.Models;
+
+/// <summary>
+/// Represents the operational mode of a connector
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ConnectorMode
 {
     /// <summary>
-    /// Defines the operational mode for connectors
+    /// Nocturne mode - connector communicates with Nocturne API
     /// </summary>
-    public enum ConnectorMode
-    {
-        /// <summary>
-        /// Standalone mode - connects directly to a Nightscout instance
-        /// Requires NightscoutUrl and NightscoutApiSecret
-        /// </summary>
-        Standalone,
+    Nocturne,
 
-        /// <summary>
-        /// Nocturne mode - works within the Nocturne ecosystem
-        /// Uses message bus for data ingestion, does not require direct Nightscout connection
-        /// </summary>
-        Nocturne,
-    }
+    /// <summary>
+    /// Standalone mode - connector directly uploads to Nightscout
+    /// </summary>
+    Standalone,
 }

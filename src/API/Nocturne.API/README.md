@@ -13,13 +13,13 @@ Nocturne is a modern C# implementation of the complete Nightscout API. It runs n
 - 📚 **MongoDB Integration** - Direct database access with optimized queries
 - 🔐 **Full Authentication** - Complete support for Nightscout's authentication system
 - 📝 **API Documentation** - Built-in interactive documentation at `/scalar`
-- 🔄 **Optional Legacy Proxy** - Can proxy to existing Nightscout for missing features (disabled by default)
+- 🔄 **Compatibility Proxy** - Optional A/B testing proxy for gradual migration from Nightscout (disabled by default)
 
 ## Quick Start
 
 **Prerequisites:**
 
-- .NET 9.0 or later
+- .NET 10.0 or later
 - Postgres database
 
 **Option 1: VS Code Tasks (Recommended for development)**
@@ -145,25 +145,27 @@ Configure JWT authentication:
 }
 ```
 
-## Proxy Mode (Legacy Support)
+## Compatibility Proxy (Migration Support)
 
-If you need to gradually migrate from a legacy Nightscout installation, you can enable proxy mode to forward unhandled requests:
+If you're migrating from an existing Nightscout instance, you can enable the Compatibility Proxy to run both systems side-by-side and compare responses:
 
 ```json
 {
-  "Proxy": {
-    "Enabled": true,
-    "TargetUrl": "https://your-legacy-nightscout.com",
-    "TimeoutSeconds": 30,
-    "RetryAttempts": 3,
-    "Authentication": {
-      "ForwardAuthHeaders": true
+  "CompatibilityProxy": {
+    "NightscoutUrl": "https://your-existing-nightscout.com",
+    "NocturneUrl": "http://localhost:1612",
+    "DefaultStrategy": "Nightscout",
+    "EnableDetailedLogging": true,
+    "Comparison": {
+      "EnableDeepComparison": true
     }
   }
 }
 ```
 
-**Note:** Proxy mode is not recommended for production use. All endpoints are implemented natively and proxy mode may be removed in future versions.
+This allows you to "try before you buy" - point your data sources at Nocturne, which will forward requests to your existing Nightscout while comparing responses to ensure compatibility.
+
+**Note:** The Compatibility Proxy is intended for migration testing. Once you're confident in Nocturne, disable it for optimal performance.
 
 ## Development
 
@@ -193,7 +195,3 @@ import { apiClient } from "$lib/api/api-client";
 const entries = await apiClient.rawClient.getEntries();
 const treatments = await apiClient.rawClient.getTreatments();
 ```
-
-## License
-
-This project is not affiliated with the official Nightscout project.

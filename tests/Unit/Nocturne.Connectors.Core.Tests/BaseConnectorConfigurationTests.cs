@@ -16,9 +16,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
         };
 
         // Act & Assert
@@ -32,51 +29,11 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = (ConnectSource)999, // Invalid enum value
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
         };
 
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(() => config.Validate());
         Assert.Contains("Invalid connector source", exception.Message);
-    }
-
-    [Fact]
-    public void Validate_WithMissingNightscoutUrl_InStandaloneMode_ThrowsArgumentException()
-    {
-        // Arrange
-        var config = new TestConnectorConfiguration
-        {
-            ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "",
-            NightscoutApiSecret = "test-secret",
-        };
-
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => config.Validate());
-        Assert.Contains("Nightscout URL is required for Standalone mode", exception.Message);
-    }
-
-    [Fact]
-    public void Validate_WithMissingApiSecrets_InStandaloneMode_ThrowsArgumentException()
-    {
-        // Arrange
-        var config = new TestConnectorConfiguration
-        {
-            ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "",
-            ApiSecret = "",
-        };
-
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => config.Validate());
-        Assert.Contains(
-            "Either NightscoutApiSecret or ApiSecret is required for Standalone mode",
-            exception.Message
-        );
     }
 
     [Fact]
@@ -86,9 +43,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
             UseAsyncProcessing = true,
             MessageTimeout = TimeSpan.Zero,
         };
@@ -105,9 +59,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
             UseAsyncProcessing = true,
             MaxRetryAttempts = -1,
         };
@@ -124,9 +75,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
             UseAsyncProcessing = true,
             BatchSize = 0,
         };
@@ -143,9 +91,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
             RoutingKeyPrefix = "invalid-prefix!",
         };
 
@@ -164,9 +109,6 @@ public class BaseConnectorConfigurationTests
         var config = new TestConnectorConfiguration
         {
             ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Standalone,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
             RoutingKeyPrefix = "valid.prefix.123",
         };
 
@@ -191,56 +133,6 @@ public class BaseConnectorConfigurationTests
         Assert.Equal(3, config.MaxRetryAttempts);
         Assert.Equal(50, config.BatchSize);
         Assert.Equal(5, config.SyncIntervalMinutes);
-        Assert.Equal(ConnectorMode.Standalone, config.Mode);
-    }
-
-    [Fact]
-    public void Validate_WithNocturneMode_WithoutNightscoutSettings_DoesNotThrow()
-    {
-        // Arrange
-        var config = new TestConnectorConfiguration
-        {
-            ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Nocturne,
-            NightscoutUrl = "",
-            NightscoutApiSecret = "",
-        };
-
-        // Act & Assert
-        config.Validate(); // Should not throw in Nocturne mode
-    }
-
-    [Fact]
-    public void Validate_WithNocturneMode_WithNightscoutSettings_DoesNotThrow()
-    {
-        // Arrange
-        var config = new TestConnectorConfiguration
-        {
-            ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = ConnectorMode.Nocturne,
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
-        };
-
-        // Act & Assert
-        config.Validate(); // Should not throw - settings are optional in Nocturne mode
-    }
-
-    [Fact]
-    public void Validate_WithUnknownMode_ThrowsArgumentException()
-    {
-        // Arrange
-        var config = new TestConnectorConfiguration
-        {
-            ConnectSource = ConnectSource.Dexcom, // Using a valid enum value for testing
-            Mode = (ConnectorMode)999, // Invalid mode
-            NightscoutUrl = "https://test.nightscout.com",
-            NightscoutApiSecret = "test-secret",
-        };
-
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => config.Validate());
-        Assert.Contains("Unknown connector mode", exception.Message);
     }
 }
 

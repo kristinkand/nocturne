@@ -95,127 +95,16 @@ namespace Nocturne.Connectors.Core.Services
         }
 
         /// <summary>
-        /// Get the timestamp of the most recent treatment in the target Nightscout instance
+        /// Get the timestamp of the most recent treatment from the Nocturne API
         /// This enables "catch up" functionality to fetch only new data since the last upload
         /// </summary>
+        /// <remarks>
+        /// TODO: Implement querying Nocturne API for most recent treatment timestamp.
+        /// For now, returns null to use default lookback period.
+        /// </remarks>
         protected virtual async Task<DateTime?> FetchLatestTreatmentTimestampAsync(TConfig config)
         {
-            try
-            {
-                // In Nocturne mode, we cannot query Nightscout directly
-                if (config.Mode == ConnectorMode.Nocturne)
-                {
-                    Console.WriteLine(
-                        "Warning: Cannot query Nightscout in Nocturne mode, using default lookback"
-                    );
-                    return null;
-                }
-
-                var nightscoutUrl = config.NightscoutUrl.TrimEnd('/');
-                var apiSecret = !string.IsNullOrEmpty(config.NightscoutApiSecret)
-                    ? config.NightscoutApiSecret
-                    : config.ApiSecret;
-
-                if (string.IsNullOrEmpty(nightscoutUrl) || string.IsNullOrEmpty(apiSecret))
-                {
-                    Console.WriteLine(
-                        "Warning: No Nightscout URL or API secret provided for query, using default lookback"
-                    );
-                    return null;
-                }
-
-                // Hash the API secret to match Nightscout's expected format
-                var hashedApiSecret = HashApiSecret(apiSecret);
-
-                // Query for the most recent treatment from this connector source (count=50 to filter by source)
-                var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"{nightscoutUrl}/api/v1/treatments.json?count=50"
-                );
-                request.Headers.Add("API-SECRET", hashedApiSecret);
-                request.Headers.Add("User-Agent", "Nocturne-Connect/1.0");
-
-                Console.WriteLine(
-                    $"Querying target Nightscout for most recent {ConnectorSource} treatment timestamp..."
-                );
-
-                var response = await _httpClient.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonContent = await response.Content.ReadAsStringAsync();
-                    var treatments = JsonSerializer.Deserialize<Treatment[]>(jsonContent);
-
-                    if (treatments != null && treatments.Length > 0)
-                    {
-                        // Filter treatments to only those from this connector source
-                        var connectorTreatments = treatments
-                            .Where(t =>
-                                !string.IsNullOrEmpty(t.Source)
-                                && t.Source.Equals(
-                                    ConnectorSource,
-                                    StringComparison.OrdinalIgnoreCase
-                                )
-                            )
-                            .ToArray();
-
-                        if (connectorTreatments.Length > 0)
-                        {
-                            var mostRecentTreatment = connectorTreatments[0];
-                            if (DateTime.TryParse(mostRecentTreatment.CreatedAt, out var timestamp))
-                            {
-                                // Validate timestamp is not in the future
-                                var now = DateTime.UtcNow;
-                                if (timestamp > now)
-                                {
-                                    Console.WriteLine(
-                                        $"Warning: Found treatment with future timestamp ({timestamp:yyyy-MM-dd HH:mm:ss} UTC > {now:yyyy-MM-dd HH:mm:ss} UTC), using default lookback"
-                                    );
-                                    return null;
-                                }
-
-                                Console.WriteLine(
-                                    $"Found most recent {ConnectorSource} treatment at: {timestamp:yyyy-MM-dd HH:mm:ss} UTC"
-                                );
-                                return timestamp;
-                            }
-                            else
-                            {
-                                Console.WriteLine(
-                                    $"Could not parse timestamp from most recent {ConnectorSource} treatment: {mostRecentTreatment.CreatedAt}"
-                                );
-                                return null;
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine(
-                                $"No {ConnectorSource} treatments found in target Nightscout, using default lookback"
-                            );
-                            return null;
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine(
-                            "No treatments found in target Nightscout, using default lookback"
-                        );
-                        return null;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Failed to query target Nightscout: {response.StatusCode}");
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(
-                    $"Error querying target Nightscout for recent treatments: {ex.Message}"
-                );
-                return null;
-            }
+            return await Task.FromResult<DateTime?>(null);
         }
 
         /// <summary>

@@ -38,7 +38,7 @@ namespace Nocturne.Connectors.Core.Models
 
         public int SyncIntervalMinutes { get; set; } = 5;
 
-        public ConnectorMode Mode { get; set; } = ConnectorMode.Standalone;
+        public ConnectorMode Mode { get; set; } = ConnectorMode.Nocturne;
 
         public string NightscoutUrl { get; set; } = string.Empty;
 
@@ -51,42 +51,7 @@ namespace Nocturne.Connectors.Core.Models
             if (!Enum.IsDefined(typeof(ConnectSource), ConnectSource))
                 throw new ArgumentException($"Invalid connector source: {ConnectSource}");
 
-            // Validate mode-specific requirements
-            ValidateModeSpecificConfiguration();
-
             ValidateSourceSpecificConfiguration();
-        }
-
-        /// <summary>
-        /// Validates configuration based on the connector mode
-        /// </summary>
-        protected virtual void ValidateModeSpecificConfiguration()
-        {
-            switch (Mode)
-            {
-                case ConnectorMode.Standalone:
-                    if (string.IsNullOrWhiteSpace(NightscoutUrl))
-                        throw new ArgumentException(
-                            "Nightscout URL is required for Standalone mode"
-                        );
-
-                    if (
-                        string.IsNullOrWhiteSpace(NightscoutApiSecret)
-                        && string.IsNullOrWhiteSpace(ApiSecret)
-                    )
-                        throw new ArgumentException(
-                            "Either NightscoutApiSecret or ApiSecret is required for Standalone mode authentication"
-                        );
-                    break;
-
-                case ConnectorMode.Nocturne:
-                    // In Nocturne mode, Nightscout URL and API secret are optional
-                    // as the connector works via message bus and Nocturne handles Nightscout communication
-                    break;
-
-                default:
-                    throw new ArgumentException($"Unknown connector mode: {Mode}");
-            }
         }
 
         /// <summary>
