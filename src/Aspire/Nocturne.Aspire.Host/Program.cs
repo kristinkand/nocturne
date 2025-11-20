@@ -539,7 +539,8 @@ class Program
                 .WaitFor(api)
                 .WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret)
                 .WithEnvironment("SIGNALR_HUB_URL", signalrHubUrl)
-                .WithEnvironment("PUBLIC_API_URL", api.GetEndpoint("http"));
+                .WithEnvironment("PUBLIC_API_URL", api.GetEndpoint("http"))
+                .WithEnvironment("NOCTURNE_API_URL", api.GetEndpoint("http"));
         }
         else
         {

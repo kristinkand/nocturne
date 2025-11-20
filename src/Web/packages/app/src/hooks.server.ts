@@ -4,6 +4,54 @@ import type { HandleServerError } from "@sveltejs/kit";
 import { PUBLIC_API_URL } from "$env/static/public";
 import { env } from "$env/dynamic/private";
 import { createHash } from "crypto";
+import { sequence } from "@sveltejs/kit/hooks";
+
+// Proxy handler for /api requests
+const proxyHandle: Handle = async ({ event, resolve }) => {
+  // Check if the request is for /api
+  if (event.url.pathname.startsWith("/api")) {
+    // Use NOCTURNE_API_URL for server-side (internal Docker network) if available,
+    // otherwise fall back to PUBLIC_API_URL for development
+    const apiBaseUrl = env.NOCTURNE_API_URL || PUBLIC_API_URL;
+    if (!apiBaseUrl) {
+      throw new Error(
+        "Neither NOCTURNE_API_URL nor PUBLIC_API_URL is defined. Please set one in your environment variables."
+      );
+    }
+
+    // Get the API secret and hash it with SHA1
+    const apiSecret = env.API_SECRET;
+    const hashedSecret = apiSecret
+      ? createHash("sha1").update(apiSecret).digest("hex").toLowerCase()
+      : null;
+
+    // Construct the target URL
+    const targetUrl = new URL(event.url.pathname + event.url.search, apiBaseUrl);
+
+    // Forward the request to the backend API
+    const headers = new Headers(event.request.headers);
+    if (hashedSecret) {
+      headers.set("api-secret", hashedSecret);
+    }
+
+    const proxyResponse = await fetch(targetUrl.toString(), {
+      method: event.request.method,
+      headers,
+      body: event.request.method !== "GET" && event.request.method !== "HEAD"
+        ? await event.request.arrayBuffer()
+        : undefined,
+    });
+
+    // Return the proxied response
+    return new Response(proxyResponse.body, {
+      status: proxyResponse.status,
+      statusText: proxyResponse.statusText,
+      headers: proxyResponse.headers,
+    });
+  }
+
+  return resolve(event);
+};
 
 const apiClientHandle: Handle = async ({ event, resolve }) => {
   // Use NOCTURNE_API_URL for server-side (internal Docker network) if available,
@@ -55,4 +103,5 @@ export const handleError: HandleServerError = async ({ error, event }) => {
   };
 };
 
-export const handle: Handle = apiClientHandle;
+// Chain the proxy handler before the API client handler
+export const handle: Handle = sequence(proxyHandle, apiClientHandle);
