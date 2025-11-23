@@ -32,6 +32,11 @@ export class WebSocketClient {
   private reconnectAttempts = $state(0);
   private lastMessageTime = $state<number>(0);
 
+  /** Check if the client has a valid URL configured */
+  hasValidUrl(): boolean {
+    return Boolean(this.config.url);
+  }
+
   // Derived state
   isConnected = $derived(this.connectionStatus === "connected");
   isConnecting = $derived(
@@ -50,6 +55,11 @@ export class WebSocketClient {
   /** Connect to WebSocket bridge */
   connect(): void {
     if (this.socket?.connected) {
+      return;
+    }
+
+    // Skip connection if URL is empty (SSR scenario)
+    if (!this.config.url) {
       return;
     }
 

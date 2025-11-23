@@ -10,7 +10,6 @@ import type {
   AlarmEvent,
 } from "$lib/websocket/types";
 import { toast } from "svelte-sonner";
-import { getEntries, getTreatments } from "$lib/data/entries.remote";
 import { getContext, setContext } from "svelte";
 
 const REALTIME_STORE_KEY = Symbol("realtime-store");
@@ -92,23 +91,20 @@ export class RealtimeStore {
     this.setupEventHandlers();
   }
 
-  /** Initialize with server data and start WebSocket connection */
+  /** Initialize WebSocket connection - data will be populated via real-time events */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {
+      return;
+    }
 
-    // Set initial data from server
-    this.entries = await getEntries({
-      dateRange: {
-        from: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-        to: new Date(),
-      },
-    });
-    this.treatments = await getTreatments({
-      dateRange: {
-        from: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-        to: new Date(),
-      },
-    });
+    // Skip if WebSocket URL is not available (SSR scenario)
+    if (!this.websocketClient.hasValidUrl()) {
+      return;
+    }
+
+    // Start with empty data - will be populated by WebSocket events
+    this.entries = [];
+    this.treatments = [];
 
     // Connect to WebSocket bridge
     this.websocketClient.connect();
@@ -117,23 +113,19 @@ export class RealtimeStore {
 
   /** Setup WebSocket event handlers */
   private setupEventHandlers(): void {
-    this.websocketClient.on("connect", (info) => {
-      console.log("WebSocket connected:", info.clientId);
+    this.websocketClient.on("connect", () => {
       toast.success("Connected to real-time data");
     });
 
-    this.websocketClient.on("disconnect", (reason) => {
-      console.log("WebSocket disconnected:", reason);
+    this.websocketClient.on("disconnect", () => {
       toast.warning("Real-time data disconnected");
     });
 
-    this.websocketClient.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
+    this.websocketClient.on("connect_error", () => {
       toast.error("Failed to connect to real-time data");
     });
 
     this.websocketClient.on("dataUpdate", (event: DataUpdateEvent) => {
-      console.log(event);
       this.handleDataUpdate(event);
     });
 

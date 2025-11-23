@@ -8779,6 +8779,7 @@ export class TreatmentsClient {
   /**
    * Get treatments with optional filtering and pagination
    *
+   * @param find (optional) MongoDB-style query filter for date range filtering
    * @param count (optional) Maximum number of treatments to return (default:
    *   10)
    * @param skip (optional) Number of treatments to skip for pagination
@@ -8787,12 +8788,15 @@ export class TreatmentsClient {
    * @returns Array of treatments ordered by most recent first
    */
   getTreatments2(
+    find?: string | null | undefined,
     count?: number | undefined,
     skip?: number | undefined,
     format?: string | null | undefined,
     signal?: AbortSignal
   ): Promise<Treatment[]> {
     let url_ = this.baseUrl + "/api/v1/Treatments?";
+    if (find !== undefined && find !== null)
+      url_ += "find=" + encodeURIComponent("" + find) + "&";
     if (count === null)
       throw new Error("The parameter 'count' cannot be null.");
     else if (count !== undefined)

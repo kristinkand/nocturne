@@ -34,10 +34,10 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     startDate = new Date(endDate);
     startDate.setDate(endDate.getDate() - (days - 1));
   } else {
-    // Default to last month
+    // Default to last 24 hours
     endDate = new Date();
     startDate = new Date(endDate);
-    startDate.setMonth(endDate.getMonth() - 1);
+    startDate.setDate(endDate.getDate() - 1);
   }
 
   // Validate dates
@@ -49,18 +49,16 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   startDate.setHours(0, 0, 0, 0);
   endDate.setHours(23, 59, 59, 999);
 
-  // Build find query for SGV/entries data as JSON string
-  // Build find query for SGV/entries data
+  // Build find query for entries and treatments
   const entriesQuery = `find[date][$gte]=${startDate.toISOString()}&find[date][$lte]=${endDate.toISOString()}`;
+  const treatmentsQuery = `find[created_at][$gte]=${startDate.toISOString()}&find[created_at][$lte]=${endDate.toISOString()}`;
   const numberOfEntries = Math.ceil(
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 5)
   );
   console.log("expected", numberOfEntries);
   const [treatments, entries] = await Promise.all([
-    locals.apiClient.treatments.getTreatments2({}),
-    locals.apiClient.entries.getEntries2({
-      find: entriesQuery,
-    }),
+    locals.apiClient.treatments.getTreatments2(treatmentsQuery, numberOfEntries, 0),
+    locals.apiClient.entries.getEntries2(entriesQuery),
   ]);
 
   console.log("Fetched entries:", entries.length);
@@ -69,10 +67,8 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     entries,
     summary: locals.apiClient.statistics.getMultiPeriodStatistics(),
     analysis: locals.apiClient.statistics.analyzeGlucoseData({
-      request: {
-        entries,
-        treatments,
-      },
+      entries,
+      treatments,
     }),
     /** All ISO strings */
     dateRange: {

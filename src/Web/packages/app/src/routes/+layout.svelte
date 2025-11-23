@@ -12,10 +12,9 @@
 
   const { children } = $props();
 
-  // Create store and set in context during component initialization
-  // WebSocket bridge is integrated into the SvelteKit server, so connect to same origin
+  // WebSocket bridge is integrated into the SvelteKit dev server
   const config = {
-    url: typeof window !== 'undefined' ? window.location.origin : '',
+    url: typeof window !== "undefined" ? window.location.origin : "",
     reconnectAttempts: parseInt(PUBLIC_WEBSOCKET_RECONNECT_ATTEMPTS) || 10,
     reconnectDelay: parseInt(PUBLIC_WEBSOCKET_RECONNECT_DELAY) || 5000,
     maxReconnectDelay: parseInt(PUBLIC_WEBSOCKET_MAX_RECONNECT_DELAY) || 30000,
@@ -25,7 +24,6 @@
 
   const realtimeStore = createRealtimeStore(config);
 
-  // Initialize and cleanup on client side
   onMount(async () => {
     await realtimeStore.initialize();
   });

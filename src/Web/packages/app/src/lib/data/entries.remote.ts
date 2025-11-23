@@ -28,7 +28,8 @@ export const getTreatments = query(entriesSchema, async (props) => {
   const { from = new Date(), to = new Date() } = props.dateRange;
   if (!from || !to) throw new Error("Invalid date range");
 
-  const treatments: Treatment[] = await apiClient.treatments.getTreatments2();
+  const treatmentsQuery = `find[created_at][$gte]=${from.toISOString()}&find[created_at][$lte]=${to.toISOString()}`;
+  const treatments: Treatment[] = await apiClient.treatments.getTreatments2(treatmentsQuery);
   return treatments;
 });
 
@@ -39,11 +40,12 @@ export const getStats = query(entriesSchema, async (props) => {
   const { from = new Date(), to = new Date() } = props.dateRange;
   if (!from || !to) throw new Error("Invalid date range");
 
+  const entriesQuery = `find[date][$gte]=${from.toISOString()}&find[date][$lte]=${to.toISOString()}`;
+  const treatmentsQuery = `find[created_at][$gte]=${from.toISOString()}&find[created_at][$lte]=${to.toISOString()}`;
+
   const [entries, treatments] = await Promise.all([
-    apiClient.entries.getEntries2(
-      `find[date][$gte]=${from.toISOString()}&find[date][$lte]=${to.toISOString()}`
-    ),
-    apiClient.treatments.getTreatments2(),
+    apiClient.entries.getEntries2(entriesQuery),
+    apiClient.treatments.getTreatments2(treatmentsQuery),
   ]);
 
   const stats = apiClient.statistics.analyzeGlucoseData({

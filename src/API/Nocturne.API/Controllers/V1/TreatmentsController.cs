@@ -35,6 +35,7 @@ public class TreatmentsController : ControllerBase
     /// <summary>
     /// Get treatments with optional filtering and pagination
     /// </summary>
+    /// <param name="find">MongoDB-style query filter for date range filtering</param>
     /// <param name="count">Maximum number of treatments to return (default: 10)</param>
     /// <param name="skip">Number of treatments to skip for pagination (default: 0)</param>
     /// <param name="format">Output format (json, csv, tsv, txt)</param>
@@ -46,16 +47,41 @@ public class TreatmentsController : ControllerBase
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
     public async Task<ActionResult> GetTreatments(
+        [FromQuery] string? find = null,
         [FromQuery] int count = 10,
         [FromQuery] int skip = 0,
         [FromQuery] string? format = null,
         CancellationToken cancellationToken = default
     )
     {
+        // Get the full query string to handle multiple find parameters correctly
+        var queryString = HttpContext?.Request?.QueryString.ToString() ?? string.Empty;
+
+        // Strip the leading '?' if present
+        if (queryString.StartsWith("?"))
+        {
+            queryString = queryString.Substring(1);
+        }
+
+        // Extract find query from the query string (handles multiple find parameters)
+        string? findQuery = null;
+        if (
+            !string.IsNullOrEmpty(queryString)
+            && (queryString.Contains("find[") || queryString.Contains("find%5B"))
+        )
+        {
+            findQuery = queryString;
+        }
+        else if (!string.IsNullOrEmpty(find))
+        {
+            findQuery = find;
+        }
+
         _logger.LogDebug(
-            "Treatments endpoint requested with count: {Count}, skip: {Skip} from {RemoteIpAddress}",
+            "Treatments endpoint requested with count: {Count}, skip: {Skip}, findQuery: {FindQuery} from {RemoteIpAddress}",
             count,
             skip,
+            findQuery,
             HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown"
         );
 
@@ -75,6 +101,7 @@ public class TreatmentsController : ControllerBase
             }
 
             var treatments = await _treatmentService.GetTreatmentsAsync(
+                find: findQuery,
                 count: count,
                 skip: skip,
                 cancellationToken: cancellationToken

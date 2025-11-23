@@ -49,6 +49,24 @@ public class TreatmentService : ITreatmentService
         var actualCount = count ?? 10;
         var actualSkip = skip ?? 0;
 
+        // If find query is provided, use advanced filtering (no caching for filtered queries)
+        if (!string.IsNullOrEmpty(find))
+        {
+            _logger.LogDebug(
+                "Using advanced filter for treatments with findQuery: {FindQuery}, count: {Count}, skip: {Skip}",
+                find,
+                actualCount,
+                actualSkip
+            );
+            return await _postgreSqlService.GetTreatmentsWithAdvancedFilterAsync(
+                count: actualCount,
+                skip: actualSkip,
+                findQuery: find,
+                reverseResults: false,
+                cancellationToken: cancellationToken
+            );
+        }
+
         // Cache recent treatments for common queries (skip = 0 and common counts)
         if (actualSkip == 0 && IsCommonTreatmentCount(actualCount))
         {
