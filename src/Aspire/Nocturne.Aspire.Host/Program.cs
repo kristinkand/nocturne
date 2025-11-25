@@ -164,6 +164,9 @@ class Program
             );
         }
 
+        // Add api-secret parameter for authentication (needed by connectors)
+        var apiSecret = builder.AddParameter(ServiceNames.Parameters.ApiSecret, secret: true);
+
         // Add connector services as independent services based on Parameters configuration
         var connectors = builder.Configuration.GetSection("Parameters:Connectors");
 
@@ -476,7 +479,11 @@ class Program
                 .WithEnvironment(
                     $"{ServiceNames.ConnectorEnvironment.NightscoutPrefix}ConnectSource",
                     ConnectSource.Nightscout.ToString()
-                );
+                )
+                .WithEnvironment("NocturneApiUrl", api.GetEndpoint("http"))
+                .WithEnvironment("ApiSecret", apiSecret)
+                .WaitFor(api)
+                .WithReference(api);
         }
 
         // MyFitnessPal Connector Service
@@ -564,8 +571,6 @@ class Program
             // The parameters above are defined for visibility in Aspire dashboard and secret management
         }
 
-        // Add api-secret parameter for authentication
-        var apiSecret = builder.AddParameter(ServiceNames.Parameters.ApiSecret, secret: true);
 
         // Add SignalR Hub URL parameter for the web app's integrated WebSocket bridge
         var signalrHubUrl = builder.AddParameter("signalr-hub-url", secret: false);

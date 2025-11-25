@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
@@ -42,7 +43,13 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<MyFitnessPalConnectorService>();
+        builder.Services.AddSingleton<MyFitnessPalConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<MyFitnessPalConnectorConfiguration>>().Value;
+            var logger = sp.GetRequiredService<ILogger<MyFitnessPalConnectorService>>();
+            var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
+            return new MyFitnessPalConnectorService(config, logger, httpClient);
+        });
         builder.Services.AddSingleton<
             IMyFitnessPalManualSyncService,
             MyFitnessPalManualSyncService

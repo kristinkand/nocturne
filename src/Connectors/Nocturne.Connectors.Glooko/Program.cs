@@ -43,7 +43,12 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<GlookoConnectorService>();
+        builder.Services.AddSingleton<GlookoConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<GlookoConnectorConfiguration>>().Value;
+            var logger = sp.GetRequiredService<ILogger<GlookoConnectorService>>();
+            return new GlookoConnectorService(config, logger);
+        });
         builder.Services.AddHostedService<GlookoHostedService>();
 
         // Add health checks

@@ -42,7 +42,13 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<DexcomConnectorService>();
+        builder.Services.AddSingleton<DexcomConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<DexcomConnectorConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<DexcomConnectorService>>();
+            var apiDataSubmitter = sp.GetRequiredService<IApiDataSubmitter>();
+            return new DexcomConnectorService(config, logger, apiDataSubmitter);
+        });
         builder.Services.AddHostedService<DexcomHostedService>();
 
         // Add health checks

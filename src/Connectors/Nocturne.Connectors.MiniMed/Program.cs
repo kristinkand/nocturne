@@ -43,7 +43,12 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<CareLinkConnectorService>();
+        builder.Services.AddSingleton<CareLinkConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<CareLinkConnectorConfiguration>>().Value;
+            var logger = sp.GetRequiredService<ILogger<CareLinkConnectorService>>();
+            return new CareLinkConnectorService(config, logger);
+        });
         builder.Services.AddHostedService<MiniMedHostedService>();
 
         // Add health checks

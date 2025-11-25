@@ -43,7 +43,13 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<LibreConnectorService>();
+        builder.Services.AddSingleton<LibreConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<LibreLinkUpConnectorConfiguration>>().Value;
+            var logger = sp.GetRequiredService<ILogger<LibreConnectorService>>();
+            var apiDataSubmitter = sp.GetRequiredService<IApiDataSubmitter>();
+            return new LibreConnectorService(config, logger, apiDataSubmitter);
+        });
         builder.Services.AddHostedService<FreeStyleHostedService>();
 
         // Add health checks
