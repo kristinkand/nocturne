@@ -9,9 +9,6 @@ class Program
     {
         var builder = DistributedApplication.CreateBuilder(args);
 
-        // Add Docker Compose environment for generating docker-compose.yml files
-        // builder.AddDockerComposeEnvironment("production");
-
         // Get the solution root directory
         var solutionRoot = Path.GetFullPath(
             Path.Combine(builder.AppHostDirectory, "..", "..", "..")
@@ -28,6 +25,27 @@ class Program
             optional: true,
             reloadOnChange: true
         );
+
+        // Configure Docker Compose environment for CI/CD and production deployments
+        // This enables Aspire to generate docker-compose.yml with proper registry and build settings
+        if (builder.ExecutionContext.IsPublishMode)
+        {
+            var containerRegistry = builder.Configuration["ContainerRegistry"] ?? "docker.io";
+            var containerRepository = builder.Configuration["ContainerRepository"] ?? "nocturne";
+
+            builder
+                .AddDockerComposeEnvironment("production")
+                .WithProperties(env =>
+                {
+                    env.DefaultContainerRegistry = containerRegistry;
+                    env.DefaultNetworkName = "nocturne-network";
+                });
+
+            Console.WriteLine($"[Aspire] Docker Compose environment configured:");
+            Console.WriteLine($"[Aspire]   Registry: {containerRegistry}");
+            Console.WriteLine($"[Aspire]   Repository: {containerRepository}");
+            Console.WriteLine($"[Aspire]   Network: nocturne-network");
+        }
 
         // Add PostgreSQL database - use remote database connection or local container
         var useRemoteDb = builder.Configuration.GetValue<bool>(
@@ -553,39 +571,36 @@ class Program
         var signalrHubUrl = builder.AddParameter("signalr-hub-url", secret: false);
 
         // Add the SvelteKit web application (with integrated WebSocket bridge)
-        // For Azure deployment, use container. For local dev, use JavaScript app with pnpm.
-        IResourceBuilder<IResourceWithEndpoints> web;
-        if (builder.ExecutionContext.IsPublishMode)
-        {
-            // Use containerized deployment for publish/Azure
-            // Build from workspace root with Dockerfile in packages/app
-            var webWorkspaceRoot = Path.Combine(solutionRoot, "src", "Web");
-            var dockerfilePath = Path.Combine("packages", "app", "Dockerfile");
+        var webPackagePath = Path.Combine(solutionRoot, "src", "Web", "packages", "app");
 
-            web = builder
-                .AddDockerfile(ServiceNames.NocturneWeb, webWorkspaceRoot, dockerfilePath)
-                .WithHttpEndpoint(port: 5173, targetPort: 5173, name: "http", isProxied: false)
-                .WithExternalHttpEndpoints()
-                .WaitFor(api)
-                .WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret)
-                .WithEnvironment("SIGNALR_HUB_URL", signalrHubUrl)
-                .WithEnvironment("PUBLIC_API_URL", api.GetEndpoint("http"))
-                .WithEnvironment("NOCTURNE_API_URL", api.GetEndpoint("http"));
-        }
-        else
-        {
-            // Use Vite app for local development with pnpm workspace support
-            // AddViteApp automatically creates an HTTP endpoint and configures Vite-specific optimizations
-            var webRootPath = Path.Combine(solutionRoot, "src", "Web");
-            web = builder
-                .AddViteApp(ServiceNames.NocturneWeb, webRootPath)
-                .WithPnpm() // Automatically run pnpm install before dev with frozen lockfile in production
-                .WithExternalHttpEndpoints()
-                .WaitFor(api)
-                .WithReference(api)
-                .WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret)
-                .WithEnvironment("SIGNALR_HUB_URL", signalrHubUrl);
-        }
+        var web = builder
+            .AddViteApp(ServiceNames.NocturneWeb, webPackagePath, packageManager: "pnpm")
+            .WithExternalHttpEndpoints()
+            .WaitFor(api)
+            .WithReference(api)
+            .WithEnvironment("NOCTURNE_API_URL", api.GetEndpoint("http"))
+            .WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret)
+            .WithEnvironment("SIGNALR_HUB_URL", signalrHubUrl)
+            .WithEnvironment(
+                "PUBLIC_WEBSOCKET_RECONNECT_ATTEMPTS",
+                builder.Configuration["WebSocket:ReconnectAttempts"] ?? "5"
+            )
+            .WithEnvironment(
+                "PUBLIC_WEBSOCKET_MAX_RECONNECT_DELAY",
+                builder.Configuration["WebSocket:MaxReconnectDelay"] ?? "30000"
+            )
+            .WithEnvironment(
+                "PUBLIC_WEBSOCKET_RECONNECT_DELAY",
+                builder.Configuration["WebSocket:ReconnectDelay"] ?? "1000"
+            )
+            .WithEnvironment(
+                "PUBLIC_WEBSOCKET_PING_TIMEOUT",
+                builder.Configuration["WebSocket:PingTimeout"] ?? "15000"
+            )
+            .WithEnvironment(
+                "PUBLIC_WEBSOCKET_PING_INTERVAL",
+                builder.Configuration["WebSocket:PingInterval"] ?? "20000"
+            );
 
         apiSecret.WithParentRelationship(web);
         signalrHubUrl.WithParentRelationship(web);

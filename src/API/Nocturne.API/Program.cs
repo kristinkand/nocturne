@@ -395,9 +395,7 @@ catch (Exception ex)
 
 app.Run();
 
-/// <summary>
-/// Configures connector services as background workers within the API
-/// </summary>
+// Configures connector services as background workers within the API
 static void ConfigureConnectorServices(WebApplicationBuilder builder)
 {
     var connectorsSection = builder.Configuration.GetSection("Connectors");
@@ -415,6 +413,10 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
     {
         var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
         var logger = sp.GetRequiredService<ILogger<ApiDataSubmitter>>();
+        if (string.IsNullOrEmpty(apiUrl))
+        {
+            throw new InvalidOperationException("NocturneApiUrl configuration is missing.");
+        }
         return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
     });
 

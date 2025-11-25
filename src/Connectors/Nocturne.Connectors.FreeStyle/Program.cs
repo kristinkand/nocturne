@@ -36,6 +36,10 @@ public class Program
         {
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
             var logger = sp.GetRequiredService<ILogger<ApiDataSubmitter>>();
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                throw new InvalidOperationException("NocturneApiUrl configuration is missing.");
+            }
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 

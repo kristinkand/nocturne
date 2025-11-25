@@ -13,23 +13,15 @@
     <PackageReference Include="Aspire.Hosting.JavaScript" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.Docker" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Spectre.Console" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\API\Nocturne.API\Nocturne.API.csproj" />
-    <ProjectReference
-      Include="..\..\Core\Nocturne.Core.Constants\Nocturne.Core.Constants.csproj"
-      IsAspireProjectResource="false"
-    />
-    <ProjectReference
-      Include="..\Nocturne.Aspire.ServiceDefaults\Nocturne.Aspire.ServiceDefaults.csproj"
-      IsAspireProjectResource="false"
-    />
-    <ProjectReference
-      Include="..\..\Connectors\Nocturne.Connectors.Core\Nocturne.Connectors.Core.csproj"
-      IsAspireProjectResource="false"
-    />
+    <ProjectReference Include="..\..\Core\Nocturne.Core.Constants\Nocturne.Core.Constants.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\Nocturne.Aspire.ServiceDefaults\Nocturne.Aspire.ServiceDefaults.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.Core\Nocturne.Connectors.Core.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.Dexcom\Nocturne.Connectors.Dexcom.csproj" />
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.Glooko\Nocturne.Connectors.Glooko.csproj" />
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.MiniMed\Nocturne.Connectors.MiniMed.csproj" />

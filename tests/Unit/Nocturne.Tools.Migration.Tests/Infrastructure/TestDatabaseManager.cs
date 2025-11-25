@@ -6,6 +6,7 @@ using Npgsql;
 using Testcontainers.MongoDb;
 using Testcontainers.PostgreSql;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Nocturne.Tools.Migration.Tests.Infrastructure;
 

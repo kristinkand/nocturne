@@ -367,7 +367,7 @@ public class ResponseComparisonService : IResponseComparisonService
             var effectiveSettings = new ResponseComparisonSettings
             {
                 ExcludeFields = mergedExcludeFields,
-                RouteExcludeFields = comparisonSettings.RouteExcludeFields,
+                RouteExcludeFields = comparisonSettings.RouteExcludeFields ?? new Dictionary<string, List<string>>(),
                 AllowSupersetResponses = comparisonSettings.AllowSupersetResponses,
                 TimestampToleranceMs = comparisonSettings.TimestampToleranceMs,
                 NumericPrecisionTolerance = comparisonSettings.NumericPrecisionTolerance,
