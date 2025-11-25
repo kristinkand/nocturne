@@ -74,6 +74,25 @@ namespace Nocturne.Connectors.Nightscout.Services
         public NightscoutConnectorService(
             NightscoutConnectorConfiguration config,
             ILogger<NightscoutConnectorService> logger,
+            IApiDataSubmitter apiDataSubmitter
+        )
+            : base(apiDataSubmitter, logger)
+        {
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _retryDelayStrategy = new ProductionRetryDelayStrategy();
+            _rateLimitingStrategy = new ProductionRateLimitingStrategy(
+                LoggerFactory
+                    .Create(builder => builder.AddConsole())
+                    .CreateLogger<ProductionRateLimitingStrategy>()
+            );
+
+            ConfigureHttpClient();
+        }
+
+        public NightscoutConnectorService(
+            NightscoutConnectorConfiguration config,
+            ILogger<NightscoutConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy
         )
             : base()
@@ -139,8 +158,19 @@ namespace Nocturne.Connectors.Nightscout.Services
             // Add API secret header if provided
             if (!string.IsNullOrEmpty(_config.SourceApiSecret))
             {
-                _httpClient.DefaultRequestHeaders.Add("API-SECRET", _config.SourceApiSecret);
+                var hashedSecret = HashApiSecret(_config.SourceApiSecret);
+                _httpClient.DefaultRequestHeaders.Add("API-SECRET", hashedSecret);
             }
+        }
+
+        /// <summary>
+        /// Hash API secret using SHA1 to match Nightscout's expected format
+        /// </summary>
+        private static string HashApiSecret(string apiSecret)
+        {
+            using var sha1 = System.Security.Cryptography.SHA1.Create();
+            var hashBytes = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(apiSecret));
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
 
         public override async Task<bool> AuthenticateAsync()
@@ -646,6 +676,44 @@ namespace Nocturne.Connectors.Nightscout.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading device status to Nightscout");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Syncs Nightscout data using the API data submitter
+        /// </summary>
+        /// <param name="config">Connector configuration</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>True if sync was successful</returns>
+        public async Task<bool> SyncNightscoutDataAsync(
+            NightscoutConnectorConfiguration config,
+            CancellationToken cancellationToken = default
+        )
+        {
+            try
+            {
+                _logger.LogInformation(
+                    "Starting Nightscout data sync using API data submitter"
+                );
+
+                // Use the base class SyncDataAsync method which handles uploading to Nocturne API
+                var success = await SyncDataAsync(config, cancellationToken);
+
+                if (success)
+                {
+                    _logger.LogInformation("Nightscout data sync completed successfully");
+                }
+                else
+                {
+                    _logger.LogWarning("Nightscout data sync failed");
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Nightscout data sync");
                 return false;
             }
         }

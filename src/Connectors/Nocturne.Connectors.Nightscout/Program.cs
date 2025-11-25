@@ -43,7 +43,13 @@ public class Program
             return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
         });
 
-        builder.Services.AddSingleton<NightscoutConnectorService>();
+        builder.Services.AddSingleton<NightscoutConnectorService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<NightscoutConnectorConfiguration>>().Value;
+            var logger = sp.GetRequiredService<ILogger<NightscoutConnectorService>>();
+            var apiDataSubmitter = sp.GetRequiredService<IApiDataSubmitter>();
+            return new NightscoutConnectorService(config, logger, apiDataSubmitter);
+        });
         builder.Services.AddHostedService<NightscoutHostedService>();
 
         // Add health checks
@@ -71,28 +77,10 @@ public class Program
                         scope.ServiceProvider.GetRequiredService<NightscoutConnectorService>();
 
                     logger.LogInformation("Manual sync triggered for Nightscout connector");
-
-                    // Perform full sync like the hosted service does
-                    var glucoseEntries = await connectorService.FetchGlucoseDataAsync();
-                    var glucoseSuccess = await connectorService.UploadToNightscoutAsync(
-                        glucoseEntries,
-                        config
+                    var success = await connectorService.SyncNightscoutDataAsync(
+                        config,
+                        cancellationToken
                     );
-
-                    var treatmentEntries = await connectorService.FetchTreatmentsAsync();
-                    var treatmentSuccess = await connectorService.UploadTreatmentsToNightscoutAsync(
-                        treatmentEntries,
-                        config
-                    );
-
-                    var deviceStatusEntries = await connectorService.FetchDeviceStatusAsync();
-                    var deviceStatusSuccess =
-                        await connectorService.UploadDeviceStatusToNightscoutAsync(
-                            deviceStatusEntries,
-                            config
-                        );
-
-                    bool success = glucoseSuccess && treatmentSuccess && deviceStatusSuccess;
 
                     return Results.Ok(
                         new

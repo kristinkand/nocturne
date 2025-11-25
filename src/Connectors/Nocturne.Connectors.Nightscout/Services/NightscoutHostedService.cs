@@ -44,29 +44,13 @@ public class NightscoutHostedService : BackgroundService
 
                     _logger.LogDebug("Starting Nightscout data sync cycle");
 
-                    // Fetch glucose data from source Nightscout
-                    var glucoseEntries = await connectorService.FetchGlucoseDataAsync();
-
-                    // Upload to destination Nightscout
-                    var glucoseSuccess = await connectorService.UploadToNightscoutAsync(
-                        glucoseEntries,
-                        _config
+                    // Use the new SyncNightscoutDataAsync method which uploads to Nocturne API
+                    var success = await connectorService.SyncNightscoutDataAsync(
+                        _config,
+                        stoppingToken
                     );
 
-                    // Fetch and sync treatments
-                    var treatments = await connectorService.FetchTreatmentsAsync();
-                    // Note: Treatment upload would need to be implemented in the service
-
-                    // Fetch and sync device status
-                    var deviceStatuses = await connectorService.FetchDeviceStatusAsync();
-                    var deviceSuccess = await connectorService.UploadDeviceStatusToNightscoutAsync(
-                        deviceStatuses,
-                        _config
-                    );
-
-                    var overallSuccess = glucoseSuccess && deviceSuccess;
-
-                    if (overallSuccess)
+                    if (success)
                     {
                         _logger.LogInformation("Nightscout data sync completed successfully");
                     }
@@ -81,7 +65,9 @@ public class NightscoutHostedService : BackgroundService
                 }
 
                 // Wait for the configured interval before next sync
-                var syncInterval = TimeSpan.FromMinutes(_config.SyncIntervalMinutes);
+                // Enforce a minimum interval of 1 minute to prevent tight loops
+                var intervalMinutes = Math.Max(1, _config.SyncIntervalMinutes);
+                var syncInterval = TimeSpan.FromMinutes(intervalMinutes);
                 _logger.LogDebug(
                     "Waiting {SyncInterval} minutes until next sync",
                     syncInterval.TotalMinutes

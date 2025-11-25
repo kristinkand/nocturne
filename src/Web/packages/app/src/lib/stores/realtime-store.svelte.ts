@@ -11,11 +11,14 @@ import type {
 } from "$lib/websocket/types";
 import { toast } from "svelte-sonner";
 import { getContext, setContext } from "svelte";
+import { ApiClient } from "$lib/api/api-client";
 
 const REALTIME_STORE_KEY = Symbol("realtime-store");
 
 export class RealtimeStore {
   private websocketClient!: WebSocketClient;
+  private apiClient?: ApiClient;
+  private config: WebSocketConfig;
   private initialized = false;
 
   /** Reactive state using Svelte 5 runes */
@@ -87,6 +90,7 @@ export class RealtimeStore {
   });
 
   constructor(config: WebSocketConfig) {
+    this.config = config;
     this.websocketClient = new WebSocketClient(config);
     this.setupEventHandlers();
   }
@@ -102,9 +106,31 @@ export class RealtimeStore {
       return;
     }
 
-    // Start with empty data - will be populated by WebSocket events
+    // Initialize API client for fetching historical data
+    // Use the same base URL as the WebSocket connection (window.location.origin)
+    this.apiClient = new ApiClient(this.config.url);
+
+    // Start with empty data
     this.entries = [];
     this.treatments = [];
+
+    try {
+      // Fetch historical data first
+      if (this.apiClient) {
+        const historicalEntries = await this.apiClient.entries.getEntries2(
+          undefined,
+          1000
+        );
+        if (historicalEntries && historicalEntries.length > 0) {
+          this.entries = historicalEntries.sort(
+            (a: Entry, b: Entry) => (b.mills || 0) - (a.mills || 0)
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch historical entries:", error);
+      toast.error("Failed to load historical data");
+    }
 
     // Connect to WebSocket bridge
     this.websocketClient.connect();
