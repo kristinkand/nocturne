@@ -275,10 +275,7 @@ namespace Nocturne.Connectors.Glooko.Services
                         if (_userData?.UserLogin?.GlookoCode != null)
                         {
                             _logger.LogInformation("User data parsed successfully. Glooko code: {GlookoCode}", _userData.UserLogin.GlookoCode);
-                        }
-                        else
-                        {
-                            _logger.LogWarning("User data parsed but GlookoCode is missing");
+                            return true;
                         }
                     }
                     catch (Exception ex)
@@ -489,7 +486,7 @@ namespace Nocturne.Connectors.Glooko.Services
                 {
                     new
                     {
-                        Endpoint = "/api/v2/external/foods",
+                        Endpoint = "/api/v2/foods",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("foods", out var element))
@@ -498,7 +495,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/scheduled_basals",
+                        Endpoint = "/api/v2/pumps/scheduled_basals",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("scheduledBasals", out var element))
@@ -507,7 +504,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/normal_boluses",
+                        Endpoint = "/api/v2/pumps/normal_boluses",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("normalBoluses", out var element))
@@ -516,7 +513,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/cgm/readings",
+                        Endpoint = "/api/v2/cgm/readings",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("readings", out var element))
@@ -525,16 +522,17 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/readings", // BGM Readings
+                        Endpoint = "/api/v2/readings", // BGM Readings
                         Handler = new Action<JsonElement>(json =>
                         {
-                            if (json.TryGetProperty("bloodGlucose", out var element))
+                            // Internal API returns 'readings' for BGM as well
+                            if (json.TryGetProperty("readings", out var element))
                                 batchData.BloodGlucose = JsonSerializer.Deserialize<GlookoBloodGlucoseReading[]>(element.GetRawText()) ?? Array.Empty<GlookoBloodGlucoseReading>();
                         })
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/blood_pressures",
+                        Endpoint = "/api/v2/blood_pressures",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("bloodPressure", out var element))
@@ -543,25 +541,28 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/exercises",
+                        Endpoint = "/api/v2/exercises",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("activity", out var element))
                                 batchData.Activity = JsonSerializer.Deserialize<GlookoActivityReading[]>(element.GetRawText()) ?? Array.Empty<GlookoActivityReading>();
                         })
                     },
+                    // Medications endpoint removed due to 404 errors
+                    /*
                     new
                     {
-                        Endpoint = "/api/v2/external/medications",
+                        Endpoint = "/api/v2/medications",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("medications", out var element))
                                 batchData.Medications = JsonSerializer.Deserialize<GlookoMedicationReading[]>(element.GetRawText()) ?? Array.Empty<GlookoMedicationReading>();
                         })
                     },
+                    */
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/extended_boluses",
+                        Endpoint = "/api/v2/pumps/extended_boluses",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("extendedBoluses", out var element))
@@ -570,7 +571,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/suspend_basals",
+                        Endpoint = "/api/v2/pumps/suspend_basals",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("suspendBasals", out var element))
@@ -579,7 +580,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/temporary_basals",
+                        Endpoint = "/api/v2/pumps/temporary_basals",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("temporaryBasals", out var element))
@@ -588,7 +589,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/settings",
+                        Endpoint = "/api/v2/pumps/settings",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("settings", out var element))
@@ -597,7 +598,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/alarms",
+                        Endpoint = "/api/v2/pumps/alarms",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("alarms", out var element))
@@ -606,7 +607,7 @@ namespace Nocturne.Connectors.Glooko.Services
                     },
                     new
                     {
-                        Endpoint = "/api/v2/external/pumps/events",
+                        Endpoint = "/api/v2/pumps/events",
                         Handler = new Action<JsonElement>(json =>
                         {
                             if (json.TryGetProperty("events", out var element))
@@ -717,7 +718,7 @@ namespace Nocturne.Connectors.Glooko.Services
                         }
 
                         treatment.Carbs = food.Carbs > 0 ? food.Carbs : food.CarbohydrateGrams;
-                        treatment.Notes = JsonSerializer.Serialize(food);
+                        treatment.AdditionalProperties = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(food));
                         treatment.Source = ConnectorSource;
                         treatments.Add(treatment);
                     }
@@ -774,7 +775,7 @@ namespace Nocturne.Connectors.Glooko.Services
                                 .ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                             Insulin = bolus.InsulinDelivered,
                             Carbs = bolus.CarbsInput > 0 ? bolus.CarbsInput : null,
-                            Notes = JsonSerializer.Serialize(bolus),
+                            AdditionalProperties = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(bolus)),
                             Source = ConnectorSource,
                         };
                         treatments.Add(treatment);
@@ -804,7 +805,7 @@ namespace Nocturne.Connectors.Glooko.Services
                             Rate = basal.Rate,
                             Absolute = basal.Rate,
                             Duration = basal.Duration / 60.0, // Convert seconds to minutes
-                            Notes = JsonSerializer.Serialize(basal),
+                            AdditionalProperties = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(basal)),
                             Source = ConnectorSource,
                         };
                         treatments.Add(treatment);
@@ -841,6 +842,7 @@ namespace Nocturne.Connectors.Glooko.Services
                 }
 
                 var actualConfig = config ?? _config;
+                _logger.LogInformation($"FetchAndUploadTreatmentsAsync: SaveRawData={actualConfig.SaveRawData}, DataDirectory={actualConfig.DataDirectory}");
 
                 // Use catch-up functionality to determine optimal since timestamp
                 var effectiveSince = await CalculateSinceTimestampAsync(actualConfig, since);
@@ -935,8 +937,8 @@ namespace Nocturne.Connectors.Glooko.Services
                 if (actualConfig.SaveRawData)
                 {
                     await SaveTreatmentsToFileAsync(treatments, ServiceName, actualConfig, _logger);
-                } // Upload treatments to Nightscout
-                var success = await UploadTreatmentsToNightscoutAsync(treatments, actualConfig);
+                } // Upload treatments to Nocturne API (via ApiDataSubmitter)
+                var success = await PublishTreatmentDataAsync(treatments, actualConfig);
 
                 _logger.LogInformation(
                     $"Treatment upload {(success ? "succeeded" : "failed")}: {treatments.Count} treatments"
@@ -1225,12 +1227,10 @@ namespace Nocturne.Connectors.Glooko.Services
                         );
                         return true;
                     }
-                    else if (config.FallbackToDirectApi)
+                    else
                     {
-                        _logger.LogWarning(
-                            "Health data publishing failed, falling back to direct API"
-                        );
-                        return await UploadToNightscoutAsync(glucoseEntries, config);
+                        _logger.LogWarning("Health data publishing failed");
+                        return false;
                     }
                 }
                 else
