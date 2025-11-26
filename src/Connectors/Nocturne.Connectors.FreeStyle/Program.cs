@@ -7,6 +7,7 @@ using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.FreeStyle.Constants;
 using Nocturne.Connectors.FreeStyle.Models;
 using Nocturne.Connectors.FreeStyle.Services;
 
@@ -27,8 +28,25 @@ public class Program
         builder.Configuration.BindConnectorConfiguration(libreConfig, "FreeStyle");
 
         // Configure typed HttpClient for LibreConnectorService
+        // Map region to server endpoint
+        var region = libreConfig.LibreRegion?.ToUpperInvariant() ?? LibreLinkUpConstants.Configuration.DefaultRegion;
+        var server = region switch
+        {
+            "AE" => LibreLinkUpConstants.Endpoints.AE,
+            "AP" => LibreLinkUpConstants.Endpoints.AP,
+            "AU" => LibreLinkUpConstants.Endpoints.AU,
+            "CA" => LibreLinkUpConstants.Endpoints.CA,
+            "DE" => LibreLinkUpConstants.Endpoints.DE,
+            "EU" => LibreLinkUpConstants.Endpoints.EU,
+            "EU2" => LibreLinkUpConstants.Endpoints.EU2,
+            "FR" => LibreLinkUpConstants.Endpoints.FR,
+            "JP" => LibreLinkUpConstants.Endpoints.JP,
+            "US" => LibreLinkUpConstants.Endpoints.US,
+            _ => LibreLinkUpConstants.Endpoints.EU // Default to EU if unknown
+        };
+
         builder.Services.AddHttpClient<LibreConnectorService>()
-            .ConfigureLibreLinkUpClient(libreConfig.LibreRegion);
+            .ConfigureLibreLinkUpClient(server);
 
         // Register strategies
         builder.Services.AddSingleton<IRetryDelayStrategy, ProductionRetryDelayStrategy>();

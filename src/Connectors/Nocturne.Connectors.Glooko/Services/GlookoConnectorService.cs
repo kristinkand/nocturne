@@ -124,7 +124,7 @@ namespace Nocturne.Connectors.Glooko.Services
 
                 var request = new HttpRequestMessage(
                     HttpMethod.Post,
-                    $"https://{_config.GlookoServer}/api/v2/users/sign_in"
+                    "/api/v2/users/sign_in"
                 )
                 {
                     Content = content,
@@ -787,7 +787,7 @@ namespace Nocturne.Connectors.Glooko.Services
             var lastGuid = "1e0c094e-1e54-4a4f-8e6a-f94484b53789"; // hardcoded as per legacy
             var maxCount = Math.Max(1, (int)Math.Ceiling((endDate - startDate).TotalMinutes / 5)); // 5-minute intervals
 
-            return $"https://{_config.GlookoServer}{endpoint}?patient={patientCode}&startDate={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}&endDate={endDate:yyyy-MM-ddTHH:mm:ss.fffZ}&lastGuid={lastGuid}&lastUpdatedAt={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}&limit={maxCount}";
+            return $"{endpoint}?patient={patientCode}&startDate={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}&endDate={endDate:yyyy-MM-ddTHH:mm:ss.fffZ}&lastGuid={lastGuid}&lastUpdatedAt={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}&limit={maxCount}";
         }
 
         private async Task<JsonElement?> FetchFromGlookoEndpoint(string url)

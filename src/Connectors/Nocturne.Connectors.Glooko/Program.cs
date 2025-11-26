@@ -7,6 +7,7 @@ using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Glooko.Constants;
 using Nocturne.Connectors.Glooko.Models;
 using Nocturne.Connectors.Glooko.Services;
 
@@ -27,8 +28,12 @@ public class Program
         builder.Configuration.BindConnectorConfiguration(glookoConfig, "Glooko");
 
         // Configure typed HttpClient for GlookoConnectorService
+        var server = !string.IsNullOrEmpty(glookoConfig.GlookoServer)
+            ? glookoConfig.GlookoServer
+            : GlookoConstants.Configuration.DefaultServer;
+
         builder.Services.AddHttpClient<GlookoConnectorService>()
-            .ConfigureGlookoClient(glookoConfig.GlookoServer);
+            .ConfigureGlookoClient(server);
 
         // Register strategies
         builder.Services.AddSingleton<IRetryDelayStrategy, ProductionRetryDelayStrategy>();
