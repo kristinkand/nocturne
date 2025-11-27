@@ -278,23 +278,22 @@ namespace Nocturne.Aspire.SourceGenerators
             foreach (var param in connector.Parameters)
             {
                 var varName = ToCamelCase(param.PropertyName);
-                var configValue =
-                    $"builder.Configuration[\"Parameters:Connectors:{connector.ConnectorName}:{param.ConfigPath}\"]";
-                var defaultVal = param.DefaultValue != null ? $"\"{param.DefaultValue}\"" : "\"\"";
+                var configKey = $"Parameters:Connectors:{connector.ConnectorName}:{param.ConfigPath}";
+                var defaultValLiteral = param.DefaultValue != null ? $"\"{param.DefaultValue}\"" : "null";
 
-                sb.AppendLine($"            var {varName} = builder.AddParameter(");
-                sb.AppendLine($"                \"{param.ParameterName}\",");
-                sb.AppendLine($"                value: {configValue} ?? {defaultVal},");
-                sb.AppendLine($"                secret: {param.IsSecret.ToString().ToLower()})");
+                sb.AppendLine($"            var config_{varName} = builder.Configuration[\"{configKey}\"];");
+                sb.AppendLine($"            var val_{varName} = !string.IsNullOrEmpty(config_{varName}) ? config_{varName} : {defaultValLiteral};");
+
+                sb.AppendLine($"            var {varName} = val_{varName} is not null");
+                sb.AppendLine($"                ? builder.AddParameter(\"{param.ParameterName}\", val_{varName}, secret: {param.IsSecret.ToString().ToLower()})");
+                sb.AppendLine($"                : builder.AddParameter(\"{param.ParameterName}\", secret: {param.IsSecret.ToString().ToLower()});");
 
                 if (!string.IsNullOrEmpty(param.Description))
                 {
                     sb.AppendLine(
-                        $"                .WithDescription(\"{EscapeString(param.Description)}\")"
+                        $"            {varName}.WithDescription(\"{EscapeString(param.Description)}\");"
                     );
                 }
-
-                sb.AppendLine("                ;");
                 sb.AppendLine();
             }
 

@@ -36,7 +36,7 @@ namespace Nocturne.Connectors.Configurations
         /// Source Nightscout API secret (optional)
         /// </summary>
         [EnvironmentVariable("CONNECT_NS_API_SECRET")]
-        [AspireParameter("nightscout-source-secret", "SourceApiSecret", secret: true, description: "Source Nightscout API Secret")]
+        [AspireParameter("nightscout-source-secret", "SourceApiSecret", secret: true, description: "Source Nightscout API Secret", defaultValue: "")]
         public string? SourceApiSecret { get; set; }
 
         protected override void ValidateSourceSpecificConfiguration()

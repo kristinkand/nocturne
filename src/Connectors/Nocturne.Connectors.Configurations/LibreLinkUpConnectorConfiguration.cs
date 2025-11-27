@@ -70,7 +70,8 @@ namespace Nocturne.Connectors.Configurations
             "librelinkup-server",
             "Server",
             secret: false,
-            description: "Custom server URL (optional)"
+            description: "Custom server URL (optional)",
+            defaultValue: ""
         )]
         public string LibreServer { get; set; } = string.Empty;
 
@@ -81,7 +82,8 @@ namespace Nocturne.Connectors.Configurations
             "librelinkup-patient-id",
             "PatientId",
             secret: false,
-            description: "Patient ID for caregiver accounts"
+            description: "Patient ID for caregiver accounts",
+            defaultValue: ""
         )]
         [EnvironmentVariable("CONNECT_LIBRE_PATIENT_ID")]
         public string LibrePatientId { get; set; } = string.Empty;

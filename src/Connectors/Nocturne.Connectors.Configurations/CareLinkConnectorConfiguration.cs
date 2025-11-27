@@ -52,7 +52,7 @@ namespace Nocturne.Connectors.Configurations
         /// Patient username (if different from account username)
         /// </summary>
         [EnvironmentVariable("CONNECT_CARE_LINK_PATIENT_USERNAME")]
-        [AspireParameter("carelink-patient-username", "PatientUsername", secret: false, description: "Patient username (if different from account)")]
+        [AspireParameter("carelink-patient-username", "PatientUsername", secret: false, description: "Patient username (if different from account)", defaultValue: "")]
         public string CareLinkPatientUsername { get; set; } = string.Empty;
 
         protected override void ValidateSourceSpecificConfiguration()

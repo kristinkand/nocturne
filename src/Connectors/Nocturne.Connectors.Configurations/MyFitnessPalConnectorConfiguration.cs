@@ -44,7 +44,7 @@ namespace Nocturne.Connectors.Configurations
         /// MyFitnessPal API key (if available)
         /// </summary>
         [EnvironmentVariable("CONNECT_MFP_API_KEY")]
-        [AspireParameter("mfp-api-key", "ApiKey", secret: true, description: "MyFitnessPal API Key (optional)")]
+        [AspireParameter("mfp-api-key", "ApiKey", secret: true, description: "MyFitnessPal API Key (optional)", defaultValue: "")]
         public string MyFitnessPalApiKey { get; set; } = string.Empty;
 
         /// <summary>
