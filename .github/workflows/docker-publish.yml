@@ -32,7 +32,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Install Aspire CLI
-        run: dotnet tool install --global aspire --prerelease
+        run: dotnet tool install --global aspire.cli
 
       - name: Install Aspire workload
         run: dotnet workload install aspire
@@ -233,7 +233,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Install Aspire CLI
-        run: dotnet tool install --global aspire --prerelease
+        run: dotnet tool install --global aspire.cli
 
       - name: Install Aspire workload
         run: dotnet workload install aspire
