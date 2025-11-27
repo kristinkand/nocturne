@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 
 #nullable enable
@@ -20,17 +21,20 @@ namespace Nocturne.Connectors.MyFitnessPal.Models
         /// MyFitnessPal username/email
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_MFP_USERNAME")]
         public string MyFitnessPalUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// MyFitnessPal password
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_MFP_PASSWORD")]
         public string MyFitnessPalPassword { get; set; } = string.Empty;
 
         /// <summary>
         /// MyFitnessPal API key (if available)
         /// </summary>
+        [EnvironmentVariable("CONNECT_MFP_API_KEY")]
         public string MyFitnessPalApiKey { get; set; } = string.Empty;
 
         /// <summary>

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 
 #nullable enable
@@ -20,22 +21,26 @@ namespace Nocturne.Connectors.Dexcom.Models
         /// Dexcom Share username
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_SHARE_ACCOUNT_NAME")]
         public string DexcomUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// Dexcom Share password
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_SHARE_PASSWORD")]
         public string DexcomPassword { get; set; } = string.Empty;
 
         /// <summary>
         /// Dexcom region ("us" or "ous")
         /// </summary>
+        [EnvironmentVariable("CONNECT_SHARE_REGION")]
         public string DexcomRegion { get; set; } = "us";
 
         /// <summary>
         /// Custom Dexcom server (optional, overrides region-based server selection)
         /// </summary>
+        [EnvironmentVariable("CONNECT_SHARE_SERVER")]
         public string DexcomServer { get; set; } = string.Empty;
 
         protected override void ValidateSourceSpecificConfiguration()

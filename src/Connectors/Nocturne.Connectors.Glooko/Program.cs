@@ -27,7 +27,9 @@ public class Program
         var glookoConfig = new GlookoConnectorConfiguration();
         builder.Configuration.BindConnectorConfiguration(glookoConfig, "Glooko");
 
-        // Configure typed HttpClient for GlookoConnectorService
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<GlookoConnectorConfiguration>>(new OptionsWrapper<GlookoConnectorConfiguration>(glookoConfig));
+
         var server = !string.IsNullOrEmpty(glookoConfig.GlookoServer)
             ? glookoConfig.GlookoServer
             : GlookoConstants.Configuration.DefaultServer;

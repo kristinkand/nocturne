@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 
 #nullable enable
@@ -20,17 +21,20 @@ namespace Nocturne.Connectors.FreeStyle.Models
         /// LibreLinkUp username
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_LIBRE_USERNAME")]
         public string LibreUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// LibreLinkUp password
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_LIBRE_PASSWORD")]
         public string LibrePassword { get; set; } = string.Empty;
 
         /// <summary>
         /// LibreLinkUp region
         /// </summary>
+        [EnvironmentVariable("CONNECT_LIBRE_REGION")]
         public string LibreRegion { get; set; } = "EU";
 
         /// <summary>
@@ -41,6 +45,7 @@ namespace Nocturne.Connectors.FreeStyle.Models
         /// <summary>
         /// Patient ID for LibreLinkUp (for caregiver accounts)
         /// </summary>
+        [EnvironmentVariable("CONNECT_LIBRE_PATIENT_ID")]
         public string LibrePatientId { get; set; } = string.Empty;
 
         protected override void ValidateSourceSpecificConfiguration()

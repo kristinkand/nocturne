@@ -36,7 +36,9 @@ public class Program
             knownServers["us"]
         );
 
-        // Configure typed HttpClient for CareLinkConnectorService
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<CareLinkConnectorConfiguration>>(new OptionsWrapper<CareLinkConnectorConfiguration>(careLinkConfig));
+
         builder.Services.AddHttpClient<CareLinkConnectorService>()
             .ConfigureCareLinkClient(server);
 

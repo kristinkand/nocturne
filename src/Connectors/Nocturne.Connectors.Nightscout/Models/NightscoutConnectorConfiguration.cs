@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 
 #nullable enable
@@ -20,11 +21,13 @@ namespace Nocturne.Connectors.Nightscout.Models
         /// Source Nightscout endpoint URL
         /// </summary>
         [Required]
+        [EnvironmentVariable("CONNECT_NS_URL")]
         public string SourceEndpoint { get; set; } = string.Empty;
 
         /// <summary>
         /// Source Nightscout API secret (optional)
         /// </summary>
+        [EnvironmentVariable("CONNECT_NS_API_SECRET")]
         public string? SourceApiSecret { get; set; }
 
         protected override void ValidateSourceSpecificConfiguration()

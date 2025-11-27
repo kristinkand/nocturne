@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
@@ -21,13 +22,12 @@ public class Program
         builder.AddServiceDefaults();
 
         // Configure services
-        // Configure connector configuration
-        builder.Services.Configure<DexcomConnectorConfiguration>(
-            builder.Configuration.GetSection("Connectors:Dexcom"));
-
         // Bind configuration for HttpClient setup
         var dexcomConfig = new DexcomConnectorConfiguration();
         builder.Configuration.BindConnectorConfiguration(dexcomConfig, "Dexcom");
+
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<DexcomConnectorConfiguration>>(new OptionsWrapper<DexcomConnectorConfiguration>(dexcomConfig));
 
         // Configure typed HttpClient for DexcomConnectorService
         builder.Services.AddHttpClient<DexcomConnectorService>()

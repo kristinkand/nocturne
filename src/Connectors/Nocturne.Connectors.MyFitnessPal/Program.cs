@@ -26,7 +26,9 @@ public class Program
         var mfpConfig = new MyFitnessPalConnectorConfiguration();
         builder.Configuration.BindConnectorConfiguration(mfpConfig, "MyFitnessPal");
 
-        // Configure typed HttpClient for MyFitnessPalConnectorService
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<MyFitnessPalConnectorConfiguration>>(new OptionsWrapper<MyFitnessPalConnectorConfiguration>(mfpConfig));
+
         builder.Services.AddHttpClient<MyFitnessPalConnectorService>()
             .ConfigureMyFitnessPalClient();
 

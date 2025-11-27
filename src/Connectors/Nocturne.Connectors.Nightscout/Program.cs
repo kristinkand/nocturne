@@ -26,7 +26,9 @@ public class Program
         var nightscoutConfig = new NightscoutConnectorConfiguration();
         builder.Configuration.BindConnectorConfiguration(nightscoutConfig, "Nightscout");
 
-        // Configure typed HttpClient for NightscoutConnectorService
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<NightscoutConnectorConfiguration>>(new OptionsWrapper<NightscoutConnectorConfiguration>(nightscoutConfig));
+
         builder.Services.AddHttpClient<NightscoutConnectorService>()
             .ConfigureNightscoutClient(
                 nightscoutConfig.SourceEndpoint,

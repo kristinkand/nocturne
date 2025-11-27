@@ -1,10 +1,28 @@
 using Microsoft.Extensions.Configuration;
 using Nocturne.Connectors.Core.Models;
+using System.Reflection;
 
 #nullable enable
 
 namespace Nocturne.Connectors.Core.Extensions
 {
+    /// <summary>
+    /// Attribute to map configuration properties to environment variables
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class EnvironmentVariableAttribute : Attribute
+    {
+        /// <summary>
+        /// The environment variable name to bind from
+        /// </summary>
+        public string Name { get; }
+
+        public EnvironmentVariableAttribute(string name)
+        {
+            Name = name;
+        }
+    }
+
     /// <summary>
     /// Extension methods for simplified connector configuration binding
     /// </summary>
@@ -107,6 +125,49 @@ namespace Nocturne.Connectors.Core.Extensions
             if (!string.IsNullOrEmpty(apiSecret))
             {
                 config.ApiSecret = apiSecret;
+            }
+
+            // Bind connector-specific environment variables using reflection
+            BindEnvironmentVariables(configuration, config);
+        }
+
+        /// <summary>
+        /// Binds environment variables to properties marked with [EnvironmentVariable] attribute
+        /// </summary>
+        private static void BindEnvironmentVariables<T>(IConfiguration configuration, T config)
+            where T : BaseConnectorConfiguration
+        {
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var property in properties)
+            {
+                var envVarAttribute = property.GetCustomAttribute<EnvironmentVariableAttribute>();
+                if (envVarAttribute == null)
+                    continue;
+
+                var envValue = configuration[envVarAttribute.Name];
+                if (string.IsNullOrEmpty(envValue))
+                    continue;
+
+                // Handle different property types
+                if (property.PropertyType == typeof(string))
+                {
+                    property.SetValue(config, envValue);
+                }
+                else if (property.PropertyType == typeof(int))
+                {
+                    if (int.TryParse(envValue, out var intValue))
+                    {
+                        property.SetValue(config, intValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(bool))
+                {
+                    if (bool.TryParse(envValue, out var boolValue))
+                    {
+                        property.SetValue(config, boolValue);
+                    }
+                }
             }
         }
     }

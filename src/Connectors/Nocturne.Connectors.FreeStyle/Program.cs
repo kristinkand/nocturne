@@ -27,7 +27,9 @@ public class Program
         var libreConfig = new LibreLinkUpConnectorConfiguration();
         builder.Configuration.BindConnectorConfiguration(libreConfig, "FreeStyle");
 
-        // Configure typed HttpClient for LibreConnectorService
+        // Register the fully bound configuration instance
+        builder.Services.AddSingleton<IOptions<LibreLinkUpConnectorConfiguration>>(new OptionsWrapper<LibreLinkUpConnectorConfiguration>(libreConfig));
+
         // Map region to server endpoint
         var region = libreConfig.LibreRegion?.ToUpperInvariant() ?? LibreLinkUpConstants.Configuration.DefaultRegion;
         var server = region switch
