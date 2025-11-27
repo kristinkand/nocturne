@@ -184,6 +184,7 @@ jobs:
           RUN pnpm --filter @nocturne/bridge run build
 
           # Set default build-time environment variables for SvelteKit
+          ENV PUBLIC_API_URL=http://localhost:1612
           ENV PUBLIC_WEBSOCKET_RECONNECT_ATTEMPTS=5
           ENV PUBLIC_WEBSOCKET_RECONNECT_DELAY=1000
           ENV PUBLIC_WEBSOCKET_MAX_RECONNECT_DELAY=30000
