@@ -90,10 +90,8 @@ jobs:
         working-directory: src/API/Nocturne.API
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/nocturne-api \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -104,10 +102,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.Dexcom
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/dexcom-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -117,10 +113,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.Glooko
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/glooko-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -130,10 +124,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.FreeStyle
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/freestyle-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -143,10 +135,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.MiniMed
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/minimed-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -156,10 +146,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.Nightscout
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/nightscout-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
@@ -169,10 +157,8 @@ jobs:
         working-directory: src/Connectors/Nocturne.Connectors.MyFitnessPal
         run: |
           dotnet publish \
-            --os linux \
-            --arch x64 \
             -c Release \
-            /t:PublishContainer \
+            -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/myfitnespal-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
