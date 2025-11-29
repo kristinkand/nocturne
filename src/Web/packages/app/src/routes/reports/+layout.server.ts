@@ -57,7 +57,11 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   );
   console.log("expected", numberOfEntries);
   const [treatments, entries] = await Promise.all([
-    locals.apiClient.treatments.getTreatments2(treatmentsQuery, numberOfEntries, 0),
+    locals.apiClient.treatments.getTreatments2(
+      treatmentsQuery,
+      numberOfEntries,
+      0
+    ),
     locals.apiClient.entries.getEntries2(entriesQuery),
   ]);
 
@@ -72,8 +76,8 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     }),
     /** All ISO strings */
     dateRange: {
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
+      from: startDate.toISOString(),
+      to: endDate.toISOString(),
       lastUpdated: new Date().toISOString(),
     },
     rawParams,
