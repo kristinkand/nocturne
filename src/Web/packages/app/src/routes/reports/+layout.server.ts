@@ -73,8 +73,8 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     }),
     /** All ISO strings */
     dateRange: {
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
+      from: startDate.toISOString(),
+      to: endDate.toISOString(),
       lastUpdated: new Date().toISOString(),
     },
     rawParams,

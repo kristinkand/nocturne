@@ -27,28 +27,31 @@ public class QueryParser : IQueryParser
         ["type"] = s => s.Trim('\'', '"'), // Handle quoted strings
         ["direction"] = s => s.Trim('\'', '"'),
         ["device"] = s => s.Trim('\'', '"'),
-        ["is_demo"] = s => bool.Parse(s)
+        ["is_demo"] = s => bool.Parse(s),
     };
 
-    private static readonly Dictionary<string, Func<string, object>> DefaultTreatmentConverters = new()
-    {
-        ["date"] = s => long.Parse(s),
-        ["mills"] = s => long.Parse(s),
-        ["insulin"] = s => double.Parse(s),
-        ["carbs"] = s => double.Parse(s),
-        ["glucose"] = s => int.Parse(s),
-        ["notes"] = ParseRegexOrString,
-        ["eventType"] = ParseRegexOrString,
-        ["enteredBy"] = ParseRegexOrString,
-        ["reason"] = ParseRegexOrString
-    };
+    private static readonly Dictionary<string, Func<string, object>> DefaultTreatmentConverters =
+        new()
+        {
+            ["date"] = s => long.Parse(s),
+            ["mills"] = s => long.Parse(s),
+            ["insulin"] = s => double.Parse(s),
+            ["carbs"] = s => double.Parse(s),
+            ["glucose"] = s => int.Parse(s),
+            ["notes"] = ParseRegexOrString,
+            ["eventType"] = ParseRegexOrString,
+            ["enteredBy"] = ParseRegexOrString,
+            ["reason"] = ParseRegexOrString,
+        };
 
     /// <inheritdoc />
     public Task<IQueryable<T>> ApplyQueryAsync<T>(
-        IQueryable<T> queryable, 
-        string findQuery, 
+        IQueryable<T> queryable,
+        string findQuery,
         QueryOptions options,
-        CancellationToken cancellationToken = default) where T : class
+        CancellationToken cancellationToken = default
+    )
+        where T : class
     {
         if (string.IsNullOrWhiteSpace(findQuery))
         {
@@ -66,9 +69,11 @@ public class QueryParser : IQueryParser
 
     /// <inheritdoc />
     public Task<Expression<Func<T, bool>>?> ParseFilterAsync<T>(
-        string findQuery, 
+        string findQuery,
         QueryOptions options,
-        CancellationToken cancellationToken = default) where T : class
+        CancellationToken cancellationToken = default
+    )
+        where T : class
     {
         if (string.IsNullOrWhiteSpace(findQuery))
         {
@@ -84,7 +89,7 @@ public class QueryParser : IQueryParser
 
         // Determine type converters based on entity type
         var typeConverters = GetTypeConverters<T>(options);
-        
+
         // Build the expression tree
         var parameter = Expression.Parameter(typeof(T), "x");
         Expression? combinedExpression = null;
@@ -96,29 +101,39 @@ public class QueryParser : IQueryParser
 
             foreach (var condition in conditions)
             {
-                var expr = BuildFieldExpression<T>(parameter, fieldPath, condition.Operator, condition.Value, typeConverters);
+                var expr = BuildFieldExpression<T>(
+                    parameter,
+                    fieldPath,
+                    condition.Operator,
+                    condition.Value,
+                    typeConverters
+                );
                 if (expr != null)
                 {
-                    combinedExpression = combinedExpression == null 
-                        ? expr 
-                        : Expression.AndAlso(combinedExpression, expr);
+                    combinedExpression =
+                        combinedExpression == null
+                            ? expr
+                            : Expression.AndAlso(combinedExpression, expr);
                 }
             }
         }
 
-        var result = combinedExpression != null 
-            ? Expression.Lambda<Func<T, bool>>(combinedExpression, parameter)
-            : null;
-            
+        var result =
+            combinedExpression != null
+                ? Expression.Lambda<Func<T, bool>>(combinedExpression, parameter)
+                : null;
+
         return Task.FromResult(result);
     }
 
     /// <inheritdoc />
     public IQueryable<T> ApplyDefaultDateFilter<T>(
-        IQueryable<T> queryable, 
-        string? findQuery, 
-        string? dateString, 
-        QueryOptions options) where T : class
+        IQueryable<T> queryable,
+        string? findQuery,
+        string? dateString,
+        QueryOptions options
+    )
+        where T : class
     {
         if (options.DisableDefaultDateFilter)
         {
@@ -126,9 +141,16 @@ public class QueryParser : IQueryParser
         }
 
         // Check if there's already a date constraint
-        var hasDateConstraint = !string.IsNullOrEmpty(dateString) || 
-                               (!string.IsNullOrEmpty(findQuery) && 
-                                (findQuery.Contains("date") || findQuery.Contains("mills") || findQuery.Contains(options.DateField.ToLower())));
+        var hasDateConstraint =
+            !string.IsNullOrEmpty(dateString)
+            || (
+                !string.IsNullOrEmpty(findQuery)
+                && (
+                    findQuery.Contains("date")
+                    || findQuery.Contains("mills")
+                    || findQuery.Contains(options.DateField.ToLower())
+                )
+            );
 
         if (hasDateConstraint)
         {
@@ -149,7 +171,9 @@ public class QueryParser : IQueryParser
         return queryable.Where(lambda);
     }
 
-    private static Dictionary<string, Func<string, object>> GetTypeConverters<T>(QueryOptions options)
+    private static Dictionary<string, Func<string, object>> GetTypeConverters<T>(
+        QueryOptions options
+    )
     {
         if (options.TypeConverters.Any())
         {
@@ -157,20 +181,20 @@ public class QueryParser : IQueryParser
         }
 
         // Return appropriate converters based on entity type
-        return typeof(T) == typeof(EntryEntity) 
-            ? DefaultEntryConverters 
+        return typeof(T) == typeof(EntryEntity)
+            ? DefaultEntryConverters
             : DefaultTreatmentConverters;
     }
 
     private static Dictionary<string, List<MongoCondition>> ParseUrlEncodedQuery(string findQuery)
     {
         var result = new Dictionary<string, List<MongoCondition>>();
-        
+
         try
         {
             // Handle both URL-encoded and JSON-style queries
             string decodedQuery = HttpUtility.UrlDecode(findQuery);
-            
+
             // If it looks like JSON, try to parse as JSON first
             if (decodedQuery.TrimStart().StartsWith("{"))
             {
@@ -179,7 +203,7 @@ public class QueryParser : IQueryParser
 
             // Parse URL parameters (find[field][$op]=value format)
             var queryParams = HttpUtility.ParseQueryString(findQuery);
-            
+
             foreach (string? key in queryParams.AllKeys)
             {
                 if (string.IsNullOrEmpty(key))
@@ -192,17 +216,14 @@ public class QueryParser : IQueryParser
                 foreach (var value in values)
                 {
                     var (fieldPath, mongoOperator) = ParseFieldPath(key);
-                    
+
                     if (!result.ContainsKey(fieldPath))
                     {
                         result[fieldPath] = new List<MongoCondition>();
                     }
 
-                    result[fieldPath].Add(new MongoCondition
-                    {
-                        Operator = mongoOperator,
-                        Value = value
-                    });
+                    result[fieldPath]
+                        .Add(new MongoCondition { Operator = mongoOperator, Value = value });
                 }
             }
         }
@@ -218,7 +239,7 @@ public class QueryParser : IQueryParser
     private static Dictionary<string, List<MongoCondition>> ParseJsonQuery(string jsonQuery)
     {
         var result = new Dictionary<string, List<MongoCondition>>();
-        
+
         try
         {
             using var doc = JsonDocument.Parse(jsonQuery);
@@ -233,15 +254,21 @@ public class QueryParser : IQueryParser
         return result;
     }
 
-    private static void ParseJsonElement(JsonElement element, Dictionary<string, List<MongoCondition>> result, string currentPath)
+    private static void ParseJsonElement(
+        JsonElement element,
+        Dictionary<string, List<MongoCondition>> result,
+        string currentPath
+    )
     {
         switch (element.ValueKind)
         {
             case JsonValueKind.Object:
                 foreach (var property in element.EnumerateObject())
                 {
-                    var newPath = string.IsNullOrEmpty(currentPath) ? property.Name : $"{currentPath}.{property.Name}";
-                    
+                    var newPath = string.IsNullOrEmpty(currentPath)
+                        ? property.Name
+                        : $"{currentPath}.{property.Name}";
+
                     if (property.Name.StartsWith("$"))
                     {
                         // This is an operator
@@ -251,11 +278,14 @@ public class QueryParser : IQueryParser
                             result[parentPath] = new List<MongoCondition>();
                         }
 
-                        result[parentPath].Add(new MongoCondition
-                        {
-                            Operator = property.Name,
-                            Value = GetJsonElementValue(property.Value)
-                        });
+                        result[parentPath]
+                            .Add(
+                                new MongoCondition
+                                {
+                                    Operator = property.Name,
+                                    Value = GetJsonElementValue(property.Value),
+                                }
+                            );
                     }
                     else
                     {
@@ -263,7 +293,7 @@ public class QueryParser : IQueryParser
                     }
                 }
                 break;
-            
+
             case JsonValueKind.Array:
                 // Handle array values (for $in, $nin operators)
                 var arrayValues = element.EnumerateArray().Select(GetJsonElementValue).ToArray();
@@ -271,24 +301,30 @@ public class QueryParser : IQueryParser
                 {
                     result[currentPath] = new List<MongoCondition>();
                 }
-                result[currentPath].Add(new MongoCondition
-                {
-                    Operator = "$in", // Default for array values
-                    Value = string.Join("|", arrayValues) // Pipe-separated like Nightscout
-                });
+                result[currentPath]
+                    .Add(
+                        new MongoCondition
+                        {
+                            Operator = "$in", // Default for array values
+                            Value = string.Join("|", arrayValues), // Pipe-separated like Nightscout
+                        }
+                    );
                 break;
-            
+
             default:
                 // Direct value assignment (implies $eq)
                 if (!result.ContainsKey(currentPath))
                 {
                     result[currentPath] = new List<MongoCondition>();
                 }
-                result[currentPath].Add(new MongoCondition
-                {
-                    Operator = "$eq",
-                    Value = GetJsonElementValue(element)
-                });
+                result[currentPath]
+                    .Add(
+                        new MongoCondition
+                        {
+                            Operator = "$eq",
+                            Value = GetJsonElementValue(element),
+                        }
+                    );
                 break;
         }
     }
@@ -302,7 +338,7 @@ public class QueryParser : IQueryParser
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
             JsonValueKind.Null => string.Empty,
-            _ => element.GetRawText()
+            _ => element.GetRawText(),
         };
     }
 
@@ -312,7 +348,7 @@ public class QueryParser : IQueryParser
         // find[sgv][$gte] -> sgv, $gte
         // find[date][$lte] -> date, $lte
         // find[type] -> type, $eq
-        
+
         var match = Regex.Match(key, @"find\[([^\]]+)\](?:\[(\$\w+)\])?");
         if (match.Success)
         {
@@ -330,7 +366,8 @@ public class QueryParser : IQueryParser
         string fieldPath,
         string mongoOperator,
         string value,
-        Dictionary<string, Func<string, object>> typeConverters)
+        Dictionary<string, Func<string, object>> typeConverters
+    )
     {
         try
         {
@@ -343,7 +380,7 @@ public class QueryParser : IQueryParser
 
             // Convert value using type converter if available
             var convertedValue = ConvertValue(value, fieldPath.ToLower(), typeConverters);
-            
+
             // Build the expression based on operator
             return mongoOperator switch
             {
@@ -356,7 +393,7 @@ public class QueryParser : IQueryParser
                 "$in" => BuildInExpression(propertyExpr, value), // Pass original value for splitting
                 "$nin" => BuildNotInExpression(propertyExpr, value),
                 "$regex" => BuildRegexExpression(propertyExpr, convertedValue),
-                _ => null
+                _ => null,
             };
         }
         catch
@@ -366,7 +403,10 @@ public class QueryParser : IQueryParser
         }
     }
 
-    private static Expression? GetPropertyExpression(ParameterExpression parameter, string fieldPath)
+    private static Expression? GetPropertyExpression(
+        ParameterExpression parameter,
+        string fieldPath
+    )
     {
         try
         {
@@ -408,11 +448,15 @@ public class QueryParser : IQueryParser
             "enteredby" => "EnteredBy",
             "reason" => "Reason",
             "is_demo" => "IsDemo",
-            _ => fieldName // Use as-is for unknown fields
+            _ => fieldName, // Use as-is for unknown fields
         };
     }
 
-    private static object ConvertValue(string value, string fieldName, Dictionary<string, Func<string, object>> typeConverters)
+    private static object ConvertValue(
+        string value,
+        string fieldName,
+        Dictionary<string, Func<string, object>> typeConverters
+    )
     {
         if (typeConverters.ContainsKey(fieldName))
         {
@@ -436,19 +480,21 @@ public class QueryParser : IQueryParser
         // Handle regex patterns like /pattern/flags
         var regexPattern = @"^/(.*)/(.*)?$";
         var match = Regex.Match(value, regexPattern);
-        
+
         if (match.Success)
         {
             var pattern = match.Groups[1].Value;
             var flags = match.Groups[2].Value;
-            
+
             var options = RegexOptions.None;
-            if (flags.Contains('i')) options |= RegexOptions.IgnoreCase;
-            if (flags.Contains('m')) options |= RegexOptions.Multiline;
-            
+            if (flags.Contains('i'))
+                options |= RegexOptions.IgnoreCase;
+            if (flags.Contains('m'))
+                options |= RegexOptions.Multiline;
+
             return new Regex(pattern, options);
         }
-        
+
         return value.Trim('\'', '"');
     }
 
@@ -499,15 +545,17 @@ public class QueryParser : IQueryParser
         // Split pipe-separated values
         var values = value.Split('|', StringSplitOptions.RemoveEmptyEntries);
         var propertyType = property.Type;
-        
+
         // Convert values to proper type
-        var convertedValues = values.Select(v => Convert.ChangeType(v.Trim('\'', '"'), propertyType)).ToList();
-        
+        var convertedValues = values
+            .Select(v => Convert.ChangeType(v.Trim('\'', '"'), propertyType))
+            .ToList();
+
         // Create Contains expression
         var listConstant = Expression.Constant(convertedValues);
         var containsMethod = typeof(List<object>).GetMethod("Contains");
         var convertedProperty = Expression.Convert(property, typeof(object));
-        
+
         return Expression.Call(listConstant, containsMethod!, convertedProperty);
     }
 
@@ -524,16 +572,16 @@ public class QueryParser : IQueryParser
             var stringProperty = Expression.Convert(property, typeof(string));
             var regexConstant = Expression.Constant(regex);
             var isMatchMethod = typeof(Regex).GetMethod("IsMatch", new[] { typeof(string) });
-            
+
             return Expression.Call(regexConstant, isMatchMethod!, stringProperty);
         }
-        
+
         if (value is string pattern)
         {
             var stringProperty = Expression.Convert(property, typeof(string));
             var patternConstant = Expression.Constant(pattern);
             var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-            
+
             return Expression.Call(stringProperty, containsMethod!, patternConstant);
         }
 

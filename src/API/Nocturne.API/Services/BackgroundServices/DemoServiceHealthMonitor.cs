@@ -66,7 +66,9 @@ public class DemoServiceHealthMonitor : BackgroundService
     {
         if (!_config.Enabled)
         {
-            _logger.LogInformation("Demo service integration is disabled, health monitoring will not run");
+            _logger.LogInformation(
+                "Demo service integration is disabled, health monitoring will not run"
+            );
             return;
         }
 
