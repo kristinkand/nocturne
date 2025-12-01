@@ -36,7 +36,7 @@ fn is_newer_medtronic(model: &str) -> bool {
         "523", "723", "554", "754",
         "530G", "630G", "670G", "770G", "780G",
     ];
-    
+
     newer_models.iter().any(|m| model.contains(m))
 }
 
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn test_round_basal_default() {
         let profile = Profile::default();
-        
+
         // Should round to 0.05
         assert!((round_basal(0.83, &profile) - 0.85).abs() < 0.001);
         assert!((round_basal(0.86, &profile) - 0.85).abs() < 0.001);
@@ -71,7 +71,7 @@ mod tests {
             model: Some("554".to_string()),
             ..Default::default()
         };
-        
+
         // Should round to 0.025 increments
         assert!((round_basal(0.025, &profile) - 0.025).abs() < 0.001);
         assert!((round_basal(0.030, &profile) - 0.025).abs() < 0.001);
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_round_basal_high_rate() {
         let profile = Profile::default();
-        
+
         // High rates (>10) round to 0.1
         assert!((round_basal(10.83, &profile) - 10.8).abs() < 0.001);
         assert!((round_basal(10.86, &profile) - 10.9).abs() < 0.001);

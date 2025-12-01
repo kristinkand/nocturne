@@ -25,7 +25,7 @@ pub struct CarbAbsorptionResult {
     pub current_deviation: f64,
     /// Maximum deviation seen
     pub max_deviation: f64,
-    /// Minimum deviation seen  
+    /// Minimum deviation seen
     pub min_deviation: f64,
     /// Slope from max deviation
     pub slope_from_max_deviation: f64,
@@ -46,11 +46,11 @@ pub fn calculate(
 ) -> Result<COBResult> {
     // Find meal time from most recent carb entry
     let meal_time = find_meal_time(treatments, clock, profile.max_meal_absorption_time);
-    
+
     if meal_time.is_none() {
         return Ok(COBResult::default());
     }
-    
+
     let meal_time = meal_time.unwrap();
     let absorption = detect_carb_absorption_internal(
         profile,
@@ -59,11 +59,11 @@ pub fn calculate(
         meal_time,
         clock,
     )?;
-    
+
     // Calculate remaining COB
     let total_carbs = calculate_total_carbs(treatments, meal_time, clock);
     let meal_cob = (total_carbs - absorption.carbs_absorbed).max(0.0);
-    
+
     Ok(COBResult {
         meal_cob,
         carbs_absorbed: absorption.carbs_absorbed,
@@ -83,7 +83,7 @@ fn find_meal_time(
 ) -> Option<DateTime<Utc>> {
     let clock_millis = clock.timestamp_millis();
     let window_start = clock_millis - (max_absorption_hours * 3600.0 * 1000.0) as i64;
-    
+
     treatments
         .iter()
         .filter(|t| {
@@ -102,7 +102,7 @@ fn calculate_total_carbs(
 ) -> f64 {
     let meal_millis = meal_time.timestamp_millis();
     let clock_millis = clock.timestamp_millis();
-    
+
     treatments
         .iter()
         .filter(|t| {
@@ -128,16 +128,16 @@ fn detect_carb_absorption_internal(
     if glucose_data.is_empty() {
         return Ok(CarbAbsorptionResult::default());
     }
-    
+
     let meal_millis = meal_time.timestamp_millis();
-    
+
     // Bucket the glucose data into 5-minute intervals
     let bucketed_data = bucket_glucose_data(glucose_data, meal_millis, profile.max_meal_absorption_time);
-    
+
     if bucketed_data.len() < 4 {
         return Ok(CarbAbsorptionResult::default());
     }
-    
+
     let mut carbs_absorbed = 0.0;
     let mut current_deviation = 0.0;
     let mut max_deviation = 0.0;
@@ -145,35 +145,35 @@ fn detect_carb_absorption_internal(
     let mut slope_from_max_deviation = 0.0;
     let mut slope_from_min_deviation = 999.0;
     let mut all_deviations = Vec::new();
-    
+
     let ci_millis = ci_time.timestamp_millis();
-    
+
     // Process bucketed data
     for i in 0..(bucketed_data.len().saturating_sub(3)) {
         let bg_time = bucketed_data[i].date;
         let bg = bucketed_data[i].glucose;
-        
+
         if bg < 39.0 || bucketed_data[i + 3].glucose < 39.0 {
             continue;
         }
-        
+
         // Calculate average delta over 15 minutes (3 readings)
         let avg_delta = (bg - bucketed_data[i + 3].glucose) / 3.0;
         let delta = bg - bucketed_data[i + 1].glucose;
-        
+
         // Get sensitivity at this time
         let bg_datetime = DateTime::from_timestamp_millis(bg_time).unwrap_or(ci_time);
         let sens = isf_lookup(profile, bg_datetime);
-        
+
         // Calculate IOB at this time
         let iob = calculate_iob_at_time(profile, treatments, bg_datetime);
-        
+
         // Calculate BGI (BG Impact from insulin)
         let bgi = round_to_decimal(-iob.activity * sens * 5.0, 2);
-        
+
         // Calculate deviation (actual change - expected change)
         let deviation = round_to_decimal(delta - bgi, 2);
-        
+
         // Calculate current deviation (for first reading)
         if i == 0 {
             current_deviation = round_to_decimal(avg_delta - bgi, 3);
@@ -182,9 +182,9 @@ fn detect_carb_absorption_internal(
             }
         } else if ci_millis > bg_time {
             let avg_deviation = round_to_decimal(avg_delta - bgi, 3);
-            let deviation_slope = (avg_deviation - current_deviation) 
+            let deviation_slope = (avg_deviation - current_deviation)
                 / (bg_time - ci_millis) as f64 * 1000.0 * 60.0 * 5.0;
-            
+
             if avg_deviation > max_deviation {
                 slope_from_max_deviation = deviation_slope.min(0.0);
                 max_deviation = avg_deviation;
@@ -193,23 +193,23 @@ fn detect_carb_absorption_internal(
                 slope_from_min_deviation = deviation_slope.max(0.0);
                 min_deviation = avg_deviation;
             }
-            
+
             all_deviations.push(avg_deviation.round() as i32);
         }
-        
+
         // If this reading is after meal time, calculate carb absorption
         if bg_time > meal_millis {
             // Carb impact: use the greater of deviation, current_deviation/2, or min_5m_carbimpact
             let ci = deviation
                 .max(current_deviation / 2.0)
                 .max(profile.min_5m_carbimpact);
-            
+
             // Convert to carbs absorbed using carb ratio and sensitivity
             let absorbed = ci * profile.carb_ratio / sens;
             carbs_absorbed += absorbed;
         }
     }
-    
+
     Ok(CarbAbsorptionResult {
         carbs_absorbed,
         current_deviation,
@@ -230,9 +230,9 @@ fn bucket_glucose_data(
     if glucose_data.is_empty() {
         return Vec::new();
     }
-    
+
     let mut bucketed = Vec::new();
-    
+
     // Start with first valid reading
     if let Some(first) = glucose_data.first() {
         if first.glucose >= 39.0 {
@@ -242,19 +242,19 @@ fn bucket_glucose_data(
             });
         }
     }
-    
+
     let mut last_bg_time = glucose_data.first().map(|g| g.date).unwrap_or(0);
     let mut last_bg = glucose_data.first().map(|g| g.glucose).unwrap_or(0.0);
     let mut found_pre_meal = false;
-    
+
     for reading in glucose_data.iter().skip(1) {
         let bg_time = reading.date;
-        
+
         // Skip invalid readings
         if reading.glucose < 39.0 {
             continue;
         }
-        
+
         // Check if within absorption window
         let hours_after_meal = (bg_time - meal_millis) as f64 / (3600.0 * 1000.0);
         if hours_after_meal > max_absorption_hours || found_pre_meal {
@@ -262,24 +262,24 @@ fn bucket_glucose_data(
         } else if hours_after_meal < 0.0 {
             found_pre_meal = true;
         }
-        
+
         let elapsed_minutes = (bg_time - last_bg_time) as f64 / 60000.0;
-        
+
         if elapsed_minutes.abs() > 8.0 {
             // Interpolate missing data points (cap at 4 hours)
             let mut remaining = elapsed_minutes.abs().min(240.0);
             let mut interp_time = last_bg_time;
             let gap_delta = reading.glucose - last_bg;
-            
+
             while remaining > 5.0 {
                 interp_time -= 5 * 60 * 1000;
                 let interp_bg = last_bg + (5.0 / remaining * gap_delta);
-                
+
                 bucketed.push(BucketedGlucose {
                     date: interp_time,
                     glucose: interp_bg.round(),
                 });
-                
+
                 remaining -= 5.0;
                 last_bg = interp_bg;
             }
@@ -292,11 +292,11 @@ fn bucket_glucose_data(
             // Average with previous if very close
             last.glucose = (last.glucose + reading.glucose) / 2.0;
         }
-        
+
         last_bg_time = bg_time;
         last_bg = reading.glucose;
     }
-    
+
     bucketed
 }
 
@@ -308,29 +308,29 @@ fn calculate_iob_at_time(
 ) -> IOBData {
     let time_millis = time.timestamp_millis();
     let dia_millis = (profile.dia * 60.0 * 60.0 * 1000.0) as i64;
-    
+
     let mut iob = 0.0;
     let mut activity = 0.0;
-    
+
     for treatment in treatments {
         let treatment_time = treatment.effective_date();
-        
+
         // Skip if treatment is after current time
         if treatment_time > time_millis {
             continue;
         }
-        
+
         // Skip if treatment is older than DIA
         if time_millis - treatment_time > dia_millis {
             continue;
         }
-        
+
         // Get insulin amount
         let insulin = treatment.insulin.unwrap_or(0.0);
         if insulin <= 0.0 {
             continue;
         }
-        
+
         let minutes_ago = (time_millis - treatment_time) as f64 / 60000.0;
         let contrib = calculate_iob_contrib(
             insulin,
@@ -339,11 +339,11 @@ fn calculate_iob_at_time(
             profile.dia,
             profile.peak,
         );
-        
+
         iob += contrib.iob_contrib;
         activity += contrib.activity_contrib;
     }
-    
+
     IOBData {
         iob,
         activity,

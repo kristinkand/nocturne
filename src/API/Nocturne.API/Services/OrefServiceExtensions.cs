@@ -35,7 +35,8 @@ public static class OrefServiceExtensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddOrefService(
         this IServiceCollection services,
-        Action<OrefServiceOptions>? configure = null)
+        Action<OrefServiceOptions>? configure = null
+    )
     {
         var options = new OrefServiceOptions();
         configure?.Invoke(options);
@@ -80,7 +81,19 @@ public static class OrefServiceExtensions
             // Application base directory
             Path.Combine(AppContext.BaseDirectory, configuredPath),
             // Relative to the oref source (for development)
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Core", "oref", "target", "wasm32-unknown-unknown", "release", "oref.wasm"),
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "Core",
+                "oref",
+                "target",
+                "wasm32-unknown-unknown",
+                "release",
+                "oref.wasm"
+            ),
             // Look for it in a wasm subdirectory
             Path.Combine(AppContext.BaseDirectory, "wasm", "oref.wasm"),
         };

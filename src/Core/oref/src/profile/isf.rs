@@ -14,21 +14,21 @@ pub fn isf_lookup_from_schedule(isf_profile: &ISFProfile, time: DateTime<Utc>) -
     if isf_profile.sensitivities.is_empty() {
         return None;
     }
-    
+
     let now_minutes = time.hour() * 60 + time.minute();
-    
+
     // Sort by offset
     let mut schedule: Vec<_> = isf_profile.sensitivities.iter().collect();
     schedule.sort_by_key(|e| e.offset);
-    
+
     // Check first entry starts at midnight
     if schedule[0].offset != 0 {
         return None;
     }
-    
+
     // Find applicable entry
     let mut isf_entry = schedule.last().unwrap();
-    
+
     for i in 0..schedule.len() {
         let entry = &schedule[i];
         let next_offset = if i + 1 < schedule.len() {
@@ -36,13 +36,13 @@ pub fn isf_lookup_from_schedule(isf_profile: &ISFProfile, time: DateTime<Utc>) -
         } else {
             24 * 60
         };
-        
+
         if now_minutes >= entry.offset && now_minutes < next_offset {
             isf_entry = entry;
             break;
         }
     }
-    
+
     Some(isf_entry.sensitivity)
 }
 
@@ -70,7 +70,7 @@ mod tests {
     fn test_isf_lookup_night() {
         let profile = make_profile_with_isf_schedule();
         let time = Utc.with_ymd_and_hms(2024, 1, 1, 3, 0, 0).unwrap();
-        
+
         let isf = isf_lookup(&profile, time);
         assert!((isf - 45.0).abs() < 0.1);
     }
@@ -79,7 +79,7 @@ mod tests {
     fn test_isf_lookup_day() {
         let profile = make_profile_with_isf_schedule();
         let time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
-        
+
         let isf = isf_lookup(&profile, time);
         assert!((isf - 50.0).abs() < 0.1);
     }
@@ -88,7 +88,7 @@ mod tests {
     fn test_isf_lookup_evening() {
         let profile = make_profile_with_isf_schedule();
         let time = Utc.with_ymd_and_hms(2024, 1, 1, 20, 0, 0).unwrap();
-        
+
         let isf = isf_lookup(&profile, time);
         assert!((isf - 55.0).abs() < 0.1);
     }
@@ -100,7 +100,7 @@ mod tests {
             isf_profile: ISFProfile::default(),
             ..Default::default()
         };
-        
+
         let isf = isf_lookup(&profile, Utc::now());
         assert!((isf - 42.0).abs() < 0.1);
     }

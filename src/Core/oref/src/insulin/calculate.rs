@@ -55,7 +55,7 @@ impl BilinearCurve {
     pub fn calculate(insulin: f64, mins_ago: f64, dia: f64) -> IOBContrib {
         // Enforce minimum DIA of 3 hours
         let dia = dia.max(3.0);
-        
+
         // Scale minsAgo by the ratio of the default DIA / the user's DIA
         let time_scalar = Self::DEFAULT_DIA / dia;
         let scaled_mins_ago = time_scalar * mins_ago;
@@ -127,10 +127,10 @@ impl ExponentialCurve {
 
         // Time constant of exponential decay
         let tau = peak * (1.0 - peak / end) / (1.0 - 2.0 * peak / end);
-        
+
         // Rise time factor
         let a = 2.0 * tau / end;
-        
+
         // Auxiliary scale factor
         let s = 1.0 / (1.0 - a + (1.0 + a) * (-end / tau).exp());
 
@@ -197,7 +197,7 @@ mod tests {
         let at_30 = ExponentialCurve::calculate(1.0, 30.0, 5.0, 75);
         let at_75 = ExponentialCurve::calculate(1.0, 75.0, 5.0, 75);
         let at_120 = ExponentialCurve::calculate(1.0, 120.0, 5.0, 75);
-        
+
         // Activity at peak should be higher than before and after
         assert!(at_75.activity_contrib > at_30.activity_contrib);
         assert!(at_75.activity_contrib > at_120.activity_contrib);
@@ -208,7 +208,7 @@ mod tests {
         // Ultra-rapid (peak 55) should decay faster than rapid-acting (peak 75)
         let rapid = ExponentialCurve::calculate(1.0, 120.0, 5.0, 75);
         let ultra = ExponentialCurve::calculate(1.0, 120.0, 5.0, 55);
-        
+
         // Ultra-rapid should have less IOB remaining at 120 min
         assert!(ultra.iob_contrib < rapid.iob_contrib);
     }
@@ -219,7 +219,7 @@ mod tests {
         let bilinear = calculate_iob_contrib(1.0, 60.0, InsulinCurve::Bilinear, 3.0, 75);
         let rapid = calculate_iob_contrib(1.0, 60.0, InsulinCurve::RapidActing, 5.0, 75);
         let ultra = calculate_iob_contrib(1.0, 60.0, InsulinCurve::UltraRapid, 5.0, 55);
-        
+
         // All should have IOB between 0 and 1
         assert!(bilinear.iob_contrib > 0.0 && bilinear.iob_contrib < 1.0);
         assert!(rapid.iob_contrib > 0.0 && rapid.iob_contrib < 1.0);

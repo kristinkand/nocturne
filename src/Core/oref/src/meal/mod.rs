@@ -17,26 +17,26 @@ pub fn generate(
     let max_absorption_hours = profile.max_meal_absorption_time;
     let clock_millis = clock.timestamp_millis();
     let carb_window = clock_millis - (max_absorption_hours * 60.0 * 60.0 * 1000.0) as i64;
-    
+
     let mut carbs = 0.0;
     let mut ns_carbs = 0.0;
     let mut bw_carbs = 0.0;
     let mut journal_carbs = 0.0;
     let mut last_carb_time: i64 = 0;
     let mut bw_found = false;
-    
+
     for treatment in treatments {
         let treatment_time = treatment.effective_date();
-        
+
         if treatment_time < carb_window || treatment_time > clock_millis {
             continue;
         }
-        
+
         if let Some(c) = treatment.carbs {
             if c >= 1.0 {
                 carbs += c;
                 last_carb_time = last_carb_time.max(treatment_time);
-                
+
                 // Categorize carb source
                 if let Some(ns) = treatment.ns_carbs {
                     ns_carbs += ns;
@@ -52,11 +52,11 @@ pub fn generate(
             }
         }
     }
-    
+
     // TODO: Calculate actual COB using glucose deviations
     // For now, use a simple model
     let meal_cob = carbs.min(profile.max_cob);
-    
+
     Ok(MealData {
         carbs,
         ns_carbs,
@@ -83,7 +83,7 @@ pub fn find_meals(
     let max_absorption_hours = profile.max_meal_absorption_time;
     let clock_millis = clock.timestamp_millis();
     let carb_window = clock_millis - (max_absorption_hours * 60.0 * 60.0 * 1000.0) as i64;
-    
+
     treatments
         .iter()
         .filter(|t| {
@@ -111,13 +111,13 @@ mod tests {
     fn test_find_recent_carbs() {
         let now = Utc::now();
         let profile = make_profile();
-        
+
         let treatments = vec![
             Treatment::carbs(50.0, now - Duration::hours(1)),
         ];
-        
+
         let meal_data = generate(&profile, &treatments, &[], now).unwrap();
-        
+
         assert_eq!(meal_data.carbs, 50.0);
         assert_eq!(meal_data.ns_carbs, 50.0);
     }
@@ -126,14 +126,14 @@ mod tests {
     fn test_ignore_old_carbs() {
         let now = Utc::now();
         let profile = make_profile();
-        
+
         // Carbs from 7 hours ago (beyond 6h absorption window)
         let treatments = vec![
             Treatment::carbs(50.0, now - Duration::hours(7)),
         ];
-        
+
         let meal_data = generate(&profile, &treatments, &[], now).unwrap();
-        
+
         assert_eq!(meal_data.carbs, 0.0);
     }
 
@@ -141,14 +141,14 @@ mod tests {
     fn test_multiple_carb_entries() {
         let now = Utc::now();
         let profile = make_profile();
-        
+
         let treatments = vec![
             Treatment::carbs(30.0, now - Duration::hours(1)),
             Treatment::carbs(20.0, now - Duration::hours(2)),
         ];
-        
+
         let meal_data = generate(&profile, &treatments, &[], now).unwrap();
-        
+
         assert_eq!(meal_data.carbs, 50.0);
     }
 
@@ -157,13 +157,13 @@ mod tests {
         let now = Utc::now();
         let mut profile = make_profile();
         profile.max_cob = 100.0;
-        
+
         let treatments = vec![
             Treatment::carbs(150.0, now - Duration::minutes(30)),
         ];
-        
+
         let meal_data = generate(&profile, &treatments, &[], now).unwrap();
-        
+
         assert!(meal_data.meal_cob <= 100.0);
     }
 }

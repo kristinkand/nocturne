@@ -100,7 +100,7 @@ impl GlucoseStatus {
         }
 
         let current = &readings[0];
-        
+
         // Calculate delta from most recent two readings
         let delta = if readings.len() >= 2 && readings[1].is_valid() {
             current.glucose - readings[1].glucose

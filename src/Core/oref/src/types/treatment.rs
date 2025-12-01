@@ -136,7 +136,7 @@ impl Treatment {
         if self.date != 0 {
             return self.date;
         }
-        
+
         // Try to parse from timestamp strings
         if let Some(ref ts) = self.started_at {
             if let Ok(dt) = DateTime::parse_from_rfc3339(ts) {
@@ -148,7 +148,7 @@ impl Treatment {
                 return dt.timestamp_millis();
             }
         }
-        
+
         0
     }
 }

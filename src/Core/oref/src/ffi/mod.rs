@@ -24,7 +24,7 @@ use std::os::raw::c_char;
 use chrono::DateTime;
 
 use crate::types::{
-    AutosensData, CurrentTemp, GlucoseReading, GlucoseStatus, 
+    AutosensData, CurrentTemp, GlucoseReading, GlucoseStatus,
     IOBData, MealData, Profile, Treatment,
 };
 use crate::determine_basal::DetermineBasalInputs;
@@ -471,12 +471,12 @@ mod tests {
     fn test_health_check() {
         let result = oref_health_check();
         assert!(!result.is_null());
-        
+
         let c_str = unsafe { CStr::from_ptr(result) };
         let json = c_str.to_str().unwrap();
         assert!(json.contains("ok"));
         assert!(json.contains("iob"));
-        
+
         unsafe { oref_free_string(result) };
     }
 
@@ -484,11 +484,11 @@ mod tests {
     fn test_version() {
         let result = oref_version();
         assert!(!result.is_null());
-        
+
         let c_str = unsafe { CStr::from_ptr(result) };
         let version = c_str.to_str().unwrap();
         assert!(!version.is_empty());
-        
+
         unsafe { oref_free_string(result) };
     }
 
@@ -502,11 +502,11 @@ mod tests {
                 1,
             );
             assert!(!result.is_null());
-            
+
             let c_str = CStr::from_ptr(result);
             let json = c_str.to_str().unwrap();
             assert!(json.contains("error"));
-            
+
             oref_free_string(result);
         }
     }
@@ -524,9 +524,9 @@ mod tests {
             "sens": 50.0,
             "carbRatio": 10.0
         }"#).unwrap();
-        
+
         let treatments_json = CString::new("[]").unwrap();
-        
+
         unsafe {
             let result = oref_calculate_iob(
                 profile_json.as_ptr(),
@@ -535,13 +535,13 @@ mod tests {
                 1,
             );
             assert!(!result.is_null());
-            
+
             let c_str = CStr::from_ptr(result);
             let json = c_str.to_str().unwrap();
             // With no treatments, we should get an IOB of 0
             assert!(json.contains("iob"));
             assert!(!json.contains("error"));
-            
+
             oref_free_string(result);
         }
     }

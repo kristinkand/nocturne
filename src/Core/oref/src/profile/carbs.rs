@@ -20,7 +20,7 @@ mod tests {
             carb_ratio: 10.0,
             ..Default::default()
         };
-        
+
         let ratio = carb_ratio_lookup(&profile, Utc::now());
         assert!((ratio - 10.0).abs() < 0.1);
     }

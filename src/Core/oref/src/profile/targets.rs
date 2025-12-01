@@ -28,10 +28,10 @@ pub fn bg_targets_lookup(profile: &Profile, _time: DateTime<Utc>) -> BgTargets {
         max_bg: profile.max_bg,
         temptarget_set: profile.temptarget_set,
     };
-    
+
     // Apply bounds
     targets = bound_target_range(targets);
-    
+
     targets
 }
 
@@ -44,15 +44,15 @@ fn bound_target_range(mut targets: BgTargets) -> BgTargets {
     if targets.max_bg < 20.0 {
         targets.max_bg *= 18.0;
     }
-    
+
     // Hard-code lower bounds (safety)
     targets.min_bg = targets.min_bg.max(80.0);
     targets.max_bg = targets.max_bg.max(80.0);
-    
+
     // Hard-code upper bounds (safety)
     targets.min_bg = targets.min_bg.min(200.0);
     targets.max_bg = targets.max_bg.min(200.0);
-    
+
     targets
 }
 
@@ -67,7 +67,7 @@ mod tests {
             max_bg: 120.0,
             ..Default::default()
         };
-        
+
         let targets = bg_targets_lookup(&profile, Utc::now());
         assert!((targets.min_bg - 100.0).abs() < 0.1);
         assert!((targets.max_bg - 120.0).abs() < 0.1);
@@ -80,7 +80,7 @@ mod tests {
             max_bg: 6.5,
             temptarget_set: false,
         });
-        
+
         // Should be converted to mg/dL
         assert!(targets.min_bg > 90.0);
         assert!(targets.max_bg > 100.0);
@@ -93,7 +93,7 @@ mod tests {
             max_bg: 70.0,
             temptarget_set: false,
         });
-        
+
         // Should be raised to 80
         assert!((targets.min_bg - 80.0).abs() < 0.1);
         assert!((targets.max_bg - 80.0).abs() < 0.1);
@@ -106,7 +106,7 @@ mod tests {
             max_bg: 300.0,
             temptarget_set: false,
         });
-        
+
         // Should be lowered to 200
         assert!((targets.min_bg - 200.0).abs() < 0.1);
         assert!((targets.max_bg - 200.0).abs() < 0.1);

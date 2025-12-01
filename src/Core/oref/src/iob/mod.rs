@@ -34,7 +34,7 @@ pub fn calculate(
 ) -> Result<Vec<IOBData>> {
     // Find all insulin treatments
     let treatments = find_insulin_treatments(profile, history, clock, 0)?;
-    
+
     // Also calculate with zero temp for comparison
     let treatments_with_zero_temp = if !current_iob_only {
         find_insulin_treatments(profile, history, clock, 240)?
@@ -43,7 +43,7 @@ pub fn calculate(
     };
 
     let mut iob_array = Vec::new();
-    
+
     // Track last bolus time and last temp
     let mut last_bolus_time: i64 = 0;
     let mut last_temp = TempBasalState::default();
@@ -58,7 +58,7 @@ pub fn calculate(
                 }
             }
         }
-        
+
         if treatment.rate.is_some() && treatment.duration.is_some() {
             let treatment_date = treatment.effective_date();
             if treatment_date > last_temp.date {
@@ -80,17 +80,17 @@ pub fn calculate(
 
     for i in (0..i_stop).step_by(1) {
         let t = clock + chrono::Duration::minutes((i * 5) as i64);
-        
+
         let iob = calculate_total_iob(profile, &treatments, t)?;
-        
+
         let mut iob_data = iob;
-        
+
         // Calculate IOB with zero temp if we have that data
         if !treatments_with_zero_temp.is_empty() {
             let iob_with_zero = calculate_total_iob(profile, &treatments_with_zero_temp, t)?;
             iob_data.iob_with_zero_temp = Some(Box::new(iob_with_zero));
         }
-        
+
         iob_array.push(iob_data.rounded());
     }
 
@@ -132,9 +132,9 @@ mod tests {
     fn test_calculate_iob_right_after_bolus() {
         let now = Utc::now();
         let profile = make_profile(3.0, InsulinCurve::Bilinear);
-        
+
         let treatments = vec![Treatment::bolus(2.0, now)];
-        
+
         let iob = calculate(&profile, &treatments, now, true).unwrap();
         assert!(!iob.is_empty());
         assert!((iob[0].iob - 2.0).abs() < 0.01);
@@ -145,9 +145,9 @@ mod tests {
         let now = Utc::now();
         let bolus_time = now - chrono::Duration::hours(3);
         let profile = make_profile(3.0, InsulinCurve::Bilinear);
-        
+
         let treatments = vec![Treatment::bolus(2.0, bolus_time)];
-        
+
         let iob = calculate(&profile, &treatments, now, true).unwrap();
         assert!(!iob.is_empty());
         assert!(iob[0].iob.abs() < 0.01);
@@ -157,9 +157,9 @@ mod tests {
     fn test_calculate_iob_array_length() {
         let now = Utc::now();
         let profile = make_profile(5.0, InsulinCurve::RapidActing);
-        
+
         let treatments = vec![Treatment::bolus(1.0, now)];
-        
+
         let iob = calculate(&profile, &treatments, now, false).unwrap();
         // Should have 48 entries (4 hours / 5 min = 48)
         assert_eq!(iob.len(), 48);
@@ -169,11 +169,11 @@ mod tests {
     fn test_iob_decreases_over_time() {
         let now = Utc::now();
         let profile = make_profile(5.0, InsulinCurve::RapidActing);
-        
+
         let treatments = vec![Treatment::bolus(1.0, now)];
-        
+
         let iob = calculate(&profile, &treatments, now, false).unwrap();
-        
+
         // IOB should generally decrease over time
         assert!(iob[0].iob > iob[10].iob);
         assert!(iob[10].iob > iob[20].iob);
@@ -184,16 +184,16 @@ mod tests {
     fn test_activity_peaks_then_decreases() {
         let now = Utc::now();
         let profile = make_profile(5.0, InsulinCurve::RapidActing);
-        
+
         let treatments = vec![Treatment::bolus(1.0, now)];
-        
+
         let iob = calculate(&profile, &treatments, now, false).unwrap();
-        
+
         // Activity should be low at start, peak around 75 min (index ~15), then decrease
         let activity_at_0 = iob[0].activity;
         let activity_at_15 = iob[15].activity; // 75 min
         let activity_at_40 = iob[40].activity; // 200 min
-        
+
         assert!(activity_at_15 > activity_at_0);
         assert!(activity_at_15 > activity_at_40);
     }

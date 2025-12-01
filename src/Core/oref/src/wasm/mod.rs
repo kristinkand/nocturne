@@ -35,16 +35,16 @@ pub fn calculate_iob(
 ) -> Result<String, JsValue> {
     let profile: Profile = serde_json::from_str(profile_json)
         .map_err(|e| JsValue::from_str(&format!("Profile parse error: {}", e)))?;
-    
+
     let treatments: Vec<Treatment> = serde_json::from_str(treatments_json)
         .map_err(|e| JsValue::from_str(&format!("Treatments parse error: {}", e)))?;
-    
+
     let time = DateTime::from_timestamp_millis(time_millis)
         .ok_or_else(|| JsValue::from_str("Invalid timestamp"))?;
-    
+
     let iob_array = crate::iob::calculate(&profile, &treatments, time, current_only)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    
+
     serde_json::to_string(&iob_array)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -90,19 +90,19 @@ pub fn calculate_cob(
 ) -> Result<String, JsValue> {
     let profile: Profile = serde_json::from_str(profile_json)
         .map_err(|e| JsValue::from_str(&format!("Profile parse error: {}", e)))?;
-    
+
     let glucose: Vec<GlucoseReading> = serde_json::from_str(glucose_json)
         .map_err(|e| JsValue::from_str(&format!("Glucose parse error: {}", e)))?;
-    
+
     let treatments: Vec<Treatment> = serde_json::from_str(treatments_json)
         .map_err(|e| JsValue::from_str(&format!("Treatments parse error: {}", e)))?;
-    
+
     let time = DateTime::from_timestamp_millis(time_millis)
         .ok_or_else(|| JsValue::from_str("Invalid timestamp"))?;
-    
+
     let cob = crate::cob::calculate(&profile, &glucose, &treatments, time)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    
+
     serde_json::to_string(&cob)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -133,19 +133,19 @@ pub fn calculate_autosens(
 ) -> Result<String, JsValue> {
     let profile: Profile = serde_json::from_str(profile_json)
         .map_err(|e| JsValue::from_str(&format!("Profile parse error: {}", e)))?;
-    
+
     let glucose: Vec<GlucoseReading> = serde_json::from_str(glucose_json)
         .map_err(|e| JsValue::from_str(&format!("Glucose parse error: {}", e)))?;
-    
+
     let treatments: Vec<Treatment> = serde_json::from_str(treatments_json)
         .map_err(|e| JsValue::from_str(&format!("Treatments parse error: {}", e)))?;
-    
+
     let time = DateTime::from_timestamp_millis(time_millis)
         .ok_or_else(|| JsValue::from_str("Invalid timestamp"))?;
-    
+
     let autosens = crate::autosens::detect_sensitivity(&profile, &glucose, &treatments, time)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    
+
     serde_json::to_string(&autosens)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -160,28 +160,28 @@ pub fn calculate_autosens(
 pub struct DetermineBasalInputsJson {
     /// Current glucose status
     pub glucose_status: GlucoseStatus,
-    
+
     /// Current temp basal
     pub current_temp: CurrentTemp,
-    
+
     /// Current IOB data
     pub iob_data: IOBData,
-    
+
     /// User profile
     pub profile: Profile,
-    
+
     /// Autosens data
     #[serde(default)]
     pub autosens_data: AutosensData,
-    
+
     /// Meal data
     #[serde(default)]
     pub meal_data: MealData,
-    
+
     /// Whether micro bolus (SMB) is allowed
     #[serde(default)]
     pub micro_bolus_allowed: bool,
-    
+
     /// Current time in milliseconds (optional, defaults to now)
     #[serde(default)]
     pub current_time_millis: Option<i64>,
@@ -200,10 +200,10 @@ pub struct DetermineBasalInputsJson {
 pub fn determine_basal(inputs_json: &str) -> Result<String, JsValue> {
     let inputs: DetermineBasalInputsJson = serde_json::from_str(inputs_json)
         .map_err(|e| JsValue::from_str(&format!("Inputs parse error: {}", e)))?;
-    
+
     let current_time = inputs.current_time_millis
         .and_then(DateTime::from_timestamp_millis);
-    
+
     let algo_inputs = DetermineBasalInputs {
         glucose_status: &inputs.glucose_status,
         current_temp: &inputs.current_temp,
@@ -214,10 +214,10 @@ pub fn determine_basal(inputs_json: &str) -> Result<String, JsValue> {
         micro_bolus_allowed: inputs.micro_bolus_allowed,
         current_time,
     };
-    
+
     let result = crate::determine_basal::determine_basal(&algo_inputs)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    
+
     serde_json::to_string(&result)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -237,19 +237,19 @@ pub fn determine_basal_simple(
 ) -> Result<String, JsValue> {
     let profile: Profile = serde_json::from_str(profile_json)
         .map_err(|e| JsValue::from_str(&format!("Profile parse error: {}", e)))?;
-    
+
     let glucose_status: GlucoseStatus = serde_json::from_str(glucose_status_json)
         .map_err(|e| JsValue::from_str(&format!("GlucoseStatus parse error: {}", e)))?;
-    
+
     let iob_data: IOBData = serde_json::from_str(iob_data_json)
         .map_err(|e| JsValue::from_str(&format!("IOBData parse error: {}", e)))?;
-    
+
     let current_temp: CurrentTemp = serde_json::from_str(current_temp_json)
         .map_err(|e| JsValue::from_str(&format!("CurrentTemp parse error: {}", e)))?;
-    
+
     let autosens_data = AutosensData::with_ratio(autosens_ratio);
     let meal_data = MealData::with_cob(meal_cob, 0.0);
-    
+
     let inputs = DetermineBasalInputs {
         glucose_status: &glucose_status,
         current_temp: &current_temp,
@@ -260,10 +260,10 @@ pub fn determine_basal_simple(
         micro_bolus_allowed,
         current_time: None,
     };
-    
+
     let result = crate::determine_basal::determine_basal(&inputs)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    
+
     serde_json::to_string(&result)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -283,10 +283,10 @@ pub fn determine_basal_simple(
 pub fn calculate_glucose_status(glucose_json: &str) -> Result<String, JsValue> {
     let readings: Vec<GlucoseReading> = serde_json::from_str(glucose_json)
         .map_err(|e| JsValue::from_str(&format!("Glucose parse error: {}", e)))?;
-    
+
     let status = GlucoseStatus::from_readings(&readings)
         .ok_or_else(|| JsValue::from_str("No valid glucose readings"))?;
-    
+
     serde_json::to_string(&status)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
@@ -304,8 +304,8 @@ pub fn oref_version() -> String {
 /// Check if the WASM module is loaded correctly
 #[wasm_bindgen]
 pub fn oref_health_check() -> String {
-    r#"{"status":"ok","version":""#.to_string() 
-        + env!("CARGO_PKG_VERSION") 
+    r#"{"status":"ok","version":""#.to_string()
+        + env!("CARGO_PKG_VERSION")
         + r#"","features":["iob","cob","autosens","determine_basal"]}"#
 }
 

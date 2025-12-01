@@ -14,25 +14,25 @@ import Foundation
 /// }
 /// ```
 public class OrefBridge {
-    
+
     // MARK: - Initialization
-    
+
     public init() {}
-    
+
     // MARK: - Version Info
-    
+
     /// Get the oref library version
     public static var version: String {
         guard let ptr = oref_version() else { return "unknown" }
         defer { oref_free_string(ptr) }
         return String(cString: ptr)
     }
-    
+
     /// Perform a health check on the library
     public static func healthCheck() -> [String: Any]? {
         guard let ptr = oref_health_check() else { return nil }
         defer { oref_free_string(ptr) }
-        
+
         let json = String(cString: ptr)
         guard let data = json.data(using: .utf8),
               let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -40,9 +40,9 @@ public class OrefBridge {
         }
         return result
     }
-    
+
     // MARK: - IOB Calculation
-    
+
     /// Calculate Insulin on Board from treatment history
     ///
     /// - Parameters:
@@ -60,7 +60,7 @@ public class OrefBridge {
         let profileJson = try encodeToJSON(profile)
         let treatmentsJson = try encodeToJSON(treatments)
         let timeMillis = Int64(time.timeIntervalSince1970 * 1000)
-        
+
         guard let resultPtr = oref_calculate_iob(
             profileJson,
             treatmentsJson,
@@ -70,13 +70,13 @@ public class OrefBridge {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     // MARK: - COB Calculation
-    
+
     /// Calculate Carbs on Board from glucose and treatment history
     public func calculateCOB(
         profile: OrefProfile,
@@ -88,7 +88,7 @@ public class OrefBridge {
         let glucoseJson = try encodeToJSON(glucose)
         let treatmentsJson = try encodeToJSON(treatments)
         let timeMillis = Int64(time.timeIntervalSince1970 * 1000)
-        
+
         guard let resultPtr = oref_calculate_cob(
             profileJson,
             glucoseJson,
@@ -98,13 +98,13 @@ public class OrefBridge {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     // MARK: - Autosens
-    
+
     /// Calculate autosens ratio from glucose history
     public func calculateAutosens(
         profile: OrefProfile,
@@ -116,7 +116,7 @@ public class OrefBridge {
         let glucoseJson = try encodeToJSON(glucose)
         let treatmentsJson = try encodeToJSON(treatments)
         let timeMillis = Int64(time.timeIntervalSince1970 * 1000)
-        
+
         guard let resultPtr = oref_calculate_autosens(
             profileJson,
             glucoseJson,
@@ -126,26 +126,26 @@ public class OrefBridge {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     // MARK: - Determine Basal
-    
+
     /// Run the main determine-basal algorithm
     public func determineBasal(inputs: DetermineBasalInputs) throws -> DetermineBasalResult {
         let inputsJson = try encodeToJSON(inputs)
-        
+
         guard let resultPtr = oref_determine_basal(inputsJson) else {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     /// Convenience function to run determine-basal with individual parameters
     public func determineBasalSimple(
         profile: OrefProfile,
@@ -160,7 +160,7 @@ public class OrefBridge {
         let glucoseStatusJson = try encodeToJSON(glucoseStatus)
         let iobDataJson = try encodeToJSON(iobData)
         let currentTempJson = try encodeToJSON(currentTemp)
-        
+
         guard let resultPtr = oref_determine_basal_simple(
             profileJson,
             glucoseStatusJson,
@@ -173,28 +173,28 @@ public class OrefBridge {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     // MARK: - Glucose Status
-    
+
     /// Calculate glucose status from readings
     public func calculateGlucoseStatus(glucose: [GlucoseReading]) throws -> GlucoseStatus {
         let glucoseJson = try encodeToJSON(glucose)
-        
+
         guard let resultPtr = oref_calculate_glucose_status(glucoseJson) else {
             throw OrefError.nullPointer
         }
         defer { oref_free_string(resultPtr) }
-        
+
         let resultJson = String(cString: resultPtr)
         return try decodeFromJSON(resultJson)
     }
-    
+
     // MARK: - Private Helpers
-    
+
     private func encodeToJSON<T: Encodable>(_ value: T) throws -> String {
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
@@ -204,7 +204,7 @@ public class OrefBridge {
         }
         return json
     }
-    
+
     private func decodeFromJSON<T: Decodable>(_ json: String) throws -> T {
         // Check for error response
         if json.contains("\"error\"") {
@@ -214,7 +214,7 @@ public class OrefBridge {
                 throw OrefError.algorithmError(errorMessage)
             }
         }
-        
+
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         guard let data = json.data(using: .utf8) else {
@@ -231,7 +231,7 @@ public enum OrefError: Error, LocalizedError {
     case encodingFailed
     case decodingFailed
     case algorithmError(String)
-    
+
     public var errorDescription: String? {
         switch self {
         case .nullPointer:
@@ -260,7 +260,7 @@ public struct OrefProfile: Codable {
     public var carbRatio: Double
     public var curve: String?
     public var peak: UInt32?
-    
+
     // SMB settings
     public var enableSmbAlways: Bool?
     public var enableSmbWithCob: Bool?
@@ -271,10 +271,10 @@ public struct OrefProfile: Codable {
     public var smbInterval: UInt32?
     public var bolusIncrement: Double?
     public var smbDeliveryRatio: Double?
-    
+
     // UAM settings
     public var enableUam: Bool?
-    
+
     public init(
         dia: Double,
         currentBasal: Double,
@@ -306,8 +306,8 @@ public struct OrefTreatment: Codable {
     public var rate: Double?
     public var duration: Double?
     public var eventType: String?
-    
-    public init(date: Int64 = 0, timestamp: String? = nil, insulin: Double? = nil, 
+
+    public init(date: Int64 = 0, timestamp: String? = nil, insulin: Double? = nil,
                 carbs: Double? = nil, rate: Double? = nil, duration: Double? = nil,
                 eventType: String? = nil) {
         self.date = date
@@ -318,7 +318,7 @@ public struct OrefTreatment: Codable {
         self.duration = duration
         self.eventType = eventType
     }
-    
+
     public static func bolus(_ insulin: Double, at date: Date) -> OrefTreatment {
         OrefTreatment(
             date: Int64(date.timeIntervalSince1970 * 1000),
@@ -327,7 +327,7 @@ public struct OrefTreatment: Codable {
             eventType: "Bolus"
         )
     }
-    
+
     public static func carbs(_ grams: Double, at date: Date) -> OrefTreatment {
         OrefTreatment(
             date: Int64(date.timeIntervalSince1970 * 1000),
@@ -344,7 +344,7 @@ public struct GlucoseReading: Codable {
     public var dateString: String?
     public var noise: Double?
     public var direction: String?
-    
+
     public init(glucose: Double, date: Date) {
         self.glucose = glucose
         self.date = Int64(date.timeIntervalSince1970 * 1000)
@@ -389,13 +389,13 @@ public struct CurrentTemp: Codable {
     public var duration: Double
     public var rate: Double
     public var temp: String
-    
+
     public init(duration: Double = 0, rate: Double = 0, temp: String = "absolute") {
         self.duration = duration
         self.rate = rate
         self.temp = temp
     }
-    
+
     public static var none: CurrentTemp {
         CurrentTemp(duration: 0, rate: 0, temp: "absolute")
     }
@@ -404,7 +404,7 @@ public struct CurrentTemp: Codable {
 public struct MealData: Codable {
     public var carbs: Double
     public var mealCob: Double
-    
+
     public init(carbs: Double = 0, mealCob: Double = 0) {
         self.carbs = carbs
         self.mealCob = mealCob
@@ -445,18 +445,18 @@ public struct DetermineBasalResult: Codable {
     public var smbEnabled: Bool?
     public var carbsReq: Double?
     public var threshold: Double?
-    
+
     /// Check if an SMB is recommended
     public var hasSMB: Bool {
         guard let units = units else { return false }
         return units > 0
     }
-    
+
     /// Check if a temp basal change is recommended
     public var hasTemp: Bool {
         rate != nil && duration != nil
     }
-    
+
     /// Check if there was an error
     public var hasError: Bool {
         error != nil

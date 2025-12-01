@@ -155,7 +155,7 @@ public class OrefModelsTests
             GlucoseStatus = new OrefGlucoseStatus { Glucose = 120 },
             CurrentTemp = OrefCurrentTemp.None,
             IobData = new OrefIobResult { Iob = 2.5 },
-            Profile = new OrefProfile()
+            Profile = new OrefProfile(),
         };
 
         // Assert

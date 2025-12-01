@@ -15,19 +15,19 @@ pub fn parse_timestamp(s: &str) -> Result<DateTime<Utc>> {
     if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
         return Ok(dt.with_timezone(&Utc));
     }
-    
+
     // Try common ISO format with space
     if let Ok(dt) = DateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S") {
         return Ok(dt.with_timezone(&Utc));
     }
-    
+
     // Try Unix milliseconds
     if let Ok(millis) = s.parse::<i64>() {
         if let Some(dt) = DateTime::from_timestamp_millis(millis) {
             return Ok(dt);
         }
     }
-    
+
     Err(OrefError::InvalidTimestamp(s.to_string()))
 }
 
@@ -70,7 +70,7 @@ mod tests {
         let original = Utc::now();
         let formatted = format_timestamp(original);
         let parsed = parse_timestamp(&formatted).unwrap();
-        
+
         // Should be within 1 second (nanoseconds may differ)
         assert!((original - parsed).num_seconds().abs() < 1);
     }
@@ -80,7 +80,7 @@ mod tests {
         let original = Utc::now();
         let millis = to_millis(original);
         let restored = from_millis(millis).unwrap();
-        
+
         // Should be within 1 millisecond
         assert!((original - restored).num_milliseconds().abs() < 1);
     }

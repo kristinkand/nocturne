@@ -19,17 +19,17 @@ pub fn percentile(data: &[f64], p: f64) -> Option<f64> {
     if data.is_empty() {
         return None;
     }
-    
+
     let n = data.len();
-    
+
     if n == 1 {
         return Some(data[0]);
     }
-    
+
     let index = (p / 100.0) * (n - 1) as f64;
     let lower = index.floor() as usize;
     let upper = index.ceil() as usize;
-    
+
     if lower == upper {
         Some(data[lower])
     } else {
@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn test_percentile() {
         let data = vec![1.0, 2.0, 3.0, 4.0, 5.0];
-        
+
         assert!((percentile(&data, 0.0).unwrap() - 1.0).abs() < 0.001);
         assert!((percentile(&data, 50.0).unwrap() - 3.0).abs() < 0.001);
         assert!((percentile(&data, 100.0).unwrap() - 5.0).abs() < 0.001);

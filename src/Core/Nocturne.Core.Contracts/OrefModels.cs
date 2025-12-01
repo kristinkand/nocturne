@@ -225,35 +225,42 @@ public class OrefTreatment
     public string? EventType { get; set; }
 
     /// <summary>Create a bolus treatment</summary>
-    public static OrefTreatment Bolus(double insulin, DateTimeOffset timestamp) => new()
-    {
-        Insulin = insulin,
-        Date = timestamp.ToUnixTimeMilliseconds(),
-        Timestamp = timestamp.ToString("O"),
-        StartedAt = timestamp.ToString("O"),
-        EventType = "Bolus"
-    };
+    public static OrefTreatment Bolus(double insulin, DateTimeOffset timestamp) =>
+        new()
+        {
+            Insulin = insulin,
+            Date = timestamp.ToUnixTimeMilliseconds(),
+            Timestamp = timestamp.ToString("O"),
+            StartedAt = timestamp.ToString("O"),
+            EventType = "Bolus",
+        };
 
     /// <summary>Create a temp basal treatment</summary>
-    public static OrefTreatment TempBasal(double rate, double durationMinutes, DateTimeOffset timestamp) => new()
-    {
-        Rate = rate,
-        Duration = durationMinutes,
-        Date = timestamp.ToUnixTimeMilliseconds(),
-        Timestamp = timestamp.ToString("O"),
-        StartedAt = timestamp.ToString("O"),
-        EventType = "TempBasal"
-    };
+    public static OrefTreatment TempBasal(
+        double rate,
+        double durationMinutes,
+        DateTimeOffset timestamp
+    ) =>
+        new()
+        {
+            Rate = rate,
+            Duration = durationMinutes,
+            Date = timestamp.ToUnixTimeMilliseconds(),
+            Timestamp = timestamp.ToString("O"),
+            StartedAt = timestamp.ToString("O"),
+            EventType = "TempBasal",
+        };
 
     /// <summary>Create a carb entry</summary>
-    public static OrefTreatment CarbEntry(double carbs, DateTimeOffset timestamp) => new()
-    {
-        Carbs = carbs,
-        NsCarbs = carbs,
-        Date = timestamp.ToUnixTimeMilliseconds(),
-        Timestamp = timestamp.ToString("O"),
-        EventType = "Carbs"
-    };
+    public static OrefTreatment CarbEntry(double carbs, DateTimeOffset timestamp) =>
+        new()
+        {
+            Carbs = carbs,
+            NsCarbs = carbs,
+            Date = timestamp.ToUnixTimeMilliseconds(),
+            Timestamp = timestamp.ToString("O"),
+            EventType = "Carbs",
+        };
 }
 
 /// <summary>
@@ -336,7 +343,13 @@ public class OrefCurrentTemp
     [JsonPropertyName("temp")]
     public string Temp { get; set; } = "absolute";
 
-    public static OrefCurrentTemp None => new() { Duration = 0, Rate = 0, Temp = "absolute" };
+    public static OrefCurrentTemp None =>
+        new()
+        {
+            Duration = 0,
+            Rate = 0,
+            Temp = "absolute",
+        };
 }
 
 /// <summary>

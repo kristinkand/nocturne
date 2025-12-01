@@ -186,25 +186,25 @@ public class DemoDataGenerator : IDemoDataGenerator
         {
             return roll switch
             {
-                < 40 => DayScenario.Normal,       // 40% normal weekends
-                < 55 => DayScenario.HighDay,      // 15% high
-                < 70 => DayScenario.Exercise,     // 15% exercise
-                < 80 => DayScenario.PoorSleep,    // 10% poor sleep
-                < 90 => DayScenario.LowDay,       // 10% low
-                < 97 => DayScenario.StressDay,    // 7% stress
-                _ => DayScenario.SickDay,         // 3% sick
+                < 40 => DayScenario.Normal, // 40% normal weekends
+                < 55 => DayScenario.HighDay, // 15% high
+                < 70 => DayScenario.Exercise, // 15% exercise
+                < 80 => DayScenario.PoorSleep, // 10% poor sleep
+                < 90 => DayScenario.LowDay, // 10% low
+                < 97 => DayScenario.StressDay, // 7% stress
+                _ => DayScenario.SickDay, // 3% sick
             };
         }
 
         return roll switch
         {
-            < 50 => DayScenario.Normal,           // 50% truly "normal" days with AID
-            < 65 => DayScenario.HighDay,          // 15% high days
-            < 78 => DayScenario.LowDay,           // 13% low days  
-            < 88 => DayScenario.Exercise,         // 10% exercise
-            < 94 => DayScenario.StressDay,        // 6% stress
-            < 98 => DayScenario.PoorSleep,        // 4% poor sleep
-            _ => DayScenario.SickDay,             // 2% sick
+            < 50 => DayScenario.Normal, // 50% truly "normal" days with AID
+            < 65 => DayScenario.HighDay, // 15% high days
+            < 78 => DayScenario.LowDay, // 13% low days
+            < 88 => DayScenario.Exercise, // 10% exercise
+            < 94 => DayScenario.StressDay, // 6% stress
+            < 98 => DayScenario.PoorSleep, // 4% poor sleep
+            _ => DayScenario.SickDay, // 2% sick
         };
     }
 
@@ -351,17 +351,12 @@ public class DemoDataGenerator : IDemoDataGenerator
                     // Scale from 1.1x to 1.4x basal rate based on how high glucose is
                     var tempBasalMultiplier = 1.1 + Math.Min(0.3, glucoseAboveTarget / 150.0);
                     var highTempRate = _config.BasalRate * tempBasalMultiplier;
-                    
+
                     treatments.Add(
-                        CreateTempBasalTreatment(
-                            currentTime,
-                            Math.Round(highTempRate, 2),
-                            30
-                        )
+                        CreateTempBasalTreatment(currentTime, Math.Round(highTempRate, 2), 30)
                     );
                     // Add to simulator for glucose effect (only the extra insulin above scheduled)
-                    var extraInsulin =
-                        (highTempRate - _config.BasalRate) * (30 / 60.0);
+                    var extraInsulin = (highTempRate - _config.BasalRate) * (30 / 60.0);
                     simulator.AddInsulinDose(
                         currentTime,
                         extraInsulin,
@@ -434,15 +429,10 @@ public class DemoDataGenerator : IDemoDataGenerator
                 if (currentTime.Minute == 0 || currentTime.Minute == 30)
                 {
                     treatments.Add(
-                        CreateTempBasalTreatment(
-                            currentTime,
-                            Math.Round(reducedRate, 2),
-                            30
-                        )
+                        CreateTempBasalTreatment(currentTime, Math.Round(reducedRate, 2), 30)
                     );
                     // Add to simulator for reduced basal effect (negative = less insulin)
-                    var insulinReduction =
-                        -(_config.BasalRate - reducedRate) * (30 / 60.0);
+                    var insulinReduction = -(_config.BasalRate - reducedRate) * (30 / 60.0);
                     simulator.AddInsulinDose(
                         currentTime,
                         insulinReduction,
