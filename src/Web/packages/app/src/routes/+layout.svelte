@@ -9,6 +9,8 @@
     PUBLIC_WEBSOCKET_PING_TIMEOUT,
     PUBLIC_WEBSOCKET_PING_INTERVAL,
   } from "$env/static/public";
+  import * as Sidebar from "$lib/components/ui/sidebar";
+  import { AppSidebar, MobileHeader } from "$lib/components/layout";
 
   const { children } = $props();
 
@@ -29,13 +31,36 @@
   });
 </script>
 
-<svelte:boundary>
-  {@render children()}
+<Sidebar.Provider>
+  <AppSidebar />
+  <MobileHeader />
+  <Sidebar.Inset>
+    <!-- Desktop header - hidden on mobile -->
+    <header
+      class="hidden md:flex h-14 shrink-0 items-center gap-2 border-b border-border px-4"
+    >
+      <Sidebar.Trigger class="-ml-1" />
+      <div class="flex-1"></div>
+    </header>
+    <main class="flex-1 overflow-auto">
+      <svelte:boundary>
+        {@render children()}
 
-  {#snippet pending()}
-    Loading...
-  {/snippet}
-  {#snippet failed(e)}
-    Error loading entries: {e instanceof Error ? e.message : JSON.stringify(e)}
-  {/snippet}
-</svelte:boundary>
+        {#snippet pending()}
+          <div class="flex items-center justify-center h-full">
+            <div class="text-muted-foreground">Loading...</div>
+          </div>
+        {/snippet}
+        {#snippet failed(e)}
+          <div class="flex items-center justify-center h-full">
+            <div class="text-destructive">
+              Error loading entries: {e instanceof Error
+                ? e.message
+                : JSON.stringify(e)}
+            </div>
+          </div>
+        {/snippet}
+      </svelte:boundary>
+    </main>
+  </Sidebar.Inset>
+</Sidebar.Provider>

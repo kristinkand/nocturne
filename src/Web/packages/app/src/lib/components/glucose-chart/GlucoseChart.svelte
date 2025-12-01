@@ -12,7 +12,7 @@
     entries: Entry[];
     treatments: Treatment[];
     /** Optional. If not provided, will be inferred from the supplied entries. */
-    dateRange?: DateRange;
+    dateRange?: DateRange | { from: string; to: string };
     thresholds?: GlycemicThresholds;
   }
 
@@ -57,10 +57,17 @@
     )
   );
 
+  // Helper to normalize dateRange - handles both Date objects and ISO strings
+  function normalizeDateRange(range: DateRange | { from: string; to: string }): DateRange {
+    const from = range.from instanceof Date ? range.from : (range.from ? new Date(range.from) : new Date());
+    const to = range.to instanceof Date ? range.to : (range.to ? new Date(range.to) : new Date());
+    return { from, to };
+  }
+
   // Resolve the effective date range – compute min/max in single pass
   const resolvedDateRange: DateRange = $derived(
     dateRange
-      ? dateRange
+      ? normalizeDateRange(dateRange)
       : (() => {
           if (processedEntries.length === 0) {
             const now = new Date();

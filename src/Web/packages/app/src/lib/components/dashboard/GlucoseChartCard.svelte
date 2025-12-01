@@ -24,8 +24,8 @@
     treatments?: Treatment[];
     demoMode?: boolean;
     dateRange?: {
-      from: Date;
-      to: Date;
+      from: Date | string;
+      to: Date | string;
     };
   }
 
@@ -37,13 +37,23 @@
     dateRange,
   }: ComponentProps = $props();
 
-  $inspect(treatments);
+  // Helper to normalize date - handles both Date objects and ISO strings
+  function normalizeDate(
+    date: Date | string | undefined,
+    fallback: Date
+  ): Date {
+    if (!date) return fallback;
+    return date instanceof Date ? date : new Date(date);
+  }
+
   // Use realtime store values as fallback when props not provided
   const displayDemoMode = $derived(demoMode ?? realtimeStore.demoMode);
   const displayDateRange = $derived({
-    from:
-      dateRange?.from ?? new Date(new Date().getTime() - 12 * 60 * 60 * 1000),
-    to: dateRange?.to ?? new Date(),
+    from: normalizeDate(
+      dateRange?.from,
+      new Date(new Date().getTime() - 12 * 60 * 60 * 1000)
+    ),
+    to: normalizeDate(dateRange?.to, new Date()),
   });
 
   // Filter treatments by date range
@@ -227,7 +237,7 @@
                 text-anchor="middle"
                 class="text-[8px] fill-purple-600"
               >
-                {treatment.rate !== undefined
+                {treatment.rate != null
                   ? `${treatment.rate.toFixed(1)}`
                   : `${treatment.percent}%`}
               </text>

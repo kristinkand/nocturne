@@ -1,0 +1,228 @@
+<script lang="ts">
+  import { page } from "$app/state";
+  import * as Sidebar from "$lib/components/ui/sidebar";
+  import * as Collapsible from "$lib/components/ui/collapsible";
+  import { SidebarGlucoseWidget } from "./index";
+  import {
+    Home,
+    BarChart3,
+    FileText,
+    Settings,
+    Activity,
+    Clock,
+    User,
+    ChevronDown,
+    Syringe,
+    LineChart,
+    PieChart,
+    TrendingUp,
+    Droplets,
+    Apple,
+  } from "lucide-svelte";
+
+  type NavItem = {
+    title: string;
+    href?: string;
+    icon: typeof Home;
+    isActive?: boolean;
+    children?: NavItem[];
+  };
+
+  const navigation: NavItem[] = [
+    {
+      title: "Dashboard",
+      href: "/",
+      icon: Home,
+    },
+    {
+      title: "Reports",
+      icon: BarChart3,
+      children: [
+        { title: "Overview", href: "/reports", icon: PieChart },
+        { title: "AGP", href: "/reports/agp", icon: LineChart },
+        { title: "Readings", href: "/reports/readings", icon: Activity },
+        { title: "Treatments", href: "/reports/treatments", icon: Syringe },
+        {
+          title: "Insulin Delivery",
+          href: "/reports/insulin-delivery",
+          icon: Droplets,
+        },
+        {
+          title: "Basal Analysis",
+          href: "/reports/basal-analysis",
+          icon: TrendingUp,
+        },
+        {
+          title: "Executive Summary",
+          href: "/reports/executive-summary",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      title: "Clock",
+      href: "/clock",
+      icon: Clock,
+    },
+    {
+      title: "Food Database",
+      href: "/food",
+      icon: Apple,
+    },
+    {
+      title: "Profile",
+      href: "/profile",
+      icon: User,
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      children: [
+        { title: "General", href: "/settings", icon: Settings },
+        { title: "Compatibility", href: "/compatibility", icon: Activity },
+      ],
+    },
+  ];
+
+  // Track which collapsible menus are open
+  let openMenus = $state<Record<string, boolean>>({});
+
+  // Check if current path matches or starts with a nav item path
+  const isActive = (item: NavItem): boolean => {
+    if (item.href) {
+      if (item.href === "/") {
+        return page.url.pathname === "/";
+      }
+      return page.url.pathname.startsWith(item.href);
+    }
+    if (item.children) {
+      return item.children.some((child) => isActive(child));
+    }
+    return false;
+  };
+
+  // Initialize open state for menus that have active children
+  $effect(() => {
+    navigation.forEach((item) => {
+      if (item.children && isActive(item)) {
+        openMenus[item.title] = true;
+      }
+    });
+  });
+
+  function toggleMenu(title: string) {
+    openMenus[title] = !openMenus[title];
+  }
+</script>
+
+<Sidebar.Sidebar collapsible="icon">
+  <Sidebar.Header class="p-4">
+    <div class="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
+      <div
+        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary"
+      >
+        <Activity class="h-4 w-4 text-primary-foreground" />
+      </div>
+      <span class="text-lg font-bold">Nocturne</span>
+    </div>
+    <div class="hidden group-data-[collapsible=icon]:flex justify-center">
+      <div
+        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary"
+      >
+        <Activity class="h-4 w-4 text-primary-foreground" />
+      </div>
+    </div>
+  </Sidebar.Header>
+
+  <Sidebar.Content>
+    <!-- Glucose Widget -->
+    <Sidebar.Group>
+      <Sidebar.GroupContent>
+        <SidebarGlucoseWidget />
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+
+    <Sidebar.Separator />
+
+    <!-- Navigation -->
+    <Sidebar.Group>
+      <Sidebar.GroupLabel>Navigation</Sidebar.GroupLabel>
+      <Sidebar.GroupContent>
+        <Sidebar.Menu>
+          {#each navigation as item}
+            {#if item.children}
+              <!-- Collapsible submenu -->
+              <Collapsible.Root
+                open={openMenus[item.title]}
+                onOpenChange={() => toggleMenu(item.title)}
+              >
+                <Sidebar.MenuItem>
+                  <Sidebar.MenuButton
+                    isActive={isActive(item)}
+                    onclick={() => toggleMenu(item.title)}
+                  >
+                    <item.icon class="h-4 w-4" />
+                    <span class="group-data-[collapsible=icon]:hidden">
+                      {item.title}
+                    </span>
+                    <ChevronDown
+                      class="ml-auto h-4 w-4 transition-transform duration-200 group-data-[collapsible=icon]:hidden {openMenus[
+                        item.title
+                      ]
+                        ? 'rotate-180'
+                        : ''}"
+                    />
+                  </Sidebar.MenuButton>
+                </Sidebar.MenuItem>
+                <Collapsible.Content>
+                  <Sidebar.MenuSub>
+                    {#each item.children as child}
+                      <Sidebar.MenuSubItem>
+                        <Sidebar.MenuSubButton
+                          href={child.href}
+                          isActive={isActive(child)}
+                        >
+                          <child.icon class="h-4 w-4" />
+                          <span>{child.title}</span>
+                        </Sidebar.MenuSubButton>
+                      </Sidebar.MenuSubItem>
+                    {/each}
+                  </Sidebar.MenuSub>
+                </Collapsible.Content>
+              </Collapsible.Root>
+            {:else}
+              <!-- Simple menu item with link -->
+              <Sidebar.MenuItem>
+                <Sidebar.MenuButton isActive={isActive(item)}>
+                  {#snippet child({ props })}
+                    <a href={item.href} {...props}>
+                      <item.icon class="h-4 w-4" />
+                      <span class="group-data-[collapsible=icon]:hidden">
+                        {item.title}
+                      </span>
+                    </a>
+                  {/snippet}
+                </Sidebar.MenuButton>
+              </Sidebar.MenuItem>
+            {/if}
+          {/each}
+        </Sidebar.Menu>
+      </Sidebar.GroupContent>
+    </Sidebar.Group>
+  </Sidebar.Content>
+
+  <Sidebar.Footer class="p-4">
+    <Sidebar.Menu>
+      <Sidebar.MenuItem>
+        <Sidebar.MenuButton>
+          <Settings class="h-4 w-4" />
+          <span class="group-data-[collapsible=icon]:hidden">
+            Quick Settings
+          </span>
+        </Sidebar.MenuButton>
+      </Sidebar.MenuItem>
+    </Sidebar.Menu>
+  </Sidebar.Footer>
+
+  <Sidebar.Rail />
+</Sidebar.Sidebar>
