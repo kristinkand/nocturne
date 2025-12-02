@@ -2,7 +2,7 @@
   import { page } from "$app/state";
   import * as Sidebar from "$lib/components/ui/sidebar";
   import * as Collapsible from "$lib/components/ui/collapsible";
-  import { SidebarGlucoseWidget } from "./index";
+  import { SidebarGlucoseWidget, UserMenu } from "./index";
   import {
     Home,
     BarChart3,
@@ -25,6 +25,16 @@
     Smartphone,
     Sparkles,
   } from "lucide-svelte";
+  import type { AuthUser } from "../../../../app.d";
+
+  interface Props {
+    /**
+     * Current authenticated user (passed from layout data)
+     */
+    user?: AuthUser | null;
+  }
+
+  const { user = null }: Props = $props();
 
   type NavItem = {
     title: string;
@@ -227,15 +237,10 @@
     </Sidebar.Group>
   </Sidebar.Content>
 
-  <Sidebar.Footer class="p-4">
+  <Sidebar.Footer class="p-2">
     <Sidebar.Menu>
       <Sidebar.MenuItem>
-        <Sidebar.MenuButton>
-          <Settings class="h-4 w-4" />
-          <span class="group-data-[collapsible=icon]:hidden">
-            Quick Settings
-          </span>
-        </Sidebar.MenuButton>
+        <UserMenu {user} />
       </Sidebar.MenuItem>
     </Sidebar.Menu>
   </Sidebar.Footer>

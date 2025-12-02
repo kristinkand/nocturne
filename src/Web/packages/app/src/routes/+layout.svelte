@@ -11,8 +11,9 @@
   } from "$env/static/public";
   import * as Sidebar from "$lib/components/ui/sidebar";
   import { AppSidebar, MobileHeader } from "$lib/components/layout";
+  import type { LayoutData } from "./$types";
 
-  const { children } = $props();
+  const { data, children } = $props<{ data: LayoutData; children: any }>();
 
   // WebSocket bridge is integrated into the SvelteKit dev server
   const config = {
@@ -32,7 +33,7 @@
 </script>
 
 <Sidebar.Provider>
-  <AppSidebar />
+  <AppSidebar user={data.user} />
   <MobileHeader />
   <Sidebar.Inset>
     <!-- Desktop header - hidden on mobile -->

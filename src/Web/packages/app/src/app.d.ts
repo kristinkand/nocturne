@@ -13,6 +13,18 @@ export interface ServerSettings {
 	authorized?: Record<string, unknown>;
 }
 
+/**
+ * Authenticated user information available in locals
+ */
+export interface AuthUser {
+	subjectId: string;
+	name: string;
+	email?: string;
+	roles: string[];
+	permissions: string[];
+	expiresAt?: Date;
+}
+
 declare global {
 	namespace App {
 		interface Error {
@@ -22,6 +34,14 @@ declare global {
 		}
 		interface Locals {
 			apiClient: ApiClient;
+			/**
+			 * Current authenticated user, or null if not authenticated
+			 */
+			user: AuthUser | null;
+			/**
+			 * Whether the current request is authenticated
+			 */
+			isAuthenticated: boolean;
 		}
 
 		// Base page data interface for the main app

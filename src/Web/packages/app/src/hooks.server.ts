@@ -5,6 +5,84 @@ import { PUBLIC_API_URL } from "$env/static/public";
 import { env } from "$env/dynamic/private";
 import { createHash } from "crypto";
 import { sequence } from "@sveltejs/kit/hooks";
+import type { AuthUser } from "./app.d";
+
+/**
+ * Session info response from the API
+ */
+interface SessionInfo {
+  isAuthenticated: boolean;
+  subjectId?: string;
+  name?: string;
+  email?: string;
+  roles?: string[];
+  permissions?: string[];
+  expiresAt?: string;
+}
+
+/**
+ * Auth handler - extracts session from cookies and validates with API
+ */
+const authHandle: Handle = async ({ event, resolve }) => {
+  // Initialize auth state as unauthenticated
+  event.locals.user = null;
+  event.locals.isAuthenticated = false;
+
+  // Use NOCTURNE_API_URL for server-side (internal Docker network) if available,
+  // otherwise fall back to PUBLIC_API_URL for development
+  const apiBaseUrl = env.NOCTURNE_API_URL || PUBLIC_API_URL;
+  if (!apiBaseUrl) {
+    return resolve(event);
+  }
+
+  // Check for auth cookie
+  const authCookie = event.cookies.get("nocturne.IsAuthenticated");
+  const accessToken = event.cookies.get("nocturne.AccessToken");
+
+  if (!authCookie && !accessToken) {
+    // No auth cookies, user is not authenticated
+    return resolve(event);
+  }
+
+  try {
+    // Validate session with the API by calling /auth/session
+    const sessionUrl = new URL("/auth/session", apiBaseUrl);
+
+    // Forward the access token cookie
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Cookie"] = `nocturne.AccessToken=${accessToken}`;
+    }
+
+    const response = await fetch(sessionUrl.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    if (response.ok) {
+      const session: SessionInfo = await response.json();
+
+      if (session.isAuthenticated && session.subjectId) {
+        const user: AuthUser = {
+          subjectId: session.subjectId,
+          name: session.name ?? "User",
+          email: session.email,
+          roles: session.roles ?? [],
+          permissions: session.permissions ?? [],
+          expiresAt: session.expiresAt ? new Date(session.expiresAt) : undefined,
+        };
+
+        event.locals.user = user;
+        event.locals.isAuthenticated = true;
+      }
+    }
+  } catch (error) {
+    // Log but don't fail the request - user will be treated as unauthenticated
+    console.error("Failed to validate session:", error);
+  }
+
+  return resolve(event);
+};
 
 // Proxy handler for /api requests
 const proxyHandle: Handle = async ({ event, resolve }) => {
@@ -126,5 +204,5 @@ export const handleError: HandleServerError = async ({ error, event }) => {
   };
 };
 
-// Chain the proxy handler before the API client handler
-export const handle: Handle = sequence(proxyHandle, apiClientHandle);
+// Chain the auth handler, proxy handler, and API client handler
+export const handle: Handle = sequence(authHandle, proxyHandle, apiClientHandle);

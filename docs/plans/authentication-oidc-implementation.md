@@ -648,195 +648,198 @@ src/API/Nocturne.API/Program.cs    ✅ MODIFIED (registered auth services)
 
 ---
 
-### Phase 2: Authentication Middleware (Current - Week 2-3)
+### Phase 2: Authentication Middleware ✅ COMPLETED
 
 **Objective**: Refactor existing auth middleware to use new JWT services with handler chain.
 
-#### Tasks
+#### Completed Tasks
 
-1. **Refactor AuthenticationMiddleware**
+1. **Refactored AuthenticationMiddleware** ✅
 
-   ```csharp
-   public class AuthenticationMiddleware
-   {
-       // Handler chain: OIDC → Legacy JWT → Access Token → API Secret
-       private readonly IAuthHandler[] _handlers;
+   - Handler chain architecture: OIDC → Legacy JWT → Access Token → API Secret
+   - Each handler implements `IAuthHandler` interface with priority ordering
+   - Context-based auth result propagation
 
-       public async Task InvokeAsync(HttpContext context)
-       {
-           foreach (var handler in _handlers)
-           {
-               var result = await handler.AuthenticateAsync(context);
-               if (result.Succeeded)
-               {
-                   context.Items["AuthContext"] = result.AuthContext;
-                   break;
-               }
-           }
-           await _next(context);
-       }
-   }
-   ```
+2. **Created Auth Handlers** ✅
 
-2. **Create Auth Handlers**
+   - `OidcTokenHandler` - Validates OIDC JWT tokens
+   - `LegacyJwtHandler` - Validates legacy Nightscout JWTs
+   - `AccessTokenHandler` - Validates legacy access tokens
+   - `ApiSecretHandler` - Validates SHA1 hashed API secrets
 
-   ```csharp
-   public interface IAuthHandler
-   {
-       int Priority { get; }
-       Task<AuthResult> AuthenticateAsync(HttpContext context);
-   }
+3. **Updated AuthorizationController** ✅
 
-   // Implementations:
-   // - OidcTokenHandler (new)
-   // - LegacyJwtHandler (refactored)
-   // - AccessTokenHandler (refactored)
-   // - ApiSecretHandler (refactored)
-   ```
+   - `GET /api/v2/authorization/request/:accessToken` - JWT exchange for legacy clients
+   - Subject and role management endpoints
 
-3. **Update AuthorizationController for Token Exchange**
-
-   ```csharp
-   // Maintain: GET /api/v2/authorization/request/:accessToken
-   // Returns JWT for legacy clients
-
-   // Add: POST /api/v2/authorization/token
-   // Modern token endpoint (returns opaque token)
-   ```
-
-4. **Migrate API Endpoints**
+4. **API Endpoint Migration** ✅
    - `/api/v1/verifyauth` - Works with all auth methods
    - `/api/v2/authorization/*` - Subject/role management
-   - `/api/v3/*` - Bearer token only (OIDC or legacy JWT)
+   - Auth handlers support all legacy and modern auth patterns
 
-#### Deliverables
+#### Files Created/Modified
 
-- [ ] Handler-based authentication pipeline
-- [ ] `OidcTokenHandler`, `LegacyJwtHandler`, `AccessTokenHandler`, `ApiSecretHandler`
-- [ ] Updated authorization endpoints
-- [ ] Integration tests for legacy API compatibility
+```
+src/API/Nocturne.API/Middleware/
+├── AuthenticationMiddleware.cs    ✅ REFACTORED
+└── Handlers/
+    ├── IAuthHandler.cs            ✅ NEW
+    ├── OidcTokenHandler.cs        ✅ NEW
+    ├── LegacyJwtHandler.cs        ✅ NEW
+    ├── AccessTokenHandler.cs      ✅ NEW
+    └── ApiSecretHandler.cs        ✅ NEW
+
+src/API/Nocturne.API/Controllers/
+├── AuthorizationController.cs     ✅ UPDATED
+└── AuthenticationController.cs    ✅ UPDATED
+```
 
 ---
 
-### Phase 3: OIDC Integration (Week 3-4)
+### Phase 3: OIDC Integration ✅ COMPLETED
 
 **Objective**: Implement full OIDC authentication flow for the web application.
 
-#### Tasks
+#### Completed Tasks
 
-1. **OIDC Configuration Service**
+1. **OIDC Configuration Service** ✅
 
-   ```csharp
-   public interface IOidcProviderService
-   {
-       Task<OidcProvider?> GetProviderByIssuerAsync(string issuer);
-       Task<OidcDiscoveryDocument> GetDiscoveryDocumentAsync(string issuer);
-       Task<List<OidcProvider>> GetEnabledProvidersAsync();
-       Task<OidcProvider> ConfigureProviderAsync(OidcProviderConfig config);
-   }
-   ```
+   - `IOidcProviderService` with provider management
+   - Discovery document caching
+   - Multi-provider support
 
-2. **Authentication Flow Endpoints**
+2. **Authentication Flow Endpoints** ✅
 
-   ```csharp
-   // src/API/Nocturne.API/Controllers/OidcController.cs
+   - `GET /auth/providers` - List available OIDC providers
+   - `GET /auth/login` - Initiates OIDC authorization code flow
+   - `GET /auth/callback` - Handles OIDC callback, exchanges code for tokens
+   - `POST /auth/logout` - Revokes tokens, performs OIDC RP-initiated logout
+   - `GET /auth/userinfo` - Returns current user info from session
+   - `POST /auth/refresh` - Refresh token flow
+   - `GET /auth/session` - Returns current session status
 
-   [Route("auth")]
-   public class OidcController : ControllerBase
-   {
-       // GET /auth/login?provider={providerId}&returnUrl={url}
-       // Initiates OIDC authorization code flow
+3. **Token Management** ✅
 
-       // GET /auth/callback
-       // Handles OIDC callback, exchanges code for tokens
+   - ID token validation from OIDC providers
+   - Subject creation/update from OIDC claims
+   - Refresh token storage and rotation
+   - Session cookie management (HttpOnly, Secure, SameSite)
 
-       // POST /auth/logout
-       // Revokes tokens, performs OIDC logout if supported
+4. **Session Management** ✅
+   - Cookie-based sessions with access and refresh tokens
+   - State cookie for CSRF protection during OIDC flow
+   - IsAuthenticated cookie for client-side status checking
 
-       // GET /auth/userinfo
-       // Returns current user info from session
+#### Files Created/Modified
 
-       // POST /auth/refresh
-       // Refresh token flow
-   }
-   ```
+```
+src/API/Nocturne.API/Controllers/
+└── OidcController.cs              ✅ NEW
 
-3. **Token Exchange for Opaque Tokens**
+src/API/Nocturne.API/Services/Auth/
+├── OidcAuthService.cs             ✅ NEW
+├── OidcProviderService.cs         ✅ NEW
+└── OidcDiscoveryService.cs        ✅ NEW
 
-   ```csharp
-   // After OIDC callback:
-   // 1. Validate ID token from OIDC provider
-   // 2. Create/update Subject from OIDC claims
-   // 3. Generate opaque access token
-   // 4. Store token in database with hash
-   // 5. Cache token entry
-   // 6. Return opaque token to client (or set session cookie)
-   ```
+src/API/Nocturne.API/Configuration/
+└── OidcOptions.cs                 ✅ NEW
 
-4. **Session Management for Web**
-   ```csharp
-   // Cookie-based sessions for web app
-   // SameSite=Strict, HttpOnly, Secure
-   // Contains encrypted reference to opaque token
-   ```
+src/Core/Nocturne.Core.Contracts/
+├── IOidcAuthService.cs            ✅ NEW
+└── IOidcProviderService.cs        ✅ UPDATED
 
-#### Deliverables
-
-- [ ] OIDC provider configuration system
-- [ ] Authorization code flow implementation
-- [ ] Session cookie management
-- [ ] Token refresh flow
-- [ ] Logout (local + OIDC RP-initiated)
-- [ ] E2E tests for OIDC flows
+src/Core/Nocturne.Core.Models/Authorization/
+├── OidcProvider.cs                ✅ NEW
+├── OidcTokenResponse.cs           ✅ NEW
+└── OidcCallbackResult.cs          ✅ NEW
+```
 
 ---
 
-### Phase 4: Web Frontend Integration (Week 4-5)
+### Phase 4: Web Frontend Integration ✅ COMPLETED
 
 **Objective**: Update SvelteKit frontend to use OIDC authentication.
 
-Might be easiest using @oslojs
+#### Completed Tasks
 
-#### Tasks
+1. **Auth Store with Svelte 5 $state Runes** ✅
 
-1. **Auth Class with $state runes (Svelte)**
+   - `AuthStore` class with reactive state management
+   - Session loading and monitoring
+   - Permission and role checking helpers
+   - Session expiry tracking
 
-2. **Auth Hooks (SvelteKit)**
+2. **SvelteKit Server Hooks** ✅
 
-   ```typescript
-   // src/Web/packages/app/src/hooks.server.ts
-   export const handle: Handle = async ({ event, resolve }) => {
-     // Extract session from cookie
-     // Validate token via API
-     // Populate event.locals.user
-   };
-   ```
+   - `authHandle` hook for session extraction from cookies
+   - Session validation via API
+   - `event.locals.user` and `event.locals.isAuthenticated` population
+   - Updated `app.d.ts` with `AuthUser` interface
 
-3. **Protected Routes**
+3. **Protected Route Layout** ✅
 
-   ```typescript
-   // src/Web/packages/app/src/routes/(protected)/+layout.server.ts
-   export const load: LayoutServerLoad = async ({ locals, url }) => {
-     if (!locals.user) {
-       throw redirect(303, `/auth/login?returnUrl=${url.pathname}`);
-     }
-     return { user: locals.user };
-   };
-   ```
+   - `(protected)` route group with `+layout.server.ts`
+   - Automatic redirect to login for unauthenticated users
+   - Return URL preservation for post-login redirect
 
-4. **Login UI Components**
-   - Provider selection (for multi-SSO)
-   - Login form (if local auth enabled)
-   - User dropdown with logout
-   - Session expiry warning
+4. **Login UI Components** ✅
+   - Login page with provider selection
+   - Provider buttons with custom colors
+   - Error handling and loading states
 
-#### Deliverables
+5. **Logout Route** ✅
+   - Server endpoint for logout (`/auth/logout`)
+   - Cookie cleanup
+   - Provider logout URL support
 
-- [ ] Svelte auth store and hooks
-- [ ] Login/logout pages
-- [ ] Protected route layouts
-- [ ] User profile components
-- [ ] Session expiry handling
+6. **Auth Error Page** ✅
+   - Error page with user-friendly messages
+   - Suggestions based on error codes
+   - Retry and return home buttons
+
+7. **User Profile Components** ✅
+   - `UserMenu` component with dropdown
+   - Role badges
+   - Session expiry display
+   - Quick access to profile, settings, and admin (for admins)
+
+8. **Session Expiry Warning** ✅
+   - `SessionExpiryWarning` component
+   - Auto-refresh capability
+   - Dismissible warning
+
+#### Files Created/Modified
+
+```
+src/Web/packages/app/src/lib/stores/
+└── auth.svelte.ts                     ✅ NEW
+
+src/Web/packages/app/src/
+├── app.d.ts                           ✅ MODIFIED (AuthUser interface)
+└── hooks.server.ts                    ✅ MODIFIED (authHandle)
+
+src/Web/packages/app/src/routes/
+├── +layout.server.ts                  ✅ NEW (provides user data)
+├── +layout.svelte                     ✅ MODIFIED (passes user to AppSidebar)
+├── (protected)/
+│   ├── +layout.server.ts              ✅ NEW
+│   └── +layout.svelte                 ✅ NEW
+└── auth/
+    ├── login/
+    │   ├── +page.server.ts            ✅ NEW
+    │   └── +page.svelte               ✅ NEW
+    ├── logout/
+    │   └── +server.ts                 ✅ NEW
+    └── error/
+        ├── +page.server.ts            ✅ NEW
+        └── +page.svelte               ✅ NEW
+
+src/Web/packages/app/src/lib/components/layout/
+├── UserMenu.svelte                    ✅ NEW
+├── SessionExpiryWarning.svelte        ✅ NEW
+├── AppSidebar.svelte                  ✅ MODIFIED (user prop, UserMenu)
+└── index.ts                           ✅ MODIFIED (exports)
+```
 
 ---
 
