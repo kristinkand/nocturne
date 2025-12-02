@@ -199,12 +199,18 @@ public class TreatmentRepository
     }
 
     /// <summary>
-    /// Delete all demo treatments (treatments with IsDemo = true)
+    /// Delete all treatments with the specified data source
     /// </summary>
-    public async Task<long> DeleteDemoTreatmentsAsync(CancellationToken cancellationToken = default)
+    /// <param name="dataSource">The data source to filter by (e.g., "demo-service")</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The number of treatments deleted</returns>
+    public async Task<long> DeleteByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    )
     {
         var deletedCount = await _context
-            .Treatments.Where(t => t.IsDemo)
+            .Treatments.Where(t => t.DataSource == dataSource)
             .ExecuteDeleteAsync(cancellationToken);
         return deletedCount;
     }

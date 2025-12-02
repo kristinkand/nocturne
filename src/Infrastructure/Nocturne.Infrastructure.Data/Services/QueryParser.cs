@@ -27,7 +27,7 @@ public class QueryParser : IQueryParser
         ["type"] = s => s.Trim('\'', '"'), // Handle quoted strings
         ["direction"] = s => s.Trim('\'', '"'),
         ["device"] = s => s.Trim('\'', '"'),
-        ["is_demo"] = s => bool.Parse(s),
+        ["data_source"] = s => s.Trim('\'', '"'),
     };
 
     private static readonly Dictionary<string, Func<string, object>> DefaultTreatmentConverters =
@@ -447,7 +447,7 @@ public class QueryParser : IQueryParser
             "notes" => "Notes",
             "enteredby" => "EnteredBy",
             "reason" => "Reason",
-            "is_demo" => "IsDemo",
+            "data_source" => "DataSource",
             _ => fieldName, // Use as-is for unknown fields
         };
     }

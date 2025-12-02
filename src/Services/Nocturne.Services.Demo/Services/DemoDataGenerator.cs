@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Services.Demo.Configuration;
@@ -120,7 +121,7 @@ public class DemoDataGenerator : IDemoDataGenerator
                 Sgv = Math.Round(_currentGlucose, 0),
                 Direction = direction.ToString(),
                 Delta = Math.Round(change, 1),
-                IsDemo = true,
+                DataSource = DataSources.DemoService,
                 Filtered = Math.Round(_currentGlucose + (_random.NextDouble() - 0.5) * 2, 0),
                 Unfiltered = Math.Round(_currentGlucose + (_random.NextDouble() - 0.5) * 5, 0),
                 Rssi = _random.Next(0, 101),
@@ -841,7 +842,7 @@ public class DemoDataGenerator : IDemoDataGenerator
                     Mills = mills,
                     Created_at = time.ToString("o"),
                     EnteredBy = "demo-pump",
-                    IsDemo = true,
+                    DataSource = DataSources.DemoService,
                 }
             );
         }
@@ -907,7 +908,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Sgv = Math.Round(glucose, 0),
             Direction = direction.ToString(),
             Delta = delta.HasValue ? Math.Round(delta.Value, 1) : null,
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
             Filtered = Math.Round(glucose + (_random.NextDouble() - 0.5) * 2, 0),
             Unfiltered = Math.Round(glucose + (_random.NextDouble() - 0.5) * 5, 0),
             Rssi = _random.Next(0, 101),
@@ -927,7 +928,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Mills = new DateTimeOffset(time).ToUnixTimeMilliseconds(),
             Created_at = time.ToString("o"),
             EnteredBy = "demo-user",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -940,7 +941,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Mills = new DateTimeOffset(time).ToUnixTimeMilliseconds(),
             Created_at = time.ToString("o"),
             EnteredBy = "demo-user",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -953,7 +954,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Mills = new DateTimeOffset(time).ToUnixTimeMilliseconds(),
             Created_at = time.ToString("o"),
             EnteredBy = "demo-pump", // AID pump delivers partial corrections
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -967,7 +968,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Created_at = time.ToString("o"),
             EnteredBy = "demo-user", // User manually corrects with exact ISF calculation
             Notes = "Manual correction",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -980,7 +981,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Mills = new DateTimeOffset(time).ToUnixTimeMilliseconds(),
             Created_at = time.ToString("o"),
             EnteredBy = "demo-pump",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -994,7 +995,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Created_at = time.ToString("o"),
             EnteredBy = "demo-user",
             Notes = "Low treatment",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 
@@ -1008,7 +1009,7 @@ public class DemoDataGenerator : IDemoDataGenerator
             Mills = new DateTimeOffset(time).ToUnixTimeMilliseconds(),
             Created_at = time.ToString("o"),
             EnteredBy = "demo-pump",
-            IsDemo = true,
+            DataSource = DataSources.DemoService,
         };
     }
 

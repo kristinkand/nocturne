@@ -189,12 +189,18 @@ public class EntryRepository
     }
 
     /// <summary>
-    /// Delete all demo entries (entries with IsDemo = true)
+    /// Delete all entries with the specified data source
     /// </summary>
-    public async Task<long> DeleteDemoEntriesAsync(CancellationToken cancellationToken = default)
+    /// <param name="dataSource">The data source to filter by (e.g., "demo-service")</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The number of entries deleted</returns>
+    public async Task<long> DeleteByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    )
     {
         var deletedCount = await _context
-            .Entries.Where(e => e.IsDemo)
+            .Entries.Where(e => e.DataSource == dataSource)
             .ExecuteDeleteAsync(cancellationToken);
         return deletedCount;
     }

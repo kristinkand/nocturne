@@ -177,8 +177,12 @@ public class DemoServiceHealthMonitor : BackgroundService
 
             _logger.LogInformation("Cleaning up demo data...");
 
-            var entriesDeleted = await postgreSqlService.DeleteDemoEntriesAsync(cancellationToken);
-            var treatmentsDeleted = await postgreSqlService.DeleteDemoTreatmentsAsync(
+            var entriesDeleted = await postgreSqlService.DeleteEntriesByDataSourceAsync(
+                Core.Constants.DataSources.DemoService,
+                cancellationToken
+            );
+            var treatmentsDeleted = await postgreSqlService.DeleteTreatmentsByDataSourceAsync(
+                Core.Constants.DataSources.DemoService,
                 cancellationToken
             );
 

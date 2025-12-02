@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Nocturne.API.Services;
+using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Cache.Abstractions;
@@ -23,6 +24,9 @@ public class EntryServiceTests
     private readonly Mock<IDemoModeService> _mockDemoModeService;
     private readonly Mock<ILogger<EntryService>> _mockLogger;
     private readonly EntryService _entryService;
+
+    // The demo mode filter query applied when demo mode is disabled (excludes demo data)
+    private const string NonDemoFilterQuery = "{\"data_source\":{\"$ne\":\"demo-service\"}}";
 
     public EntryServiceTests()
     {
@@ -76,7 +80,7 @@ public class EntryServiceTests
                     "sgv",
                     10,
                     0,
-                    null,
+                    NonDemoFilterQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -127,8 +131,20 @@ public class EntryServiceTests
             },
         };
 
+        // GetEntriesAsync internally calls GetEntriesWithAdvancedFilterAsync with the demo filter applied
+        // Use loose matching for the mock setup to avoid parameter mismatch issues
         _mockPostgreSqlService
-            .Setup(x => x.GetEntriesAsync(find, count, skip, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetEntriesWithAdvancedFilterAsync(
+                    It.IsAny<string?>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(expectedEntries);
 
         // Mock cache service to simulate cache miss and execute the factory function
@@ -456,9 +472,25 @@ public class EntryServiceTests
             Mills = 1234567890,
         };
 
+        // GetCurrentEntryAsync internally calls GetEntriesWithAdvancedFilterAsync with count=1 and demo filter
         _mockPostgreSqlService
-            .Setup(x => x.GetCurrentEntryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedEntry);
+            .Setup(x =>
+                x.GetEntriesWithAdvancedFilterAsync(
+                    "sgv",
+                    1,
+                    0,
+                    NonDemoFilterQuery,
+                    null,
+                    false,
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new List<Entry> { expectedEntry });
+
+        // Mock cache service to simulate cache miss
+        _mockCacheService
+            .Setup(x => x.GetAsync<Entry>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entry?)null);
 
         // Act
         var result = await _entryService.GetCurrentEntryAsync(CancellationToken.None);
@@ -474,8 +506,24 @@ public class EntryServiceTests
     public async Task GetCurrentEntryAsync_WithNoEntries_ReturnsNull()
     {
         // Arrange
+        // GetCurrentEntryAsync internally calls GetEntriesWithAdvancedFilterAsync with count=1 and demo filter
         _mockPostgreSqlService
-            .Setup(x => x.GetCurrentEntryAsync(It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetEntriesWithAdvancedFilterAsync(
+                    "sgv",
+                    1,
+                    0,
+                    NonDemoFilterQuery,
+                    null,
+                    false,
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new List<Entry>());
+
+        // Mock cache service to simulate cache miss
+        _mockCacheService
+            .Setup(x => x.GetAsync<Entry>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Entry?)null);
 
         // Act
@@ -492,6 +540,8 @@ public class EntryServiceTests
     {
         // Arrange
         var find = "{\"type\":\"sgv\",\"sgv\":{\"$gte\":100}}";
+        var expectedFindQuery =
+            "{\"data_source\":{\"$ne\":\"demo-service\"},\"type\":\"sgv\",\"sgv\":{\"$gte\":100}}";
         var count = 50;
         var skip = 10;
         var expectedEntries = new List<Entry>
@@ -518,7 +568,7 @@ public class EntryServiceTests
                     It.IsAny<string>(),
                     count,
                     skip,
-                    find,
+                    expectedFindQuery,
                     It.IsAny<string?>(),
                     It.IsAny<bool>(),
                     It.IsAny<CancellationToken>()
@@ -581,6 +631,7 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "{\"type\":\"sgv\"}";
+        var expectedFindQuery = "{\"data_source\":{\"$ne\":\"demo-service\"},\"type\":\"sgv\"}";
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -600,7 +651,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -626,7 +677,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -642,6 +693,8 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "find[sgv][$gte]=100";
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 50;
         var skip = 10;
         var expectedEntries = new List<Entry>
@@ -668,7 +721,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -693,7 +746,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -716,6 +769,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -729,7 +784,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -753,7 +808,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -774,6 +829,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -792,7 +849,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -816,7 +873,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -840,6 +897,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -859,7 +918,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -883,7 +942,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -899,6 +958,8 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "{\"$and\":[{\"type\":\"sgv\"},{\"sgv\":{\"$gte\":100,\"$lte\":200}}]}";
+        var expectedFindQuery =
+            "{\"data_source\":{\"$ne\":\"demo-service\"},\"$and\":[{\"type\":\"sgv\"},{\"sgv\":{\"$gte\":100,\"$lte\":200}}]}";
         var count = 25;
         var skip = 5;
         var expectedEntries = new List<Entry>
@@ -923,7 +984,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -948,7 +1009,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -964,6 +1025,8 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "find[sgv][$gte]=100&find[sgv][$lte]=200&find[type]=sgv";
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 15;
         var skip = 3;
         var expectedEntries = new List<Entry>
@@ -982,7 +1045,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1007,7 +1070,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1026,6 +1089,8 @@ public class EntryServiceTests
         var count = 20;
         var skip = 10;
         var findQuery = "find[sgv][$gte]=100";
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var dateString = "2022-01-01T12:00:00.000Z";
         var reverseResults = true;
         var expectedEntries = new List<Entry> { new Entry { Id = "1" } };
@@ -1036,7 +1101,7 @@ public class EntryServiceTests
                     type,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     dateString,
                     reverseResults,
                     It.IsAny<CancellationToken>()
@@ -1063,7 +1128,7 @@ public class EntryServiceTests
                     type,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     dateString,
                     reverseResults,
                     It.IsAny<CancellationToken>()
@@ -1083,6 +1148,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // Null/empty/whitespace queries get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry> { new Entry { Id = "1" } };
@@ -1093,7 +1160,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1117,7 +1184,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1139,9 +1206,11 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // Non-JSON queries (including invalid ones) get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
-        var expectedEntries = new List<Entry>(); // MongoDB service should handle gracefully and return empty
+        var expectedEntries = new List<Entry>(); // Service should handle gracefully and return empty
 
         _mockPostgreSqlService
             .Setup(x =>
@@ -1149,7 +1218,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1174,7 +1243,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1195,6 +1264,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1214,7 +1285,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1238,7 +1309,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1259,6 +1330,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1279,7 +1352,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1303,7 +1376,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1323,6 +1396,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1342,7 +1417,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1366,7 +1441,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1382,6 +1457,8 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "find[sgv][$gte]=100";
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
 
@@ -1391,7 +1468,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     It.IsAny<CancellationToken>()
@@ -1415,7 +1492,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1431,6 +1508,8 @@ public class EntryServiceTests
     {
         // Arrange
         var findQuery = "find[type]=sgv";
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var cancellationToken = new CancellationToken();
@@ -1442,7 +1521,7 @@ public class EntryServiceTests
                     null, // type
                     count,
                     skip,
-                    findQuery, // findQuery
+                    expectedFindQuery, // findQuery with demo filter
                     null, // dateString
                     false, // reverseResults
                     cancellationToken
@@ -1466,7 +1545,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     cancellationToken
@@ -1490,6 +1569,7 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // Each JSON query gets the demo filter merged in, so use It.IsAny for the parameterized test
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1508,7 +1588,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    It.IsAny<string?>(),
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1532,7 +1612,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    It.IsAny<string?>(),
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1554,6 +1634,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1572,7 +1654,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1596,7 +1678,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1620,6 +1702,8 @@ public class EntryServiceTests
     )
     {
         // Arrange
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1638,7 +1722,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1663,7 +1747,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1683,6 +1767,8 @@ public class EntryServiceTests
     )
     {
         // Arrange - Testing patterns from reports +layout.server.ts
+        // URL parameter queries are not JSON, so they get replaced with just the demo filter
+        var expectedFindQuery = NonDemoFilterQuery;
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1702,7 +1788,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1726,7 +1812,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    expectedFindQuery,
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1750,6 +1836,7 @@ public class EntryServiceTests
     )
     {
         // Arrange - Testing JSON format queries from reports +layout.server.ts
+        // Each JSON query gets the demo filter merged in, so use It.IsAny for the parameterized test
         var count = 10;
         var skip = 0;
         var expectedEntries = new List<Entry>
@@ -1769,7 +1856,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    It.IsAny<string?>(),
                     null,
                     false,
                     It.IsAny<CancellationToken>()
@@ -1793,7 +1880,7 @@ public class EntryServiceTests
                     null,
                     count,
                     skip,
-                    findQuery,
+                    It.IsAny<string?>(),
                     null,
                     false,
                     It.IsAny<CancellationToken>()

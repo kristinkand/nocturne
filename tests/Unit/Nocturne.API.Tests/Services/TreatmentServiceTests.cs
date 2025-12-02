@@ -68,8 +68,18 @@ public class TreatmentServiceTests
                 Insulin = 2.0,
             },
         };
+
+        // Production code now uses GetTreatmentsWithAdvancedFilterAsync with demo mode filter
         _mockPostgreSqlService
-            .Setup(x => x.GetTreatmentsAsync(10, 0, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetTreatmentsWithAdvancedFilterAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(expectedTreatments);
 
         // Setup cache service to execute the factory function and return the result
@@ -97,7 +107,14 @@ public class TreatmentServiceTests
         result.Should().NotBeNull();
         result.Should().HaveCount(2);
         _mockPostgreSqlService.Verify(
-            x => x.GetTreatmentsAsync(10, 0, It.IsAny<CancellationToken>()),
+            x =>
+                x.GetTreatmentsWithAdvancedFilterAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
     }

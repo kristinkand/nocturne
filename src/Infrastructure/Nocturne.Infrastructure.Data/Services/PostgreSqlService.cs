@@ -236,10 +236,13 @@ public class PostgreSqlService : IPostgreSqlService
     }
 
     /// <inheritdoc />
-    public async Task<long> DeleteDemoEntriesAsync(CancellationToken cancellationToken = default)
+    public async Task<long> DeleteEntriesByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    )
     {
-        _logger.LogInformation("Deleting all demo entries");
-        return await _entryRepository.DeleteDemoEntriesAsync(cancellationToken);
+        _logger.LogInformation("Deleting all entries with data source: {DataSource}", dataSource);
+        return await _entryRepository.DeleteByDataSourceAsync(dataSource, cancellationToken);
     }
 
     /// <summary>
@@ -291,15 +294,17 @@ public class PostgreSqlService : IPostgreSqlService
         return await _treatmentRepository.DeleteTreatmentsAsync(findQuery, cancellationToken);
     }
 
-    /// <summary>
-    /// Delete all demo treatments (treatments with IsDemo = true)
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Number of treatments deleted</returns>
-    public async Task<long> DeleteDemoTreatmentsAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public async Task<long> DeleteTreatmentsByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    )
     {
-        _logger.LogDebug("Deleting all demo treatments");
-        return await _treatmentRepository.DeleteDemoTreatmentsAsync(cancellationToken);
+        _logger.LogInformation(
+            "Deleting all treatments with data source: {DataSource}",
+            dataSource
+        );
+        return await _treatmentRepository.DeleteByDataSourceAsync(dataSource, cancellationToken);
     }
 
     /// <summary>

@@ -126,11 +126,15 @@ public interface IPostgreSqlService
     Task<bool> DeleteEntryAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Delete all demo entries (entries with IsDemo = true)
+    /// Delete all entries with the specified data source
     /// </summary>
+    /// <param name="dataSource">The data source to filter by (e.g., "demo-service", "dexcom-connector")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of entries deleted</returns>
-    Task<long> DeleteDemoEntriesAsync(CancellationToken cancellationToken = default);
+    Task<long> DeleteEntriesByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Bulk delete entries using query filters
@@ -252,11 +256,15 @@ public interface IPostgreSqlService
     );
 
     /// <summary>
-    /// Delete all demo treatments (treatments with IsDemo = true)
+    /// Delete all treatments with the specified data source
     /// </summary>
+    /// <param name="dataSource">The data source to filter by (e.g., "demo-service", "dexcom-connector")</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of treatments deleted</returns>
-    Task<long> DeleteDemoTreatmentsAsync(CancellationToken cancellationToken = default);
+    Task<long> DeleteTreatmentsByDataSourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Get the current active profile

@@ -579,12 +579,8 @@ public class NocturneDbContext : DbContext
 
         modelBuilder.Entity<TreatmentEntity>().Property(t => t.ProfileJson).HasDefaultValue("null");
 
-        modelBuilder.Entity<TreatmentEntity>().Property(t => t.IsDemo).HasDefaultValue(false);
-
         // Configure required fields and defaults
         modelBuilder.Entity<EntryEntity>().Property(e => e.Type).HasDefaultValue("sgv");
-
-        modelBuilder.Entity<EntryEntity>().Property(e => e.IsDemo).HasDefaultValue(false);
 
         modelBuilder.Entity<FoodEntity>().Property(f => f.Type).HasDefaultValue("food");
 

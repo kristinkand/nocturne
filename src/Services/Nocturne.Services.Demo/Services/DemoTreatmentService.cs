@@ -1,3 +1,4 @@
+using Nocturne.Core.Constants;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Abstractions;
 
@@ -46,7 +47,10 @@ public class DemoTreatmentService : IDemoTreatmentService
         CancellationToken cancellationToken = default
     )
     {
-        var count = await _postgreSqlService.DeleteDemoTreatmentsAsync(cancellationToken);
+        var count = await _postgreSqlService.DeleteTreatmentsByDataSourceAsync(
+            DataSources.DemoService,
+            cancellationToken
+        );
         _logger.LogInformation("Deleted {Count} demo treatments", count);
         return count;
     }

@@ -76,7 +76,7 @@ public static class TreatmentMapper
             Percentage = treatment.Percentage,
             Timeshift = treatment.Timeshift,
             TransmitterId = treatment.TransmitterId,
-            IsDemo = treatment.IsDemo ?? false,
+            DataSource = treatment.DataSource,
             AdditionalPropertiesJson =
                 treatment.AdditionalProperties != null
                     ? JsonSerializer.Serialize(treatment.AdditionalProperties)
@@ -146,7 +146,7 @@ public static class TreatmentMapper
             Percentage = entity.Percentage,
             Timeshift = entity.Timeshift,
             TransmitterId = entity.TransmitterId,
-            IsDemo = entity.IsDemo,
+            DataSource = entity.DataSource,
             AdditionalProperties = DeserializeJsonProperty<Dictionary<string, object>>(
                 entity.AdditionalPropertiesJson
             ),
@@ -213,7 +213,7 @@ public static class TreatmentMapper
         entity.Percentage = treatment.Percentage;
         entity.Timeshift = treatment.Timeshift;
         entity.TransmitterId = treatment.TransmitterId;
-        entity.IsDemo = treatment.IsDemo ?? false;
+        entity.DataSource = treatment.DataSource;
         entity.AdditionalPropertiesJson =
             treatment.AdditionalProperties != null
                 ? JsonSerializer.Serialize(treatment.AdditionalProperties)

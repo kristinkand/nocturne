@@ -40,7 +40,7 @@ public static class EntryMapper
             Intercept = entry.Intercept,
             Scale = entry.Scale,
             ModifiedAt = entry.ModifiedAt,
-            IsDemo = entry.IsDemo ?? false,
+            DataSource = entry.DataSource,
             MetaJson = entry.Meta != null ? JsonSerializer.Serialize(entry.Meta) : null,
         };
     }
@@ -75,7 +75,7 @@ public static class EntryMapper
             Scale = entity.Scale,
             CreatedAt = entity.CreatedAt,
             ModifiedAt = entity.ModifiedAt,
-            IsDemo = entity.IsDemo,
+            DataSource = entity.DataSource,
             Meta = DeserializeJsonProperty<Dictionary<string, object>>(entity.MetaJson),
         };
     }
@@ -107,7 +107,7 @@ public static class EntryMapper
         entity.Scale = entry.Scale;
         entity.CreatedAt = entry.CreatedAt;
         entity.ModifiedAt = entry.ModifiedAt;
-        entity.IsDemo = entry.IsDemo ?? false;
+        entity.DataSource = entry.DataSource;
         entity.MetaJson = entry.Meta != null ? JsonSerializer.Serialize(entry.Meta) : null;
     }
 

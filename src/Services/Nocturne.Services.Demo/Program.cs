@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Infrastructure.Data.Abstractions;
@@ -46,6 +47,13 @@ public class Program
         // Register demo data generation service
         builder.Services.AddSingleton<IDemoDataGenerator, DemoDataGenerator>();
 
+        // Register demo settings generator
+        builder.Services.AddSingleton<DemoSettingsGenerator>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<DemoModeConfiguration>>().Value;
+            return new DemoSettingsGenerator(config);
+        });
+
         // Register demo data entry/treatment services
         builder.Services.AddScoped<IDemoEntryService, DemoEntryService>();
         builder.Services.AddScoped<IDemoTreatmentService, DemoTreatmentService>();
@@ -85,6 +93,16 @@ public class Program
             }
         );
 
+        // Endpoint to get UI settings configuration (demo mode data for frontend settings pages)
+        app.MapGet(
+            "/ui-settings",
+            (DemoSettingsGenerator settingsGenerator) =>
+            {
+                var settings = settingsGenerator.GenerateSettings();
+                return Results.Ok(settings);
+            }
+        );
+
         // Endpoint to get current demo data statistics
         app.MapGet(
             "/stats",
@@ -96,7 +114,7 @@ public class Program
 
                 // Count demo entries using find query
                 var entriesCount = await postgreSqlService.CountEntriesAsync(
-                    findQuery: "{\"is_demo\":true}",
+                    findQuery: "{\"data_source\":\"" + DataSources.DemoService + "\"}",
                     cancellationToken: ct
                 );
 
@@ -142,8 +160,14 @@ public class Program
                 var postgreSqlService =
                     scope.ServiceProvider.GetRequiredService<IPostgreSqlService>();
 
-                var entriesDeleted = await postgreSqlService.DeleteDemoEntriesAsync(ct);
-                var treatmentsDeleted = await postgreSqlService.DeleteDemoTreatmentsAsync(ct);
+                var entriesDeleted = await postgreSqlService.DeleteEntriesByDataSourceAsync(
+                    DataSources.DemoService,
+                    ct
+                );
+                var treatmentsDeleted = await postgreSqlService.DeleteTreatmentsByDataSourceAsync(
+                    DataSources.DemoService,
+                    ct
+                );
 
                 return Results.Ok(
                     new

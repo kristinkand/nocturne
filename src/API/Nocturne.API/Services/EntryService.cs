@@ -175,11 +175,22 @@ public class EntryService : IEntryService
     /// This ensures filtering happens at the database level for efficiency.
     /// </summary>
     /// <param name="existingQuery">Optional existing query to merge with</param>
-    /// <returns>A JSON find query string with is_demo filter</returns>
+    /// <returns>A JSON find query string with data_source filter</returns>
     private string BuildDemoModeFilterQuery(string? existingQuery = null)
     {
-        var isDemoValue = _demoModeService.IsEnabled ? "true" : "false";
-        var demoFilter = $"\"is_demo\":{isDemoValue}";
+        // When demo mode is enabled, filter for data_source = "demo-service"
+        // When demo mode is disabled, filter for data_source != "demo-service" (null or other sources)
+        string demoFilter;
+        if (_demoModeService.IsEnabled)
+        {
+            demoFilter = $"\"data_source\":\"{Core.Constants.DataSources.DemoService}\"";
+        }
+        else
+        {
+            // Use $ne operator to exclude demo service data
+            demoFilter =
+                $"\"data_source\":{{\"$ne\":\"{Core.Constants.DataSources.DemoService}\"}}";
+        }
 
         if (string.IsNullOrWhiteSpace(existingQuery) || existingQuery == "{}")
         {
@@ -209,8 +220,12 @@ public class EntryService : IEntryService
     private IEnumerable<Entry> FilterEntriesByDemoMode(IEnumerable<Entry> entries)
     {
         var entriesList = entries.ToList();
-        var demoEntries = entriesList.Where(e => e.IsDemo == true).ToList();
-        var nonDemoEntries = entriesList.Where(e => e.IsDemo != true).ToList();
+        var demoEntries = entriesList
+            .Where(e => e.DataSource == Core.Constants.DataSources.DemoService)
+            .ToList();
+        var nonDemoEntries = entriesList
+            .Where(e => e.DataSource != Core.Constants.DataSources.DemoService)
+            .ToList();
 
         _logger.LogDebug(
             "FilterEntriesByDemoMode: DemoModeEnabled={DemoMode}, TotalEntries={Total}, DemoEntries={Demo}, NonDemoEntries={NonDemo}",

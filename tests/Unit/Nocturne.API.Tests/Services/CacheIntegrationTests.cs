@@ -103,9 +103,20 @@ public class CacheIntegrationTests
             .Setup(x => x.GetAsync<Entry>("entries:current", It.IsAny<CancellationToken>()))
             .ReturnsAsync((Entry?)null);
 
+        // Production code now uses GetEntriesWithAdvancedFilterAsync with demo mode filter
         _mockPostgreSqlService
-            .Setup(x => x.GetCurrentEntryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(dbEntry);
+            .Setup(x =>
+                x.GetEntriesWithAdvancedFilterAsync(
+                    It.IsAny<string?>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new[] { dbEntry });
 
         var entryService = new EntryService(
             _mockPostgreSqlService.Object,
@@ -130,7 +141,16 @@ public class CacheIntegrationTests
             Times.Once
         );
         _mockPostgreSqlService.Verify(
-            x => x.GetCurrentEntryAsync(It.IsAny<CancellationToken>()),
+            x =>
+                x.GetEntriesWithAdvancedFilterAsync(
+                    It.IsAny<string?>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _mockCacheService.Verify(

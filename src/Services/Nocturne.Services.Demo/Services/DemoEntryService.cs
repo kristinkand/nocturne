@@ -1,3 +1,4 @@
+using Nocturne.Core.Constants;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Abstractions;
 
@@ -42,7 +43,10 @@ public class DemoEntryService : IDemoEntryService
 
     public async Task<long> DeleteAllDemoEntriesAsync(CancellationToken cancellationToken = default)
     {
-        var count = await _postgreSqlService.DeleteDemoEntriesAsync(cancellationToken);
+        var count = await _postgreSqlService.DeleteEntriesByDataSourceAsync(
+            DataSources.DemoService,
+            cancellationToken
+        );
         _logger.LogInformation("Deleted {Count} demo entries", count);
         return count;
     }
@@ -51,7 +55,7 @@ public class DemoEntryService : IDemoEntryService
     {
         // Use a simple query to check for demo entries
         var count = await _postgreSqlService.CountEntriesAsync(
-            findQuery: "{\"is_demo\":true}",
+            findQuery: "{\"data_source\":\"" + DataSources.DemoService + "\"}",
             cancellationToken: cancellationToken
         );
         return count > 0;
