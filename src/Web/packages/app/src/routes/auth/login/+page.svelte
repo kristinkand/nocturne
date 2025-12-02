@@ -9,9 +9,7 @@
   let isLoggingIn = $state(false);
   let selectedProvider = $state<string | null>(null);
 
-  /**
-   * Initiate login with the specified provider
-   */
+  /** Initiate login with the specified provider */
   function loginWithProvider(providerId: string) {
     isLoggingIn = true;
     selectedProvider = providerId;
@@ -27,9 +25,7 @@
     window.location.href = `/api/auth/login?${params.toString()}`;
   }
 
-  /**
-   * Get button style based on provider color
-   */
+  /** Get button style based on provider color */
   function getButtonStyle(buttonColor?: string): string {
     if (!buttonColor) return "";
     return `background-color: ${buttonColor}; border-color: ${buttonColor};`;
@@ -43,7 +39,9 @@
 <div class="flex min-h-screen items-center justify-center bg-background p-4">
   <Card.Root class="w-full max-w-md">
     <Card.Header class="space-y-1 text-center">
-      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+      <div
+        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
+      >
         <KeyRound class="h-6 w-6 text-primary" />
       </div>
       <Card.Title class="text-2xl font-bold">Welcome to Nocturne</Card.Title>
@@ -85,20 +83,26 @@
           </div>
         </div>
       {:else}
-        <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+        <div
+          class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20"
+        >
           <p class="text-sm text-yellow-800 dark:text-yellow-200">
-            No authentication providers are configured. Please contact your administrator
-            to set up OIDC authentication.
+            No authentication providers are configured. Please contact your
+            administrator to set up OIDC authentication.
           </p>
         </div>
       {/if}
 
       <div class="text-center text-xs text-muted-foreground">
         <p>
-          By signing in, you agree to our 
-          <a href="/terms" class="underline hover:text-foreground">Terms of Service</a>
+          By signing in, you agree to our
+          <a href="/terms" class="underline hover:text-foreground">
+            Terms of Service
+          </a>
           and
-          <a href="/privacy" class="underline hover:text-foreground">Privacy Policy</a>
+          <a href="/privacy" class="underline hover:text-foreground">
+            Privacy Policy
+          </a>
         </p>
       </div>
     </Card.Content>
@@ -107,7 +111,9 @@
       <div class="text-center text-xs text-muted-foreground">
         <p>
           Having trouble signing in?
-          <a href="/auth/help" class="underline hover:text-foreground">Get help</a>
+          <a href="/auth/help" class="underline hover:text-foreground">
+            Get help
+          </a>
         </p>
       </div>
     </Card.Footer>

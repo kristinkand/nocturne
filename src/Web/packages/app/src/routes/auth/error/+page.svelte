@@ -6,9 +6,7 @@
 
   const { data } = $props<{ data: PageData }>();
 
-  /**
-   * Get a user-friendly error title based on error code
-   */
+  /** Get a user-friendly error title based on error code */
   function getErrorTitle(error: string): string {
     const titles: Record<string, string> = {
       invalid_state: "Session Expired",
@@ -26,19 +24,26 @@
     return titles[error] || "Authentication Error";
   }
 
-  /**
-   * Get a user-friendly suggestion based on error code
-   */
+  /** Get a user-friendly suggestion based on error code */
   function getSuggestion(error: string): string {
     const suggestions: Record<string, string> = {
-      invalid_state: "Your session may have expired. Please try logging in again.",
-      access_denied: "You may not have permission to access this resource. Contact your administrator if you believe this is an error.",
-      invalid_request: "There was a problem with the authentication request. Please try again.",
-      callback_failed: "The authentication process was interrupted. Please try logging in again.",
-      provider_error: "There was an issue with the authentication provider. Please try again later.",
-      oidc_disabled: "Authentication is not currently enabled. Please contact your administrator.",
+      invalid_state:
+        "Your session may have expired. Please try logging in again.",
+      access_denied:
+        "You may not have permission to access this resource. Contact your administrator if you believe this is an error.",
+      invalid_request:
+        "There was a problem with the authentication request. Please try again.",
+      callback_failed:
+        "The authentication process was interrupted. Please try logging in again.",
+      provider_error:
+        "There was an issue with the authentication provider. Please try again later.",
+      oidc_disabled:
+        "Authentication is not currently enabled. Please contact your administrator.",
     };
-    return suggestions[error] || "Please try logging in again. If the problem persists, contact your administrator.";
+    return (
+      suggestions[error] ||
+      "Please try logging in again. If the problem persists, contact your administrator."
+    );
   }
 </script>
 
@@ -49,7 +54,9 @@
 <div class="flex min-h-screen items-center justify-center bg-background p-4">
   <Card.Root class="w-full max-w-md">
     <Card.Header class="space-y-1 text-center">
-      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+      <div
+        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10"
+      >
         <AlertTriangle class="h-6 w-6 text-destructive" />
       </div>
       <Card.Title class="text-2xl font-bold">
@@ -81,7 +88,11 @@
 
     <Card.Footer class="flex flex-col space-y-2">
       <div class="text-center text-xs text-muted-foreground">
-        <p>Error code: <code class="bg-muted px-1 py-0.5 rounded">{data.error}</code></p>
+        <p>
+          Error code: <code class="bg-muted px-1 py-0.5 rounded">
+            {data.error}
+          </code>
+        </p>
       </div>
     </Card.Footer>
   </Card.Root>
