@@ -1099,6 +1099,323 @@ export class MetadataClient {
     }
 }
 
+export class OidcClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get available OIDC providers for login
+     * @return List of enabled providers
+     */
+    getProviders(signal?: AbortSignal): Promise<OidcProviderInfo[]> {
+        let url_ = this.baseUrl + "/auth/providers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetProviders(_response);
+        });
+    }
+
+    protected processGetProviders(response: Response): Promise<OidcProviderInfo[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as OidcProviderInfo[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<OidcProviderInfo[]>(null as any);
+    }
+
+    /**
+     * Initiate OIDC login flow
+    Redirects to the OIDC provider's authorization endpoint
+     * @param provider (optional) Provider ID (optional, uses default if not specified)
+     * @param returnUrl (optional) URL to return to after login
+     */
+    login(provider?: string | null | undefined, returnUrl?: string | null | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/auth/login?";
+        if (provider !== undefined && provider !== null)
+            url_ += "provider=" + encodeURIComponent("" + provider) + "&";
+        if (returnUrl !== undefined && returnUrl !== null)
+            url_ += "returnUrl=" + encodeURIComponent("" + returnUrl) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processLogin(_response);
+        });
+    }
+
+    protected processLogin(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 302) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Handle OIDC callback from provider
+    Exchanges authorization code for tokens and creates session
+     * @param code (optional) Authorization code from provider
+     * @param state (optional) State parameter for CSRF verification
+     * @param error (optional) Error code from provider (if any)
+     * @param error_description (optional) Error description from provider
+     */
+    callback(code?: string | null | undefined, state?: string | null | undefined, error?: string | null | undefined, error_description?: string | null | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/auth/callback?";
+        if (code !== undefined && code !== null)
+            url_ += "code=" + encodeURIComponent("" + code) + "&";
+        if (state !== undefined && state !== null)
+            url_ += "state=" + encodeURIComponent("" + state) + "&";
+        if (error !== undefined && error !== null)
+            url_ += "error=" + encodeURIComponent("" + error) + "&";
+        if (error_description !== undefined && error_description !== null)
+            url_ += "error_description=" + encodeURIComponent("" + error_description) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCallback(_response);
+        });
+    }
+
+    protected processCallback(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 302) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Refresh the session tokens
+    Uses the refresh token to get a new access token
+     * @return New token response
+     */
+    refresh(signal?: AbortSignal): Promise<OidcTokenResponse> {
+        let url_ = this.baseUrl + "/auth/refresh";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processRefresh(_response);
+        });
+    }
+
+    protected processRefresh(response: Response): Promise<OidcTokenResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as OidcTokenResponse;
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<OidcTokenResponse>(null as any);
+    }
+
+    /**
+     * Logout and revoke the session
+     * @param providerId (optional) Provider ID for RP-initiated logout (optional)
+     * @return Logout result with optional provider logout URL
+     */
+    logout(providerId?: string | null | undefined, signal?: AbortSignal): Promise<LogoutResponse> {
+        let url_ = this.baseUrl + "/auth/logout?";
+        if (providerId !== undefined && providerId !== null)
+            url_ += "providerId=" + encodeURIComponent("" + providerId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processLogout(_response);
+        });
+    }
+
+    protected processLogout(response: Response): Promise<LogoutResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as LogoutResponse;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LogoutResponse>(null as any);
+    }
+
+    /**
+     * Get current user information
+     * @return User information from the current session
+     */
+    getUserInfo(signal?: AbortSignal): Promise<OidcUserInfo> {
+        let url_ = this.baseUrl + "/auth/userinfo";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUserInfo(_response);
+        });
+    }
+
+    protected processGetUserInfo(response: Response): Promise<OidcUserInfo> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as OidcUserInfo;
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<OidcUserInfo>(null as any);
+    }
+
+    /**
+     * Get current session information
+     * @return Session status
+     */
+    getSession(signal?: AbortSignal): Promise<SessionInfo> {
+        let url_ = this.baseUrl + "/auth/session";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetSession(_response);
+        });
+    }
+
+    protected processGetSession(response: Response): Promise<SessionInfo> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionInfo;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<SessionInfo>(null as any);
+    }
+}
+
 export class StatisticsClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -11099,6 +11416,67 @@ export interface WebSocketEventsMetadata {
 }
 
 export type WebSocketEvents = "connect" | "disconnect" | "connect_error" | "reconnect" | "reconnect_failed" | "connect_ack" | "dataUpdate" | "treatmentUpdate" | "create" | "update" | "delete" | "announcement" | "alarm" | "urgent_alarm" | "clear_alarm" | "notification" | "statusUpdate" | "status" | "authenticate" | "authenticated" | "join" | "leave";
+
+/** OIDC provider info for login page */
+export interface OidcProviderInfo {
+    /** Provider ID */
+    id?: string;
+    /** Display name */
+    name?: string;
+    /** Icon URL or CSS class */
+    icon?: string | undefined;
+    /** Button color for UI */
+    buttonColor?: string | undefined;
+}
+
+export interface OidcTokenResponse {
+    accessToken?: string;
+    refreshToken?: string;
+    tokenType?: string;
+    expiresIn?: number;
+    expiresAt?: Date;
+    subjectId?: string;
+}
+
+/** Logout response */
+export interface LogoutResponse {
+    /** Whether logout was successful */
+    success?: boolean;
+    /** URL for provider logout (if RP-initiated logout is supported) */
+    providerLogoutUrl?: string | undefined;
+    /** Message */
+    message?: string | undefined;
+}
+
+export interface OidcUserInfo {
+    subjectId?: string;
+    name?: string;
+    email?: string | undefined;
+    emailVerified?: boolean | undefined;
+    picture?: string | undefined;
+    roles?: string[];
+    permissions?: string[];
+    providerName?: string | undefined;
+    lastLoginAt?: Date | undefined;
+}
+
+/** Current session information */
+export interface SessionInfo {
+    /** Whether the user is authenticated */
+    isAuthenticated?: boolean;
+    /** Subject ID */
+    subjectId?: string | undefined;
+    /** User name */
+    name?: string | undefined;
+    /** Email address */
+    email?: string | undefined;
+    /** Assigned roles */
+    roles?: string[] | undefined;
+    /** Resolved permissions */
+    permissions?: string[] | undefined;
+    /** Session expiration time */
+    expiresAt?: Date | undefined;
+}
 
 export interface BasicGlucoseStats {
     count?: number;

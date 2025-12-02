@@ -25,8 +25,8 @@ public class LegacyJwtHandler : IAuthHandler
 
     private readonly IConfiguration _configuration;
     private readonly ILogger<LegacyJwtHandler> _logger;
-    private readonly byte[] _jwtKey;
-    private readonly TokenValidationParameters _validationParameters;
+    private readonly byte[]? _jwtKey;
+    private readonly TokenValidationParameters? _validationParameters;
 
     /// <summary>
     /// Creates a new instance of LegacyJwtHandler
@@ -36,27 +36,43 @@ public class LegacyJwtHandler : IAuthHandler
         _configuration = configuration;
         _logger = logger;
 
-        // Use JWT_SECRET or fall back to API_SECRET for signing key
+        // Use JWT_SECRET env var, fall back to API_SECRET, then Jwt:SecretKey from config
         var jwtSecret =
             _configuration[ServiceNames.ConfigKeys.JwtSecret]
             ?? _configuration[ServiceNames.ConfigKeys.ApiSecret]
-            ?? "";
-        _jwtKey = Encoding.UTF8.GetBytes(jwtSecret);
+            ?? _configuration["Jwt:SecretKey"];
 
-        _validationParameters = new TokenValidationParameters
+        // Only configure JWT validation if a secret is available
+        if (!string.IsNullOrEmpty(jwtSecret))
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(_jwtKey),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1),
-        };
+            _jwtKey = Encoding.UTF8.GetBytes(jwtSecret);
+            _validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(_jwtKey),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(1),
+            };
+        }
+        else
+        {
+            _logger.LogWarning(
+                "No JWT_SECRET, API_SECRET, or Jwt:SecretKey configured - legacy JWT authentication will be disabled"
+            );
+        }
     }
 
     /// <inheritdoc />
     public Task<AuthResult> AuthenticateAsync(HttpContext context)
     {
+        // If no JWT secret is configured, skip this handler
+        if (_validationParameters is null)
+        {
+            return Task.FromResult(AuthResult.Skip());
+        }
+
         // Check for Bearer token in Authorization header
         var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
 

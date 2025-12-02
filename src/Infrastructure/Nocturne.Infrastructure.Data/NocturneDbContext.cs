@@ -736,7 +736,11 @@ public class NocturneDbContext : DbContext
 
         modelBuilder.Entity<FoodEntity>().Property(f => f.Type).HasDefaultValue("food");
 
-        modelBuilder.Entity<FoodEntity>().Property(f => f.Gi).HasDefaultValue(GlycemicIndex.Medium);
+        modelBuilder
+            .Entity<FoodEntity>()
+            .Property(f => f.Gi)
+            .HasDefaultValue(GlycemicIndex.Medium)
+            .HasSentinel((GlycemicIndex)0); // CLR default (0) is not a valid enum value, use it as sentinel
 
         modelBuilder.Entity<FoodEntity>().Property(f => f.Unit).HasDefaultValue("g");
 
@@ -896,7 +900,8 @@ public class NocturneDbContext : DbContext
         modelBuilder
             .Entity<DeviceHealthEntity>()
             .Property(d => d.DeviceType)
-            .HasDefaultValue(DeviceType.Unknown);
+            .HasDefaultValue(DeviceType.Unknown)
+            .HasSentinel(DeviceType.CGM); // CGM is CLR default (0), use it as sentinel
         modelBuilder
             .Entity<DeviceHealthEntity>()
             .Property(d => d.Status)
@@ -931,13 +936,16 @@ public class NocturneDbContext : DbContext
         modelBuilder.Entity<RefreshTokenEntity>(entity =>
         {
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP")
-                  .ValueGeneratedOnAddOrUpdate();
+            entity
+                .Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate();
 
-            entity.HasOne(e => e.Subject)
-                  .WithMany(s => s.RefreshTokens)
-                  .HasForeignKey(e => e.SubjectId)
-                  .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Subject)
+                .WithMany(s => s.RefreshTokens)
+                .HasForeignKey(e => e.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure Subject entity relationships and defaults
@@ -945,8 +953,10 @@ public class NocturneDbContext : DbContext
         {
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP")
-                  .ValueGeneratedOnAddOrUpdate();
+            entity
+                .Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate();
         });
 
         // Configure Role entity defaults
@@ -955,8 +965,10 @@ public class NocturneDbContext : DbContext
             entity.Property(e => e.Permissions).HasDefaultValue(new List<string>());
             entity.Property(e => e.IsSystemRole).HasDefaultValue(false);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP")
-                  .ValueGeneratedOnAddOrUpdate();
+            entity
+                .Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate();
         });
 
         // Configure SubjectRole (many-to-many) relationships
@@ -966,33 +978,40 @@ public class NocturneDbContext : DbContext
 
             entity.Property(e => e.AssignedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            entity.HasOne(e => e.Subject)
-                  .WithMany(s => s.SubjectRoles)
-                  .HasForeignKey(e => e.SubjectId)
-                  .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Subject)
+                .WithMany(s => s.SubjectRoles)
+                .HasForeignKey(e => e.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(e => e.Role)
-                  .WithMany(r => r.SubjectRoles)
-                  .HasForeignKey(e => e.RoleId)
-                  .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Role)
+                .WithMany(r => r.SubjectRoles)
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(e => e.AssignedBy)
-                  .WithMany()
-                  .HasForeignKey(e => e.AssignedById)
-                  .OnDelete(DeleteBehavior.SetNull);
+            entity
+                .HasOne(e => e.AssignedBy)
+                .WithMany()
+                .HasForeignKey(e => e.AssignedById)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Configure OIDC Provider entity defaults
         modelBuilder.Entity<OidcProviderEntity>(entity =>
         {
-            entity.Property(e => e.Scopes).HasDefaultValue(new List<string> { "openid", "profile", "email" });
+            entity
+                .Property(e => e.Scopes)
+                .HasDefaultValue(new List<string> { "openid", "profile", "email" });
             entity.Property(e => e.DefaultRoles).HasDefaultValue(new List<string> { "readable" });
             entity.Property(e => e.ClaimMappingsJson).HasDefaultValue("{}");
             entity.Property(e => e.IsEnabled).HasDefaultValue(true);
             entity.Property(e => e.DisplayOrder).HasDefaultValue(0);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP")
-                  .ValueGeneratedOnAddOrUpdate();
+            entity
+                .Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate();
         });
 
         // Configure Auth Audit Log entity relationships and defaults
@@ -1001,15 +1020,17 @@ public class NocturneDbContext : DbContext
             entity.Property(e => e.Success).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            entity.HasOne(e => e.Subject)
-                  .WithMany()
-                  .HasForeignKey(e => e.SubjectId)
-                  .OnDelete(DeleteBehavior.SetNull);
+            entity
+                .HasOne(e => e.Subject)
+                .WithMany()
+                .HasForeignKey(e => e.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.RefreshToken)
-                  .WithMany()
-                  .HasForeignKey(e => e.RefreshTokenId)
-                  .OnDelete(DeleteBehavior.SetNull);
+            entity
+                .HasOne(e => e.RefreshToken)
+                .WithMany()
+                .HasForeignKey(e => e.RefreshTokenId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 

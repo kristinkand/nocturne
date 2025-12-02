@@ -435,17 +435,11 @@ app.MapGet(
 app.MapDefaultEndpoints();
 
 // Initialize PostgreSQL database with migrations
-try
-{
-    Console.WriteLine("Running PostgreSQL database migrations...");
-    await app.Services.MigrateDatabaseAsync();
-    Console.WriteLine("PostgreSQL database migrations completed successfully.");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Failed to run PostgreSQL database migrations: {ex.Message}");
-    Console.WriteLine("The application will continue, but database operations may fail.");
-}
+// IMPORTANT: Do not catch exceptions here - if migrations fail, the app should not start
+// This ensures the database schema is always in a valid state before handling requests
+Console.WriteLine("Running PostgreSQL database migrations...");
+await app.Services.MigrateDatabaseAsync();
+Console.WriteLine("PostgreSQL database migrations completed successfully.");
 
 app.Run();
 
