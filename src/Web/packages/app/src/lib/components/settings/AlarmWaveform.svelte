@@ -3,7 +3,8 @@
    * Alarm Waveform Visualization Component Adapted from svelte-audio-waveform
    * (MIT License) https://github.com/Catsvilles/svelte-audio-waveform
    *
-   * Displays actual waveform peaks for alarm sounds with volume envelope visualization
+   * Displays actual waveform peaks for alarm sounds with volume envelope
+   * visualization
    */
   import { onMount, onDestroy } from "svelte";
   import {
@@ -55,9 +56,7 @@
   // In-memory cache for computed peaks (no persistence needed)
   let peaksCache: Map<string, number[]> = new Map();
 
-  /**
-   * Generates an array of peak values from an AudioBuffer
-   */
+  /** Generates an array of peak values from an AudioBuffer */
   function getPeaksFromBuffer(
     buffer: AudioBuffer,
     numberOfBuckets: number = 64,
@@ -68,7 +67,9 @@
     }
 
     const decodedAudioData = buffer.getChannelData(channel);
-    const bucketDataSize = Math.floor(decodedAudioData.length / numberOfBuckets);
+    const bucketDataSize = Math.floor(
+      decodedAudioData.length / numberOfBuckets
+    );
     const buckets: number[] = [];
 
     for (let i = 0; i < numberOfBuckets; i++) {
@@ -88,12 +89,10 @@
 
     // Normalize peaks
     const maxPeak = Math.max(...buckets) || 1;
-    return buckets.map(p => p / maxPeak);
+    return buckets.map((p) => p / maxPeak);
   }
 
-  /**
-   * Load peaks from custom audio file
-   */
+  /** Load peaks from custom audio file */
   async function loadCustomSoundPeaks(soundId: string): Promise<number[]> {
     // Check cache first
     if (peaksCache.has(soundId)) {
@@ -108,31 +107,34 @@
     try {
       // Decode the audio data
       const audioContext = new AudioContext();
-      
+
       // Convert data URL to array buffer
       const response = await fetch(sound.dataUrl);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      
+
       const extractedPeaks = getPeaksFromBuffer(audioBuffer, 64);
-      
+
       // Cache the result in memory
       peaksCache.set(soundId, extractedPeaks);
-      
+
       await audioContext.close();
       return extractedPeaks;
     } catch (err) {
-      console.error('Failed to extract peaks from audio:', err);
+      console.error("Failed to extract peaks from audio:", err);
       return generateSynthesizedPeaks(soundId);
     }
   }
 
   /**
-   * Generate waveform peaks for synthesized (built-in) sounds
-   * These sounds are generated via Web Audio API oscillators, so we create
-   * representative waveform patterns based on their characteristics
+   * Generate waveform peaks for synthesized (built-in) sounds These sounds are
+   * generated via Web Audio API oscillators, so we create representative
+   * waveform patterns based on their characteristics
    */
-  function generateSynthesizedPeaks(soundId: string, numberOfBuckets: number = 64): number[] {
+  function generateSynthesizedPeaks(
+    soundId: string,
+    numberOfBuckets: number = 64
+  ): number[] {
     const generatedPeaks: number[] = [];
 
     // Different waveform patterns for different alarm types
@@ -150,7 +152,11 @@
       // Deeper, rounder waveform for low alerts
       pattern = (i, total) => {
         const t = i / total;
-        return 0.4 + Math.sin(t * Math.PI * 3) * 0.25 + Math.sin(t * Math.PI * 7) * 0.15;
+        return (
+          0.4 +
+          Math.sin(t * Math.PI * 3) * 0.25 +
+          Math.sin(t * Math.PI * 7) * 0.15
+        );
       };
     } else if (soundId.includes("high")) {
       // Rising pattern for high alerts
@@ -159,7 +165,11 @@
         const rise = t * 0.3;
         return 0.4 + rise + Math.sin(t * Math.PI * 5) * 0.2;
       };
-    } else if (soundId.includes("chime") || soundId.includes("soft") || soundId.includes("bell")) {
+    } else if (
+      soundId.includes("chime") ||
+      soundId.includes("soft") ||
+      soundId.includes("bell")
+    ) {
       // Gentle, smooth waveform
       pattern = (i, total) => {
         const t = i / total;
@@ -177,7 +187,11 @@
       // Default balanced waveform
       pattern = (i, total) => {
         const t = i / total;
-        return 0.5 + Math.sin(t * Math.PI * 6) * 0.25 + Math.sin(t * Math.PI * 13) * 0.1;
+        return (
+          0.5 +
+          Math.sin(t * Math.PI * 6) * 0.25 +
+          Math.sin(t * Math.PI * 13) * 0.1
+        );
       };
     }
 
@@ -191,12 +205,10 @@
     return generatedPeaks;
   }
 
-  /**
-   * Load peaks for the current sound (custom or synthesized)
-   */
+  /** Load peaks for the current sound (custom or synthesized) */
   async function loadPeaks(soundId: string): Promise<void> {
     isLoadingPeaks = true;
-    
+
     try {
       if (isCustomSound(soundId)) {
         peaks = await loadCustomSoundPeaks(soundId);

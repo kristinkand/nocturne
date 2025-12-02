@@ -91,7 +91,7 @@
     const logs = generateDiagnosticReport();
     await navigator.clipboard.writeText(logs);
     logsCopied = true;
-    setTimeout(() => logsCopied = false, 2000);
+    setTimeout(() => (logsCopied = false), 2000);
   }
 
   function downloadLogs() {
@@ -109,9 +109,14 @@
     const report = {
       timestamp: new Date().toISOString(),
       version: "1.0.0", // Would be actual version
-      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
-      platform: typeof navigator !== "undefined" ? navigator.platform : "unknown",
-      screenSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "unknown",
+      userAgent:
+        typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+      platform:
+        typeof navigator !== "undefined" ? navigator.platform : "unknown",
+      screenSize:
+        typeof window !== "undefined"
+          ? `${window.innerWidth}x${window.innerHeight}`
+          : "unknown",
       deviceInfo: includeDeviceInfo,
       recentLogs: includeRecentLogs,
       settingsIncluded: includeSettings,
@@ -123,10 +128,16 @@
   function handleSupportAction(action: string) {
     switch (action) {
       case "report":
-        window.open("https://github.com/nightscout/nocturne/issues/new?template=bug_report.md", "_blank");
+        window.open(
+          "https://github.com/nightscout/nocturne/issues/new?template=bug_report.md",
+          "_blank"
+        );
         break;
       case "feature":
-        window.open("https://github.com/nightscout/nocturne/issues/new?template=feature_request.md", "_blank");
+        window.open(
+          "https://github.com/nightscout/nocturne/issues/new?template=feature_request.md",
+          "_blank"
+        );
         break;
       case "help":
         window.open("https://discord.gg/nightscout", "_blank");
@@ -155,9 +166,7 @@
         <HeartHandshake class="h-5 w-5" />
         Community
       </CardTitle>
-      <CardDescription>
-        Connect with the Nightscout community
-      </CardDescription>
+      <CardDescription>Connect with the Nightscout community</CardDescription>
     </CardHeader>
     <CardContent class="space-y-4">
       {#each communityLinks as link}
@@ -168,14 +177,18 @@
           class="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors"
         >
           <div class="flex items-center gap-4">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+            >
               <link.icon class="h-5 w-5 text-primary" />
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <span class="font-medium">{link.name}</span>
                 {#if link.badge}
-                  <Badge variant="secondary" class="text-xs">{link.badge}</Badge>
+                  <Badge variant="secondary" class="text-xs">
+                    {link.badge}
+                  </Badge>
                 {/if}
               </div>
               <p class="text-sm text-muted-foreground">{link.description}</p>
@@ -194,9 +207,7 @@
         <HelpCircle class="h-5 w-5" />
         Get Support
       </CardTitle>
-      <CardDescription>
-        Need help? Here's how to reach us
-      </CardDescription>
+      <CardDescription>Need help? Here's how to reach us</CardDescription>
     </CardHeader>
     <CardContent>
       <div class="grid gap-4 sm:grid-cols-3">
@@ -205,11 +216,15 @@
             class="flex flex-col items-center text-center p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors"
             onclick={() => handleSupportAction(option.action)}
           >
-            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-3">
+            <div
+              class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-3"
+            >
               <option.icon class="h-6 w-6 text-primary" />
             </div>
             <span class="font-medium">{option.name}</span>
-            <p class="text-sm text-muted-foreground mt-1">{option.description}</p>
+            <p class="text-sm text-muted-foreground mt-1">
+              {option.description}
+            </p>
           </button>
         {/each}
       </div>
@@ -223,9 +238,7 @@
         <FileText class="h-5 w-5" />
         Share Diagnostic Logs
       </CardTitle>
-      <CardDescription>
-        Export logs to help troubleshoot issues
-      </CardDescription>
+      <CardDescription>Export logs to help troubleshoot issues</CardDescription>
     </CardHeader>
     <CardContent class="space-y-6">
       <div class="space-y-4">
@@ -287,13 +300,20 @@
         </Button>
       </div>
 
-      <Card class="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+      <Card
+        class="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20"
+      >
         <CardContent class="flex items-start gap-3 pt-6">
-          <Shield class="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <Shield
+            class="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"
+          />
           <div>
-            <p class="font-medium text-blue-900 dark:text-blue-100">Privacy Note</p>
+            <p class="font-medium text-blue-900 dark:text-blue-100">
+              Privacy Note
+            </p>
             <p class="text-sm text-blue-800 dark:text-blue-200">
-              Logs never include your glucose data, API tokens, or passwords. Only diagnostic information is shared.
+              Logs never include your glucose data, API tokens, or passwords.
+              Only diagnostic information is shared.
             </p>
           </div>
         </CardContent>
@@ -328,21 +348,31 @@
 
       <div class="text-center text-sm text-muted-foreground">
         <p>
-          Made with <Heart class="h-4 w-4 inline text-red-500" /> by the Nightscout community
+          Made with <Heart class="h-4 w-4 inline text-red-500" /> by the Nightscout
+          community
         </p>
         <p class="mt-2">
-          Nocturne is free and open source software, created by people with diabetes, for people with diabetes.
+          Nocturne is free and open source software, created by people with
+          diabetes, for people with diabetes.
         </p>
       </div>
 
       <div class="flex justify-center gap-4 pt-4">
-        <a href="https://github.com/nightscout/nocturne" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://github.com/nightscout/nocturne"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button variant="ghost" size="sm" class="gap-2">
             <Github class="h-4 w-4" />
             Star on GitHub
           </Button>
         </a>
-        <a href="https://www.nightscoutfoundation.org/donate" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://www.nightscoutfoundation.org/donate"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button variant="ghost" size="sm" class="gap-2">
             <Heart class="h-4 w-4" />
             Donate

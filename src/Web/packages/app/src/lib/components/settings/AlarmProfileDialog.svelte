@@ -53,7 +53,12 @@
     ALARM_TYPE_LABELS,
     PRIORITY_LABELS,
   } from "$lib/types/alarm-profile";
-  import { getAllAlarmSounds, isCustomSound, getBrowserCapabilities, type BrowserAlarmCapabilities } from "$lib/audio/alarm-sounds";
+  import {
+    getAllAlarmSounds,
+    isCustomSound,
+    getBrowserCapabilities,
+    type BrowserAlarmCapabilities,
+  } from "$lib/audio/alarm-sounds";
   import AlarmPreview from "./AlarmPreview.svelte";
   import CustomSoundUpload from "./CustomSoundUpload.svelte";
 
@@ -65,10 +70,18 @@
     onCancel: () => void;
   }
 
-  let { open = $bindable(), profile, emergencyContacts = [], onSave, onCancel }: Props = $props();
+  let {
+    open = $bindable(),
+    profile,
+    emergencyContacts = [],
+    onSave,
+    onCancel,
+  }: Props = $props();
 
   // Helper to create a properly initialized profile copy with all defaults
-  function initializeProfile(p: AlarmProfileConfiguration): AlarmProfileConfiguration {
+  function initializeProfile(
+    p: AlarmProfileConfiguration
+  ): AlarmProfileConfiguration {
     const copy = JSON.parse(JSON.stringify(p)) as AlarmProfileConfiguration;
     // Ensure schedule.activeDays is initialized
     if (!copy.schedule.activeDays) {
@@ -76,13 +89,16 @@
     }
     // Ensure visual.showEmergencyContacts is initialized
     if (copy.visual.showEmergencyContacts === undefined) {
-      copy.visual.showEmergencyContacts = p.alarmType === "UrgentLow" || p.alarmType === "UrgentHigh";
+      copy.visual.showEmergencyContacts =
+        p.alarmType === "UrgentLow" || p.alarmType === "UrgentHigh";
     }
     return copy;
   }
 
   // Create a working copy of the profile
-  let editedProfile = $state<AlarmProfileConfiguration>(initializeProfile(profile));
+  let editedProfile = $state<AlarmProfileConfiguration>(
+    initializeProfile(profile)
+  );
 
   // All available sounds (built-in + custom)
   let allSounds = $state<
@@ -101,20 +117,20 @@
 
   // Track previous state to avoid unnecessary re-runs
   let lastOpenState = false;
-  let lastProfileId = '';
+  let lastProfileId = "";
 
   // Handle dialog open - reload sounds and reset profile
   $effect(() => {
     const isOpen = open;
     const profileId = profile.id;
-    
+
     // Only run when dialog is opening (not on every render)
     if (isOpen && !lastOpenState) {
       // Reload sounds in case custom sounds were added
       getAllAlarmSounds().then((sounds) => {
         allSounds = sounds;
       });
-      
+
       // Reset edited profile with proper defaults
       editedProfile = initializeProfile(profile);
       lastProfileId = profileId;
@@ -123,7 +139,7 @@
       editedProfile = initializeProfile(profile);
       lastProfileId = profileId;
     }
-    
+
     lastOpenState = isOpen;
   });
 
@@ -498,7 +514,11 @@
                     Preview sound and visual effects
                   </span>
                 </div>
-                <AlarmPreview profile={editedProfile} isOpen={open} emergencyContacts={emergencyContacts} />
+                <AlarmPreview
+                  profile={editedProfile}
+                  isOpen={open}
+                  {emergencyContacts}
+                />
               </div>
 
               <div
@@ -589,7 +609,11 @@
                   <div class="flex items-center gap-2">
                     <Label>Vibration</Label>
                     {#if capabilities && !capabilities.vibration}
-                      <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Not on this device</span>
+                      <span
+                        class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+                      >
+                        Not on this device
+                      </span>
                     {/if}
                   </div>
                   <p class="text-sm text-muted-foreground">
@@ -685,11 +709,23 @@
               <div class="flex items-center gap-2">
                 <Label>Persistent Banner</Label>
                 {#if capabilities && !capabilities.notifications}
-                  <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Not on this device</span>
+                  <span
+                    class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+                  >
+                    Not on this device
+                  </span>
                 {:else if capabilities && capabilities.notificationPermission === "denied"}
-                  <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-500">Blocked on this device</span>
+                  <span
+                    class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-500"
+                  >
+                    Blocked on this device
+                  </span>
                 {:else if capabilities && capabilities.notificationPermission === "default"}
-                  <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">Needs Permission</span>
+                  <span
+                    class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                  >
+                    Needs Permission
+                  </span>
                 {/if}
               </div>
               <p class="text-sm text-muted-foreground">
@@ -704,7 +740,11 @@
               <div class="flex items-center gap-2">
                 <Label>Wake Screen</Label>
                 {#if capabilities && !capabilities.wakeLock}
-                  <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Not on this device</span>
+                  <span
+                    class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+                  >
+                    Not on this device
+                  </span>
                 {/if}
               </div>
               <p class="text-sm text-muted-foreground">

@@ -84,21 +84,24 @@
 
 <svelte:head>
   <title>Settings - Nocturne</title>
-  <meta name="description" content="Configure your Nocturne diabetes management settings" />
+  <meta
+    name="description"
+    content="Configure your Nocturne diabetes management settings"
+  />
 </svelte:head>
 
 <div class="container mx-auto p-6 max-w-4xl">
   <!-- Header -->
   <div class="mb-8">
     <div class="flex items-center gap-3 mb-2">
-      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+      <div
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+      >
         <Settings class="h-5 w-5 text-primary" />
       </div>
       <div>
         <h1 class="text-3xl font-bold tracking-tight">Settings</h1>
-        <p class="text-muted-foreground">
-          Configure your Nocturne experience
-        </p>
+        <p class="text-muted-foreground">Configure your Nocturne experience</p>
       </div>
     </div>
   </div>
@@ -107,11 +110,15 @@
   <div class="grid gap-4 md:grid-cols-2">
     {#each settingsSections as section}
       <a href={section.href} class="block group">
-        <Card class="h-full transition-colors hover:border-primary/50 hover:bg-accent/50">
+        <Card
+          class="h-full transition-colors hover:border-primary/50 hover:bg-accent/50"
+        >
           <CardHeader class="pb-3">
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors"
+                >
                   <section.icon class="h-5 w-5 text-primary" />
                 </div>
                 <div>
@@ -125,7 +132,9 @@
                   </CardTitle>
                 </div>
               </div>
-              <ChevronRight class="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              <ChevronRight
+                class="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors"
+              />
             </div>
           </CardHeader>
           <CardContent>

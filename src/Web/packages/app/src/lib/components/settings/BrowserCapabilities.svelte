@@ -31,7 +31,7 @@
 
   onMount(() => {
     capabilities = getBrowserCapabilities();
-    
+
     return () => {
       // Clean up wake lock if active
       if (wakeLockSentinel) {
@@ -52,10 +52,13 @@
   }
 
   async function testNotification() {
-    if (!capabilities?.notifications || capabilities.notificationPermission !== "granted") {
+    if (
+      !capabilities?.notifications ||
+      capabilities.notificationPermission !== "granted"
+    ) {
       return;
     }
-    
+
     new Notification("Nocturne Test", {
       body: "This is a test notification from Nocturne. Alarms will appear like this!",
       icon: "/images/logo-128.png",
@@ -69,7 +72,7 @@
       testingAudio = false;
       return;
     }
-    
+
     testingAudio = true;
     try {
       await previewAlarmSound("chime", {
@@ -83,10 +86,10 @@
 
   function testVibrate() {
     if (!canVibrate()) return;
-    
+
     testingVibration = true;
     triggerVibration([200, 100, 200, 100, 200]);
-    
+
     // Reset state after vibration completes
     setTimeout(() => {
       testingVibration = false;
@@ -95,23 +98,23 @@
 
   async function testWakeLock() {
     if (!capabilities?.wakeLock) return;
-    
+
     if (wakeLockSentinel) {
       await wakeLockSentinel.release();
       wakeLockSentinel = null;
       testingWakeLock = false;
       return;
     }
-    
+
     try {
       wakeLockSentinel = await navigator.wakeLock.request("screen");
       testingWakeLock = true;
-      
+
       wakeLockSentinel.addEventListener("release", () => {
         wakeLockSentinel = null;
         testingWakeLock = false;
       });
-      
+
       // Auto-release after 5 seconds
       setTimeout(async () => {
         if (wakeLockSentinel) {
@@ -156,7 +159,11 @@
       <!-- Audio -->
       <button
         type="button"
-        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.audio ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60 cursor-not-allowed'} {testingAudio ? 'ring-2 ring-primary' : ''}"
+        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.audio
+          ? 'hover:bg-muted/50 cursor-pointer'
+          : 'opacity-60 cursor-not-allowed'} {testingAudio
+          ? 'ring-2 ring-primary'
+          : ''}"
         onclick={capabilities.audio ? testAudio : undefined}
       >
         <div
@@ -172,7 +179,11 @@
           <div class="flex items-center gap-2">
             <span class="font-medium text-sm">Audio Playback</span>
             {#if !capabilities.audio}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Unavailable</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+              >
+                Unavailable
+              </span>
             {:else}
               <AudioStatusIcon class="h-4 w-4 {audioStatus.class}" />
             {/if}
@@ -195,8 +206,18 @@
       <!-- Notifications -->
       <button
         type="button"
-        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.notifications && capabilities.notificationPermission !== 'denied' ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60 cursor-not-allowed'} {requestingPermission ? 'ring-2 ring-primary animate-pulse' : ''}"
-        onclick={!capabilities.notifications || capabilities.notificationPermission === "denied" ? undefined : (capabilities.notificationPermission === "granted" ? testNotification : handleRequestNotificationPermission)}
+        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.notifications &&
+        capabilities.notificationPermission !== 'denied'
+          ? 'hover:bg-muted/50 cursor-pointer'
+          : 'opacity-60 cursor-not-allowed'} {requestingPermission
+          ? 'ring-2 ring-primary animate-pulse'
+          : ''}"
+        onclick={!capabilities.notifications ||
+        capabilities.notificationPermission === "denied"
+          ? undefined
+          : capabilities.notificationPermission === "granted"
+            ? testNotification
+            : handleRequestNotificationPermission}
       >
         <div
           class="flex items-center justify-center w-10 h-10 rounded-lg bg-background"
@@ -207,13 +228,27 @@
           <div class="flex items-center gap-2">
             <span class="font-medium text-sm">Notifications</span>
             {#if !capabilities.notifications}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Unavailable</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+              >
+                Unavailable
+              </span>
             {:else if capabilities.notificationPermission === "denied"}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-500">Blocked</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-500"
+              >
+                Blocked
+              </span>
             {:else if capabilities.notificationPermission === "default"}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">Needs Permission</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+              >
+                Needs Permission
+              </span>
             {:else}
-              <NotificationStatusIcon class="h-4 w-4 {notificationStatus.class}" />
+              <NotificationStatusIcon
+                class="h-4 w-4 {notificationStatus.class}"
+              />
             {/if}
           </div>
           <p class="text-xs text-muted-foreground">
@@ -238,7 +273,11 @@
       <!-- Vibration -->
       <button
         type="button"
-        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.vibration ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60 cursor-not-allowed'} {testingVibration ? 'ring-2 ring-primary animate-pulse' : ''}"
+        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.vibration
+          ? 'hover:bg-muted/50 cursor-pointer'
+          : 'opacity-60 cursor-not-allowed'} {testingVibration
+          ? 'ring-2 ring-primary animate-pulse'
+          : ''}"
         onclick={capabilities.vibration ? testVibrate : undefined}
       >
         <div
@@ -250,7 +289,11 @@
           <div class="flex items-center gap-2">
             <span class="font-medium text-sm">Vibration</span>
             {#if !capabilities.vibration}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Unavailable</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+              >
+                Unavailable
+              </span>
             {:else}
               <VibrationStatusIcon class="h-4 w-4 {vibrationStatus.class}" />
             {/if}
@@ -273,7 +316,11 @@
       <!-- Wake Lock -->
       <button
         type="button"
-        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.wakeLock ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60 cursor-not-allowed'} {testingWakeLock ? 'ring-2 ring-primary' : ''}"
+        class="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 transition-colors text-left w-full {capabilities.wakeLock
+          ? 'hover:bg-muted/50 cursor-pointer'
+          : 'opacity-60 cursor-not-allowed'} {testingWakeLock
+          ? 'ring-2 ring-primary'
+          : ''}"
         onclick={capabilities.wakeLock ? testWakeLock : undefined}
       >
         <div
@@ -285,7 +332,11 @@
           <div class="flex items-center gap-2">
             <span class="font-medium text-sm">Screen Wake Lock</span>
             {#if !capabilities.wakeLock}
-              <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">Unavailable</span>
+              <span
+                class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground"
+              >
+                Unavailable
+              </span>
             {:else}
               <WakelockStatusIcon class="h-4 w-4 {wakelockStatus.class}" />
             {/if}
@@ -311,7 +362,8 @@
     </div>
 
     <p class="text-xs text-muted-foreground">
-      Click each capability to test it. These determine what alarm features are available in your browser.
+      Click each capability to test it. These determine what alarm features are
+      available in your browser.
     </p>
   </div>
 {/if}
