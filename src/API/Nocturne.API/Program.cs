@@ -182,6 +182,9 @@ builder.Services.AddScoped<IAlexaService, AlexaService>();
 // Statistics service for analytics and calculations
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
+// Data source service for services/connectors management
+builder.Services.AddScoped<IDataSourceService, DataSourceService>();
+
 // Device age tracking services
 builder.Services.AddScoped<ICannulaAgeService, CannulaAgeService>();
 builder.Services.AddScoped<ISensorAgeService, SensorAgeService>();
@@ -446,6 +449,7 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
     var dexcomConfig = connectorsSection.GetSection("Dexcom").Get<DexcomConnectorConfiguration>();
     if (dexcomConfig != null && dexcomConfig.SyncIntervalMinutes > 0)
     {
+        dexcomConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
             $"Configuring Dexcom connector with {dexcomConfig.SyncIntervalMinutes} minute interval"
         );
@@ -458,8 +462,9 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
     var glookoConfig = connectorsSection.GetSection("Glooko").Get<GlookoConnectorConfiguration>();
     if (glookoConfig != null && glookoConfig.SyncIntervalMinutes > 0)
     {
+        glookoConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
-            $"Configuring Glooko connector with {glookoConfig.SyncIntervalMinutes} minute interval"
+            $"Configuring Glooko connector with {glookoConfig.SyncIntervalMinutes} minute interval (DataDirectory: {glookoConfig.DataDirectory})"
         );
         builder.Services.AddSingleton(glookoConfig);
         builder.Services.AddScoped<GlookoConnectorService>();
@@ -472,6 +477,7 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
         .Get<LibreLinkUpConnectorConfiguration>();
     if (libreConfig != null && libreConfig.SyncIntervalMinutes > 0)
     {
+        libreConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
             $"Configuring FreeStyle LibreLinkUp connector with {libreConfig.SyncIntervalMinutes} minute interval"
         );
@@ -486,6 +492,7 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
         .Get<CareLinkConnectorConfiguration>();
     if (carelinkConfig != null && carelinkConfig.SyncIntervalMinutes > 0)
     {
+        carelinkConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
             $"Configuring MiniMed CareLink connector with {carelinkConfig.SyncIntervalMinutes} minute interval"
         );
@@ -500,6 +507,7 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
         .Get<NightscoutConnectorConfiguration>();
     if (nightscoutConfig != null && nightscoutConfig.SyncIntervalMinutes > 0)
     {
+        nightscoutConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
             $"Configuring Nightscout connector with {nightscoutConfig.SyncIntervalMinutes} minute interval"
         );
@@ -514,6 +522,7 @@ static void ConfigureConnectorServices(WebApplicationBuilder builder)
         .Get<MyFitnessPalConnectorConfiguration>();
     if (mfpConfig != null && mfpConfig.SyncIntervalMinutes > 0)
     {
+        mfpConfig.ContentRootPath = builder.Environment.ContentRootPath;
         Console.WriteLine(
             $"Configuring MyFitnessPal connector with {mfpConfig.SyncIntervalMinutes} minute interval"
         );

@@ -18,6 +18,12 @@
     TrendingUp,
     Droplets,
     Apple,
+    Bell,
+    Brain,
+    HeartHandshake,
+    Plug,
+    Smartphone,
+    Sparkles,
   } from "lucide-svelte";
 
   type NavItem = {
@@ -79,9 +85,17 @@
       icon: Settings,
       children: [
         { title: "Overview", href: "/settings", icon: Settings },
-        { title: "Devices", href: "/settings/devices", icon: Activity },
-        { title: "Services", href: "/settings/services", icon: Activity },
-        { title: "Compatibility", href: "/compatibility", icon: Activity },
+        { title: "Devices", href: "/settings/devices", icon: Smartphone },
+        { title: "Therapy", href: "/settings/therapy", icon: Syringe },
+        { title: "Algorithm", href: "/settings/algorithm", icon: Brain },
+        { title: "Features", href: "/settings/features", icon: Sparkles },
+        { title: "Notifications", href: "/settings/notifications", icon: Bell },
+        { title: "Services", href: "/settings/services", icon: Plug },
+        {
+          title: "Support & Community",
+          href: "/settings/support",
+          icon: HeartHandshake,
+        },
       ],
     },
   ];

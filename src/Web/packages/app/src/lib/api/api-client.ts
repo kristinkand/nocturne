@@ -27,6 +27,7 @@ import {
   IobClient,
   CompatibilityClient,
   UISettingsClient,
+  ServicesClient,
 } from "./generated/nocturne-api-client";
 
 /**
@@ -63,6 +64,7 @@ export class ApiClient {
   public readonly iob: IobClient;
   public readonly compatibility: CompatibilityClient;
   public readonly uiSettings: UISettingsClient;
+  public readonly services: ServicesClient;
 
   constructor(
     baseUrl: string,
@@ -106,6 +108,7 @@ export class ApiClient {
     this.iob = new IobClient(apiBaseUrl, http);
     this.compatibility = new CompatibilityClient(apiBaseUrl, http);
     this.uiSettings = new UISettingsClient(apiBaseUrl, http);
+    this.services = new ServicesClient(apiBaseUrl, http);
   }
 
   /** Get the underlying main client for direct access if needed */

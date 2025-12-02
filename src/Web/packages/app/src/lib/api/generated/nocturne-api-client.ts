@@ -2422,6 +2422,412 @@ export class CompatibilityClient {
     }
 }
 
+export class ServicesClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get a complete overview of services, data sources, and available integrations.
+     * @return Complete services overview including active data sources, connectors, and uploader apps
+     */
+    getServicesOverview(signal?: AbortSignal): Promise<ServicesOverview> {
+        let url_ = this.baseUrl + "/api/v4/services";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetServicesOverview(_response);
+        });
+    }
+
+    protected processGetServicesOverview(response: Response): Promise<ServicesOverview> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ServicesOverview;
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ServicesOverview>(null as any);
+    }
+
+    /**
+     * Get all active data sources that have been sending data to this Nocturne instance.
+    This includes CGM apps, AID systems, and any other uploaders.
+     * @return List of active data sources with their status
+     */
+    getActiveDataSources(signal?: AbortSignal): Promise<DataSourceInfo[]> {
+        let url_ = this.baseUrl + "/api/v4/services/data-sources";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetActiveDataSources(_response);
+        });
+    }
+
+    protected processGetActiveDataSources(response: Response): Promise<DataSourceInfo[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DataSourceInfo[];
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DataSourceInfo[]>(null as any);
+    }
+
+    /**
+     * Get detailed information about a specific data source.
+     * @param id Data source ID or device ID
+     * @return Data source information if found
+     */
+    getDataSource(id: string, signal?: AbortSignal): Promise<DataSourceInfo> {
+        let url_ = this.baseUrl + "/api/v4/services/data-sources/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDataSource(_response);
+        });
+    }
+
+    protected processGetDataSource(response: Response): Promise<DataSourceInfo> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DataSourceInfo;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DataSourceInfo>(null as any);
+    }
+
+    /**
+     * Delete all data from a specific data source.
+    WARNING: This is a destructive operation that cannot be undone.
+     * @param id Data source ID or device ID
+     * @return Result of the delete operation
+     */
+    deleteDataSourceData(id: string, signal?: AbortSignal): Promise<DataSourceDeleteResult> {
+        let url_ = this.baseUrl + "/api/v4/services/data-sources/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteDataSourceData(_response);
+        });
+    }
+
+    protected processDeleteDataSourceData(response: Response): Promise<DataSourceDeleteResult> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DataSourceDeleteResult;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DataSourceDeleteResult>(null as any);
+    }
+
+    /**
+     * Get available connectors that can be configured to pull data into Nocturne.
+     * @return List of available connectors
+     */
+    getAvailableConnectors(signal?: AbortSignal): Promise<AvailableConnector[]> {
+        let url_ = this.baseUrl + "/api/v4/services/connectors";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAvailableConnectors(_response);
+        });
+    }
+
+    protected processGetAvailableConnectors(response: Response): Promise<AvailableConnector[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AvailableConnector[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AvailableConnector[]>(null as any);
+    }
+
+    /**
+     * Get uploader apps that can push data to Nocturne with setup instructions.
+     * @return List of uploader apps with setup instructions
+     */
+    getUploaderApps(signal?: AbortSignal): Promise<UploaderApp[]> {
+        let url_ = this.baseUrl + "/api/v4/services/uploaders";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUploaderApps(_response);
+        });
+    }
+
+    protected processGetUploaderApps(response: Response): Promise<UploaderApp[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UploaderApp[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UploaderApp[]>(null as any);
+    }
+
+    /**
+     * Get API endpoint information for configuring external apps.
+    This provides all the information needed to configure xDrip+, Loop, AAPS, etc.
+     * @return API endpoint information
+     */
+    getApiInfo(signal?: AbortSignal): Promise<ApiEndpointInfo> {
+        let url_ = this.baseUrl + "/api/v4/services/api-info";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetApiInfo(_response);
+        });
+    }
+
+    protected processGetApiInfo(response: Response): Promise<ApiEndpointInfo> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ApiEndpointInfo;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApiEndpointInfo>(null as any);
+    }
+
+    /**
+     * Get setup instructions for a specific uploader app.
+     * @param appId The uploader app ID (e.g., "xdrip", "loop", "aaps")
+     * @return Setup instructions for the specified app
+     */
+    getUploaderSetup(appId: string, signal?: AbortSignal): Promise<UploaderSetupResponse> {
+        let url_ = this.baseUrl + "/api/v4/services/uploaders/{appId}/setup";
+        if (appId === undefined || appId === null)
+            throw new globalThis.Error("The parameter 'appId' must be defined.");
+        url_ = url_.replace("{appId}", encodeURIComponent("" + appId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUploaderSetup(_response);
+        });
+    }
+
+    protected processGetUploaderSetup(response: Response): Promise<UploaderSetupResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UploaderSetupResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UploaderSetupResponse>(null as any);
+    }
+
+    /**
+     * Delete all demo data. This operation is safe as demo data can be easily regenerated.
+     * @return Result of the delete operation
+     */
+    deleteDemoData(signal?: AbortSignal): Promise<DataSourceDeleteResult> {
+        let url_ = this.baseUrl + "/api/v4/services/data-sources/demo";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteDemoData(_response);
+        });
+    }
+
+    protected processDeleteDemoData(response: Response): Promise<DataSourceDeleteResult> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DataSourceDeleteResult;
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DataSourceDeleteResult>(null as any);
+    }
+}
+
 export class UISettingsClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -11392,6 +11798,113 @@ export interface MigrationReadinessReport {
 }
 
 export type MigrationReadinessLevel = 0 | 1 | 2 | 3;
+
+export interface ServicesOverview {
+    activeDataSources?: DataSourceInfo[];
+    availableConnectors?: AvailableConnector[];
+    uploaderApps?: UploaderApp[];
+    apiEndpoint?: ApiEndpointInfo;
+}
+
+export interface DataSourceInfo {
+    id?: string;
+    name?: string;
+    deviceId?: string;
+    category?: string;
+    sourceType?: string;
+    description?: string;
+    lastSeen?: Date | undefined;
+    firstSeen?: Date | undefined;
+    entriesLast24h?: number;
+    totalEntries?: number;
+    status?: string;
+    minutesSinceLastData?: number | undefined;
+    icon?: string;
+    isHealthy?: boolean;
+}
+
+export interface AvailableConnector {
+    id?: string;
+    name?: string;
+    category?: string;
+    description?: string;
+    icon?: string;
+    available?: boolean;
+    requiresServerConfig?: boolean;
+    configFields?: ConnectorConfigField[] | undefined;
+    documentationUrl?: string | undefined;
+}
+
+export interface ConnectorConfigField {
+    id?: string;
+    label?: string;
+    type?: string;
+    required?: boolean;
+    placeholder?: string | undefined;
+    helpText?: string | undefined;
+    options?: SelectOption[] | undefined;
+}
+
+export interface SelectOption {
+    value?: string;
+    label?: string;
+}
+
+export interface UploaderApp {
+    id?: string;
+    name?: string;
+    platform?: string;
+    description?: string;
+    category?: string;
+    icon?: string;
+    setupInstructions?: SetupStep[] | undefined;
+    url?: string | undefined;
+}
+
+export interface SetupStep {
+    step?: number;
+    title?: string;
+    description?: string;
+    imageUrl?: string | undefined;
+}
+
+export interface ApiEndpointInfo {
+    baseUrl?: string;
+    requiresApiSecret?: boolean;
+    isAuthenticated?: boolean;
+    entriesEndpoint?: string;
+    treatmentsEndpoint?: string;
+    deviceStatusEndpoint?: string;
+}
+
+/** Response model for uploader setup instructions */
+export interface UploaderSetupResponse {
+    /** The uploader app details */
+    app?: UploaderApp;
+    /** Base URL for this Nocturne instance */
+    baseUrl?: string;
+    /** Placeholder for where the API secret goes */
+    apiSecretPlaceholder?: string;
+    /** Full API URL (base + /api/v1) */
+    fullApiUrl?: string;
+    /** Entries endpoint URL */
+    entriesUrl?: string;
+    /** Treatments endpoint URL */
+    treatmentsUrl?: string;
+    /** Device status endpoint URL */
+    deviceStatusUrl?: string;
+    /** xDrip+ style URL with embedded secret placeholder */
+    xdripStyleUrl?: string;
+}
+
+export interface DataSourceDeleteResult {
+    success?: boolean;
+    entriesDeleted?: number;
+    treatmentsDeleted?: number;
+    deviceStatusDeleted?: number;
+    dataSource?: string;
+    error?: string | undefined;
+}
 
 export interface UISettingsConfiguration {
     devices?: DeviceSettings;

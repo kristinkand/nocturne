@@ -8,10 +8,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
-using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.MyFitnessPal.Models;
 using Nocturne.Core.Models;
 
@@ -139,7 +139,8 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
             }
 
             _logger.LogInformation(
-                "Successfully fetched MyFitnessPal diary data with {EntryCount} diary entries",
+                "[{ConnectorSource}] Successfully fetched MyFitnessPal diary data with {EntryCount} diary entries",
+                ConnectorSource,
                 diaryResponse.Count
             );
 

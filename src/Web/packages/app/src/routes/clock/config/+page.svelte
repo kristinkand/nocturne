@@ -7,101 +7,275 @@
   import { Label } from "$lib/components/ui/label";
   import { Checkbox } from "$lib/components/ui/checkbox";
   import { Slider } from "$lib/components/ui/slider";
+  import * as Select from "$lib/components/ui/select";
+  import { Badge } from "$lib/components/ui/badge";
   import {
-    _generateFaceString,
-    _validateConfiguration,
-    _defaultConfiguration,
-  } from "./+page";
+    Plus,
+    Minus,
+    ArrowLeft,
+    Play,
+    Save,
+    RotateCcw,
+    Trash2,
+  } from "lucide-svelte";
+  import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
-  // Configuration state using runes
-  let bgColor = $state(_defaultConfiguration.bgColor);
-  let alwaysShowTime = $state(_defaultConfiguration.alwaysShowTime);
-  let staleMinutes = $state(_defaultConfiguration.staleMinutes);
-  let elements = $state({
+  // Element type definitions
+  type ElementType = "sg" | "dt" | "ar" | "ag" | "time" | "nl";
+
+  interface ClockElement {
+    id: string;
+    type: ElementType;
+    size: number;
+  }
+
+  const elementInfo: Record<
+    ElementType,
+    {
+      name: string;
+      description: string;
+      defaultSize: number;
+      minSize: number;
+      maxSize: number;
+    }
+  > = {
     sg: {
-      enabled: _defaultConfiguration.elements.sg.enabled,
-      size: _defaultConfiguration.elements.sg.size,
+      name: "Blood Glucose",
+      description: "Current BG value",
+      defaultSize: 40,
+      minSize: 20,
+      maxSize: 80,
     },
     dt: {
-      enabled: _defaultConfiguration.elements.dt.enabled,
-      size: _defaultConfiguration.elements.dt.size,
+      name: "Delta",
+      description: "Change since last reading",
+      defaultSize: 14,
+      minSize: 10,
+      maxSize: 40,
     },
     ar: {
-      enabled: _defaultConfiguration.elements.ar.enabled,
-      size: _defaultConfiguration.elements.ar.size,
+      name: "Arrow",
+      description: "Trend direction arrow",
+      defaultSize: 25,
+      minSize: 15,
+      maxSize: 50,
     },
     ag: {
-      enabled: _defaultConfiguration.elements.ag.enabled,
-      size: _defaultConfiguration.elements.ag.size,
+      name: "Reading Age",
+      description: "Time since last reading",
+      defaultSize: 10,
+      minSize: 6,
+      maxSize: 24,
     },
     time: {
-      enabled: _defaultConfiguration.elements.time.enabled,
-      size: _defaultConfiguration.elements.time.size,
+      name: "Current Time",
+      description: "Display current time",
+      defaultSize: 20,
+      minSize: 12,
+      maxSize: 48,
     },
+    nl: {
+      name: "Line Break",
+      description: "New line separator",
+      defaultSize: 0,
+      minSize: 0,
+      maxSize: 0,
+    },
+  };
+
+  let { data }: { data: PageData } = $props();
+
+  // Get realtime store for live preview
+  const realtimeStore = getRealtimeStore();
+  const currentBG = $derived(realtimeStore.currentBG);
+  const bgDelta = $derived(realtimeStore.bgDelta);
+  const direction = $derived(realtimeStore.direction);
+
+  // Configuration state
+  let bgColor = $state(false);
+  let alwaysShowTime = $state(false);
+  let staleMinutes = $state(13);
+
+  // LIFO element stack - elements are added/removed from the end
+  let elements = $state<ClockElement[]>([
+    { id: crypto.randomUUID(), type: "sg", size: 40 },
+    { id: crypto.randomUUID(), type: "dt", size: 14 },
+    { id: crypto.randomUUID(), type: "nl", size: 0 },
+    { id: crypto.randomUUID(), type: "ar", size: 25 },
+    { id: crypto.randomUUID(), type: "nl", size: 0 },
+    { id: crypto.randomUUID(), type: "ag", size: 10 },
+  ]);
+
+  // Element to add selector
+  let selectedElementType = $state<ElementType>("sg");
+
+  // Generate face string from current configuration
+  const faceString = $derived.by(() => {
+    const bgPrefix = bgColor ? "c" : "b";
+    const timePrefix = alwaysShowTime ? "y" : "n";
+    const staleStr = staleMinutes.toString().padStart(2, "0");
+
+    let result = `${bgPrefix}${timePrefix}${staleStr}`;
+
+    for (const element of elements) {
+      if (element.type === "nl") {
+        result += "-nl";
+      } else {
+        result += `-${element.type}${element.size}`;
+      }
+    }
+
+    return result;
   });
 
-  // Preview configuration
-  let previewFace = $state("");
-  // Create current configuration object
-  let currentConfig = $derived({
-    bgColor,
-    alwaysShowTime,
-    staleMinutes,
-    elements,
-  });
+  // Get direction arrow
+  function getDirectionArrow(dir: string): string {
+    switch (dir) {
+      case "DoubleUp":
+        return "⇈";
+      case "SingleUp":
+        return "↑";
+      case "FortyFiveUp":
+        return "↗";
+      case "Flat":
+        return "→";
+      case "FortyFiveDown":
+        return "↘";
+      case "SingleDown":
+        return "↓";
+      case "DoubleDown":
+        return "⇊";
+      default:
+        return "→";
+    }
+  }
 
-  // Update preview when configuration changes
-  function updatePreview() {
-    previewFace = _generateFaceString(currentConfig);
-  } // Save configuration to localStorage
+  // Get BG color class based on value
+  function getBgColorClass(bg: number): string {
+    if (bg < 70) return "text-red-500";
+    if (bg < 80) return "text-yellow-500";
+    if (bg > 250) return "text-red-500";
+    if (bg > 180) return "text-orange-500";
+    return "text-green-500";
+  }
+
+  // Get BG background class
+  function getBgBgClass(bg: number): string {
+    if (bg < 70) return "bg-red-500";
+    if (bg < 80) return "bg-yellow-500";
+    if (bg > 250) return "bg-red-500";
+    if (bg > 180) return "bg-orange-500";
+    return "bg-green-500";
+  }
+
+  // Add element to the stack (LIFO - adds to end)
+  function addElement() {
+    const info = elementInfo[selectedElementType];
+    elements = [
+      ...elements,
+      {
+        id: crypto.randomUUID(),
+        type: selectedElementType,
+        size: info.defaultSize,
+      },
+    ];
+  }
+
+  // Remove last element (LIFO - removes from end)
+  function removeLastElement() {
+    if (elements.length > 0) {
+      elements = elements.slice(0, -1);
+    }
+  }
+
+  // Remove specific element by id
+  function removeElement(id: string) {
+    elements = elements.filter((e) => e.id !== id);
+  }
+
+  // Update element size
+  function updateElementSize(id: string, size: number) {
+    elements = elements.map((e) => (e.id === id ? { ...e, size } : e));
+  }
+
+  // Clear all elements
+  function clearElements() {
+    elements = [];
+  }
+
+  // Reset to default configuration
+  function resetToDefault() {
+    bgColor = false;
+    alwaysShowTime = false;
+    staleMinutes = 13;
+    elements = [
+      { id: crypto.randomUUID(), type: "sg", size: 40 },
+      { id: crypto.randomUUID(), type: "dt", size: 14 },
+      { id: crypto.randomUUID(), type: "nl", size: 0 },
+      { id: crypto.randomUUID(), type: "ar", size: 25 },
+      { id: crypto.randomUUID(), type: "nl", size: 0 },
+      { id: crypto.randomUUID(), type: "ag", size: 10 },
+    ];
+  }
+
+  // Save configuration to localStorage
   function saveConfiguration() {
     if (!browser) return;
-
-    const validatedConfig = _validateConfiguration(currentConfig);
-    localStorage.setItem("clockConfig", JSON.stringify(validatedConfig));
-    alert("Configuration saved!");
+    const config = { bgColor, alwaysShowTime, staleMinutes, elements };
+    localStorage.setItem("clockConfig", JSON.stringify(config));
   }
+
   // Load configuration from localStorage
   function loadConfiguration() {
     if (!browser) return;
-
     const saved = localStorage.getItem("clockConfig");
     if (saved) {
       try {
         const config = JSON.parse(saved);
-        const validatedConfig = _validateConfiguration(config);
-
-        bgColor = validatedConfig.bgColor;
-        alwaysShowTime = validatedConfig.alwaysShowTime;
-        staleMinutes = validatedConfig.staleMinutes;
-        elements = { ...validatedConfig.elements };
-
-        updatePreview();
+        bgColor = config.bgColor ?? false;
+        alwaysShowTime = config.alwaysShowTime ?? false;
+        staleMinutes = config.staleMinutes ?? 13;
+        elements = config.elements ?? [];
       } catch (e) {
         console.error("Failed to load configuration:", e);
       }
     }
   }
-  // Navigate to preview
-  function previewClock() {
-    const faceString = _generateFaceString(currentConfig);
+
+  // Navigate to preview clock
+  function openClock() {
     goto(`/clock/${faceString}`);
   }
 
-  // Effect to update preview when configuration changes
+  // Load configuration on mount
   $effect(() => {
     if (browser) {
-      updatePreview();
+      loadConfiguration();
     }
   });
 
-  // Load configuration on mount
-  if (browser) {
-    loadConfiguration();
-    updatePreview();
-  }
+  // Current time for preview
+  let currentTime = $state(new Date());
+  $effect(() => {
+    if (!browser) return;
+    const interval = setInterval(() => {
+      currentTime = new Date();
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+
+  const formattedTime = $derived(
+    currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+
+  // Derived classes for preview
+  const textColorClass = $derived(
+    bgColor ? "text-white" : getBgColorClass(currentBG)
+  );
+  const previewBgClass = $derived(
+    bgColor ? getBgBgClass(currentBG) : "bg-neutral-950"
+  );
 </script>
 
 <svelte:head>
@@ -113,229 +287,368 @@
   />
 </svelte:head>
 
-<div class="max-w-6xl mx-auto p-8 bg-background text-foreground min-h-screen">
-  <h1 class="text-center text-primary text-4xl font-bold mb-8">
-    Clock Configuration
-  </h1>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <!-- General Settings -->
-    <Card.Root>
-      <Card.Header>
-        <Card.Title class="text-primary">General Settings</Card.Title>
-      </Card.Header>
-      <Card.Content class="space-y-4">
-        <div class="flex items-center space-x-2">
-          <Checkbox id="bgColor" bind:checked={bgColor} />
-          <Label
-            for="bgColor"
-            class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Colorful Background
-          </Label>
-        </div>
-        <p class="text-sm text-muted-foreground">
-          Use colored background instead of black
-        </p>
+<div class="min-h-dvh bg-background p-4 text-foreground sm:p-6 md:p-8">
+  <div class="mx-auto max-w-6xl">
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+      <Button variant="ghost" href="/clock" class="gap-2">
+        <ArrowLeft class="size-4" />
+        Back to Clocks
+      </Button>
+      <h1 class="text-2xl font-bold text-primary sm:text-3xl">Clock Builder</h1>
+      <div class="w-24"></div>
+    </div>
 
-        <div class="flex items-center space-x-2">
-          <Checkbox id="alwaysShowTime" bind:checked={alwaysShowTime} />
-          <Label
-            for="alwaysShowTime"
-            class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Always Show Last Reading Time
-          </Label>
-        </div>
-        <p class="text-sm text-muted-foreground">
-          Always display when the last reading was taken
-        </p>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Left Column: Live Preview -->
+      <div class="space-y-4">
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-lg">Live Preview</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <!-- Live Preview Display -->
+            <div
+              class="relative flex min-h-[300px] flex-col items-center justify-center overflow-hidden rounded-lg transition-colors duration-300 {previewBgClass}"
+            >
+              <div class="flex flex-col items-center gap-1 p-4">
+                {#each elements as element (element.id)}
+                  {#if element.type === "nl"}
+                    <div class="h-2 w-full"></div>
+                  {:else if element.type === "sg"}
+                    <span
+                      class="font-bold tabular-nums leading-none {textColorClass}"
+                      style:font-size="{element.size * 0.8}px"
+                    >
+                      {currentBG}
+                    </span>
+                  {:else if element.type === "dt"}
+                    <span
+                      class="font-medium tabular-nums {textColorClass}"
+                      style:font-size="{element.size * 0.8}px"
+                    >
+                      {bgDelta > 0 ? "+" : ""}{bgDelta} mg/dL
+                    </span>
+                  {:else if element.type === "ar"}
+                    <span
+                      class="leading-none {textColorClass}"
+                      style:font-size="{element.size * 0.8}px"
+                    >
+                      {getDirectionArrow(direction)}
+                    </span>
+                  {:else if element.type === "ag"}
+                    <span
+                      class="font-medium opacity-70 {textColorClass}"
+                      style:font-size="{element.size * 0.8}px"
+                    >
+                      3m ago
+                    </span>
+                  {:else if element.type === "time"}
+                    <span
+                      class="font-medium tabular-nums opacity-80 {textColorClass}"
+                      style:font-size="{element.size * 0.8}px"
+                    >
+                      {formattedTime}
+                    </span>
+                  {/if}
+                {/each}
+              </div>
+            </div>
 
-        <div class="space-y-2">
-          <Label for="staleMinutes">Stale Threshold (minutes)</Label>
-          <Input
-            id="staleMinutes"
-            type="number"
-            min="0"
-            max="60"
-            bind:value={staleMinutes}
-            class="w-20"
-          />
-          <p class="text-sm text-muted-foreground">
-            After this many minutes, readings are considered stale (0 = never)
-          </p>
-        </div>
-      </Card.Content>
-    </Card.Root>
-    <!-- Element Settings -->
-    <Card.Root>
-      <Card.Header>
-        <Card.Title class="text-primary">Display Elements</Card.Title>
-      </Card.Header>
-      <Card.Content class="space-y-6">
-        <!-- Blood Glucose Value -->
-        <Card.Root class="bg-muted/50">
-          <Card.Content class="pt-4">
-            <Card.Title class="text-base mb-3">
-              Blood Glucose Value (sg)
+            <!-- Generated Face String -->
+            <div class="mt-4 rounded-md bg-muted p-3">
+              <div class="mb-1 text-xs text-muted-foreground">
+                Generated Face String:
+              </div>
+              <code class="break-all font-mono text-sm text-primary">
+                {faceString}
+              </code>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 flex flex-wrap gap-2">
+              <Button onclick={openClock} class="flex-1 gap-2">
+                <Play class="size-4" />
+                Open Clock
+              </Button>
+              <Button
+                variant="secondary"
+                onclick={saveConfiguration}
+                class="gap-2"
+              >
+                <Save class="size-4" />
+                Save
+              </Button>
+              <Button variant="outline" onclick={resetToDefault} class="gap-2">
+                <RotateCcw class="size-4" />
+                Reset
+              </Button>
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        <!-- General Settings -->
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-lg">Display Settings</Card.Title>
+          </Card.Header>
+          <Card.Content class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <Label for="bgColor">Colorful Background</Label>
+                <p class="text-xs text-muted-foreground">
+                  Use BG-based colored background
+                </p>
+              </div>
+              <Checkbox id="bgColor" bind:checked={bgColor} />
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <Label for="alwaysShowTime">Always Show Reading Age</Label>
+                <p class="text-xs text-muted-foreground">
+                  Always display when last reading was taken
+                </p>
+              </div>
+              <Checkbox id="alwaysShowTime" bind:checked={alwaysShowTime} />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="staleMinutes">Stale Threshold (minutes)</Label>
+              <div class="flex items-center gap-2">
+                <Input
+                  id="staleMinutes"
+                  type="number"
+                  min="0"
+                  max="60"
+                  bind:value={staleMinutes}
+                  class="w-20"
+                />
+                <span class="text-sm text-muted-foreground">
+                  (0 = never stale)
+                </span>
+              </div>
+            </div>
+          </Card.Content>
+        </Card.Root>
+      </div>
+
+      <!-- Right Column: Element Builder -->
+      <div class="space-y-4">
+        <!-- Add Element Controls -->
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-lg">Add Element</Card.Title>
+            <Card.Description>
+              Elements are added to the end of the display (LIFO style)
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            <div class="flex gap-2">
+              <Select.Root
+                type="single"
+                value={selectedElementType}
+                onValueChange={(v) => {
+                  if (v) selectedElementType = v as ElementType;
+                }}
+              >
+                <Select.Trigger class="flex-1">
+                  {elementInfo[selectedElementType].name}
+                </Select.Trigger>
+                <Select.Content>
+                  {#each Object.entries(elementInfo) as [type, info]}
+                    <Select.Item value={type}>
+                      <div class="flex flex-col items-start">
+                        <span>{info.name}</span>
+                        <span class="text-xs text-muted-foreground">
+                          {info.description}
+                        </span>
+                      </div>
+                    </Select.Item>
+                  {/each}
+                </Select.Content>
+              </Select.Root>
+              <Button onclick={addElement} class="gap-2">
+                <Plus class="size-4" />
+                Add
+              </Button>
+            </div>
+
+            <div class="mt-3 flex gap-2">
+              <Button
+                variant="outline"
+                onclick={removeLastElement}
+                disabled={elements.length === 0}
+                class="flex-1 gap-2"
+              >
+                <Minus class="size-4" />
+                Remove Last
+              </Button>
+              <Button
+                variant="destructive"
+                onclick={clearElements}
+                disabled={elements.length === 0}
+                class="gap-2"
+              >
+                <Trash2 class="size-4" />
+                Clear All
+              </Button>
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        <!-- Element Stack -->
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-lg">
+              Element Stack
+              <Badge variant="secondary" class="ml-2">{elements.length}</Badge>
             </Card.Title>
-            <div class="space-y-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="sg-enabled" bind:checked={elements.sg.enabled} />
-                <Label for="sg-enabled">Show BG Value</Label>
+            <Card.Description>
+              Elements display from top to bottom
+            </Card.Description>
+          </Card.Header>
+          <Card.Content>
+            {#if elements.length === 0}
+              <div
+                class="rounded-md border border-dashed p-8 text-center text-muted-foreground"
+              >
+                No elements added yet. Add elements above to build your clock
+                face.
               </div>
+            {:else}
               <div class="space-y-2">
-                <Label for="sg-size">Size: {elements.sg.size}px</Label>
-                <Slider
-                  type="single"
-                  bind:value={elements.sg.size}
-                  min={20}
-                  max={80}
-                  step={1}
-                  disabled={!elements.sg.enabled}
-                  class="w-full"
-                />
+                {#each elements as element, index (element.id)}
+                  <div
+                    class="flex items-center gap-2 rounded-md border bg-card p-2"
+                  >
+                    <div
+                      class="flex size-6 items-center justify-center text-xs text-muted-foreground"
+                    >
+                      {index + 1}
+                    </div>
+
+                    {#if element.type === "nl"}
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                          <Badge variant="outline">Line Break</Badge>
+                          <span class="text-xs text-muted-foreground">
+                            New row separator
+                          </span>
+                        </div>
+                      </div>
+                    {:else}
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                          <Badge>{elementInfo[element.type].name}</Badge>
+                          <code class="text-xs text-muted-foreground">
+                            {element.type}{element.size}
+                          </code>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                          <span class="text-xs text-muted-foreground w-12">
+                            Size: {element.size}
+                          </span>
+                          <Slider
+                            type="single"
+                            value={element.size}
+                            onValueChange={(v) =>
+                              updateElementSize(element.id, v)}
+                            min={elementInfo[element.type].minSize}
+                            max={elementInfo[element.type].maxSize}
+                            step={1}
+                            class="flex-1"
+                          />
+                        </div>
+                      </div>
+                    {/if}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onclick={() => removeElement(element.id)}
+                      class="size-8 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 class="size-4" />
+                    </Button>
+                  </div>
+                {/each}
               </div>
-            </div>
+            {/if}
           </Card.Content>
         </Card.Root>
 
-        <!-- Delta/Change -->
-        <Card.Root class="bg-muted/50">
-          <Card.Content class="pt-4">
-            <Card.Title class="text-base mb-3">Delta/Change (dt)</Card.Title>
-            <div class="space-y-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="dt-enabled" bind:checked={elements.dt.enabled} />
-                <Label for="dt-enabled">Show Delta</Label>
-              </div>
-              <div class="space-y-2">
-                <Label for="dt-size">Size: {elements.dt.size}px</Label>
-                <Slider
-                  type="single"
-                  bind:value={elements.dt.size}
-                  min={10}
-                  max={40}
-                  step={1}
-                  disabled={!elements.dt.enabled}
-                  class="w-full"
-                />
-              </div>
+        <!-- Quick Presets -->
+        <Card.Root>
+          <Card.Header class="pb-2">
+            <Card.Title class="text-lg">Quick Presets</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <div class="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onclick={() => {
+                  bgColor = false;
+                  alwaysShowTime = false;
+                  staleMinutes = 0;
+                  elements = [
+                    { id: crypto.randomUUID(), type: "sg", size: 60 },
+                  ];
+                }}
+              >
+                Simple BG
+              </Button>
+              <Button
+                variant="outline"
+                onclick={() => {
+                  bgColor = true;
+                  alwaysShowTime = false;
+                  staleMinutes = 13;
+                  elements = [
+                    { id: crypto.randomUUID(), type: "sg", size: 35 },
+                    { id: crypto.randomUUID(), type: "dt", size: 14 },
+                    { id: crypto.randomUUID(), type: "nl", size: 0 },
+                    { id: crypto.randomUUID(), type: "ar", size: 25 },
+                    { id: crypto.randomUUID(), type: "nl", size: 0 },
+                    { id: crypto.randomUUID(), type: "ag", size: 6 },
+                  ];
+                }}
+              >
+                Color Detailed
+              </Button>
+              <Button
+                variant="outline"
+                onclick={() => {
+                  bgColor = false;
+                  alwaysShowTime = false;
+                  staleMinutes = 0;
+                  elements = [
+                    { id: crypto.randomUUID(), type: "sg", size: 80 },
+                    { id: crypto.randomUUID(), type: "nl", size: 0 },
+                    { id: crypto.randomUUID(), type: "time", size: 30 },
+                  ];
+                }}
+              >
+                Large + Time
+              </Button>
+              <Button
+                variant="outline"
+                onclick={() => {
+                  bgColor = false;
+                  alwaysShowTime = false;
+                  staleMinutes = 13;
+                  elements = [
+                    { id: crypto.randomUUID(), type: "sg", size: 50 },
+                    { id: crypto.randomUUID(), type: "ar", size: 30 },
+                  ];
+                }}
+              >
+                BG + Arrow
+              </Button>
             </div>
           </Card.Content>
         </Card.Root>
-
-        <!-- Direction Arrow -->
-        <Card.Root class="bg-muted/50">
-          <Card.Content class="pt-4">
-            <Card.Title class="text-base mb-3">Direction Arrow (ar)</Card.Title>
-            <div class="space-y-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="ar-enabled" bind:checked={elements.ar.enabled} />
-                <Label for="ar-enabled">Show Arrow</Label>
-              </div>
-              <div class="space-y-2">
-                <Label for="ar-size">Size: {elements.ar.size}px</Label>
-                <Slider
-                  type="single"
-                  bind:value={elements.ar.size}
-                  min={15}
-                  max={50}
-                  step={1}
-                  disabled={!elements.ar.enabled}
-                  class="w-full"
-                />
-              </div>
-            </div>
-          </Card.Content>
-        </Card.Root>
-
-        <!-- Reading Age -->
-        <Card.Root class="bg-muted/50">
-          <Card.Content class="pt-4">
-            <Card.Title class="text-base mb-3">Reading Age (ag)</Card.Title>
-            <div class="space-y-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="ag-enabled" bind:checked={elements.ag.enabled} />
-                <Label for="ag-enabled">Show Reading Age</Label>
-              </div>
-              <div class="space-y-2">
-                <Label for="ag-size">Size: {elements.ag.size}px</Label>
-                <Slider
-                  type="single"
-                  bind:value={elements.ag.size}
-                  min={8}
-                  max={24}
-                  step={1}
-                  disabled={!elements.ag.enabled}
-                  class="w-full"
-                />
-              </div>
-            </div>
-          </Card.Content>
-        </Card.Root>
-
-        <!-- Current Time -->
-        <Card.Root class="bg-muted/50">
-          <Card.Content class="pt-4">
-            <Card.Title class="text-base mb-3">Current Time</Card.Title>
-            <div class="space-y-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox
-                  id="time-enabled"
-                  bind:checked={elements.time.enabled}
-                />
-                <Label for="time-enabled">Show Current Time</Label>
-              </div>
-              <div class="space-y-2">
-                <Label for="time-size">Size: {elements.time.size}px</Label>
-                <Slider
-                  type="single"
-                  bind:value={elements.time.size}
-                  min={16}
-                  max={48}
-                  step={1}
-                  disabled={!elements.time.enabled}
-                  class="w-full"
-                />
-              </div>
-            </div>
-          </Card.Content>
-        </Card.Root>
-      </Card.Content>
-    </Card.Root>
+      </div>
+    </div>
   </div>
-  <!-- Preview Section -->
-  <Card.Root>
-    <Card.Header>
-      <Card.Title class="text-center text-2xl">Preview</Card.Title>
-    </Card.Header>
-    <Card.Content class="text-center space-y-4">
-      <div class="bg-muted rounded-md p-4">
-        <strong class="text-sm font-medium">Generated Face String:</strong>
-        <code
-          class="font-mono text-lg bg-background px-2 py-1 rounded ml-2 text-primary"
-        >
-          {previewFace}
-        </code>
-      </div>
-
-      <div class="flex gap-4 justify-center flex-wrap">
-        <Button onclick={previewClock} class="px-6 py-3">Preview Clock</Button>
-        <Button
-          variant="secondary"
-          onclick={saveConfiguration}
-          class="px-6 py-3"
-        >
-          Save Configuration
-        </Button>
-        <Button
-          variant="secondary"
-          onclick={loadConfiguration}
-          class="px-6 py-3"
-        >
-          Load Saved Configuration
-        </Button>
-      </div>
-    </Card.Content>
-  </Card.Root>
 </div>

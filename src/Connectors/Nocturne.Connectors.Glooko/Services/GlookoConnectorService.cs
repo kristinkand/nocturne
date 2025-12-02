@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Glooko.Models;
-using Nocturne.Connectors.Configurations;
 using Nocturne.Core.Models;
 
 #nullable enable
@@ -64,12 +64,16 @@ namespace Nocturne.Connectors.Glooko.Services
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
             IConnectorFileService<GlookoBatchData> fileService,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
             : base(httpClient, logger, apiDataSubmitter)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-            _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-            _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+            _retryDelayStrategy =
+                retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+            _rateLimitingStrategy =
+                rateLimitingStrategy
+                ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
         }
 
@@ -123,10 +127,7 @@ namespace Nocturne.Connectors.Glooko.Services
                 var json = JsonSerializer.Serialize(loginData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    "/api/v2/users/sign_in"
-                )
+                var request = new HttpRequestMessage(HttpMethod.Post, "/api/v2/users/sign_in")
                 {
                     Content = content,
                 };
@@ -260,12 +261,15 @@ namespace Nocturne.Connectors.Glooko.Services
                 since
             );
 
+            var entriesList = entries.ToList();
             _logger.LogInformation(
-                "Retrieved {Count} glucose entries from Glooko",
-                entries.Count()
+                "[{ConnectorSource}] Retrieved {Count} glucose entries from Glooko (since: {Since})",
+                ConnectorSource,
+                entriesList.Count,
+                since?.ToString("yyyy-MM-dd HH:mm:ss") ?? "default lookback"
             );
 
-            return entries;
+            return entriesList;
         }
 
         // Adapter method to match Func<TData, IEnumerable<Entry>> signature
@@ -529,6 +533,22 @@ namespace Nocturne.Connectors.Glooko.Services
                     }
                 }
 
+                // Log a summary of fetched data with source identifier
+                _logger.LogInformation(
+                    "[{ConnectorSource}] Fetched Glooko batch data summary: "
+                        + "Readings={ReadingsCount}, Foods={FoodsCount}, Insulins={InsulinsCount}, "
+                        + "NormalBoluses={BolusCount}, TempBasals={TempBasalCount}, "
+                        + "ScheduledBasals={ScheduledBasalCount}, Activity={ActivityCount}",
+                    ConnectorSource,
+                    batchData.Readings?.Length ?? 0,
+                    batchData.Foods?.Length ?? 0,
+                    batchData.Insulins?.Length ?? 0,
+                    batchData.NormalBoluses?.Length ?? 0,
+                    batchData.TempBasals?.Length ?? 0,
+                    batchData.ScheduledBasals?.Length ?? 0,
+                    batchData.Activity?.Length ?? 0
+                );
+
                 return batchData;
             }
             catch (InvalidOperationException)
@@ -701,7 +721,11 @@ namespace Nocturne.Connectors.Glooko.Services
                     }
                 }
 
-                _logger.LogInformation($"Generated {treatments.Count} treatments from Glooko data");
+                _logger.LogInformation(
+                    "[{ConnectorSource}] Generated {Count} treatments from Glooko batch data",
+                    ConnectorSource,
+                    treatments.Count
+                );
             }
             catch (Exception ex)
             {

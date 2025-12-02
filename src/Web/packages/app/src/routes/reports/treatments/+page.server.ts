@@ -1,6 +1,31 @@
-import type { Actions } from "./$types";
-import type { Treatment } from "$lib/stores/serverSettings";
+import type { Actions, PageServerLoad } from "./$types";
+import type { Treatment } from "$lib/api";
 import { fail } from "@sveltejs/kit";
+import { calculateTreatmentStats } from "$lib/constants/treatment-categories";
+
+export const load: PageServerLoad = async ({ parent, url }) => {
+  // Get shared data from layout (treatments, dateRange, etc.)
+  const parentData = await parent();
+
+  // Calculate treatment statistics
+  const stats = calculateTreatmentStats(parentData.treatments as Treatment[]);
+
+  // Get any filter state from URL params
+  const categoryParam = url.searchParams.get("category");
+  const searchParam = url.searchParams.get("search");
+  const eventTypesParam = url.searchParams.get("eventTypes");
+
+  return {
+    treatments: parentData.treatments,
+    dateRange: parentData.dateRange,
+    stats,
+    filters: {
+      category: categoryParam || "all",
+      search: searchParam || "",
+      eventTypes: eventTypesParam ? eventTypesParam.split(",") : [],
+    },
+  };
+};
 
 export const actions: Actions = {
   updateTreatment: async ({ request, locals }) => {
@@ -17,10 +42,10 @@ export const actions: Actions = {
 
       const parsedTreatment = JSON.parse(treatmentData);
       const updatedTreatment =
-        await locals.apiClient.treatments.updateTreatment2({
-          id: treatmentId,
-          treatment: parsedTreatment,
-        });
+        await locals.apiClient.treatments.updateTreatment2(
+          treatmentId,
+          parsedTreatment
+        );
 
       return {
         message: "Treatment updated successfully",

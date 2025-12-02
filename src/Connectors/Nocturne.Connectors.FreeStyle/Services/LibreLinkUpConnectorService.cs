@@ -72,15 +72,17 @@ namespace Nocturne.Connectors.FreeStyle.Services
             ILogger<LibreConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
             : base(httpClient, logger, apiDataSubmitter)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-            _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-            _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+            _retryDelayStrategy =
+                retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+            _rateLimitingStrategy =
+                rateLimitingStrategy
+                ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
         }
-
-
 
         public override async Task<bool> AuthenticateAsync()
         {
@@ -387,7 +389,8 @@ namespace Nocturne.Connectors.FreeStyle.Services
                         _failedRequestCount = 0;
 
                         _logger.LogInformation(
-                            "Successfully fetched {Count} glucose entries from LibreLinkUp",
+                            "[{ConnectorSource}] Successfully fetched {Count} glucose entries from LibreLinkUp",
+                            ConnectorSource,
                             glucoseEntries.Count
                         );
                         return glucoseEntries;

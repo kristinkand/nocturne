@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
-using Nocturne.Connectors.Configurations;
 using Nocturne.Core.Models;
 
 #nullable enable
@@ -86,15 +86,17 @@ namespace Nocturne.Connectors.MiniMed.Services
             ILogger<CareLinkConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
             : base(httpClient, logger, apiDataSubmitter)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-            _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-            _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+            _retryDelayStrategy =
+                retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+            _rateLimitingStrategy =
+                rateLimitingStrategy
+                ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
         }
-
-
 
         public override async Task<bool> AuthenticateAsync()
         {
@@ -500,7 +502,8 @@ namespace Nocturne.Connectors.MiniMed.Services
 
                     _failedRequestCount = 0;
                     _logger.LogInformation(
-                        "Successfully fetched {Count} glucose entries from MiniMed CareLink",
+                        "[{ConnectorSource}] Successfully fetched {Count} glucose entries from MiniMed CareLink",
+                        ConnectorSource,
                         glucoseEntries.Count()
                     );
                     return glucoseEntries;

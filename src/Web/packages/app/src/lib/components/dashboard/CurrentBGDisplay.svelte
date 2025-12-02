@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import type { Entry } from "$lib/api";
   import { Badge } from "$lib/components/ui/badge";
   import { getDirectionInfo } from "$lib/utils";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
+  import { Clock } from "lucide-svelte";
 
   interface ComponentProps {
     entries?: Entry[];
@@ -10,10 +12,21 @@
     direction?: string;
     bgDelta?: number;
     demoMode?: boolean;
+    /**
+     * Profile timezone (e.g., "Europe/Stockholm") - if different from local,
+     * will show offset
+     */
+    profileTimezone?: string;
   }
 
-  let { entries, currentBG, direction, bgDelta, demoMode }: ComponentProps =
-    $props();
+  let {
+    entries,
+    currentBG,
+    direction,
+    bgDelta,
+    demoMode,
+    profileTimezone,
+  }: ComponentProps = $props();
 
   const realtimeStore = getRealtimeStore();
 
@@ -23,8 +36,59 @@
   const displayBgDelta = $derived(bgDelta ?? realtimeStore.bgDelta);
   const displayDemoMode = $derived(demoMode ?? realtimeStore.demoMode);
 
-  // const directionInfo = $derived(getDirectionInfo(displayDirection));
-  // const Icon = $derived(directionInfo.icon);
+  // Current time state (updated every second)
+  let currentTime = $state(new Date());
+
+  $effect(() => {
+    if (!browser) return;
+    const interval = setInterval(() => {
+      currentTime = new Date();
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+
+  // Format current time in local timezone
+  const formattedLocalTime = $derived(
+    currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+
+  // Format time in profile timezone if provided and different
+  const profileTimeInfo = $derived.by(() => {
+    if (!profileTimezone) return null;
+
+    try {
+      const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (localTz === profileTimezone) return null;
+
+      const profileTime = currentTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: profileTimezone,
+      });
+
+      // Calculate offset between timezones
+      const localDate = new Date(
+        currentTime.toLocaleString("en-US", { timeZone: localTz })
+      );
+      const profileDate = new Date(
+        currentTime.toLocaleString("en-US", { timeZone: profileTimezone })
+      );
+      const diffHours = Math.round(
+        (profileDate.getTime() - localDate.getTime()) / (1000 * 60 * 60)
+      );
+      const offsetStr = diffHours >= 0 ? `+${diffHours}h` : `${diffHours}h`;
+
+      return {
+        time: profileTime,
+        timezone:
+          profileTimezone.split("/").pop()?.replace(/_/g, " ") ??
+          profileTimezone,
+        offset: offsetStr,
+      };
+    } catch {
+      return null;
+    }
+  });
 
   // Get background color based on BG value
   const getBGColor = (bg: number) => {
@@ -46,7 +110,25 @@
       </Badge>
     {/if}
   </div>
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-6">
+    <!-- Current Time Display -->
+    <div class="text-right">
+      <div class="flex items-center gap-2 text-lg font-medium tabular-nums">
+        <Clock class="h-4 w-4 text-muted-foreground" />
+        {formattedLocalTime}
+      </div>
+      {#if profileTimeInfo}
+        <div class="text-xs text-muted-foreground flex items-center gap-1">
+          <span class="font-medium">{profileTimeInfo.timezone}:</span>
+          <span class="tabular-nums">{profileTimeInfo.time}</span>
+          <Badge variant="outline" class="text-[10px] px-1 py-0">
+            {profileTimeInfo.offset}
+          </Badge>
+        </div>
+      {/if}
+    </div>
+
+    <!-- BG Display -->
     <div class="flex items-center gap-2">
       <div class="relative">
         <div
@@ -59,11 +141,7 @@
       </div>
       <div class="text-center">
         <div class="text-2xl">
-          <!-- {#if directionInfo.icon}
-            {@const Icon = directionInfo.icon}
-            <Icon class="inline w-6 h-6" />
-          {/if} -->
-          <!-- {directionInfo.label} -->
+          <!-- Direction display placeholder -->
         </div>
         <div class="text-sm text-muted-foreground">
           {displayBgDelta > 0 ? "+" : ""}{displayBgDelta}

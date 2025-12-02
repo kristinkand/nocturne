@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Constants;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Dexcom.Constants;
-using Nocturne.Connectors.Configurations;
 using Nocturne.Core.Models;
 
 #nullable enable
@@ -85,15 +85,17 @@ namespace Nocturne.Connectors.Dexcom.Services
             ILogger<DexcomConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
             : base(httpClient, logger, apiDataSubmitter)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-            _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-            _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+            _retryDelayStrategy =
+                retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+            _rateLimitingStrategy =
+                rateLimitingStrategy
+                ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
         }
-
-
 
         public override async Task<bool> AuthenticateAsync()
         {
@@ -333,7 +335,8 @@ namespace Nocturne.Connectors.Dexcom.Services
             );
 
             _logger.LogInformation(
-                "Retrieved {Count} glucose entries from Dexcom",
+                "[{ConnectorSource}] Retrieved {Count} glucose entries from Dexcom",
+                ConnectorSource,
                 entries.Count()
             );
 
@@ -361,7 +364,10 @@ namespace Nocturne.Connectors.Dexcom.Services
                 // Check if session is expired and re-authenticate if needed
                 if (IsSessionExpired())
                 {
-                    _logger.LogInformation("Session expired, attempting to re-authenticate");
+                    _logger.LogInformation(
+                        "[{ConnectorSource}] Session expired, attempting to re-authenticate",
+                        ConnectorSource
+                    );
                     if (!await AuthenticateAsync())
                     {
                         _failedRequestCount++;
@@ -372,11 +378,34 @@ namespace Nocturne.Connectors.Dexcom.Services
                 // Apply rate limiting
                 await _rateLimitingStrategy.ApplyDelayAsync(0);
 
-                return await FetchRawDataWithRetryAsync(since);
+                var result = await FetchRawDataWithRetryAsync(since);
+
+                // Log batch data summary
+                if (result != null)
+                {
+                    var validEntries = result.Where(e => e != null && e.Value > 0).ToArray();
+                    var minDate = validEntries.Length > 0 ? validEntries.Min(e => e.WT) : "N/A";
+                    var maxDate = validEntries.Length > 0 ? validEntries.Max(e => e.WT) : "N/A";
+
+                    _logger.LogInformation(
+                        "[{ConnectorSource}] Fetched Dexcom batch data: TotalEntries={TotalCount}, ValidEntries={ValidCount}, DateRange={MinDate} to {MaxDate}",
+                        ConnectorSource,
+                        result.Length,
+                        validEntries.Length,
+                        minDate,
+                        maxDate
+                    );
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching glucose data from Dexcom Share");
+                _logger.LogError(
+                    ex,
+                    "[{ConnectorSource}] Error fetching glucose data from Dexcom Share",
+                    ConnectorSource
+                );
                 _failedRequestCount++;
                 return null;
             }

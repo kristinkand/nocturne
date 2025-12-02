@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
-using Nocturne.Connectors.Configurations;
 using Nocturne.Core.Models;
 
 namespace Nocturne.Connectors.Nightscout.Services
@@ -60,15 +60,17 @@ namespace Nocturne.Connectors.Nightscout.Services
             ILogger<NightscoutConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
             : base(httpClient, logger, apiDataSubmitter)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-            _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-            _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+            _retryDelayStrategy =
+                retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+            _rateLimitingStrategy =
+                rateLimitingStrategy
+                ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
         }
-
-
 
         /// <summary>
         /// Hash API secret using SHA1 to match Nightscout's expected format
@@ -227,7 +229,8 @@ namespace Nocturne.Connectors.Nightscout.Services
             );
 
             _logger.LogInformation(
-                "Retrieved {Count} glucose entries from Nightscout",
+                "[{ConnectorSource}] Retrieved {Count} glucose entries from Nightscout",
+                ConnectorSource,
                 entries.Count()
             );
 
@@ -255,11 +258,38 @@ namespace Nocturne.Connectors.Nightscout.Services
                 await _rateLimitingStrategy.ApplyDelayAsync(0);
                 // Use a much higher count to get more data per request
                 int hundredAndTwentyDays = 120 * 24 * 60 * 5;
-                return await FetchRawDataWithRetryAsync(since, hundredAndTwentyDays);
+                var result = await FetchRawDataWithRetryAsync(since, hundredAndTwentyDays);
+
+                // Log batch data summary
+                if (result != null && result.Length > 0)
+                {
+                    var validEntries = result
+                        .Where(e => e != null && (e.Mgdl > 0 || e.Sgv > 0))
+                        .ToArray();
+                    var minDate =
+                        validEntries.Length > 0 ? validEntries.Min(e => e.Date) : DateTime.MinValue;
+                    var maxDate =
+                        validEntries.Length > 0 ? validEntries.Max(e => e.Date) : DateTime.MinValue;
+
+                    _logger.LogInformation(
+                        "[{ConnectorSource}] Fetched Nightscout batch data: TotalEntries={TotalCount}, ValidEntries={ValidCount}, DateRange={MinDate:yyyy-MM-dd HH:mm} to {MaxDate:yyyy-MM-dd HH:mm}",
+                        ConnectorSource,
+                        result.Length,
+                        validEntries.Length,
+                        minDate,
+                        maxDate
+                    );
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching glucose data from source Nightscout");
+                _logger.LogError(
+                    ex,
+                    "[{ConnectorSource}] Error fetching glucose data from source Nightscout",
+                    ConnectorSource
+                );
                 _failedRequestCount++;
                 return null;
             }
