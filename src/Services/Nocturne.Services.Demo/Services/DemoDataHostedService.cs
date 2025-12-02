@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Nocturne.Core.Constants;
+using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Abstractions;
 using Nocturne.Services.Demo.Configuration;
 
@@ -85,7 +86,7 @@ public class DemoDataHostedService : BackgroundService
     }
 
     /// <summary>
-    /// Clears all demo data and regenerates historical data.
+    /// Clears all demo data and regenerates historical data using streaming pattern.
     /// </summary>
     public async Task RegenerateDataAsync(CancellationToken cancellationToken)
     {
@@ -112,38 +113,69 @@ public class DemoDataHostedService : BackgroundService
             treatmentsDeleted
         );
 
-        // Generate new historical data
+        // Generate and save data using streaming pattern to minimize memory usage
         var startTime = DateTime.UtcNow;
-        var (entries, treatments) = _generator.GenerateHistoricalData();
+        const int batchSize = 1000;
 
-        _logger.LogInformation(
-            "Generated {Entries} entries and {Treatments} treatments, saving to database...",
-            entries.Count,
-            treatments.Count
-        );
+        // Stream and save entries in batches
+        var entryCount = 0;
+        var entryBatch = new List<Entry>(batchSize);
 
-        // Save in batches to avoid memory issues
-        const int batchSize = 5000;
-
-        for (var i = 0; i < entries.Count; i += batchSize)
+        foreach (var entry in _generator.GenerateHistoricalEntries())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var batch = entries.Skip(i).Take(batchSize).ToList();
-            await entryService.CreateEntriesAsync(batch, cancellationToken);
+            entryBatch.Add(entry);
+
+            if (entryBatch.Count >= batchSize)
+            {
+                await entryService.CreateEntriesAsync(entryBatch, cancellationToken);
+                entryCount += entryBatch.Count;
+                entryBatch.Clear();
+            }
         }
 
-        for (var i = 0; i < treatments.Count; i += batchSize)
+        // Save remaining entries
+        if (entryBatch.Count > 0)
+        {
+            await entryService.CreateEntriesAsync(entryBatch, cancellationToken);
+            entryCount += entryBatch.Count;
+            entryBatch.Clear();
+        }
+
+        _logger.LogInformation("Saved {Count} entries using streaming pattern", entryCount);
+
+        // Stream and save treatments in batches
+        var treatmentCount = 0;
+        var treatmentBatch = new List<Treatment>(batchSize);
+
+        foreach (var treatment in _generator.GenerateHistoricalTreatments())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var batch = treatments.Skip(i).Take(batchSize).ToList();
-            await treatmentService.CreateTreatmentsAsync(batch, cancellationToken);
+            treatmentBatch.Add(treatment);
+
+            if (treatmentBatch.Count >= batchSize)
+            {
+                await treatmentService.CreateTreatmentsAsync(treatmentBatch, cancellationToken);
+                treatmentCount += treatmentBatch.Count;
+                treatmentBatch.Clear();
+            }
         }
+
+        // Save remaining treatments
+        if (treatmentBatch.Count > 0)
+        {
+            await treatmentService.CreateTreatmentsAsync(treatmentBatch, cancellationToken);
+            treatmentCount += treatmentBatch.Count;
+            treatmentBatch.Clear();
+        }
+
+        _logger.LogInformation("Saved {Count} treatments using streaming pattern", treatmentCount);
 
         var duration = DateTime.UtcNow - startTime;
         _logger.LogInformation(
             "Completed demo data regeneration: {Entries} entries, {Treatments} treatments in {Duration}",
-            entries.Count,
-            treatments.Count,
+            entryCount,
+            treatmentCount,
             duration
         );
     }

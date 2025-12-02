@@ -244,6 +244,9 @@ builder.Services.AddScoped<ISignalRBroadcastService, SignalRBroadcastService>();
 // This service is used by EntryService, TreatmentService, and StatusService to filter data
 builder.Services.AddSingleton<IDemoModeService, DemoModeService>();
 
+// Register UI settings service for frontend configuration persistence
+builder.Services.AddScoped<IUISettingsService, UISettingsService>();
+
 // Register domain services for WebSocket broadcasting
 builder.Services.AddScoped<ITreatmentService, TreatmentService>();
 builder.Services.AddScoped<IEntryService, EntryService>();

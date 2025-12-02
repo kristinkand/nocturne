@@ -78,7 +78,9 @@
       title: "Settings",
       icon: Settings,
       children: [
-        { title: "General", href: "/settings", icon: Settings },
+        { title: "Overview", href: "/settings", icon: Settings },
+        { title: "Devices", href: "/settings/devices", icon: Activity },
+        { title: "Services", href: "/settings/services", icon: Activity },
         { title: "Compatibility", href: "/compatibility", icon: Activity },
       ],
     },

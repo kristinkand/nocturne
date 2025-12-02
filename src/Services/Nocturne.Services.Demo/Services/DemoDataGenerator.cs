@@ -27,8 +27,21 @@ public interface IDemoDataGenerator
     Entry GenerateCurrentEntry();
 
     /// <summary>
+    /// Generates historical entries using streaming/yield pattern to minimize memory usage.
+    /// </summary>
+    IEnumerable<Entry> GenerateHistoricalEntries();
+
+    /// <summary>
+    /// Generates historical treatments using streaming/yield pattern to minimize memory usage.
+    /// </summary>
+    IEnumerable<Treatment> GenerateHistoricalTreatments();
+
+    /// <summary>
     /// Generates historical data for the configured time period.
     /// </summary>
+    [Obsolete(
+        "Use GenerateHistoricalEntries() and GenerateHistoricalTreatments() for streaming pattern"
+    )]
     (List<Entry> Entries, List<Treatment> Treatments) GenerateHistoricalData();
 }
 
@@ -175,6 +188,381 @@ public class DemoDataGenerator : IDemoDataGenerator
         );
 
         return (entries, treatments);
+    }
+
+    /// <summary>
+    /// Generates historical entries using streaming/yield pattern to minimize memory usage.
+    /// Each entry is yielded immediately after generation, avoiding large in-memory collections.
+    /// </summary>
+    public IEnumerable<Entry> GenerateHistoricalEntries()
+    {
+        var endDate = DateTime.UtcNow;
+        var startDate = endDate.AddDays(-_config.HistoryDays);
+
+        _logger.LogInformation(
+            "Streaming historical entries from {StartDate} to {EndDate}",
+            startDate,
+            endDate
+        );
+
+        var currentDay = startDate.Date;
+        double? previousDayEndingGlucose = null;
+        double previousDayMomentum = 0;
+        var totalEntries = 0;
+
+        while (currentDay <= endDate.Date)
+        {
+            var dayScenario = SelectDayScenario(currentDay);
+            var scenarioParams = GetScenarioParameters(dayScenario);
+            var orefProfile = CreateOrefProfile(scenarioParams);
+            var simulator = new OrefPhysiologySimulator(
+                _loggerFactory.CreateLogger<OrefPhysiologySimulator>(),
+                orefProfile
+            );
+
+            double glucose =
+                previousDayEndingGlucose
+                ?? scenarioParams.FastingGlucose + (_random.NextDouble() - 0.5) * 20;
+            var mealPlan = GenerateMealPlan(currentDay, dayScenario);
+            var basalAdjustments = GenerateBasalAdjustments(currentDay, dayScenario);
+
+            // Pre-populate events into simulator
+            foreach (var meal in mealPlan)
+            {
+                var absorptionHours =
+                    _config.CarbAbsorptionDurationMinutes / 60.0 / meal.GlycemicIndex;
+                simulator.AddCarbs(meal.MealTime, meal.Carbs, absorptionHours);
+                var bolusTime = meal.MealTime.AddMinutes(meal.BolusOffsetMinutes);
+                var bolus = CalculateMealBolus(meal.Carbs, glucose, scenarioParams);
+                simulator.AddInsulinDose(bolusTime, bolus);
+            }
+
+            double glucoseMomentum = previousDayMomentum * 0.5;
+            double lastGlucose = glucose;
+            double estimatedIob = 0;
+            var targetGlucose = _config.TargetGlucose;
+            var currentTime = currentDay;
+            var endTime = currentDay.AddDays(1);
+
+            while (currentTime < endTime)
+            {
+                var basalAdj = basalAdjustments.FirstOrDefault(b =>
+                    Math.Abs((b.Time - currentTime).TotalMinutes) < 2.5
+                );
+                if (basalAdj.Rate > 0 || basalAdj.Duration > 0)
+                {
+                    simulator.AddInsulinDose(
+                        currentTime,
+                        basalAdj.Rate * basalAdj.Duration / 60.0,
+                        isTempBasal: true,
+                        duration: basalAdj.Duration
+                    );
+                }
+
+                glucose = SimulateGlucoseWithOref(
+                    glucose,
+                    currentTime,
+                    simulator,
+                    scenarioParams,
+                    dayScenario,
+                    ref glucoseMomentum
+                );
+
+                glucose = Math.Max(40, Math.Min(_config.MaxGlucose, glucose));
+
+                var iobDecayRate = 1.0 - (5.0 / _config.InsulinDurationMinutes);
+                estimatedIob *= iobDecayRate;
+
+                var hour = currentTime.Hour;
+                var isWakingHours = hour >= 7 && hour < 22;
+
+                // Handle reactive glucose management (simplified for entry generation - treatments handled separately)
+                if (glucose < 70)
+                {
+                    var correctionCarbs =
+                        glucose < 55 ? _random.Next(15, 25) : _random.Next(10, 18);
+                    simulator.AddCarbs(currentTime, correctionCarbs, 0.4);
+                }
+                else if (glucose > targetGlucose + 10)
+                {
+                    var glucoseAboveTarget = glucose - targetGlucose;
+                    var effectiveIsf =
+                        _config.InsulinSensitivityFactor
+                        * scenarioParams.InsulinSensitivityMultiplier;
+                    var insulinNeeded = glucoseAboveTarget / effectiveIsf;
+                    var insulinToDeliver = Math.Max(0, insulinNeeded - estimatedIob * 0.6);
+
+                    if (currentTime.Minute == 0 || currentTime.Minute == 30)
+                    {
+                        var tempBasalMultiplier = 1.1 + Math.Min(0.3, glucoseAboveTarget / 150.0);
+                        var highTempRate = _config.BasalRate * tempBasalMultiplier;
+                        var extraInsulin = (highTempRate - _config.BasalRate) * (30 / 60.0);
+                        simulator.AddInsulinDose(
+                            currentTime,
+                            extraInsulin,
+                            isTempBasal: true,
+                            duration: 30
+                        );
+                        estimatedIob += extraInsulin;
+                    }
+
+                    if (
+                        glucose > targetGlucose + 15
+                        && currentTime.Minute % 5 == 0
+                        && insulinToDeliver > 0.1
+                    )
+                    {
+                        var correctionBolus = insulinToDeliver * (0.5 + _random.NextDouble() * 0.2);
+                        correctionBolus = Math.Clamp(correctionBolus, 0.1, 4.0);
+                        simulator.AddInsulinDose(currentTime, correctionBolus);
+                        estimatedIob += correctionBolus;
+                    }
+                }
+
+                var delta = glucose - lastGlucose;
+                yield return CreateEntry(currentTime, glucose, delta);
+                totalEntries++;
+
+                lastGlucose = glucose;
+                currentTime = currentTime.AddMinutes(5);
+                simulator.CleanupExpired(currentTime);
+            }
+
+            previousDayEndingGlucose = glucose;
+            previousDayMomentum = glucoseMomentum;
+            currentDay = currentDay.AddDays(1);
+        }
+
+        _logger.LogInformation("Streamed {EntryCount} entries", totalEntries);
+    }
+
+    /// <summary>
+    /// Generates historical treatments using streaming/yield pattern to minimize memory usage.
+    /// Each treatment is yielded immediately after generation, avoiding large in-memory collections.
+    /// </summary>
+    public IEnumerable<Treatment> GenerateHistoricalTreatments()
+    {
+        var endDate = DateTime.UtcNow;
+        var startDate = endDate.AddDays(-_config.HistoryDays);
+
+        _logger.LogInformation(
+            "Streaming historical treatments from {StartDate} to {EndDate}",
+            startDate,
+            endDate
+        );
+
+        var currentDay = startDate.Date;
+        double? previousDayEndingGlucose = null;
+        double previousDayMomentum = 0;
+        var totalTreatments = 0;
+
+        while (currentDay <= endDate.Date)
+        {
+            var dayScenario = SelectDayScenario(currentDay);
+            var scenarioParams = GetScenarioParameters(dayScenario);
+            var orefProfile = CreateOrefProfile(scenarioParams);
+            var simulator = new OrefPhysiologySimulator(
+                _loggerFactory.CreateLogger<OrefPhysiologySimulator>(),
+                orefProfile
+            );
+
+            double glucose =
+                previousDayEndingGlucose
+                ?? scenarioParams.FastingGlucose + (_random.NextDouble() - 0.5) * 20;
+            var mealPlan = GenerateMealPlan(currentDay, dayScenario);
+            var basalAdjustments = GenerateBasalAdjustments(currentDay, dayScenario);
+
+            // Yield meal treatments
+            foreach (var meal in mealPlan)
+            {
+                var absorptionHours =
+                    _config.CarbAbsorptionDurationMinutes / 60.0 / meal.GlycemicIndex;
+                simulator.AddCarbs(meal.MealTime, meal.Carbs, absorptionHours);
+
+                var bolusTime = meal.MealTime.AddMinutes(meal.BolusOffsetMinutes);
+                var bolus = CalculateMealBolus(meal.Carbs, glucose, scenarioParams);
+                simulator.AddInsulinDose(bolusTime, bolus);
+
+                yield return CreateCarbTreatment(meal.MealTime, meal.Carbs, meal.FoodType);
+                totalTreatments++;
+
+                yield return CreateBolusTreatment(
+                    bolusTime,
+                    bolus,
+                    meal.FoodType == "Snack" ? "Snack Bolus" : "Meal Bolus"
+                );
+                totalTreatments++;
+            }
+
+            double glucoseMomentum = previousDayMomentum * 0.5;
+            double lastGlucose = glucose;
+            double estimatedIob = 0;
+            var targetGlucose = _config.TargetGlucose;
+            var currentTime = currentDay;
+            var endTime = currentDay.AddDays(1);
+
+            while (currentTime < endTime)
+            {
+                var basalAdj = basalAdjustments.FirstOrDefault(b =>
+                    Math.Abs((b.Time - currentTime).TotalMinutes) < 2.5
+                );
+                if (basalAdj.Rate > 0 || basalAdj.Duration > 0)
+                {
+                    yield return CreateTempBasalTreatment(
+                        currentTime,
+                        basalAdj.Rate,
+                        basalAdj.Duration
+                    );
+                    totalTreatments++;
+                    simulator.AddInsulinDose(
+                        currentTime,
+                        basalAdj.Rate * basalAdj.Duration / 60.0,
+                        isTempBasal: true,
+                        duration: basalAdj.Duration
+                    );
+                }
+
+                glucose = SimulateGlucoseWithOref(
+                    glucose,
+                    currentTime,
+                    simulator,
+                    scenarioParams,
+                    dayScenario,
+                    ref glucoseMomentum
+                );
+
+                glucose = Math.Max(40, Math.Min(_config.MaxGlucose, glucose));
+
+                var iobDecayRate = 1.0 - (5.0 / _config.InsulinDurationMinutes);
+                estimatedIob *= iobDecayRate;
+
+                var hour = currentTime.Hour;
+                var isWakingHours = hour >= 7 && hour < 22;
+
+                // Handle LOW glucose - yield carb correction treatment
+                if (glucose < 70)
+                {
+                    var correctionCarbs =
+                        glucose < 55 ? _random.Next(15, 25) : _random.Next(10, 18);
+                    yield return CreateCarbCorrectionTreatment(currentTime, correctionCarbs);
+                    totalTreatments++;
+                    simulator.AddCarbs(currentTime, correctionCarbs, 0.4);
+                }
+                // Handle HIGH glucose - yield insulin treatments
+                else if (glucose > targetGlucose + 10)
+                {
+                    var glucoseAboveTarget = glucose - targetGlucose;
+                    var effectiveIsf =
+                        _config.InsulinSensitivityFactor
+                        * scenarioParams.InsulinSensitivityMultiplier;
+                    var insulinNeeded = glucoseAboveTarget / effectiveIsf;
+                    var insulinToDeliver = Math.Max(0, insulinNeeded - estimatedIob * 0.6);
+
+                    if (currentTime.Minute == 0 || currentTime.Minute == 30)
+                    {
+                        var tempBasalMultiplier = 1.1 + Math.Min(0.3, glucoseAboveTarget / 150.0);
+                        var highTempRate = _config.BasalRate * tempBasalMultiplier;
+                        yield return CreateTempBasalTreatment(
+                            currentTime,
+                            Math.Round(highTempRate, 2),
+                            30
+                        );
+                        totalTreatments++;
+                        var extraInsulin = (highTempRate - _config.BasalRate) * (30 / 60.0);
+                        simulator.AddInsulinDose(
+                            currentTime,
+                            extraInsulin,
+                            isTempBasal: true,
+                            duration: 30
+                        );
+                        estimatedIob += extraInsulin;
+                    }
+
+                    if (
+                        isWakingHours
+                        && glucose > targetGlucose + 30
+                        && _random.NextDouble() < 0.25
+                    )
+                    {
+                        var manualCorrectionBolus = glucoseAboveTarget / effectiveIsf;
+                        manualCorrectionBolus = Math.Clamp(manualCorrectionBolus, 0.5, 6.0);
+                        yield return CreateManualCorrectionBolusTreatment(
+                            currentTime,
+                            Math.Round(manualCorrectionBolus, 1)
+                        );
+                        totalTreatments++;
+                        simulator.AddInsulinDose(currentTime, manualCorrectionBolus);
+                        estimatedIob += manualCorrectionBolus;
+                    }
+                    else if (
+                        glucose > targetGlucose + 15
+                        && currentTime.Minute % 5 == 0
+                        && insulinToDeliver > 0.1
+                    )
+                    {
+                        var correctionBolus = insulinToDeliver * (0.5 + _random.NextDouble() * 0.2);
+                        correctionBolus = Math.Clamp(correctionBolus, 0.1, 4.0);
+                        yield return CreateCorrectionBolusTreatment(
+                            currentTime,
+                            Math.Round(correctionBolus, 1)
+                        );
+                        totalTreatments++;
+                        simulator.AddInsulinDose(currentTime, correctionBolus);
+                        estimatedIob += correctionBolus;
+                    }
+                    else if (glucose > targetGlucose + 10 && insulinToDeliver > 0.05)
+                    {
+                        var microBolus = insulinToDeliver * 0.25;
+                        microBolus = Math.Clamp(microBolus, 0.05, 1.2);
+                        if (microBolus >= 0.05)
+                        {
+                            yield return CreateMicroBolusTreatment(
+                                currentTime,
+                                Math.Round(microBolus, 2)
+                            );
+                            totalTreatments++;
+                        }
+                        simulator.AddInsulinDose(currentTime, microBolus);
+                        estimatedIob += microBolus;
+                    }
+                }
+                else if (glucose < 90 || (glucose < 100 && glucoseMomentum < -0.3))
+                {
+                    var reductionFactor =
+                        glucose < 75 ? 0.0
+                        : glucose < 85 ? 0.2
+                        : 0.4;
+                    var reducedRate = _config.BasalRate * reductionFactor;
+
+                    if (currentTime.Minute == 0 || currentTime.Minute == 30)
+                    {
+                        yield return CreateTempBasalTreatment(
+                            currentTime,
+                            Math.Round(reducedRate, 2),
+                            30
+                        );
+                        totalTreatments++;
+                    }
+                }
+
+                lastGlucose = glucose;
+                currentTime = currentTime.AddMinutes(5);
+                simulator.CleanupExpired(currentTime);
+            }
+
+            // Yield scheduled basal treatments for the day
+            foreach (var basalTreatment in GenerateScheduledBasal(currentDay, scenarioParams))
+            {
+                yield return basalTreatment;
+                totalTreatments++;
+            }
+
+            previousDayEndingGlucose = glucose;
+            previousDayMomentum = glucoseMomentum;
+            currentDay = currentDay.AddDays(1);
+        }
+
+        _logger.LogInformation("Streamed {TreatmentCount} treatments", totalTreatments);
     }
 
     private DayScenario SelectDayScenario(DateTime date)

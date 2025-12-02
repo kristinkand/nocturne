@@ -49,7 +49,7 @@ export class RealtimeStore {
     return sorted[0] || null;
   });
 
-  demoMode = $derived(this.entries.some((e) => e.is_demo));
+  demoMode = $derived(this.entries.some((e) => e.data_source === "demo-service"));
 
   previousEntry = $derived.by(() => {
     const sorted = [...this.entries].sort(

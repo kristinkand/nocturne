@@ -326,7 +326,9 @@ public class PluginSettings
 #region Notification Settings
 
 /// <summary>
-/// Notification settings including alarms and notification channels
+/// Notification settings including alarms and notification channels.
+/// This is the legacy format - new code should use UserAlarmConfiguration from AlarmProfileConfiguration.cs
+/// which provides xDrip+-style alarm profiles with full customization.
 /// </summary>
 public class NotificationSettings
 {
@@ -353,49 +355,60 @@ public class NotificationSettings
 
     [JsonPropertyName("emergencyContacts")]
     public List<EmergencyContact> EmergencyContacts { get; set; } = new();
+
+    /// <summary>
+    /// New xDrip+-style alarm configuration stored as JSONB.
+    /// When this is present, it takes precedence over the legacy AlarmSettings.
+    /// </summary>
+    [JsonPropertyName("alarmConfiguration")]
+    public UserAlarmConfiguration? AlarmConfiguration { get; set; }
 }
 
 public class AlarmSettings
 {
     [JsonPropertyName("urgentHigh")]
-    public AlarmConfig UrgentHigh { get; set; } = new()
-    {
-        Enabled = true,
-        Threshold = 250,
-        Sound = "alarm-urgent",
-        RepeatMinutes = 5,
-        SnoozeOptions = new List<int> { 5, 10, 15, 30 }
-    };
+    public AlarmConfig UrgentHigh { get; set; } =
+        new()
+        {
+            Enabled = true,
+            Threshold = 250,
+            Sound = "alarm-urgent",
+            RepeatMinutes = 5,
+            SnoozeOptions = new List<int> { 5, 10, 15, 30 },
+        };
 
     [JsonPropertyName("high")]
-    public AlarmConfig High { get; set; } = new()
-    {
-        Enabled = true,
-        Threshold = 180,
-        Sound = "alarm-high",
-        RepeatMinutes = 15,
-        SnoozeOptions = new List<int> { 15, 30, 60 }
-    };
+    public AlarmConfig High { get; set; } =
+        new()
+        {
+            Enabled = true,
+            Threshold = 180,
+            Sound = "alarm-high",
+            RepeatMinutes = 15,
+            SnoozeOptions = new List<int> { 15, 30, 60 },
+        };
 
     [JsonPropertyName("low")]
-    public AlarmConfig Low { get; set; } = new()
-    {
-        Enabled = true,
-        Threshold = 70,
-        Sound = "alarm-low",
-        RepeatMinutes = 5,
-        SnoozeOptions = new List<int> { 10, 15, 30 }
-    };
+    public AlarmConfig Low { get; set; } =
+        new()
+        {
+            Enabled = true,
+            Threshold = 70,
+            Sound = "alarm-low",
+            RepeatMinutes = 5,
+            SnoozeOptions = new List<int> { 10, 15, 30 },
+        };
 
     [JsonPropertyName("urgentLow")]
-    public AlarmConfig UrgentLow { get; set; } = new()
-    {
-        Enabled = true,
-        Threshold = 55,
-        Sound = "alarm-urgent",
-        RepeatMinutes = 5,
-        SnoozeOptions = new List<int> { 5, 10, 15 }
-    };
+    public AlarmConfig UrgentLow { get; set; } =
+        new()
+        {
+            Enabled = true,
+            Threshold = 55,
+            Sound = "alarm-urgent",
+            RepeatMinutes = 5,
+            SnoozeOptions = new List<int> { 5, 10, 15 },
+        };
 
     [JsonPropertyName("staleData")]
     public StaleDataAlarm StaleData { get; set; } = new();
@@ -449,7 +462,8 @@ public class QuietHoursSettings
 public class NotificationChannels
 {
     [JsonPropertyName("push")]
-    public NotificationChannel Push { get; set; } = new() { Enabled = true, Label = "Push Notifications" };
+    public NotificationChannel Push { get; set; } =
+        new() { Enabled = true, Label = "Push Notifications" };
 
     [JsonPropertyName("email")]
     public NotificationChannel Email { get; set; } = new() { Enabled = false, Label = "Email" };

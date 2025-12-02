@@ -15,6 +15,17 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Suppress verbose EF Core logging to reduce memory pressure from console log accumulation
+        builder.Logging.AddFilter(
+            "Microsoft.EntityFrameworkCore.Database.Command",
+            LogLevel.Warning
+        );
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Infrastructure", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Query", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Update", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Model", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.ChangeTracking", LogLevel.Warning);
+
         // Add service defaults (health checks, OpenTelemetry, etc.)
         builder.AddServiceDefaults();
 

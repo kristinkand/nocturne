@@ -18,7 +18,10 @@
 
   <BGStatisticsCards />
 
-  <GlucoseChartCard entries={realtimeStore.entries} />
+  <GlucoseChartCard
+    entries={realtimeStore.entries}
+    treatments={realtimeStore.treatments}
+  />
 
   <RecentEntriesCard />
 
