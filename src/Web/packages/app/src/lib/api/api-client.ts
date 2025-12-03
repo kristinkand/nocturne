@@ -28,6 +28,8 @@ import {
   CompatibilityClient,
   UISettingsClient,
   ServicesClient,
+  LocalAuthClient,
+  OidcClient,
 } from "./generated/nocturne-api-client";
 
 /**
@@ -65,6 +67,8 @@ export class ApiClient {
   public readonly compatibility: CompatibilityClient;
   public readonly uiSettings: UISettingsClient;
   public readonly services: ServicesClient;
+  public readonly localAuth: LocalAuthClient;
+  public readonly oidc: OidcClient;
 
   constructor(
     baseUrl: string,
@@ -109,6 +113,8 @@ export class ApiClient {
     this.compatibility = new CompatibilityClient(apiBaseUrl, http);
     this.uiSettings = new UISettingsClient(apiBaseUrl, http);
     this.services = new ServicesClient(apiBaseUrl, http);
+    this.localAuth = new LocalAuthClient(apiBaseUrl, http);
+    this.oidc = new OidcClient(apiBaseUrl, http);
   }
 
   /** Get the underlying main client for direct access if needed */

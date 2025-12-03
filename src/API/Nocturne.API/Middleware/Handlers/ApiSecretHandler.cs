@@ -29,18 +29,18 @@ public class ApiSecretHandler : IAuthHandler
     /// <summary>
     /// Creates a new instance of ApiSecretHandler
     /// </summary>
-    public ApiSecretHandler(
-        IConfiguration configuration,
-        ILogger<ApiSecretHandler> logger)
+    public ApiSecretHandler(IConfiguration configuration, ILogger<ApiSecretHandler> logger)
     {
         _configuration = configuration;
         _logger = logger;
 
         // Pre-compute the expected hash
-        var apiSecret = _configuration[ServiceNames.ConfigKeys.ApiSecret] ?? "";
-        _apiSecretHash = !string.IsNullOrEmpty(apiSecret)
-            ? ComputeSha1Hash(apiSecret)
-            : "";
+        // Check both the new Parameters:api-secret location and legacy API_SECRET for backwards compatibility
+        var apiSecret =
+            _configuration[$"Parameters:{ServiceNames.Parameters.ApiSecret}"]
+            ?? _configuration[ServiceNames.ConfigKeys.ApiSecret]
+            ?? "";
+        _apiSecretHash = !string.IsNullOrEmpty(apiSecret) ? ComputeSha1Hash(apiSecret) : "";
     }
 
     /// <inheritdoc />
@@ -58,7 +58,9 @@ public class ApiSecretHandler : IAuthHandler
         // API secret not configured on server
         if (string.IsNullOrEmpty(_apiSecretHash))
         {
-            _logger.LogWarning("api-secret header provided but API_SECRET not configured on server");
+            _logger.LogWarning(
+                "api-secret header provided but API_SECRET not configured on server"
+            );
             return Task.FromResult(AuthResult.Failure("API secret not configured"));
         }
 
@@ -76,7 +78,7 @@ public class ApiSecretHandler : IAuthHandler
             AuthType = AuthType.ApiSecret,
             SubjectName = "admin",
             Permissions = ["*"],
-            Roles = ["admin"]
+            Roles = ["admin"],
         };
 
         _logger.LogDebug("API secret authentication successful");

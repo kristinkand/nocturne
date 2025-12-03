@@ -184,12 +184,23 @@ builder.Services.AddScoped<IAlexaService, AlexaService>();
 // Authentication and authorization services
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection(OidcOptions.SectionName));
+builder.Services.Configure<LocalIdentityOptions>(
+    builder.Configuration.GetSection(LocalIdentityOptions.SectionName)
+);
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName)
+);
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IOidcProviderService, OidcProviderService>();
 builder.Services.AddScoped<IOidcAuthService, OidcAuthService>();
+
+// Local identity provider services (built-in authentication without external OIDC)
+builder.Services.AddScoped<ILocalIdentityService, LocalIdentityService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHostedService<AdminSeedService>();
 
 // Register authentication handlers for the middleware pipeline
 // Handlers are executed in priority order (lowest first)
@@ -434,14 +445,50 @@ app.MapGet(
 
 app.MapDefaultEndpoints();
 
-// Initialize PostgreSQL database with migrations
-// IMPORTANT: Do not catch exceptions here - if migrations fail, the app should not start
-// This ensures the database schema is always in a valid state before handling requests
-Console.WriteLine("Running PostgreSQL database migrations...");
-await app.Services.MigrateDatabaseAsync();
-Console.WriteLine("PostgreSQL database migrations completed successfully.");
+// Skip database migrations when running in NSwag/OpenAPI generation mode
+// NSwag launches the app to extract the OpenAPI schema, but we don't need DB access for that
+var isNSwagGeneration = IsRunningInNSwagContext();
+if (!isNSwagGeneration)
+{
+    // Initialize PostgreSQL database with migrations
+    // IMPORTANT: Do not catch exceptions here - if migrations fail, the app should not start
+    // This ensures the database schema is always in a valid state before handling requests
+    Console.WriteLine("Running PostgreSQL database migrations...");
+    await app.Services.MigrateDatabaseAsync();
+    Console.WriteLine("PostgreSQL database migrations completed successfully.");
+}
+else
+{
+    Console.WriteLine("[NSwag] Skipping database migrations - running in OpenAPI generation mode");
+}
 
 app.Run();
+
+// Detects if the application is being run by NSwag for OpenAPI document generation.
+// NSwag uses its AspNetCore.Launcher to load and introspect the app without actually running it.
+static bool IsRunningInNSwagContext()
+{
+    // Check if the entry assembly is the NSwag launcher
+    var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
+    if (
+        entryAssembly?.GetName().Name?.Contains("NSwag", StringComparison.OrdinalIgnoreCase) == true
+    )
+    {
+        return true;
+    }
+
+    // Check command line for NSwag invocation (covers dotnet exec scenarios)
+    var commandLine = Environment.CommandLine;
+    if (
+        commandLine.Contains("NSwag", StringComparison.OrdinalIgnoreCase)
+        || commandLine.Contains("nswag", StringComparison.OrdinalIgnoreCase)
+    )
+    {
+        return true;
+    }
+
+    return false;
+}
 
 // Configures connector services as background workers within the API
 static void ConfigureConnectorServices(WebApplicationBuilder builder)

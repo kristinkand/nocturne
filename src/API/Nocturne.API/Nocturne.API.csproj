@@ -19,6 +19,7 @@
     <PackageReference Include="Alexa.NET" />
     <PackageReference Include="dotAPNS" />
     <PackageReference Include="HtmlSanitizer" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />
@@ -65,11 +66,22 @@
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.MyFitnessPal\Nocturne.Connectors.MyFitnessPal.csproj" />
   </ItemGroup>
   <!-- NSwag TypeScript Client Generation -->
-  <!-- Use: dotnet build -t:GenerateClient to generate TypeScript client -->
-  <Target Name="GenerateClient">
+  <!-- Runs automatically after build in development mode -->
+  <!-- Set GenerateNSwagClient=false to skip (e.g., in CI/CD or publish scenarios) -->
+  <!-- Manual: dotnet build -t:GenerateClient or dotnet build -p:GenerateNSwagClient=true -->
+  <PropertyGroup>
+    <GenerateNSwagClient Condition="'$(GenerateNSwagClient)' == ''">true</GenerateNSwagClient>
+    <!-- Skip NSwag generation during publish to avoid issues with runtime dependencies -->
+    <GenerateNSwagClient Condition="'$(PublishDir)' != ''">false</GenerateNSwagClient>
+  </PropertyGroup>
+
+  <Target Name="GenerateClient" AfterTargets="Build" Condition="'$(GenerateNSwagClient)' == 'true'">
+    <Message Importance="high" Text="Generating TypeScript API client with NSwag..." />
     <Exec
       Command="$(NSwagExe_Net100) run nswag.json"
       WorkingDirectory="$(MSBuildProjectDirectory)"
+      ContinueOnError="true"
     />
+    <Message Importance="high" Text="TypeScript API client generation complete." />
   </Target>
 </Project>

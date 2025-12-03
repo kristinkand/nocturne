@@ -138,6 +138,16 @@ public class CookieSettings
     public SameSiteMode SameSite { get; set; } = SameSiteMode.Lax;
 
     /// <summary>
+    /// Name of the access token cookie
+    /// </summary>
+    public string AccessTokenName { get; set; } = ".Nocturne.AccessToken";
+
+    /// <summary>
+    /// Name of the refresh token cookie
+    /// </summary>
+    public string RefreshTokenName { get; set; } = ".Nocturne.RefreshToken";
+
+    /// <summary>
     /// Cookie expiration (should match session lifetime)
     /// </summary>
     public TimeSpan? Expiration { get; set; }

@@ -63,9 +63,7 @@ public class JwtService : IJwtService
     /// <summary>
     /// Creates a new instance of JwtService
     /// </summary>
-    public JwtService(
-        IOptions<JwtOptions> options,
-        ILogger<JwtService> logger)
+    public JwtService(IOptions<JwtOptions> options, ILogger<JwtService> logger)
     {
         _options = options.Value;
         _logger = logger;
@@ -87,7 +85,7 @@ public class JwtService : IJwtService
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = _signingKey
+            IssuerSigningKey = _signingKey,
         };
     }
 
@@ -96,17 +94,24 @@ public class JwtService : IJwtService
         SubjectInfo subject,
         IEnumerable<string> permissions,
         IEnumerable<string> roles,
-        TimeSpan? lifetime = null)
+        TimeSpan? lifetime = null
+    )
     {
         var now = DateTimeOffset.UtcNow;
-        var expires = now.Add(lifetime ?? TimeSpan.FromMinutes(_options.AccessTokenLifetimeMinutes));
+        var expires = now.Add(
+            lifetime ?? TimeSpan.FromMinutes(_options.AccessTokenLifetimeMinutes)
+        );
         var jti = Guid.CreateVersion7().ToString();
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, subject.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, jti),
-            new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            new(
+                JwtRegisteredClaimNames.Iat,
+                now.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64
+            ),
         };
 
         // Add name if present
@@ -150,7 +155,10 @@ public class JwtService : IJwtService
             Expires = expires.UtcDateTime,
             Issuer = _options.Issuer,
             Audience = _options.Audience,
-            SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(
+                _signingKey,
+                SecurityAlgorithms.HmacSha256Signature
+            ),
         };
 
         var token = _tokenHandler.CreateToken(tokenDescriptor);
@@ -162,20 +170,39 @@ public class JwtService : IJwtService
     {
         try
         {
-            var principal = _tokenHandler.ValidateToken(token, _validationParameters, out var validatedToken);
+            var principal = _tokenHandler.ValidateToken(
+                token,
+                _validationParameters,
+                out var validatedToken
+            );
 
-            if (validatedToken is not JwtSecurityToken jwtToken ||
-                !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            if (
+                validatedToken is not JwtSecurityToken jwtToken
+                || !jwtToken.Header.Alg.Equals(
+                    SecurityAlgorithms.HmacSha256,
+                    StringComparison.InvariantCultureIgnoreCase
+                )
+            )
             {
-                return JwtValidationResult.Failure("Invalid token algorithm", JwtValidationError.InvalidFormat);
+                return JwtValidationResult.Failure(
+                    "Invalid token algorithm",
+                    JwtValidationError.InvalidFormat
+                );
             }
 
-            var subjectIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            var subjectIdClaim =
+                principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
                 ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(subjectIdClaim) || !Guid.TryParse(subjectIdClaim, out var subjectId))
+            if (
+                string.IsNullOrEmpty(subjectIdClaim)
+                || !Guid.TryParse(subjectIdClaim, out var subjectId)
+            )
             {
-                return JwtValidationResult.Failure("Invalid subject claim", JwtValidationError.MissingClaims);
+                return JwtValidationResult.Failure(
+                    "Invalid subject claim",
+                    JwtValidationError.MissingClaims
+                );
             }
 
             var claims = new JwtClaims
@@ -187,7 +214,7 @@ public class JwtService : IJwtService
                 Permissions = principal.FindAll("permission").Select(c => c.Value).ToList(),
                 JwtId = jwtToken.Id,
                 IssuedAt = new DateTimeOffset(jwtToken.IssuedAt, TimeSpan.Zero),
-                ExpiresAt = new DateTimeOffset(jwtToken.ValidTo, TimeSpan.Zero)
+                ExpiresAt = new DateTimeOffset(jwtToken.ValidTo, TimeSpan.Zero),
             };
 
             return JwtValidationResult.Success(claims);
@@ -198,29 +225,47 @@ public class JwtService : IJwtService
         }
         catch (SecurityTokenInvalidSignatureException)
         {
-            return JwtValidationResult.Failure("Invalid token signature", JwtValidationError.InvalidSignature);
+            return JwtValidationResult.Failure(
+                "Invalid token signature",
+                JwtValidationError.InvalidSignature
+            );
         }
         catch (SecurityTokenInvalidIssuerException)
         {
-            return JwtValidationResult.Failure("Invalid token issuer", JwtValidationError.InvalidIssuer);
+            return JwtValidationResult.Failure(
+                "Invalid token issuer",
+                JwtValidationError.InvalidIssuer
+            );
         }
         catch (SecurityTokenInvalidAudienceException)
         {
-            return JwtValidationResult.Failure("Invalid token audience", JwtValidationError.InvalidAudience);
+            return JwtValidationResult.Failure(
+                "Invalid token audience",
+                JwtValidationError.InvalidAudience
+            );
         }
         catch (SecurityTokenNotYetValidException)
         {
-            return JwtValidationResult.Failure("Token is not yet valid", JwtValidationError.NotYetValid);
+            return JwtValidationResult.Failure(
+                "Token is not yet valid",
+                JwtValidationError.NotYetValid
+            );
         }
         catch (SecurityTokenException ex)
         {
             _logger.LogWarning(ex, "Token validation failed");
-            return JwtValidationResult.Failure($"Token validation failed: {ex.Message}", JwtValidationError.InvalidFormat);
+            return JwtValidationResult.Failure(
+                $"Token validation failed: {ex.Message}",
+                JwtValidationError.InvalidFormat
+            );
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during token validation");
-            return JwtValidationResult.Failure("An error occurred during token validation", JwtValidationError.Unknown);
+            return JwtValidationResult.Failure(
+                "An error occurred during token validation",
+                JwtValidationError.Unknown
+            );
         }
     }
 
@@ -228,10 +273,7 @@ public class JwtService : IJwtService
     public string GenerateRefreshToken()
     {
         var randomBytes = RandomNumberGenerator.GetBytes(_options.RefreshTokenLengthBytes);
-        return Convert.ToBase64String(randomBytes)
-            .Replace("+", "-")
-            .Replace("/", "_")
-            .TrimEnd('=');
+        return Convert.ToBase64String(randomBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
     }
 
     /// <inheritdoc />
@@ -240,5 +282,11 @@ public class JwtService : IJwtService
         var bytes = Encoding.UTF8.GetBytes(refreshToken);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    /// <inheritdoc />
+    public TimeSpan GetAccessTokenLifetime()
+    {
+        return TimeSpan.FromMinutes(_options.AccessTokenLifetimeMinutes);
     }
 }

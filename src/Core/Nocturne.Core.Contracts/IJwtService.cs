@@ -20,7 +20,8 @@ public interface IJwtService
         SubjectInfo subject,
         IEnumerable<string> permissions,
         IEnumerable<string> roles,
-        TimeSpan? lifetime = null);
+        TimeSpan? lifetime = null
+    );
 
     /// <summary>
     /// Validate an access token JWT
@@ -41,6 +42,12 @@ public interface IJwtService
     /// <param name="refreshToken">Plain refresh token</param>
     /// <returns>Hex-encoded SHA256 hash</returns>
     string HashRefreshToken(string refreshToken);
+
+    /// <summary>
+    /// Get the configured access token lifetime
+    /// </summary>
+    /// <returns>Access token lifetime as TimeSpan</returns>
+    TimeSpan GetAccessTokenLifetime();
 }
 
 /// <summary>
@@ -109,7 +116,12 @@ public class JwtValidationResult
     /// Create a failed result
     /// </summary>
     public static JwtValidationResult Failure(string error, JwtValidationError errorCode) =>
-        new() { IsValid = false, Error = error, ErrorCode = errorCode };
+        new()
+        {
+            IsValid = false,
+            Error = error,
+            ErrorCode = errorCode,
+        };
 }
 
 /// <summary>
@@ -201,5 +213,5 @@ public enum JwtValidationError
     /// <summary>
     /// Unknown error
     /// </summary>
-    Unknown
+    Unknown,
 }
