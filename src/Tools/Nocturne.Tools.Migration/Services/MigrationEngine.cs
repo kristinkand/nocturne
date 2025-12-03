@@ -18,35 +18,36 @@ namespace Nocturne.Tools.Migration.Services;
 /// Core migration engine that handles data transfer from MongoDB to PostgreSQL
 /// with robust batch processing capabilities and comprehensive data transformation
 /// </summary>
-public class MigrationEngine : IMigrationEngine
+/// <summary>
+/// Core migration engine that handles data transfer from MongoDB to PostgreSQL
+/// with robust batch processing capabilities and comprehensive data transformation
+/// </summary>
+/// <param name="logger">Logger instance for the migration engine</param>
+/// <param name="serviceProvider">Service provider for creating scoped services</param>
+/// <param name="transformationService">Service to transform MongoDB documents into entities</param>
+/// <param name="validationService">Service to validate configuration, schema, and data</param>
+/// <param name="indexOptimizationService">Service to analyze and create indexes for PostgreSQL</param>
+public class MigrationEngine(
+    ILogger<MigrationEngine> logger,
+    IServiceProvider serviceProvider,
+    IDataTransformationService transformationService,
+    IValidationService validationService,
+    IIndexOptimizationService indexOptimizationService
+) : IMigrationEngine
 {
-    private readonly ILogger<MigrationEngine> _logger;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IDataTransformationService _transformationService;
-    private readonly IValidationService _validationService;
-    private readonly IIndexOptimizationService _indexOptimizationService;
+    private readonly ILogger<MigrationEngine> _logger =
+        logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IServiceProvider _serviceProvider =
+        serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    private readonly IDataTransformationService _transformationService =
+        transformationService ?? throw new ArgumentNullException(nameof(transformationService));
+    private readonly IValidationService _validationService =
+        validationService ?? throw new ArgumentNullException(nameof(validationService));
+    private readonly IIndexOptimizationService _indexOptimizationService =
+        indexOptimizationService
+        ?? throw new ArgumentNullException(nameof(indexOptimizationService));
     private readonly ConcurrentDictionary<string, MigrationStatus> _migrationStatuses = new();
     private readonly SemaphoreSlim _memoryManagementSemaphore = new(1, 1);
-
-    public MigrationEngine(
-        ILogger<MigrationEngine> logger,
-        IServiceProvider serviceProvider,
-        IDataTransformationService transformationService,
-        IValidationService validationService,
-        IIndexOptimizationService indexOptimizationService
-    )
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _serviceProvider =
-            serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _transformationService =
-            transformationService ?? throw new ArgumentNullException(nameof(transformationService));
-        _validationService =
-            validationService ?? throw new ArgumentNullException(nameof(validationService));
-        _indexOptimizationService =
-            indexOptimizationService
-            ?? throw new ArgumentNullException(nameof(indexOptimizationService));
-    }
 
     /// <inheritdoc/>
     public async Task<MigrationResult> MigrateAsync(
@@ -487,7 +488,8 @@ public class MigrationEngine : IMigrationEngine
             await connection.OpenAsync(cancellationToken);
 
             using var command = connection.CreateCommand();
-            command.CommandText = @"
+            command.CommandText =
+                @"
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables
                     WHERE table_schema = 'public'
@@ -508,7 +510,8 @@ public class MigrationEngine : IMigrationEngine
             if (!allTablesExist)
             {
                 throw new InvalidOperationException(
-                    "One or more required tables (entries, treatments, devicestatus) do not exist.");
+                    "One or more required tables (entries, treatments, devicestatus) do not exist."
+                );
             }
 
             _logger.LogInformation(

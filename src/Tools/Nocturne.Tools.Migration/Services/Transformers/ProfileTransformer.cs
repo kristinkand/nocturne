@@ -133,12 +133,16 @@ public class ProfileTransformer : BaseDocumentTransformer
 
         if (startDate != BsonNull.Value)
         {
-            entity.StartDate = ConvertToDateTimeString(startDate);
+            entity.StartDate =
+                ConvertToDateTimeString(startDate)
+                ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             UpdateFieldStatistics("startDate", startDate, true);
         }
         else if (createdAt != BsonNull.Value)
         {
-            entity.StartDate = ConvertToDateTimeString(createdAt);
+            entity.StartDate =
+                ConvertToDateTimeString(createdAt)
+                ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             UpdateFieldStatistics("created_at", createdAt, true);
         }
         else if (mills != BsonNull.Value && mills.IsInt64)
@@ -184,11 +188,11 @@ public class ProfileTransformer : BaseDocumentTransformer
                     {
                         // Handle non-document profile data
                         normalizedStore[profileName] =
-                            ConvertBsonValueToObject(profileData) ?? new object();
+                            ConvertBsonValueToObject(profileData) ?? string.Empty;
                     }
                 }
 
-                entity.StoreJson = ToJsonB(BsonDocument.Create(normalizedStore));
+                entity.StoreJson = ToJsonB(BsonDocument.Create(normalizedStore)) ?? "{}";
                 UpdateFieldStatistics("store", store, true);
             }
             catch (Exception ex)
@@ -292,7 +296,8 @@ public class ProfileTransformer : BaseDocumentTransformer
                     // Normalize value field
                     if (itemDoc.Contains("value"))
                     {
-                        normalizedItem["value"] = ToNullableDouble(itemDoc["value"]);
+                        normalizedItem["value"] =
+                            (object?)ToNullableDouble(itemDoc["value"]) ?? string.Empty;
                     }
 
                     // Copy any additional fields
@@ -305,7 +310,7 @@ public class ProfileTransformer : BaseDocumentTransformer
                         )
                         {
                             normalizedItem[element.Name] =
-                                ConvertBsonValueToObject(element.Value) ?? new object();
+                                ConvertBsonValueToObject(element.Value) ?? string.Empty;
                         }
                     }
 

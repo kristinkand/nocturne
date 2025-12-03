@@ -25,7 +25,7 @@ namespace Nocturne.Connectors.Nightscout.Services
         private readonly NightscoutConnectorConfiguration _config;
         private readonly IRetryDelayStrategy _retryDelayStrategy;
         private readonly IRateLimitingStrategy _rateLimitingStrategy;
-        private readonly IConnectorFileService<Entry[]>? _fileService;
+        private readonly IConnectorFileService<Entry[]>? _fileService = null; // Optional file service for data persistence
         private int _failedRequestCount = 0;
 
         /// <summary>

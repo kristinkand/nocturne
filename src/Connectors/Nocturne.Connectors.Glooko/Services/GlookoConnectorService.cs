@@ -30,7 +30,7 @@ namespace Nocturne.Connectors.Glooko.Services
         private readonly GlookoConnectorConfiguration _config;
         private readonly IRateLimitingStrategy _rateLimitingStrategy;
         private readonly IRetryDelayStrategy _retryDelayStrategy;
-        private readonly IConnectorFileService<GlookoBatchData> _fileService;
+        private readonly IConnectorFileService<GlookoBatchData>? _fileService;
         private string? _sessionCookie;
         private GlookoUserData? _userData;
         private int _failedRequestCount = 0;
@@ -63,7 +63,7 @@ namespace Nocturne.Connectors.Glooko.Services
             ILogger<GlookoConnectorService> logger,
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
-            IConnectorFileService<GlookoBatchData> fileService,
+            IConnectorFileService<GlookoBatchData>? fileService = null,
             IApiDataSubmitter? apiDataSubmitter = null
         )
             : base(httpClient, logger, apiDataSubmitter)
@@ -74,7 +74,7 @@ namespace Nocturne.Connectors.Glooko.Services
             _rateLimitingStrategy =
                 rateLimitingStrategy
                 ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
-            _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _fileService = fileService;
         }
 
         public override async Task<bool> AuthenticateAsync()
@@ -1101,8 +1101,6 @@ namespace Nocturne.Connectors.Glooko.Services
                     }
                     return success;
                 }
-
-                return false;
             }
             catch (Exception ex)
             {

@@ -9,6 +9,8 @@
     <AssemblyName>Nocturne.Tools.Connect</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Suppress missing XML comments for CLI tool - properties are documented via Spectre.Console Description attributes -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Spectre.Console" />

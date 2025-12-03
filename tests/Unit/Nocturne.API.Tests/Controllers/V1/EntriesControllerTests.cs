@@ -53,7 +53,7 @@ public class EntriesControllerTests
         {
             // No ID, no mills, no dateString - these should be set by validation
             Sgv = 120,
-            Type = null, // Should default to "sgv"
+            // Type intentionally omitted so controller can default to "sgv"
         };
 
         var expectedProcessedEntry = new Entry
@@ -86,7 +86,9 @@ public class EntriesControllerTests
             .ReturnsAsync((Entry?)null);
 
         _mockEntryService
-            .Setup(x => x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(new[] { expectedProcessedEntry });
 
         // Act
@@ -147,7 +149,9 @@ public class EntriesControllerTests
             .ReturnsAsync((Entry?)null);
 
         _mockEntryService
-            .Setup(x => x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(
                 new[]
                 {
@@ -212,7 +216,9 @@ public class EntriesControllerTests
             .ReturnsAsync((Entry?)null);
 
         _mockEntryService
-            .Setup(x => x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(
                 new[]
                 {
@@ -269,8 +275,15 @@ public class EntriesControllerTests
             .ReturnsAsync((Entry?)null);
 
         _mockEntryService
-            .Setup(x => x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { new Entry { Id = "created-id", Sgv = 120 } });
+            .Setup(x =>
+                x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                new[]
+                {
+                    new Entry { Id = "created-id", Sgv = 120 },
+                }
+            );
 
         // Act
         var result = await _controller.CreateEntries(entryWithoutId);
@@ -317,8 +330,15 @@ public class EntriesControllerTests
             .ReturnsAsync((Entry?)null);
 
         _mockEntryService
-            .Setup(x => x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { new Entry { Id = "created-id", Sgv = 120 } });
+            .Setup(x =>
+                x.CreateEntriesAsync(It.IsAny<IEnumerable<Entry>>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                new[]
+                {
+                    new Entry { Id = "created-id", Sgv = 120 },
+                }
+            );
 
         // Act
         var result = await _controller.CreateEntries(entryWithDate);

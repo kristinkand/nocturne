@@ -30,7 +30,7 @@ namespace Nocturne.Connectors.Dexcom.Services
         private readonly DexcomConnectorConfiguration _config;
         private readonly IRetryDelayStrategy _retryDelayStrategy;
         private readonly IRateLimitingStrategy _rateLimitingStrategy;
-        private readonly IConnectorFileService<DexcomEntry[]>? _fileService;
+        private readonly IConnectorFileService<DexcomEntry[]>? _fileService = null; // Optional file service for data persistence
         private string? _sessionId;
         private DateTime _sessionExpiresAt;
         private int _failedRequestCount = 0;

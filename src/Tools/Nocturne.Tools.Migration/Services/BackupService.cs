@@ -724,9 +724,14 @@ public class BackupService : IBackupService
         // For MongoDB archives, we can try to read the first few bytes to verify it's a valid archive
         var buffer = new byte[1024];
         using var stream = File.OpenRead(backupPath);
-        await stream.ReadAsync(buffer);
+        var bytesRead = await stream.ReadAsync(buffer);
 
-        // Basic validation - check for BSON/archive signatures
+        // Basic validation - check we could read some data
+        if (bytesRead == 0)
+        {
+            return ValidationResult.Failure("Format", "Empty backup file");
+        }
+
         // This is a simplified check - real implementation could use mongorestore --dryRun
         return ValidationResult.Success();
     }

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Nocturne.API.Tests.Integration.Infrastructure;
-using Nocturne.API.Tests.Integration.Infrastructure;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -78,10 +77,15 @@ public class DataHubIntegrationTests : IntegrationTestBase
         // Assert
         Assert.Equal(HubConnectionState.Connected, connection.State);
         Output.WriteLine("DataHub authorization flow completed successfully");
+
+        // Ensure we used the authorization result variable and that authorization completed
+        Assert.True(
+            authResult,
+            "Authorization did not complete successfully or the authorized event was not triggered."
+        );
     }
 
-    [Fact(Skip = "Integration tests are non-functional")]
-    [Parity]
+    [Fact(Skip = "Test needs implementation")]
     public async Task DataHub_Subscribe_ShouldSubscribeToStorageCollectionsSuccessfully()
     {
         // Arrange
@@ -114,6 +118,15 @@ public class DataHubIntegrationTests : IntegrationTestBase
         }
 
         // Assert - Connection should remain active
+        Assert.Equal(HubConnectionState.Connected, connection.State);
+        Output.WriteLine("DataHub subscription flow completed successfully");
+
+        // Ensure we used the subscription result variable and that subscription completed
+        Assert.True(
+            subscriptionResult,
+            "Subscription did not complete successfully or the subscribed event was not triggered."
+        );
+
         Assert.Equal(HubConnectionState.Connected, connection.State);
         Output.WriteLine("DataHub subscription flow completed successfully");
     }

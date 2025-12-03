@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Nocturne.API.Services;
+using Nocturne.API.Services.Auth;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Abstractions;
@@ -17,6 +18,9 @@ public class AuthorizationServiceCrudTests
     private readonly Mock<IPostgreSqlService> _mockPostgreSqlService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<ILogger<AuthorizationService>> _mockLogger;
+    private readonly Mock<ISubjectService> _mockSubjectService;
+    private readonly Mock<IRoleService> _mockRoleService;
+    private readonly Mock<IJwtService> _mockJwtService;
     private readonly AuthorizationService _authorizationService;
 
     public AuthorizationServiceCrudTests()
@@ -24,6 +28,9 @@ public class AuthorizationServiceCrudTests
         _mockPostgreSqlService = new Mock<IPostgreSqlService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockLogger = new Mock<ILogger<AuthorizationService>>();
+        _mockSubjectService = new Mock<ISubjectService>();
+        _mockRoleService = new Mock<IRoleService>();
+        _mockJwtService = new Mock<IJwtService>();
 
         // Setup configuration
         _mockConfiguration
@@ -33,7 +40,10 @@ public class AuthorizationServiceCrudTests
         _authorizationService = new AuthorizationService(
             _mockPostgreSqlService.Object,
             _mockConfiguration.Object,
-            _mockLogger.Object
+            _mockLogger.Object,
+            _mockSubjectService.Object,
+            _mockRoleService.Object,
+            _mockJwtService.Object
         );
     }
 

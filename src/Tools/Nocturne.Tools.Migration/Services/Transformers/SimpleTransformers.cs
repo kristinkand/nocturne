@@ -26,7 +26,8 @@ public class DeviceStatusTransformer : BaseDocumentTransformer
                 : Guid.CreateVersion7();
 
             // Transform basic fields
-            entity.Device = ToString(document.GetValue("device", BsonNull.Value), 255);
+            entity.Device =
+                ToString(document.GetValue("device", BsonNull.Value), 255) ?? string.Empty;
             entity.CreatedAt = ConvertToDateTimeString(
                 document.GetValue("created_at", BsonNull.Value)
             );
@@ -148,7 +149,7 @@ public class SettingsTransformer : BaseDocumentTransformer
                 ? ConvertObjectIdToGuid(entity.OriginalId)
                 : Guid.CreateVersion7();
 
-            entity.Key = ToString(document.GetValue("key", BsonNull.Value), 255);
+            entity.Key = ToString(document.GetValue("key", BsonNull.Value), 255) ?? string.Empty;
             entity.Value = ToJsonB(document.GetValue("value", BsonNull.Value));
             entity.CreatedAt = ConvertToDateTimeString(
                 document.GetValue("created_at", BsonNull.Value)
@@ -218,9 +219,11 @@ public class FoodTransformer : BaseDocumentTransformer
                 ? ConvertObjectIdToGuid(entity.OriginalId)
                 : Guid.CreateVersion7();
 
-            entity.Name = ToString(document.GetValue("name", BsonNull.Value), 255);
-            entity.Category = ToString(document.GetValue("category", BsonNull.Value), 255);
-            entity.Subcategory = ToString(document.GetValue("subcategory", BsonNull.Value), 255);
+            entity.Name = ToString(document.GetValue("name", BsonNull.Value), 255) ?? string.Empty;
+            entity.Category =
+                ToString(document.GetValue("category", BsonNull.Value), 255) ?? string.Empty;
+            entity.Subcategory =
+                ToString(document.GetValue("subcategory", BsonNull.Value), 255) ?? string.Empty;
 
             entity.Carbs = ConvertToRequiredDouble(
                 ToNullableDouble(document.GetValue("carbs", BsonNull.Value))
@@ -345,12 +348,12 @@ public class ActivityTransformer : BaseDocumentTransformer
     }
 }
 
+// NOTE: AuthTransformer commented out because main app doesn't have AuthEntity yet
+/*
 /// <summary>
 /// Transformer for Auth documents
 /// Handles roles arrays and permission structures
-/// NOTE: Commented out because main app doesn't have AuthEntity yet
 /// </summary>
-/*
 public class AuthTransformer : BaseDocumentTransformer
 {
     public AuthTransformer(TransformationOptions? options = null)

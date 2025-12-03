@@ -17,18 +17,33 @@ public class ConnectConfiguration : IToolConfiguration
         Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
 
     // Core Configuration
+    /// <summary>
+    /// The base Nightscout URL used for API requests (e.g. https://example.herokuapp.com).
+    /// </summary>
     [Required(ErrorMessage = "Nightscout URL is required")]
     [Url(ErrorMessage = "Nightscout URL must be a valid URL")]
     public string NightscoutUrl { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The Nightscout API secret used to authenticate requests against the Nightscout API.
+    /// This should be kept secure and at least 12 characters long.
+    /// </summary>
     [Required(ErrorMessage = "Nightscout API Secret is required")]
     [MinLength(12, ErrorMessage = "API Secret should be at least 12 characters")]
     public string NightscoutApiSecret { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The source connector to use when fetching data; valid values are:
+    /// "glooko", "minimedcarelink", "dexcomshare", "linkup", or "nightscout".
+    /// </summary>
     [Required(ErrorMessage = "Connect Source is required")]
     public string ConnectSource { get; set; } = string.Empty;
 
     // Optional Configuration
+    /// <summary>
+    /// The units used for displaying glucose values (e.g., "mg/dl" or "mmol/L").
+    /// Defaults to "mg/dl".
+    /// </summary>
     public string DisplayUnits { get; set; } = "mg/dl";
     public string Language { get; set; } = "en";
     public string NodeEnvironment { get; set; } = "production";

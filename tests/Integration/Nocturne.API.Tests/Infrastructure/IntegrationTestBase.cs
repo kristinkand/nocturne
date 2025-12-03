@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nocturne.API.Tests.Integration.Infrastructure;
-using Nocturne.API.Tests.Integration.Infrastructure;
 using Xunit;
 using Xunit.Abstractions;
 

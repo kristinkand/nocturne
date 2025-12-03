@@ -562,7 +562,10 @@ public class SubjectService : ISubjectService
                         Id = subjectRole.Role.Id,
                         Name = subjectRole.Role.Name,
                         Description = subjectRole.Role.Description,
-                        Permissions = subjectRole.Role.Permissions,
+                        Permissions =
+                            subjectRole.Role.Permissions != null
+                                ? new List<string>(subjectRole.Role.Permissions)
+                                : new List<string>(),
                         IsSystemRole = subjectRole.Role.IsSystemRole,
                     }
                 );

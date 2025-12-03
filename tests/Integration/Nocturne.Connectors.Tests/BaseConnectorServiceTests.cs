@@ -80,7 +80,7 @@ public class BaseConnectorServiceTests
 
         // Assert
         Assert.True(result);
-        
+
         apiSubmitterMock.Verify(
             m =>
                 m.SubmitEntriesAsync(
@@ -109,7 +109,7 @@ public class BaseConnectorServiceTests
         };
 
         // Act
-        var result = await testService.SyncDataAsync(config);
+        var result = await testService.SyncDataAsync(config, TestContext.Current.CancellationToken);
 
         // Assert
         // Should have tried direct upload (will fail in test but that's expected)
@@ -133,7 +133,10 @@ public class TestConnectorConfiguration : BaseConnectorConfiguration
 /// </summary>
 public class TestConnectorService : BaseConnectorService<TestConnectorConfiguration>
 {
-    public TestConnectorService(IApiDataSubmitter apiDataSubmitter, ILogger<BaseConnectorService<TestConnectorConfiguration>> logger)
+    public TestConnectorService(
+        IApiDataSubmitter apiDataSubmitter,
+        ILogger<BaseConnectorService<TestConnectorConfiguration>> logger
+    )
         : base(new HttpClient(), logger, apiDataSubmitter) { }
 
     public override string ConnectorSource => "test-connector";

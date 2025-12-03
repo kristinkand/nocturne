@@ -9,11 +9,13 @@
     <AssemblyName>Nocturne.Tools.McpServer</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Suppress missing XML comments for CLI tool - properties are documented via Spectre.Console Description attributes -->
+    <!-- NU1510: Package is used for AddHttpClient factory, suppress pruning warning -->
+    <NoWarn>$(NoWarn);CS1591;NU1510</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Spectre.Console" />
     <PackageReference Include="Spectre.Console.Cli" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" />

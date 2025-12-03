@@ -179,11 +179,17 @@ public class RoleService : IRoleService
 
     public async Task<List<Subject>> GetSubjectsInRoleAsync(Guid roleId)
     {
-        var subjects = await _dbContext
+        // Load the assignments with included subject navigation property
+        var assignments = await _dbContext
             .SubjectRoles.Where(sr => sr.RoleId == roleId)
             .Include(sr => sr.Subject)
-            .Select(sr => sr.Subject)
             .ToListAsync();
+
+        // Filter out any null navigations (i.e. inconsistent data) and map to model
+        var subjects = assignments
+            .Where(sr => sr.Subject != null)
+            .Select(sr => sr.Subject!)
+            .ToList();
 
         return subjects
             .Select(s => new Subject

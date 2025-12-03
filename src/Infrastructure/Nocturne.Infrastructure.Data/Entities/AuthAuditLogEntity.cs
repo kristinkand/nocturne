@@ -99,18 +99,73 @@ public class AuthAuditLogEntity
 /// </summary>
 public static class AuthAuditEventType
 {
+    /// <summary>
+    /// Event type for a successful login.
+    /// </summary>
     public const string Login = "login";
+
+    /// <summary>
+    /// Event type for a logout.
+    /// </summary>
     public const string Logout = "logout";
+
+    /// <summary>
+    /// Event type when an access token is issued.
+    /// </summary>
     public const string TokenIssued = "token_issued";
+
+    /// <summary>
+    /// Event type when an access token is revoked.
+    /// </summary>
     public const string TokenRevoked = "token_revoked";
+
+    /// <summary>
+    /// Event type when an access token is refreshed.
+    /// </summary>
     public const string TokenRefreshed = "token_refreshed";
+
+    /// <summary>
+    /// Event type for a failed authentication attempt.
+    /// </summary>
     public const string FailedAuth = "failed_auth";
+
+    /// <summary>
+    /// Event type when a permission check is denied.
+    /// </summary>
     public const string PermissionDenied = "permission_denied";
+
+    /// <summary>
+    /// Event type when a role is assigned to a subject.
+    /// </summary>
     public const string RoleAssigned = "role_assigned";
+
+    /// <summary>
+    /// Event type when a role is removed from a subject.
+    /// </summary>
     public const string RoleRemoved = "role_removed";
+
+    /// <summary>
+    /// Event type when a subject (user) is created.
+    /// </summary>
     public const string SubjectCreated = "subject_created";
+
+    /// <summary>
+    /// Event type when a subject is updated.
+    /// </summary>
     public const string SubjectUpdated = "subject_updated";
+
+    /// <summary>
+    /// Event type when a subject is deleted.
+    /// </summary>
     public const string SubjectDeleted = "subject_deleted";
+
+    /// <summary>
+    /// Event type when an API secret is used.
+    /// </summary>
     public const string ApiSecretUsed = "api_secret_used";
+
+    /// <summary>
+    /// Event type when a session has expired.
+    /// </summary>
     public const string SessionExpired = "session_expired";
 }

@@ -207,20 +207,6 @@ namespace Nocturne.Aspire.SourceGenerators
             ImmutableArray<ConnectorInfo> connectors
         )
         {
-            // Always generate a diagnostic to show what we found
-            var diagnostic = Diagnostic.Create(
-                new DiagnosticDescriptor(
-                    "NOCGEN001",
-                    "Connector Generator Status",
-                    $"Found {connectors.Length} connector(s) with [ConnectorRegistration] attribute",
-                    "NocturneSourceGenerators",
-                    DiagnosticSeverity.Warning,
-                    isEnabledByDefault: true
-                ),
-                Location.None
-            );
-            context.ReportDiagnostic(diagnostic);
-
             if (connectors.IsEmpty)
                 return;
 
@@ -278,15 +264,25 @@ namespace Nocturne.Aspire.SourceGenerators
             foreach (var param in connector.Parameters)
             {
                 var varName = ToCamelCase(param.PropertyName);
-                var configKey = $"Parameters:Connectors:{connector.ConnectorName}:{param.ConfigPath}";
-                var defaultValLiteral = param.DefaultValue != null ? $"\"{param.DefaultValue}\"" : "null";
+                var configKey =
+                    $"Parameters:Connectors:{connector.ConnectorName}:{param.ConfigPath}";
+                var defaultValLiteral =
+                    param.DefaultValue != null ? $"\"{param.DefaultValue}\"" : "null";
 
-                sb.AppendLine($"            var config_{varName} = builder.Configuration[\"{configKey}\"];");
-                sb.AppendLine($"            var val_{varName} = !string.IsNullOrEmpty(config_{varName}) ? config_{varName} : {defaultValLiteral};");
+                sb.AppendLine(
+                    $"            var config_{varName} = builder.Configuration[\"{configKey}\"];"
+                );
+                sb.AppendLine(
+                    $"            var val_{varName} = !string.IsNullOrEmpty(config_{varName}) ? config_{varName} : {defaultValLiteral};"
+                );
 
                 sb.AppendLine($"            var {varName} = val_{varName} is not null");
-                sb.AppendLine($"                ? builder.AddParameter(\"{param.ParameterName}\", val_{varName}, secret: {param.IsSecret.ToString().ToLower()})");
-                sb.AppendLine($"                : builder.AddParameter(\"{param.ParameterName}\", secret: {param.IsSecret.ToString().ToLower()});");
+                sb.AppendLine(
+                    $"                ? builder.AddParameter(\"{param.ParameterName}\", val_{varName}, secret: {param.IsSecret.ToString().ToLower()})"
+                );
+                sb.AppendLine(
+                    $"                : builder.AddParameter(\"{param.ParameterName}\", secret: {param.IsSecret.ToString().ToLower()});"
+                );
 
                 if (!string.IsNullOrEmpty(param.Description))
                 {
@@ -316,7 +312,9 @@ namespace Nocturne.Aspire.SourceGenerators
                 if (!string.IsNullOrEmpty(param.EnvironmentVariableName))
                 {
                     var varName = ToCamelCase(param.PropertyName);
-                    sb.AppendLine($"            connector.WithEnvironment(\"{param.EnvironmentVariableName}\", {varName});");
+                    sb.AppendLine(
+                        $"            connector.WithEnvironment(\"{param.EnvironmentVariableName}\", {varName});"
+                    );
                 }
             }
             sb.AppendLine();
@@ -340,8 +338,10 @@ namespace Nocturne.Aspire.SourceGenerators
             return char.ToLower(str[0]) + str.Substring(1);
         }
 
-        private static string EscapeString(string str)
+        private static string EscapeString(string? str)
         {
+            if (str == null)
+                return string.Empty;
             return str.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
         }
 

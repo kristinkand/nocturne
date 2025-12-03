@@ -405,14 +405,49 @@ public class DaemonStatusService
 /// </summary>
 public class DaemonStatusInfo
 {
+    /// <summary>
+    /// Gets or sets the operating system process ID of the daemon.
+    /// </summary>
     public int ProcessId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source or connector that the daemon monitors (e.g. Dexcom).
+    /// </summary>
     public string ConnectSource { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp when the daemon was started.
+    /// </summary>
     public DateTime StartedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp of the last heartbeat message from the daemon.
+    /// </summary>
     public DateTime LastHeartbeat { get; set; }
+
+    /// <summary>
+    /// Gets or sets the sync interval in minutes configured for the daemon.
+    /// </summary>
     public int IntervalMinutes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current status of the daemon (e.g. running, error, stopping).
+    /// </summary>
     public string Status { get; set; } = "running"; // running, error, stopping
+
+    /// <summary>
+    /// Gets or sets the total number of successful sync operations performed.
+    /// </summary>
     public int SyncCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp of the last successful sync, or null if none.
+    /// </summary>
     public DateTime? LastSyncAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets a list of recent error messages recorded by the daemon.
+    /// </summary>
     public List<string> Errors { get; set; } = new();
 }
 
@@ -421,11 +456,38 @@ public class DaemonStatusInfo
 /// </summary>
 public class DaemonPerformanceMetrics
 {
+    /// <summary>
+    /// Total time the daemon has been running.
+    /// </summary>
     public TimeSpan Uptime { get; set; }
+
+    /// <summary>
+    /// Current memory usage in bytes.
+    /// </summary>
     public long MemoryUsage { get; set; }
+
+    /// <summary>
+    /// Total CPU time used by the daemon process.
+    /// </summary>
     public TimeSpan CpuTime { get; set; }
+
+    /// <summary>
+    /// Number of successful sync operations performed.
+    /// </summary>
     public int SyncCount { get; set; }
+
+    /// <summary>
+    /// Average interval between syncs in minutes.
+    /// </summary>
     public double AverageSyncInterval { get; set; }
+
+    /// <summary>
+    /// Number of errors recorded.
+    /// </summary>
     public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// Age of the last successful sync, or null if none have occurred.
+    /// </summary>
     public TimeSpan? LastSyncAge { get; set; }
 }

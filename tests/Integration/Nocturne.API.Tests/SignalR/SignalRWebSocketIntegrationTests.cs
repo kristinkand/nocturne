@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Nocturne.API.Tests.Integration.Infrastructure;
-using Nocturne.API.Tests.Integration.Infrastructure;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Xunit;

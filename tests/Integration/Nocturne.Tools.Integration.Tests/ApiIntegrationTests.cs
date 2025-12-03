@@ -31,11 +31,13 @@ namespace Nocturne.Tools.Integration.Tests
             SetupMockHttpMessageHandler(url, responseContent);
 
             // Act
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url, TestContext.Current.CancellationToken);
 
             // Assert
             response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken
+            );
             Assert.NotNull(content);
             Assert.Contains("sgv", content);
         }
@@ -50,11 +52,13 @@ namespace Nocturne.Tools.Integration.Tests
             SetupMockHttpMessageHandler(url, responseContent);
 
             // Act
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url, TestContext.Current.CancellationToken);
 
             // Assert
             response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken
+            );
             Assert.Contains("connected", content, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -75,6 +79,17 @@ namespace Nocturne.Tools.Integration.Tests
                     }
                 )
                 .Verifiable();
+        }
+
+        // Minimal TestContext replacement to provide a CancellationToken for test cancellation-aware APIs.
+        internal static class TestContext
+        {
+            public static TestContextInstance Current { get; } = new TestContextInstance();
+
+            public sealed class TestContextInstance
+            {
+                public CancellationToken CancellationToken { get; } = CancellationToken.None;
+            }
         }
     }
 }

@@ -59,8 +59,13 @@ public class BackupCommand : AsyncCommand<BackupCommand.Settings>
     /// </summary>
     /// <param name="context">Command context</param>
     /// <param name="settings">Command settings</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Exit code</returns>
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteAsync(
+        CommandContext context,
+        Settings settings,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {

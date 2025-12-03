@@ -50,7 +50,8 @@ namespace Nocturne.Connectors.Core.Services
         protected BaseConnectorService(
             HttpClient httpClient,
             ILogger logger,
-            IApiDataSubmitter? apiDataSubmitter = null)
+            IApiDataSubmitter? apiDataSubmitter = null
+        )
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -856,7 +857,7 @@ namespace Nocturne.Connectors.Core.Services
             TConfig config,
             Func<DateTime?, Task<TData?>> dataFetcher,
             Func<TData, IEnumerable<Entry>> dataProcessor,
-            IConnectorFileService<TData> fileService,
+            IConnectorFileService<TData>? fileService,
             string filePrefix,
             DateTime? since = null
         )
@@ -869,7 +870,7 @@ namespace Nocturne.Connectors.Core.Services
                 TData? data = null;
 
                 // Check if we should load from file instead of fetching from API
-                if (config.LoadFromFile)
+                if (config.LoadFromFile && fileService != null)
                 {
                     if (!string.IsNullOrEmpty(config.LoadFilePath))
                     {
@@ -907,8 +908,8 @@ namespace Nocturne.Connectors.Core.Services
                     Console.WriteLine($"Fetching fresh {filePrefix} data from API");
                     data = await dataFetcher(since);
 
-                    // Save the fetched data if SaveRawData is enabled
-                    if (data != null && config.SaveRawData)
+                    // Save the fetched data if SaveRawData is enabled and fileService is available
+                    if (data != null && config.SaveRawData && fileService != null)
                     {
                         var savedPath = await fileService.SaveDataAsync(
                             data,
