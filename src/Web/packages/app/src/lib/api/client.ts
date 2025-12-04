@@ -1,5 +1,6 @@
 import { ApiClient } from "./api-client";
 import { browser } from "$app/environment";
+// @ts-expect-error aspire handles this import correctly
 import { PUBLIC_API_URL } from '$env/static/public';
 
 /**

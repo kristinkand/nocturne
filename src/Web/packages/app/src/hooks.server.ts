@@ -1,7 +1,9 @@
 import type { Handle } from "@sveltejs/kit";
 import { ApiClient } from "$lib/api/api-client";
 import type { HandleServerError } from "@sveltejs/kit";
+// @ts-expect-error aspire handles this import correctly
 import { PUBLIC_API_URL } from "$env/static/public";
+// @ts-expect-error aspire handles this import correctly
 import { env } from "$env/dynamic/private";
 import { createHash } from "crypto";
 import { sequence } from "@sveltejs/kit/hooks";

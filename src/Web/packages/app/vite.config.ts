@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
       {
         name: "websocket-bridge",
         configureServer(server) {
-          const SIGNALR_HUB_URL =
-            env.SIGNALR_HUB_URL || "http://localhost:1612/hubs/data";
+          const API_URL = env.PUBLIC_API_URL || "http://localhost:1612";
+          const SIGNALR_HUB_URL = `${API_URL}/hubs/data`;
           const API_SECRET = env.API_SECRET || "";
 
           // Ensure the HTTP server is available before initializing the bridge
@@ -61,6 +61,10 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: "0.0.0.0",
+      watch: {
+        ignored: ["**/node_modules/**", "**/.git/**"],
+        usePolling: false,
+      },
       proxy: {
         "^/api/.*": {
           target: env.PUBLIC_API_URL || "http://localhost:1612",

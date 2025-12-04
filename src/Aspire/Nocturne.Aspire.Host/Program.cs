@@ -266,9 +266,6 @@ class Program
             // The parameters above are defined for visibility in Aspire dashboard and secret management
         }
 
-        // Add SignalR Hub URL parameter for the web app's integrated WebSocket bridge
-        var signalrHubUrl = builder.AddParameter("signalr-hub-url", secret: false);
-
         // Build the bridge package synchronously to ensure artifacts exist
         // Only build in development mode; in publish mode, assume it's already built by the CI/CD pipeline
         // @TODO in future it would be better to have Aspire handle building multi-project repos more elegantly
@@ -328,9 +325,9 @@ class Program
             .WithExternalHttpEndpoints()
             .WaitFor(api)
             .WithReference(api)
+            .WithEnvironment("PUBLIC_API_URL", api.GetEndpoint("http"))
             .WithEnvironment("NOCTURNE_API_URL", api.GetEndpoint("http"))
             .WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret)
-            .WithEnvironment("SIGNALR_HUB_URL", signalrHubUrl)
             .WithEnvironment(
                 "PUBLIC_WEBSOCKET_RECONNECT_ATTEMPTS",
                 builder.Configuration["WebSocket:ReconnectAttempts"] ?? "5"
@@ -353,7 +350,6 @@ class Program
             );
 
         apiSecret.WithParentRelationship(web);
-        signalrHubUrl.WithParentRelationship(web);
 
         // Add conditional notification services (if configured in appsettings.json)
         // Note: Actual notification service projects would be added here when they exist

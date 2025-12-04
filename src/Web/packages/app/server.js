@@ -7,7 +7,8 @@ const app = express();
 const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3000;
-const SIGNALR_HUB_URL = process.env.SIGNALR_HUB_URL || 'http://localhost:1612/hubs/data';
+const API_URL = process.env.NOCTURNE_API_URL || process.env.PUBLIC_API_URL || 'http://localhost:1612';
+const SIGNALR_HUB_URL = `${API_URL}/hubs/data`;
 const API_SECRET = process.env.API_SECRET || '';
 
 // Initialize WebSocket bridge

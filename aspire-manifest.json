@@ -95,15 +95,6 @@
         }
       }
     },
-    "SignalRHubUrl": {
-      "type": "parameter.v0",
-      "value": "{SignalRHubUrl.inputs.value}",
-      "inputs": {
-        "value": {
-          "type": "string"
-        }
-      }
-    },
     "nocturne-web": {
       "type": "container.v1",
       "build": {
@@ -112,7 +103,7 @@
       },
       "env": {
         "API_SECRET": "{api-secret.value}",
-        "SIGNALR_HUB_URL": "{SignalRHubUrl.value}",
+        "NOCTURNE_API_URL": "{nocturne-api.bindings.http.url}",
         "PUBLIC_API_URL": "{nocturne-api.bindings.http.url}"
       },
       "bindings": {

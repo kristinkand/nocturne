@@ -41,12 +41,6 @@ export const UrlConstants = {
   SignalR: {
     DataHub: "/hubs/data",
     NotificationHub: "/hubs/notification",
-    get DataHubUrl() {
-      return UrlConstants.Base.NocturneApiHttp + this.DataHub;
-    },
-    get NotificationHubUrl() {
-      return UrlConstants.Base.NocturneApiHttp + this.NotificationHub;
-    },
   },
 
   Health: {
@@ -65,7 +59,6 @@ export const ServiceNames = {
 } as const;
 
 export const EnvironmentVariables = {
-  SignalRHubUrl: "SIGNALR_HUB_URL",
   SocketIoPort: "SOCKETIO_PORT",
   HealthPort: "HEALTH_PORT",
   CorsOrigins: "CORS_ORIGINS",

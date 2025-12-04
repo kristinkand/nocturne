@@ -65,8 +65,6 @@ services:
       - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:1612}
       # NOCTURNE_API_URL - URL used by server-side code (internal Docker network)
       - NOCTURNE_API_URL=http://nocturne-api:1612
-      # SignalR hub for WebSocket bridge (internal Docker network)
-      - SIGNALR_HUB_URL=http://nocturne-api:1612/hubs/data
       # API secret for authentication
       - API_SECRET=${API_SECRET}
     ports:
