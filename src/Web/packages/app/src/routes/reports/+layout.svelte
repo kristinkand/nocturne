@@ -2,6 +2,7 @@
   import { page } from "$app/state";
   import Button from "$lib/components/ui/button/button.svelte";
   import { ReportsFilterSidebar } from "$lib/components/layout";
+  import * as Sidebar from "$lib/components/ui/sidebar";
   import { ArrowLeftIcon, Filter, Calendar } from "lucide-svelte";
   import { queryParam } from "sveltekit-search-params";
 
@@ -78,41 +79,47 @@
 
 <div class="min-h-full bg-background">
   {#if page.url.pathname !== "/reports"}
-    <!-- Report Header -->
+    <!-- Report Header - unified sticky header with sidebar trigger -->
+    <!-- On mobile (md:hidden), position below the MobileHeader with top-14 -->
+    <!-- On desktop (md:top-0), position at top since main header is hidden for reports -->
     <div
-      class="sticky top-14 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60"
+      class="sticky top-14 md:top-0 z-20 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60"
     >
-      <div class="px-6 py-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <Button href="/reports" variant="ghost" size="icon">
-              <ArrowLeftIcon class="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 class="text-xl font-bold text-foreground">{reportName}</h1>
-              <div
-                class="flex items-center gap-2 text-sm text-muted-foreground"
-              >
-                <Calendar class="h-3 w-3" />
-                <span>{dateRangeDisplay()}</span>
-                <span>•</span>
-                <span>{data.entries.length} entries</span>
-              </div>
+      <div class="flex h-14 items-center justify-between gap-2 px-4">
+        <div class="flex items-center gap-2">
+          <!-- Sidebar trigger -->
+          <Sidebar.Trigger class="-ml-1 hidden md:flex" />
+
+          <!-- Back button -->
+          <Button href="/reports" variant="ghost" size="icon">
+            <ArrowLeftIcon class="w-4 h-4" />
+          </Button>
+
+          <!-- Report info -->
+          <div class="flex items-center gap-3">
+            <h1 class="text-lg font-semibold text-foreground">{reportName}</h1>
+            <div
+              class="hidden sm:flex items-center gap-2 text-sm text-muted-foreground"
+            >
+              <Calendar class="h-3 w-3" />
+              <span>{dateRangeDisplay()}</span>
+              <span>•</span>
+              <span>{data.entries.length} entries</span>
             </div>
           </div>
-
-          {#if showFilters}
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={() => (filterSidebarOpen = true)}
-              class="gap-2"
-            >
-              <Filter class="w-4 h-4" />
-              <span class="hidden sm:inline">Filters</span>
-            </Button>
-          {/if}
         </div>
+
+        {#if showFilters}
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => (filterSidebarOpen = true)}
+            class="gap-2"
+          >
+            <Filter class="w-4 h-4" />
+            <span class="hidden sm:inline">Filters</span>
+          </Button>
+        {/if}
       </div>
     </div>
   {/if}

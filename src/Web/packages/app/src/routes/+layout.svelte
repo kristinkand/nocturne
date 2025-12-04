@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../app.css";
+  import { page } from "$app/state";
   import { createRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import { onMount } from "svelte";
   import {
@@ -12,6 +13,9 @@
   import * as Sidebar from "$lib/components/ui/sidebar";
   import { AppSidebar, MobileHeader } from "$lib/components/layout";
   import type { LayoutData } from "./$types";
+
+  // Check if we're on a reports sub-page (not the main /reports page)
+  const isReportsSubpage = $derived(page.url.pathname.startsWith("/reports/"));
 
   const { data, children } = $props<{ data: LayoutData; children: any }>();
 
@@ -36,13 +40,15 @@
   <AppSidebar user={data.user} />
   <MobileHeader />
   <Sidebar.Inset>
-    <!-- Desktop header - hidden on mobile -->
-    <header
-      class="hidden md:flex h-14 shrink-0 items-center gap-2 border-b border-border px-4"
-    >
-      <Sidebar.Trigger class="-ml-1" />
-      <div class="flex-1"></div>
-    </header>
+    <!-- Desktop header - hidden on mobile and on reports subpages (which have their own header) -->
+    {#if !isReportsSubpage}
+      <header
+        class="hidden md:flex h-14 shrink-0 items-center gap-2 border-b border-border px-4"
+      >
+        <Sidebar.Trigger class="-ml-1" />
+        <div class="flex-1"></div>
+      </header>
+    {/if}
     <main class="flex-1 overflow-auto">
       <svelte:boundary>
         {@render children()}
