@@ -27,7 +27,7 @@ public static class ModelExtensions
             Insulin = nightscoutTreatment.Insulin,
             Notes = nightscoutTreatment.Notes,
             Duration = nightscoutTreatment.Duration,
-            Source = nightscoutTreatment.Source,
+            DataSource = nightscoutTreatment.DataSource,
         };
     }
 }

@@ -17,6 +17,7 @@ using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.FreeStyle;
 using Nocturne.Connectors.FreeStyle.Constants;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 #nullable enable
 
@@ -64,7 +65,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
         /// <summary>
         /// Gets the source identifier for this connector
         /// </summary>
-        public override string ConnectorSource => "libre";
+        public override string ConnectorSource => DataSources.LibreConnector;
 
         public LibreConnectorService(
             HttpClient httpClient,

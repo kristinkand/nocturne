@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_MiniMed",
         serviceName: "ServiceNames.MiniMedConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.MiniMedPrefix",
-        connectSourceName: "ConnectSource.CareLink"
+        connectSourceName: "ConnectSource.CareLink",
+        dataSourceId: "minimed-connector",
+        icon: "medtronic",
+        category: "pump",
+        description: "Data synced from Medtronic CareLink"
     )]
     public class CareLinkConnectorConfiguration : BaseConnectorConfiguration
     {

@@ -163,12 +163,14 @@
           </code>
           <span>{analysis.requestPath}</span>
         </div>
-        <Badge class={getMatchTypeColor(analysis.overallMatch)}>
-          {getMatchTypeDescription(analysis.overallMatch)}
+        <Badge class={getMatchTypeColor(analysis.overallMatch ?? 0)}>
+          {getMatchTypeDescription(analysis.overallMatch ?? 0)}
         </Badge>
       </CardTitle>
       <CardDescription>
-        Analyzed on {new Date(analysis.analysisTimestamp).toLocaleString()}
+        Analyzed on {analysis.analysisTimestamp
+          ? new Date(analysis.analysisTimestamp).toLocaleString()
+          : "N/A"}
       </CardDescription>
     </CardHeader>
     <CardContent class="space-y-4">
@@ -203,9 +205,9 @@
         <div>
           <div class="text-sm font-medium">Total Discrepancies</div>
           <div class="text-lg font-bold text-orange-600">
-            {analysis.criticalDiscrepancyCount +
-              analysis.majorDiscrepancyCount +
-              analysis.minorDiscrepancyCount}
+            {(analysis.criticalDiscrepancyCount ?? 0) +
+              (analysis.majorDiscrepancyCount ?? 0) +
+              (analysis.minorDiscrepancyCount ?? 0)}
           </div>
         </div>
       </div>
@@ -338,19 +340,25 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <Badge
-                    class="{getSeverityColor(discrepancy.severity)} text-xs"
+                    class="{getSeverityColor(
+                      discrepancy.severity ?? 0
+                    )} text-xs"
                   >
-                    {getSeverityDescription(discrepancy.severity)}
+                    {getSeverityDescription(discrepancy.severity ?? 0)}
                   </Badge>
                   <Badge variant="outline" class="text-xs">
-                    {getDiscrepancyTypeDescription(discrepancy.discrepancyType)}
+                    {getDiscrepancyTypeDescription(
+                      discrepancy.discrepancyType ?? 0
+                    )}
                   </Badge>
                   <code class="text-sm bg-muted px-2 py-1 rounded">
                     {discrepancy.field}
                   </code>
                 </div>
                 <span class="text-xs text-muted-foreground">
-                  {new Date(discrepancy.recordedAt).toLocaleString()}
+                  {discrepancy.recordedAt
+                    ? new Date(discrepancy.recordedAt).toLocaleString()
+                    : ""}
                 </span>
               </div>
 
@@ -368,7 +376,7 @@
                       variant="ghost"
                       size="sm"
                       onclick={() =>
-                        copyToClipboard(discrepancy.nightscoutValue)}
+                        copyToClipboard(discrepancy.nightscoutValue ?? "")}
                     >
                       <Copy class="h-3 w-3" />
                     </Button>
@@ -388,7 +396,8 @@
                     <Button
                       variant="ghost"
                       size="sm"
-                      onclick={() => copyToClipboard(discrepancy.nocturneValue)}
+                      onclick={() =>
+                        copyToClipboard(discrepancy.nocturneValue ?? "")}
                     >
                       <Copy class="h-3 w-3" />
                     </Button>

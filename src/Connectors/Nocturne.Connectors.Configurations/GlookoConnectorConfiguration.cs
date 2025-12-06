@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_Glooko",
         serviceName: "ServiceNames.GlookoConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.GlookoPrefix",
-        connectSourceName: "ConnectSource.Glooko"
+        connectSourceName: "ConnectSource.Glooko",
+        dataSourceId: "glooko-connector",
+        icon: "glooko",
+        category: "data",
+        description: "Data synced from Glooko"
     )]
     public class GlookoConnectorConfiguration : BaseConnectorConfiguration
     {

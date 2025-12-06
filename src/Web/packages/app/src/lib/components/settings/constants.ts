@@ -110,6 +110,17 @@ export function getDefaultSettings(): ClientSettings {
 			realTimeUpdates: false,
 			webSocketUrl: '',
 			showDemoIndicators: false
+		},
+		titleFavicon: {
+			enabled: true,
+			showBgValue: true,
+			showDirection: true,
+			showDelta: false,
+			customPrefix: 'Nocturne',
+			faviconEnabled: true,
+			faviconShowBg: true,
+			faviconColorCoded: true,
+			flashOnAlarm: true
 		}
 	};
 }

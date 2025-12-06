@@ -49,6 +49,30 @@ export interface ClientThresholds {
   low: number;
 }
 
+/**
+ * Settings for dynamic browser title and favicon based on glucose values
+ */
+export interface TitleFaviconSettings {
+  /** Master switch for title/favicon updates */
+  enabled: boolean;
+  /** Show glucose value in browser title */
+  showBgValue: boolean;
+  /** Show direction arrow in browser title */
+  showDirection: boolean;
+  /** Show delta in browser title */
+  showDelta: boolean;
+  /** Custom text prefix before BG value (e.g., "Nocturne") */
+  customPrefix: string;
+  /** Enable dynamic favicon generation */
+  faviconEnabled: boolean;
+  /** Show BG value on dynamic favicon */
+  faviconShowBg: boolean;
+  /** Color-code favicon background based on glucose status */
+  faviconColorCoded: boolean;
+  /** Flash title/favicon during active alarms (uses AlarmVisualSettings) */
+  flashOnAlarm: boolean;
+}
+
 export interface ClientSettings {
   units: "mg/dl" | "mmol";
   timeFormat: 12 | 24;
@@ -79,6 +103,7 @@ export interface ClientSettings {
   authDefaultRoles: string;
   thresholds: ClientThresholds;
   demoMode: DemoModeSettings;
+  titleFavicon: TitleFaviconSettings;
 }
 
 export interface DemoModeSettings {

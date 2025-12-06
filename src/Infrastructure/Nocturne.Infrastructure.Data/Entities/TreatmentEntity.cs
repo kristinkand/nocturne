@@ -202,13 +202,6 @@ public class TreatmentEntity
     public string? Cutting { get; set; }
 
     /// <summary>
-    /// Source of the treatment data
-    /// </summary>
-    [Column("source")]
-    [MaxLength(255)]
-    public string? Source { get; set; }
-
-    /// <summary>
     /// Event time as ISO string (used by Glooko connector)
     /// </summary>
     [Column("eventTime")]

@@ -50,7 +50,6 @@ public static class TreatmentMapper
             Timestamp = ParseTimestampToLong(treatment.Timestamp),
             CuttedBy = treatment.CuttedBy,
             Cutting = treatment.Cutting,
-            Source = treatment.Source,
             EventTime = treatment.EventTime,
             PreBolus = treatment.PreBolus,
             Rate = treatment.Rate,
@@ -120,7 +119,6 @@ public static class TreatmentMapper
             Timestamp = FormatTimestampToString(entity.Timestamp),
             CuttedBy = entity.CuttedBy,
             Cutting = entity.Cutting,
-            Source = entity.Source,
             EventTime = entity.EventTime,
             PreBolus = entity.PreBolus,
             Rate = entity.Rate,
@@ -187,7 +185,6 @@ public static class TreatmentMapper
         entity.Timestamp = ParseTimestampToLong(treatment.Timestamp);
         entity.CuttedBy = treatment.CuttedBy;
         entity.Cutting = treatment.Cutting;
-        entity.Source = treatment.Source;
         entity.EventTime = treatment.EventTime;
         entity.PreBolus = treatment.PreBolus;
         entity.Rate = treatment.Rate;

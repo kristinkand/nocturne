@@ -13,7 +13,6 @@
     foodList: [],
     quickPickList: [],
     categories: {},
-    nightscoutUrl: "",
   });
   setFoodState(foodState);
 

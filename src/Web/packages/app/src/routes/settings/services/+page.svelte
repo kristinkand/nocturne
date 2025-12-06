@@ -1432,11 +1432,7 @@
                   </div>
                   <div class="text-right text-xs text-muted-foreground">
                     {#if result.duration}
-                      {Math.round(
-                        (result.duration.hours ?? 0) * 3600 +
-                          (result.duration.minutes ?? 0) * 60 +
-                          (result.duration.seconds ?? 0)
-                      )}s
+                      {result.duration}
                     {/if}
                   </div>
                 </div>

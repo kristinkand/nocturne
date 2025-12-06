@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Nocturne.Core.Constants;
@@ -67,10 +68,6 @@ public class AspireIntegrationTestFixture : IAsyncLifetime
         // Build and start the distributed application
         _app = await appHost.BuildAsync();
 
-        // Configure resource health check timeout
-        var resourceNotificationService =
-            _app.Services.GetRequiredService<ResourceNotificationService>();
-
         await _app.StartAsync();
 
         // Wait for the API to be ready before proceeding
@@ -100,17 +97,13 @@ public class AspireIntegrationTestFixture : IAsyncLifetime
     /// </summary>
     private async Task WaitForResourceHealthyAsync(string resourceName, TimeSpan timeout)
     {
-        var resourceNotificationService =
-            _app!.Services.GetRequiredService<ResourceNotificationService>();
-
         using var cts = new CancellationTokenSource(timeout);
 
         try
         {
-            // Wait for the resource to start running
-            await resourceNotificationService.WaitForResourceAsync(
+            // Wait for the resource to become healthy using the Aspire 9+ API
+            await _app!.ResourceNotifications.WaitForResourceHealthyAsync(
                 resourceName,
-                KnownResourceStates.Running,
                 cts.Token
             );
         }
@@ -127,13 +120,7 @@ public class AspireIntegrationTestFixture : IAsyncLifetime
     /// </summary>
     public async Task<string?> GetConnectionStringAsync(string resourceName)
     {
-        var resource = _app!.Resources.Single(r => r.Name == resourceName);
-
-        if (resource is IResourceWithConnectionString resourceWithConnectionString)
-        {
-            return await resourceWithConnectionString.GetConnectionStringAsync();
-        }
-
-        return null;
+        // Use the Aspire 9+ GetConnectionStringAsync extension method
+        return await _app!.GetConnectionStringAsync(resourceName);
     }
 }

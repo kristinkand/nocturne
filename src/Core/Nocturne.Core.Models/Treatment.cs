@@ -258,12 +258,6 @@ public class Treatment : ProcessableDocumentBase
     public string? Cutting { get; set; }
 
     /// <summary>
-    /// Gets or sets the source of the treatment data
-    /// </summary>
-    [JsonPropertyName("source")]
-    public string? Source { get; set; }
-
-    /// <summary>
     /// Gets or sets the event time as ISO string (used by Glooko connector)
     /// </summary>
     [JsonPropertyName("eventTime")]

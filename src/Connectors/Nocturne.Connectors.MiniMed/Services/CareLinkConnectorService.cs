@@ -15,6 +15,7 @@ using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 #nullable enable
 
@@ -78,7 +79,7 @@ namespace Nocturne.Connectors.MiniMed.Services
         /// <summary>
         /// Gets the source identifier for this connector
         /// </summary>
-        public override string ConnectorSource => "carelink";
+        public override string ConnectorSource => DataSources.MiniMedConnector;
 
         public CareLinkConnectorService(
             HttpClient httpClient,

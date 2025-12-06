@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_Dexcom",
         serviceName: "ServiceNames.DexcomConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.DexcomPrefix",
-        connectSourceName: "ConnectSource.Dexcom"
+        connectSourceName: "ConnectSource.Dexcom",
+        dataSourceId: "dexcom-connector",
+        icon: "dexcom",
+        category: "cgm",
+        description: "Nocturne Dexcom Share Connector"
     )]
     public class DexcomConnectorConfiguration : BaseConnectorConfiguration
     {

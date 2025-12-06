@@ -16,6 +16,7 @@ using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Dexcom.Constants;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 #nullable enable
 
@@ -61,7 +62,7 @@ namespace Nocturne.Connectors.Dexcom.Services
         /// <summary>
         /// Gets the source identifier for this connector
         /// </summary>
-        public override string ConnectorSource => "dexcom";
+        public override string ConnectorSource => DataSources.DexcomConnector;
 
         /// <summary>
         /// Gets the number of consecutive failed requests

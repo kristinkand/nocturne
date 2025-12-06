@@ -16,6 +16,7 @@ using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Glooko.Models;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 #nullable enable
 
@@ -55,7 +56,7 @@ namespace Nocturne.Connectors.Glooko.Services
         }
 
         public override string ServiceName => "Glooko";
-        public override string ConnectorSource => "glooko";
+        public override string ConnectorSource => DataSources.GlookoConnector;
 
         public GlookoConnectorService(
             HttpClient httpClient,
@@ -624,7 +625,7 @@ namespace Nocturne.Connectors.Glooko.Services
                         treatment.AdditionalProperties = JsonSerializer.Deserialize<
                             Dictionary<string, object>
                         >(JsonSerializer.Serialize(food));
-                        treatment.Source = ConnectorSource;
+                        treatment.DataSource = ConnectorSource;
                         treatments.Add(treatment);
                     }
                 }
@@ -651,7 +652,7 @@ namespace Nocturne.Connectors.Glooko.Services
                                     .Add(timestampDelta)
                                     .ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                                 Insulin = insulin.Value,
-                                Source = ConnectorSource,
+                                DataSource = ConnectorSource,
                             };
                             treatments.Add(treatment);
                         }
@@ -683,7 +684,7 @@ namespace Nocturne.Connectors.Glooko.Services
                             AdditionalProperties = JsonSerializer.Deserialize<
                                 Dictionary<string, object>
                             >(JsonSerializer.Serialize(bolus)),
-                            Source = ConnectorSource,
+                            DataSource = ConnectorSource,
                         };
                         treatments.Add(treatment);
                     }
@@ -721,7 +722,7 @@ namespace Nocturne.Connectors.Glooko.Services
                             AdditionalProperties = JsonSerializer.Deserialize<
                                 Dictionary<string, object>
                             >(JsonSerializer.Serialize(basal)),
-                            Source = ConnectorSource,
+                            DataSource = ConnectorSource,
                         };
                         treatments.Add(treatment);
                     }

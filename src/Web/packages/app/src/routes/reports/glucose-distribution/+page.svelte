@@ -313,13 +313,26 @@
           <div class="flex flex-col items-center">
             {#if pieData.some((d) => d.value > 0)}
               {@const totalValue = pieData.reduce((sum, d) => sum + d.value, 0)}
-              {@const arcsData = pieData.reduce((acc, d, i) => {
-                const startAngle = i === 0 ? 0 : acc[i - 1].endAngle;
-                const endAngle =
-                  startAngle + (d.value / totalValue) * Math.PI * 2;
-                acc.push({ ...d, startAngle, endAngle });
-                return acc;
-              }, [] as Array)}
+              {@const arcsData = pieData.reduce(
+                (
+                  acc: {
+                    name: string;
+                    value: number;
+                    color: string;
+                    startAngle: number;
+                    endAngle: number;
+                  }[],
+                  d,
+                  i
+                ) => {
+                  const startAngle = i === 0 ? 0 : acc[i - 1].endAngle;
+                  const endAngle =
+                    startAngle + (d.value / totalValue) * Math.PI * 2;
+                  acc.push({ ...d, startAngle, endAngle });
+                  return acc;
+                },
+                []
+              )}
               <div class="h-[300px] w-[300px]">
                 <Chart>
                   <Svg>

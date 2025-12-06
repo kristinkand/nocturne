@@ -1,14 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { Button } from "$lib/components/ui/button";
-  import { createSettingsStore } from "$lib/stores/settings-store.svelte";
   import { ChevronLeft } from "lucide-svelte";
 
   const { children } = $props();
-
-  // Create settings store in context - this will auto-load and be available to all child pages
-  // The store instance is referenced by child components via getSettingsStore()
-  createSettingsStore();
 
   const isSubpage = $derived(page.url.pathname !== "/settings");
 </script>

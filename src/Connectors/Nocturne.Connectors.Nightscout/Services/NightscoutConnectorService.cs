@@ -13,6 +13,7 @@ using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 namespace Nocturne.Connectors.Nightscout.Services
 {
@@ -31,7 +32,7 @@ namespace Nocturne.Connectors.Nightscout.Services
         /// <summary>
         /// Gets the connector source identifier
         /// </summary>
-        public override string ConnectorSource => "nightscout";
+        public override string ConnectorSource => DataSources.NightscoutConnector;
 
         /// <summary>
         /// Gets whether the connector is in a healthy state based on recent request failures

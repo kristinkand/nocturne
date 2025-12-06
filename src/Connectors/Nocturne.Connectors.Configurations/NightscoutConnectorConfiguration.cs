@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_Nightscout",
         serviceName: "ServiceNames.NightscoutConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.NightscoutPrefix",
-        connectSourceName: "ConnectSource.Nightscout"
+        connectSourceName: "ConnectSource.Nightscout",
+        dataSourceId: "nightscout-connector",
+        icon: "nightscout",
+        category: "data",
+        description: "Data bridged from upstream Nightscout"
     )]
     public class NightscoutConnectorConfiguration : BaseConnectorConfiguration
     {

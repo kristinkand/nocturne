@@ -14,6 +14,7 @@ using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.MyFitnessPal.Models;
 using Nocturne.Core.Models;
+using Nocturne.Core.Constants;
 
 namespace Nocturne.Connectors.MyFitnessPal.Services;
 
@@ -35,7 +36,7 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
     /// <summary>
     /// Gets the connector source identifier
     /// </summary>
-    public override string ConnectorSource => "myfitnesspal";
+    public override string ConnectorSource => DataSources.MyFitnessPalConnector;
 
     /// <summary>
     /// Gets the service name for this connector

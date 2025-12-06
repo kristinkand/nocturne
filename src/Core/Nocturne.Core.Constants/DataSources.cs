@@ -70,9 +70,15 @@ public static class DataSources
     /// </summary>
     public const string Spike = "spike";
 
+    /// <summary>
+    /// Data fetched from MyFitnessPal via the MyFitnessPal connector.
+    /// </summary>
+    public const string MyFitnessPalConnector = "myfitnesspal-connector";
+
     // ============================================================================
     // Manual Entry Sources
     // ============================================================================
+
 
     /// <summary>
     /// Data entered manually by a user through the Nocturne web interface.

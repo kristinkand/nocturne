@@ -55,6 +55,7 @@ namespace Nocturne.Connectors.Core.Extensions
     /// <summary>
     /// Marks a connector configuration class for automatic Aspire extension method generation.
     /// Used by source generators to create AddXxxConnector methods.
+    /// Also provides display metadata for the connector in the UI.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class ConnectorRegistrationAttribute : Attribute
@@ -85,12 +86,36 @@ namespace Nocturne.Connectors.Core.Extensions
         /// </summary>
         public string ConnectSourceName { get; }
 
+        /// <summary>
+        /// The DataSources constant value used to identify data from this connector (e.g., "libre-connector")
+        /// </summary>
+        public string DataSourceId { get; }
+
+        /// <summary>
+        /// Icon identifier for the connector in the UI (e.g., "libre", "dexcom", "glooko")
+        /// </summary>
+        public string Icon { get; }
+
+        /// <summary>
+        /// Category for grouping in UI (e.g., "cgm", "pump", "data", "connector")
+        /// </summary>
+        public string Category { get; }
+
+        /// <summary>
+        /// Human-readable description of the connector
+        /// </summary>
+        public string Description { get; }
+
         public ConnectorRegistrationAttribute(
             string connectorName,
             string projectTypeName,
             string serviceName,
             string environmentPrefix,
-            string connectSourceName
+            string connectSourceName,
+            string dataSourceId = "",
+            string icon = "",
+            string category = "connector",
+            string description = ""
         )
         {
             ConnectorName = connectorName;
@@ -98,6 +123,10 @@ namespace Nocturne.Connectors.Core.Extensions
             ServiceName = serviceName;
             EnvironmentPrefix = environmentPrefix;
             ConnectSourceName = connectSourceName;
+            DataSourceId = dataSourceId;
+            Icon = icon;
+            Category = category;
+            Description = description;
         }
     }
 }

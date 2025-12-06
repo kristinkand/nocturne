@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_FreeStyle",
         serviceName: "ServiceNames.LibreConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.FreeStylePrefix",
-        connectSourceName: "ConnectSource.LibreLinkUp"
+        connectSourceName: "ConnectSource.LibreLinkUp",
+        dataSourceId: "libre-connector",
+        icon: "libre",
+        category: "cgm",
+        description: "Nocturne LibreLinkUp Connector"
     )]
     public class LibreLinkUpConnectorConfiguration : BaseConnectorConfiguration
     {

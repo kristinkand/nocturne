@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getSettingsStore } from "$lib/stores/settings-store.svelte";
+  import TitleFaviconSettings from "$lib/components/settings/TitleFaviconSettings.svelte";
   import {
     Card,
     CardContent,
@@ -252,6 +253,9 @@
         </div>
       </CardContent>
     </Card>
+
+    <!-- Browser Tab Settings -->
+    <TitleFaviconSettings />
 
     <!-- Dashboard Widgets -->
     <Card>

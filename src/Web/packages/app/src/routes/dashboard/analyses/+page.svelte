@@ -236,9 +236,11 @@
                 </code>
                 <span class="font-medium truncate">{analysis.requestPath}</span>
                 <Badge
-                  class="{getMatchTypeColor(analysis.overallMatch)} text-xs"
+                  class="{getMatchTypeColor(
+                    analysis.overallMatch ?? 0
+                  )} text-xs"
                 >
-                  {getMatchTypeDescription(analysis.overallMatch)}
+                  {getMatchTypeDescription(analysis.overallMatch ?? 0)}
                 </Badge>
               </div>
               <div class="flex items-center gap-2">
@@ -261,7 +263,9 @@
               <div class="flex items-center gap-4">
                 <span>ID: {analysis.correlationId}</span>
                 <span>
-                  Time: {new Date(analysis.analysisTimestamp).toLocaleString()}
+                  Time: {analysis.analysisTimestamp
+                    ? new Date(analysis.analysisTimestamp).toLocaleString()
+                    : "N/A"}
                 </span>
                 {#if analysis.selectedResponseTarget}
                   <span>Selected: {analysis.selectedResponseTarget}</span>
@@ -307,24 +311,24 @@
 
             <!-- Discrepancy Counts -->
             <div class="flex gap-2">
-              {#if analysis.criticalDiscrepancyCount > 0}
+              {#if (analysis.criticalDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-red-100 text-red-800 text-xs">
                   <AlertTriangle class="h-3 w-3 mr-1" />
                   {analysis.criticalDiscrepancyCount} Critical
                 </Badge>
               {/if}
-              {#if analysis.majorDiscrepancyCount > 0}
+              {#if (analysis.majorDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-orange-100 text-orange-800 text-xs">
                   <AlertCircle class="h-3 w-3 mr-1" />
                   {analysis.majorDiscrepancyCount} Major
                 </Badge>
               {/if}
-              {#if analysis.minorDiscrepancyCount > 0}
+              {#if (analysis.minorDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-yellow-100 text-yellow-800 text-xs">
                   {analysis.minorDiscrepancyCount} Minor
                 </Badge>
               {/if}
-              {#if analysis.criticalDiscrepancyCount === 0 && analysis.majorDiscrepancyCount === 0 && analysis.minorDiscrepancyCount === 0}
+              {#if (analysis.criticalDiscrepancyCount ?? 0) === 0 && (analysis.majorDiscrepancyCount ?? 0) === 0 && (analysis.minorDiscrepancyCount ?? 0) === 0}
                 <Badge class="bg-green-100 text-green-800 text-xs">
                   No Issues
                 </Badge>

@@ -74,6 +74,15 @@ public class ApiDataSubmitter : IApiDataSubmitter
             return true;
         }
 
+        // Ensure DataSource is set on all entries for proper source tracking
+        foreach (var entry in entriesArray)
+        {
+            if (string.IsNullOrEmpty(entry.DataSource))
+            {
+                entry.DataSource = source;
+            }
+        }
+
         return await _retryPipeline.ExecuteAsync(
             async ct =>
             {
@@ -141,6 +150,15 @@ public class ApiDataSubmitter : IApiDataSubmitter
         {
             _logger?.LogDebug("No treatments to submit");
             return true;
+        }
+
+        // Ensure DataSource is set on all treatments for proper source tracking
+        foreach (var treatment in treatmentsArray)
+        {
+            if (string.IsNullOrEmpty(treatment.DataSource))
+            {
+                treatment.DataSource = source;
+            }
         }
 
         return await _retryPipeline.ExecuteAsync(

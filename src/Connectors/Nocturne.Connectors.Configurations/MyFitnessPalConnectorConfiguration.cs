@@ -15,7 +15,11 @@ namespace Nocturne.Connectors.Configurations
         projectTypeName: "Nocturne_Connectors_MyFitnessPal",
         serviceName: "ServiceNames.MyFitnessPalConnector",
         environmentPrefix: "ServiceNames.ConnectorEnvironment.MyFitnessPalPrefix",
-        connectSourceName: "ConnectSource.MyFitnessPal"
+        connectSourceName: "ConnectSource.MyFitnessPal",
+        dataSourceId: "myfitnesspal-connector",
+        icon: "myfitnesspal",
+        category: "nutrition",
+        description: "Data synced from MyFitnessPal"
     )]
     public class MyFitnessPalConnectorConfiguration : BaseConnectorConfiguration
     {
