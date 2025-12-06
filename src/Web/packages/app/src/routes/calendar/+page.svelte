@@ -230,8 +230,11 @@
     let currentDay = 1;
 
     for (let week = 0; week < 6; week++) {
-      const weekDays: (DayStats | null | { empty: true; dayNumber?: number })[] =
-        [];
+      const weekDays: (
+        | DayStats
+        | null
+        | { empty: true; dayNumber?: number }
+      )[] = [];
 
       for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
         if (week === 0 && dayOfWeek < startDayOfWeek) {
@@ -273,14 +276,17 @@
   }
 
   // Get cell classes based on day state
-  function getCellClasses(day: DayStats | null | { empty: true; dayNumber?: number }): string {
-    const base = "flex items-center justify-center rounded-lg border min-h-20 relative";
+  function getCellClasses(
+    day: DayStats | null | { empty: true; dayNumber?: number }
+  ): string {
+    const base =
+      "flex items-center justify-center rounded-lg border min-h-20 relative";
     const isTodayCell = day && "date" in day && isToday(day.date);
-    
+
     return cn(
       base,
-      isTodayCell 
-        ? "bg-primary/5 border-primary" 
+      isTodayCell
+        ? "bg-primary/5 border-primary"
         : "border-border/50 bg-background/50"
     );
   }
@@ -309,7 +315,9 @@
 
 <div class="flex flex-col h-full">
   <!-- Header -->
-  <div class="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
+  <div
+    class="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10"
+  >
     <div class="flex items-center justify-between p-4">
       <div class="flex items-center gap-4">
         <Calendar class="h-6 w-6 text-muted-foreground" />
@@ -387,7 +395,9 @@
         <!-- Day of week headers -->
         <div class="grid grid-cols-7 gap-1 mb-2">
           {#each DAY_NAMES as dayName}
-            <div class="text-center text-sm font-medium text-muted-foreground py-2">
+            <div
+              class="text-center text-sm font-medium text-muted-foreground py-2"
+            >
               {dayName}
             </div>
           {/each}
@@ -440,7 +450,8 @@
                               <svg
                                 width={radius * 2 + 4}
                                 height={radius * 2 + 4}
-                                viewBox="-{radius + 2} -{radius + 2} {radius * 2 +
+                                viewBox="-{radius + 2} -{radius + 2} {radius *
+                                  2 +
                                   4} {radius * 2 + 4}"
                               >
                                 {#each pieData as slice, i}
@@ -482,11 +493,14 @@
                         >
                           <div class="space-y-1.5">
                             <div class="font-medium text-sm">
-                              {new Date(day.date).toLocaleDateString(undefined, {
-                                weekday: "long",
-                                month: "short",
-                                day: "numeric",
-                              })}
+                              {new Date(day.date).toLocaleDateString(
+                                undefined,
+                                {
+                                  weekday: "long",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
                             </div>
                             <div
                               class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
@@ -531,7 +545,9 @@
                               <span class="font-medium">
                                 {day.totalCarbs.toFixed(0)}g
                               </span>
-                              <span class="text-muted-foreground">Insulin:</span>
+                              <span class="text-muted-foreground">
+                                Insulin:
+                              </span>
                               <span class="font-medium">
                                 {day.totalInsulin.toFixed(1)}U
                               </span>
@@ -581,7 +597,9 @@
                     {/if}
                   {:else if day && "empty" in day}
                     <!-- Day with no data -->
-                    <span class="absolute top-1 left-2 text-xs text-muted-foreground">
+                    <span
+                      class="absolute top-1 left-2 text-xs text-muted-foreground"
+                    >
                       {day.dayNumber}
                     </span>
                     <div
@@ -589,7 +607,9 @@
                     ></div>
                   {:else if day && "date" in day}
                     <!-- Day exists in data but has no readings -->
-                    <span class="absolute top-1 left-2 text-xs text-muted-foreground">
+                    <span
+                      class="absolute top-1 left-2 text-xs text-muted-foreground"
+                    >
                       {new Date(day.date).getDate()}
                     </span>
                     <div
@@ -610,7 +630,10 @@
             <div class="text-center">
               <div class="text-2xl font-bold text-green-600">
                 {monthSummary.readings > 0
-                  ? ((monthSummary.inRange / monthSummary.readings) * 100).toFixed(1)
+                  ? (
+                      (monthSummary.inRange / monthSummary.readings) *
+                      100
+                    ).toFixed(1)
                   : 0}%
               </div>
               <div class="text-sm text-muted-foreground">Time in Range</div>
