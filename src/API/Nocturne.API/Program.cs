@@ -160,6 +160,7 @@ builder.Services.AddScoped<IDDataService, DDataService>();
 builder.Services.AddScoped<IPropertiesService, PropertiesService>();
 builder.Services.AddScoped<ISummaryService, SummaryService>();
 builder.Services.AddScoped<IIobService, IobService>();
+builder.Services.AddScoped<IPredictionService, PredictionService>();
 builder.Services.AddScoped<ICobService, CobService>();
 builder.Services.AddScoped<IAr2Service, Ar2Service>();
 builder.Services.AddScoped<IBolusWizardService, BolusWizardService>();

@@ -32,6 +32,7 @@ import {
   LocalAuthClient,
   OidcClient,
   BatteryClient,
+  PredictionClient,
 } from "./generated/nocturne-api-client";
 
 /**
@@ -75,6 +76,7 @@ export class ApiClient {
   public readonly localAuth: LocalAuthClient;
   public readonly oidc: OidcClient;
   public readonly battery: BatteryClient;
+  public readonly predictions: PredictionClient;
 
   constructor(
     baseUrl: string,
@@ -124,6 +126,7 @@ export class ApiClient {
     this.localAuth = new LocalAuthClient(apiBaseUrl, http);
     this.oidc = new OidcClient(apiBaseUrl, http);
     this.battery = new BatteryClient(apiBaseUrl, http);
+    this.predictions = new PredictionClient(apiBaseUrl, http);
   }
 
   /** Get the underlying main client for direct access if needed */

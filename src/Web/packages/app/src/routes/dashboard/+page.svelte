@@ -137,11 +137,13 @@
       </CardHeader>
       <CardContent>
         <div class="text-2xl font-bold">
-          {metrics.compatibilityScore.toFixed(1)}%
+          {(metrics.compatibilityScore ?? 0).toFixed(1)}%
         </div>
         <p class="text-xs text-muted-foreground">
           <Badge
-            class="{getStatusColor(status.healthStatus)} text-white text-xs"
+            class="{getStatusColor(
+              status.healthStatus ?? 'Unknown'
+            )} text-white text-xs"
           >
             {status.healthStatus}
           </Badge>
@@ -159,7 +161,7 @@
       </CardHeader>
       <CardContent>
         <div class="text-2xl font-bold">
-          {metrics.totalRequests.toLocaleString()}
+          {(metrics.totalRequests ?? 0).toLocaleString()}
         </div>
         <p class="text-xs text-muted-foreground">In selected period</p>
       </CardContent>
@@ -191,10 +193,11 @@
       </CardHeader>
       <CardContent>
         <div class="text-2xl font-bold">
-          {Math.round(metrics.averageNocturneResponseTime)}ms
+          {Math.round(metrics.averageNocturneResponseTime ?? 0)}ms
         </div>
         <p class="text-xs text-muted-foreground">
-          vs {Math.round(metrics.averageNightscoutResponseTime)}ms Nightscout
+          vs {Math.round(metrics.averageNightscoutResponseTime ?? 0)}ms
+          Nightscout
         </p>
       </CardContent>
     </Card>
@@ -215,8 +218,8 @@
           <div class="flex justify-between items-center">
             <span class="text-sm">Perfect Matches</span>
             <Badge class="bg-green-100 text-green-800">
-              {metrics.perfectMatches} ({(
-                (metrics.perfectMatches / metrics.totalRequests) *
+              {metrics.perfectMatches ?? 0} ({(
+                ((metrics.perfectMatches ?? 0) / (metrics.totalRequests || 1)) *
                 100
               ).toFixed(1)}%)
             </Badge>
@@ -224,8 +227,9 @@
           <div class="flex justify-between items-center">
             <span class="text-sm">Minor Differences</span>
             <Badge class="bg-yellow-100 text-yellow-800">
-              {metrics.minorDifferences} ({(
-                (metrics.minorDifferences / metrics.totalRequests) *
+              {metrics.minorDifferences ?? 0} ({(
+                ((metrics.minorDifferences ?? 0) /
+                  (metrics.totalRequests || 1)) *
                 100
               ).toFixed(1)}%)
             </Badge>
@@ -233,8 +237,9 @@
           <div class="flex justify-between items-center">
             <span class="text-sm">Major Differences</span>
             <Badge class="bg-orange-100 text-orange-800">
-              {metrics.majorDifferences} ({(
-                (metrics.majorDifferences / metrics.totalRequests) *
+              {metrics.majorDifferences ?? 0} ({(
+                ((metrics.majorDifferences ?? 0) /
+                  (metrics.totalRequests || 1)) *
                 100
               ).toFixed(1)}%)
             </Badge>
@@ -242,8 +247,9 @@
           <div class="flex justify-between items-center">
             <span class="text-sm">Critical Differences</span>
             <Badge class="bg-red-100 text-red-800">
-              {metrics.criticalDifferences} ({(
-                (metrics.criticalDifferences / metrics.totalRequests) *
+              {metrics.criticalDifferences ?? 0} ({(
+                ((metrics.criticalDifferences ?? 0) /
+                  (metrics.totalRequests || 1)) *
                 100
               ).toFixed(1)}%)
             </Badge>
@@ -273,18 +279,18 @@
                   {endpoint.endpoint}
                 </div>
                 <div class="text-xs text-muted-foreground">
-                  {endpoint.totalRequests} requests • {endpoint.compatibilityScore.toFixed(
-                    1
-                  )}% compatible
+                  {endpoint.totalRequests} requests • {(
+                    endpoint.compatibilityScore ?? 0
+                  ).toFixed(1)}% compatible
                 </div>
               </div>
               <div class="flex gap-1">
-                {#if endpoint.criticalDifferences > 0}
+                {#if (endpoint.criticalDifferences ?? 0) > 0}
                   <Badge class="bg-red-100 text-red-800 text-xs">
                     {endpoint.criticalDifferences}
                   </Badge>
                 {/if}
-                {#if endpoint.majorDifferences > 0}
+                {#if (endpoint.majorDifferences ?? 0) > 0}
                   <Badge class="bg-orange-100 text-orange-800 text-xs">
                     {endpoint.majorDifferences}
                   </Badge>
@@ -330,32 +336,34 @@
                   {analysis.requestPath}
                 </span>
                 <Badge
-                  class="text-xs {getSeverityColor(analysis.overallMatch)}"
+                  class="text-xs {getSeverityColor(analysis.overallMatch ?? 0)}"
                 >
-                  {getMatchTypeDescription(analysis.overallMatch)}
+                  {getMatchTypeDescription(analysis.overallMatch ?? 0)}
                 </Badge>
               </div>
               <div class="text-xs text-muted-foreground">
-                {new Date(analysis.analysisTimestamp).toLocaleString()} •
+                {analysis.analysisTimestamp
+                  ? new Date(analysis.analysisTimestamp).toLocaleString()
+                  : "N/A"} •
                 {analysis.totalProcessingTimeMs}ms •
-                {analysis.criticalDiscrepancyCount +
-                  analysis.majorDiscrepancyCount +
-                  analysis.minorDiscrepancyCount} discrepancies
+                {(analysis.criticalDiscrepancyCount ?? 0) +
+                  (analysis.majorDiscrepancyCount ?? 0) +
+                  (analysis.minorDiscrepancyCount ?? 0)} discrepancies
               </div>
             </div>
             <div class="flex items-center gap-2">
-              {#if analysis.criticalDiscrepancyCount > 0}
+              {#if (analysis.criticalDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-red-100 text-red-800 text-xs">
                   <AlertTriangle class="h-3 w-3 mr-1" />
                   {analysis.criticalDiscrepancyCount}
                 </Badge>
               {/if}
-              {#if analysis.majorDiscrepancyCount > 0}
+              {#if (analysis.majorDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-orange-100 text-orange-800 text-xs">
                   {analysis.majorDiscrepancyCount}
                 </Badge>
               {/if}
-              {#if analysis.minorDiscrepancyCount > 0}
+              {#if (analysis.minorDiscrepancyCount ?? 0) > 0}
                 <Badge class="bg-yellow-100 text-yellow-800 text-xs">
                   {analysis.minorDiscrepancyCount}
                 </Badge>

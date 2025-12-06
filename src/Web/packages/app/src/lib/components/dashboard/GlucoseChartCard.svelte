@@ -9,9 +9,26 @@
   import { Badge } from "$lib/components/ui/badge";
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
-  import { Chart, Axis, Svg, Area, Tooltip } from "layerchart";
+  import {
+    Chart,
+    Axis,
+    Group,
+    Polygon,
+    Svg,
+    Area,
+    Spline,
+    Rule,
+    Points,
+    Text,
+    ChartClipPath,
+  } from "layerchart";
   import { chartConfig } from "$lib/constants";
   import { curveStepAfter, curveMonotoneX } from "d3";
+  import { scaleTime, scaleLinear } from "d3-scale";
+  import {
+    getPredictions,
+    type PredictionData,
+  } from "$lib/data/predictions.remote";
 
   interface ComponentProps {
     entries?: Entry[];
@@ -25,6 +42,12 @@
     defaultBasalRate?: number;
     /** Insulin to carb ratio (g per 1U) */
     carbRatio?: number;
+    /** Insulin Sensitivity Factor (mg/dL per unit) */
+    isf?: number;
+    /** Show prediction lines (currently disabled - needs backend endpoint) */
+    showPredictions?: boolean;
+    /** Default focus hours for time range selector (from settings) */
+    defaultFocusHours?: number;
   }
 
   const realtimeStore = getRealtimeStore();
@@ -35,11 +58,58 @@
     dateRange,
     defaultBasalRate = 1.0,
     carbRatio = 10,
+    isf = 50,
+    showPredictions = true, // Enable predictions by default
+    defaultFocusHours,
   }: ComponentProps = $props();
+
+  // Prediction data state
+  let predictionData = $state<PredictionData | null>(null);
+  let predictionError = $state<string | null>(null);
+
+  // Prediction display mode: 'cone' shows shaded probability area, 'lines' shows individual curves
+  type PredictionDisplayMode =
+    | "cone"
+    | "lines"
+    | "main"
+    | "iob"
+    | "zt"
+    | "uam"
+    | "cob";
+  let predictionMode = $state<PredictionDisplayMode>("cone");
+
+  // Kept for future use - suppress unused variable warnings
+  void isf;
+
+  // Fetch predictions when enabled
+  $effect(() => {
+    if (showPredictions) {
+      getPredictions({})
+        .then((data) => {
+          predictionData = data;
+          predictionError = null;
+        })
+        .catch((err) => {
+          console.error("Failed to fetch predictions:", err);
+          predictionError = err.message;
+          predictionData = null;
+        });
+    }
+  });
 
   // Time range selection (in hours)
   type TimeRangeOption = "2" | "4" | "6" | "12" | "24";
-  let selectedTimeRange = $state<TimeRangeOption>("6");
+
+  // Helper to convert numeric focus hours to valid TimeRangeOption
+  function getInitialTimeRange(hours?: number): TimeRangeOption {
+    const validOptions: TimeRangeOption[] = ["2", "4", "6", "12", "24"];
+    const hourStr = String(hours) as TimeRangeOption;
+    return validOptions.includes(hourStr) ? hourStr : "6";
+  }
+
+  let selectedTimeRange = $state<TimeRangeOption>(
+    getInitialTimeRange(defaultFocusHours)
+  );
 
   const timeRangeOptions: { value: TimeRangeOption; label: string }[] = [
     { value: "2", label: "2h" },
@@ -67,6 +137,18 @@
           new Date().getTime() - parseInt(selectedTimeRange) * 60 * 60 * 1000
         ),
     to: dateRange ? normalizeDate(dateRange.to, new Date()) : new Date(),
+  });
+
+  // Prediction buffer: extend chart 4 hours into the future when predictions are enabled
+  const predictionHours = 4;
+  const chartXDomain = $derived({
+    from: displayDateRange.from,
+    to:
+      showPredictions && predictionData
+        ? new Date(
+            displayDateRange.to.getTime() + predictionHours * 60 * 60 * 1000
+          )
+        : displayDateRange.to,
   });
 
   // Filter entries by date range
@@ -122,47 +204,19 @@
     )
   );
 
-  // X domain
-  const xMin = $derived(displayDateRange.from.getTime());
-  const xMax = $derived(displayDateRange.to.getTime());
-  const xRange = $derived(xMax - xMin);
-
   function getTreatmentTime(t: Treatment): number {
     return t.mills ?? (t.created_at ? new Date(t.created_at).getTime() : 0);
   }
 
-  function getXPercent(mills: number): number {
-    return ((mills - xMin) / xRange) * 100;
-  }
+  // Thresholds
+  const lowThreshold = chartConfig.low.threshold ?? 55;
+  const highThreshold = chartConfig.high.threshold ?? 180;
 
-  // =====================================
-  // Chart Layout - Unified Y-axis scale
-  // =====================================
-  // We'll use a unified coordinate system where:
-  // - Y values 0-100 represent the visual chart (0 = bottom, 100 = top)
-  // - Different data types map to different regions
-
-  // Basal region: 85-100 (top 15%)
-  // Glucose region: 20-82 (main 62%)
-  // IOB/COB region: 0-18 (bottom 18%)
-
-  const BASAL_Y_TOP = 100;
-  const BASAL_Y_BOTTOM = 88;
-  const GLUCOSE_Y_TOP = 85;
-  const GLUCOSE_Y_BOTTOM = 22;
-  const IOB_COB_Y_TOP = 18;
-  const IOB_COB_Y_BOTTOM = 2;
-
-  // Glucose scaling
+  // Y domain for glucose (dynamic based on data)
   const glucoseYMin = 40;
   const glucoseYMax = $derived(
     Math.min(400, Math.max(280, ...filteredEntries.map((e) => e.sgv ?? 0)) + 20)
   );
-
-  function glucoseToY(sgv: number): number {
-    const normalized = (sgv - glucoseYMin) / (glucoseYMax - glucoseYMin);
-    return GLUCOSE_Y_BOTTOM + normalized * (GLUCOSE_Y_TOP - GLUCOSE_Y_BOTTOM);
-  }
 
   // Glucose data for chart
   const glucoseData = $derived(
@@ -171,35 +225,81 @@
       .map((e) => ({
         time: new Date(e.mills ?? 0),
         sgv: e.sgv ?? 0,
-        y: glucoseToY(e.sgv ?? 0),
         color: getGlucoseColor(e.sgv ?? 0),
       }))
       .sort((a, b) => a.time.getTime() - b.time.getTime())
   );
 
-  // Basal scaling
-  const maxBasalRate = $derived(
-    Math.max(
-      defaultBasalRate * 2.5,
-      ...tempBasalTreatments.map((t) => t.rate ?? 0)
-    )
+  // Prediction curve data for chart
+  const predictionCurveData = $derived(
+    predictionData?.curves.main.map((p) => ({
+      time: new Date(p.timestamp),
+      sgv: p.value,
+    })) ?? []
   );
 
-  function basalToY(rate: number): number {
-    const normalized = rate / maxBasalRate;
-    return BASAL_Y_BOTTOM + normalized * (BASAL_Y_TOP - BASAL_Y_BOTTOM);
-  }
+  const iobPredictionData = $derived(
+    predictionData?.curves.iobOnly.map((p) => ({
+      time: new Date(p.timestamp),
+      sgv: p.value,
+    })) ?? []
+  );
 
-  const defaultBasalY = $derived(basalToY(defaultBasalRate));
+  const uamPredictionData = $derived(
+    predictionData?.curves.uam.map((p) => ({
+      time: new Date(p.timestamp),
+      sgv: p.value,
+    })) ?? []
+  );
+
+  const cobPredictionData = $derived(
+    predictionData?.curves.cob.map((p) => ({
+      time: new Date(p.timestamp),
+      sgv: p.value,
+    })) ?? []
+  );
+
+  const zeroTempPredictionData = $derived(
+    predictionData?.curves.zeroTemp.map((p) => ({
+      time: new Date(p.timestamp),
+      sgv: p.value,
+    })) ?? []
+  );
+
+  // Prediction cone data - shows min/max range of all prediction curves
+  const predictionConeData = $derived.by(() => {
+    if (!predictionData) return [];
+
+    const curves = [
+      predictionData.curves.main,
+      predictionData.curves.iobOnly,
+      predictionData.curves.zeroTemp,
+      predictionData.curves.uam,
+      predictionData.curves.cob,
+    ].filter((c) => c && c.length > 0);
+
+    if (curves.length === 0) return [];
+
+    // Assume all curves have same timestamps, use first curve's timestamps
+    const primaryCurve = curves[0];
+    return primaryCurve.map((point, i) => {
+      const valuesAtTime = curves.map((c) => c[i]?.value ?? point.value);
+      return {
+        time: new Date(point.timestamp),
+        min: Math.min(...valuesAtTime),
+        max: Math.max(...valuesAtTime),
+        mid: (Math.min(...valuesAtTime) + Math.max(...valuesAtTime)) / 2,
+      };
+    });
+  });
 
   // Basal data
   const basalData = $derived.by(() => {
-    const data: { time: Date; rate: number; y: number }[] = [];
+    const data: { time: Date; rate: number }[] = [];
 
     data.push({
       time: displayDateRange.from,
       rate: defaultBasalRate,
-      y: basalToY(defaultBasalRate),
     });
 
     if (tempBasalTreatments.length > 0) {
@@ -216,14 +316,12 @@
         data.push({
           time: new Date(startTime - 1),
           rate: defaultBasalRate,
-          y: basalToY(defaultBasalRate),
         });
-        data.push({ time: new Date(startTime), rate, y: basalToY(rate) });
-        data.push({ time: new Date(endTime), rate, y: basalToY(rate) });
+        data.push({ time: new Date(startTime), rate });
+        data.push({ time: new Date(endTime), rate });
         data.push({
           time: new Date(endTime + 1),
           rate: defaultBasalRate,
-          y: basalToY(defaultBasalRate),
         });
       });
     }
@@ -231,11 +329,17 @@
     data.push({
       time: displayDateRange.to,
       rate: defaultBasalRate,
-      y: basalToY(defaultBasalRate),
     });
 
     return data.sort((a, b) => a.time.getTime() - b.time.getTime());
   });
+
+  const maxBasalRate = $derived(
+    Math.max(
+      defaultBasalRate * 2.5,
+      ...tempBasalTreatments.map((t) => t.rate ?? 0)
+    )
+  );
 
   // IOB calculation
   const insulinDuration = 4 * 60 * 60 * 1000;
@@ -243,6 +347,8 @@
   const iobData = $derived.by(() => {
     const data: { time: Date; iob: number }[] = [];
     const step = 5 * 60 * 1000;
+    const xMin = displayDateRange.from.getTime();
+    const xMax = displayDateRange.to.getTime();
 
     for (let t = xMin; t <= xMax; t += step) {
       let iob = 0;
@@ -261,21 +367,14 @@
 
   const maxIOB = $derived(Math.max(3, ...iobData.map((d) => d.iob)));
 
-  function iobToY(iob: number): number {
-    const normalized = iob / maxIOB;
-    return IOB_COB_Y_BOTTOM + normalized * (IOB_COB_Y_TOP - IOB_COB_Y_BOTTOM);
-  }
-
-  const iobDataWithY = $derived(
-    iobData.map((d) => ({ ...d, y: iobToY(d.iob) }))
-  );
-
   // COB calculation
   const carbDuration = 3 * 60 * 60 * 1000;
 
   const cobData = $derived.by(() => {
     const data: { time: Date; cob: number }[] = [];
     const step = 5 * 60 * 1000;
+    const xMin = displayDateRange.from.getTime();
+    const xMax = displayDateRange.to.getTime();
 
     for (let t = xMin; t <= xMax; t += step) {
       let cob = 0;
@@ -292,26 +391,11 @@
     return data;
   });
 
+  // Kept for future use when COB chart is implemented
   const maxCOB = $derived(
     Math.max(carbRatio * 3, ...cobData.map((d) => d.cob))
   );
-
-  function cobToY(cob: number): number {
-    const normalized = cob / maxCOB;
-    return IOB_COB_Y_BOTTOM + normalized * (IOB_COB_Y_TOP - IOB_COB_Y_BOTTOM);
-  }
-
-  const cobDataWithY = $derived(
-    cobData.map((d) => ({ ...d, y: cobToY(d.cob) }))
-  );
-
-  // Reference line positions
-  const lowThreshold = chartConfig.low.threshold ?? 55;
-  const highThreshold = chartConfig.high.threshold ?? 180;
-  const lowLineY = $derived(glucoseToY(lowThreshold));
-  const highLineY = $derived(glucoseToY(highThreshold));
-  const iobRefY = $derived(iobToY(1));
-  const cobRefY = $derived(cobToY(carbRatio));
+  void maxCOB;
 
   function getGlucoseColor(sgv: number): string {
     const low = chartConfig.low.threshold ?? 55;
@@ -329,11 +413,29 @@
   function formatTime(date: Date): string {
     return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   }
+
+  // Bolus marker data for Points component
+  const bolusMarkerData = $derived(
+    bolusTreatments.map((t) => ({
+      time: new Date(getTreatmentTime(t)),
+      value: glucoseYMax - 10,
+      insulin: t.insulin ?? 0,
+    }))
+  );
+
+  // Carb marker data for Points component
+  const carbMarkerData = $derived(
+    carbTreatments.map((t) => ({
+      time: new Date(getTreatmentTime(t)),
+      value: glucoseYMin + 10,
+      carbs: t.carbs ?? 0,
+    }))
+  );
 </script>
 
 <Card class="bg-slate-950 border-slate-800">
   <CardHeader class="pb-2">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between flex-wrap gap-2">
       <CardTitle class="flex items-center gap-2 text-slate-100">
         Blood Glucose
         {#if displayDemoMode}
@@ -365,285 +467,328 @@
 
   <CardContent class="p-2">
     <div class="h-[420px] relative">
-      <Chart
-        data={glucoseData}
-        x="time"
-        y="y"
-        yDomain={[0, 100]}
-        xDomain={[displayDateRange.from, displayDateRange.to]}
-        padding={{ left: 48, bottom: 30, top: 8, right: 12 }}
-      >
-        <Svg>
-          <!-- Region Labels (positioned in padding area) -->
-          <text x="2" y="6%" class="text-[8px] fill-slate-500 font-medium">
-            BASAL
-          </text>
-          <text x="2" y="50%" class="text-[8px] fill-slate-500 font-medium">
-            BG
-          </text>
-          <text x="2" y="92%" class="text-[8px] fill-slate-500 font-medium">
-            IOB/COB
-          </text>
-
-          <!-- Region Separators -->
-          <line
-            x1="0%"
-            x2="100%"
-            y1="{100 - GLUCOSE_Y_TOP}%"
-            y2="{100 - GLUCOSE_Y_TOP}%"
-            stroke="rgb(51 65 85)"
-            stroke-width="1"
-          />
-          <line
-            x1="0%"
-            x2="100%"
-            y1="{100 - IOB_COB_Y_TOP}%"
-            y2="{100 - IOB_COB_Y_TOP}%"
-            stroke="rgb(51 65 85)"
-            stroke-width="1"
-          />
-
-          <!-- ===== BASAL REGION ===== -->
-          <!-- Default Basal Reference (dotted line) -->
-          <line
-            x1="0%"
-            x2="100%"
-            y1="{100 - defaultBasalY}%"
-            y2="{100 - defaultBasalY}%"
-            stroke="rgb(100 116 139)"
-            stroke-width="1"
-            stroke-dasharray="4,4"
-          />
-          <text
-            x="99%"
-            y="{100 - defaultBasalY - 1}%"
-            text-anchor="end"
-            class="text-[7px] fill-slate-400"
-          >
-            {defaultBasalRate.toFixed(1)}U/hr
-          </text>
-
-          <!-- Basal Area -->
-          {#if basalData.length > 0}
-            <Area
-              data={basalData}
-              x="time"
-              y="y"
-              y0={BASAL_Y_BOTTOM}
-              class="fill-blue-500/40"
-              line={{ class: "stroke-blue-400 stroke-1" }}
-              curve={curveStepAfter}
-            />
-          {/if}
-
-          <!-- ===== GLUCOSE REGION ===== -->
-          <!-- High/Low Reference Lines -->
-          <line
-            x1="0%"
-            x2="100%"
-            y1="{100 - highLineY}%"
-            y2="{100 - highLineY}%"
-            stroke="rgb(245 158 11)"
-            stroke-width="1"
-            stroke-dasharray="4,4"
-            opacity="0.5"
-          />
-          <text
-            x="99%"
-            y="{100 - highLineY - 1}%"
-            text-anchor="end"
-            class="text-[7px] fill-amber-500"
-          >
-            {highThreshold}
-          </text>
-
-          <line
-            x1="0%"
-            x2="100%"
-            y1="{100 - lowLineY}%"
-            y2="{100 - lowLineY}%"
-            stroke="rgb(239 68 68)"
-            stroke-width="1"
-            stroke-dasharray="4,4"
-            opacity="0.5"
-          />
-          <text
-            x="99%"
-            y="{100 - lowLineY + 3}%"
-            text-anchor="end"
-            class="text-[7px] fill-red-500"
-          >
-            {lowThreshold}
-          </text>
-
-          <!-- Y Axis Labels for Glucose -->
-          {#each [50, 100, 150, 200, 250, 300].filter((v) => v <= glucoseYMax && v >= glucoseYMin) as value}
-            {@const yPos = glucoseToY(value)}
-            <text
-              x="44"
-              y="{100 - yPos}%"
-              text-anchor="end"
-              dominant-baseline="middle"
-              class="text-[8px] fill-slate-500"
-            >
-              {value}
-            </text>
-            <line
-              x1="46"
-              x2="100%"
-              y1="{100 - yPos}%"
-              y2="{100 - yPos}%"
-              stroke="rgb(51 65 85)"
-              stroke-width="0.5"
-              opacity="0.3"
-            />
-          {/each}
-
-          <!-- Glucose Dots -->
-          {#each glucoseData as entry}
-            {@const xPct = getXPercent(entry.time.getTime())}
-            <circle
-              cx="{xPct}%"
-              cy="{100 - entry.y}%"
-              r="3"
-              fill={entry.color}
-              opacity="0.9"
-            />
-          {/each}
-
-          <!-- Bolus Markers -->
-          {#each bolusTreatments as treatment}
-            {@const xPct = getXPercent(getTreatmentTime(treatment))}
-            {@const insulin = treatment.insulin ?? 0}
-            {@const markerY = 100 - GLUCOSE_Y_TOP + 2}
-            <polygon
-              points="{xPct}%,{markerY}% {xPct - 0.4}%,{markerY + 3}% {xPct +
-                0.4}%,{markerY + 3}%"
-              fill="rgb(59 130 246)"
-              opacity="0.9"
-            />
-            <text
-              x="{xPct}%"
-              y="{markerY - 1}%"
-              text-anchor="middle"
-              class="text-[6px] fill-blue-400 font-medium"
-            >
-              {insulin < 1 ? insulin.toFixed(2) : insulin.toFixed(1)}
-            </text>
-          {/each}
-
-          <!-- Carb Markers -->
-          {#each carbTreatments as treatment}
-            {@const xPct = getXPercent(getTreatmentTime(treatment))}
-            {@const carbs = treatment.carbs ?? 0}
-            {@const markerY = 100 - GLUCOSE_Y_BOTTOM - 2}
-            <polygon
-              points="{xPct}%,{markerY}% {xPct - 0.4}%,{markerY - 3}% {xPct +
-                0.4}%,{markerY - 3}%"
-              fill="rgb(245 158 11)"
-              opacity="0.9"
-            />
-            <text
-              x="{xPct}%"
-              y="{markerY + 3}%"
-              text-anchor="middle"
-              class="text-[6px] fill-amber-400 font-medium"
-            >
-              {carbs}g
-            </text>
-          {/each}
-
-          <!-- ===== IOB/COB REGION ===== -->
-          <!-- 1U IOB Reference -->
-          {#if maxIOB >= 1}
-            <line
-              x1="0%"
-              x2="100%"
-              y1="{100 - iobRefY}%"
-              y2="{100 - iobRefY}%"
-              stroke="rgb(96 165 250)"
-              stroke-width="1"
-              stroke-dasharray="2,2"
-              opacity="0.4"
-            />
-            <text
-              x="99%"
-              y="{100 - iobRefY - 1}%"
-              text-anchor="end"
-              class="text-[6px] fill-blue-400"
-            >
-              1U
-            </text>
-          {/if}
-
-          <!-- Carb Ratio Reference -->
-          {#if maxCOB >= carbRatio}
-            <line
-              x1="0%"
-              x2="100%"
-              y1="{100 - cobRefY}%"
-              y2="{100 - cobRefY}%"
-              stroke="rgb(251 191 36)"
-              stroke-width="1"
-              stroke-dasharray="2,2"
-              opacity="0.4"
-            />
-            <text
-              x="99%"
-              y="{100 - cobRefY + 2}%"
-              text-anchor="end"
-              class="text-[6px] fill-amber-400"
-            >
-              {carbRatio}g
-            </text>
-          {/if}
-
-          <!-- IOB Area -->
-          {#if iobDataWithY.some((d) => d.iob > 0.01)}
-            <Area
-              data={iobDataWithY}
-              x="time"
-              y="y"
-              y0={IOB_COB_Y_BOTTOM}
-              class="fill-blue-600/30"
-              line={{ class: "stroke-blue-400 stroke-1" }}
-              curve={curveMonotoneX}
-            />
-          {/if}
-
-          <!-- COB Area -->
-          {#if cobDataWithY.some((d) => d.cob > 0.1)}
-            <Area
-              data={cobDataWithY}
-              x="time"
-              y="y"
-              y0={IOB_COB_Y_BOTTOM}
-              class="fill-amber-600/30"
-              line={{ class: "stroke-amber-400 stroke-1" }}
-              curve={curveMonotoneX}
-            />
-          {/if}
-
-          <!-- X Axis -->
-          <Axis
-            placement="bottom"
-            format={(v) => (v instanceof Date ? formatTime(v) : String(v))}
-            tickLabelProps={{ class: "text-[8px] fill-slate-500" }}
-          />
-        </Svg>
-
-        <!-- Tooltip -->
-        <Tooltip.Root
-          class="bg-slate-800 text-slate-100 p-2 rounded shadow-lg border border-slate-700 text-xs"
+      <!-- Main Glucose Chart -->
+      <div class="h-[280px]">
+        <Chart
+          data={glucoseData}
+          x={(d) => d.time}
+          y={(d) => d.sgv}
+          xScale={scaleTime()}
+          yScale={scaleLinear()}
+          xDomain={[chartXDomain.from, chartXDomain.to]}
+          yDomain={[glucoseYMin, glucoseYMax]}
+          padding={{ left: 48, bottom: 30, top: 8, right: 12 }}
         >
-          {#snippet children({ data })}
-            {#if data?.sgv}
-              <div class="font-medium">{data.sgv} mg/dL</div>
-              <div class="text-slate-400">{formatTime(data.time)}</div>
+          <Svg>
+            <ChartClipPath>
+              <!-- High threshold line -->
+              <Rule
+                y={highThreshold}
+                class="stroke-amber-500/50"
+                stroke-dasharray="4,4"
+              />
+
+              <!-- Low threshold line -->
+              <Rule
+                y={lowThreshold}
+                class="stroke-red-500/50"
+                stroke-dasharray="4,4"
+              />
+
+              <!-- Glucose line -->
+              <Spline class="stroke-blue-400 stroke-2 fill-none" />
+
+              <!-- Glucose points with color based on value -->
+              {#each glucoseData as point}
+                <Points
+                  data={[point]}
+                  x={(d) => d.time}
+                  y={(d) => d.sgv}
+                  r={3}
+                  fill={point.color}
+                  class="opacity-90"
+                />
+              {/each}
+
+              <!-- Prediction visualizations based on mode -->
+              {#if showPredictions && predictionData}
+                {#if predictionMode === "cone" && predictionConeData.length > 0}
+                  <!-- Cone of probabilities (shaded area between min and max) -->
+                  <Area
+                    data={predictionConeData}
+                    x={(d) => d.time}
+                    y0={(d) => d.min}
+                    y1={(d) => d.max}
+                    curve={curveMonotoneX}
+                    class="fill-purple-500/20 stroke-none"
+                  />
+                  <!-- Center line of cone -->
+                  <Spline
+                    data={predictionConeData}
+                    x={(d) => d.time}
+                    y={(d) => d.mid}
+                    curve={curveMonotoneX}
+                    class="stroke-purple-400 stroke-1 fill-none"
+                    stroke-dasharray="4,2"
+                  />
+                {:else if predictionMode === "lines"}
+                  <!-- All prediction lines -->
+                  {#if predictionCurveData.length > 0}
+                    <Spline
+                      data={predictionCurveData}
+                      x={(d) => d.time}
+                      y={(d) => d.sgv}
+                      curve={curveMonotoneX}
+                      class="stroke-purple-400 stroke-2 fill-none"
+                      stroke-dasharray="6,3"
+                    />
+                  {/if}
+                  {#if iobPredictionData.length > 0}
+                    <Spline
+                      data={iobPredictionData}
+                      x={(d) => d.time}
+                      y={(d) => d.sgv}
+                      curve={curveMonotoneX}
+                      class="stroke-cyan-400 stroke-1 fill-none opacity-80"
+                      stroke-dasharray="4,2"
+                    />
+                  {/if}
+                  {#if zeroTempPredictionData.length > 0}
+                    <Spline
+                      data={zeroTempPredictionData}
+                      x={(d) => d.time}
+                      y={(d) => d.sgv}
+                      curve={curveMonotoneX}
+                      class="stroke-orange-400 stroke-1 fill-none opacity-80"
+                      stroke-dasharray="4,2"
+                    />
+                  {/if}
+                  {#if uamPredictionData.length > 0}
+                    <Spline
+                      data={uamPredictionData}
+                      x={(d) => d.time}
+                      y={(d) => d.sgv}
+                      curve={curveMonotoneX}
+                      class="stroke-green-400 stroke-1 fill-none opacity-80"
+                      stroke-dasharray="4,2"
+                    />
+                  {/if}
+                  {#if cobPredictionData.length > 0}
+                    <Spline
+                      data={cobPredictionData}
+                      x={(d) => d.time}
+                      y={(d) => d.sgv}
+                      curve={curveMonotoneX}
+                      class="stroke-yellow-400 stroke-1 fill-none opacity-80"
+                      stroke-dasharray="4,2"
+                    />
+                  {/if}
+                {:else if predictionMode === "main" && predictionCurveData.length > 0}
+                  <Spline
+                    data={predictionCurveData}
+                    x={(d) => d.time}
+                    y={(d) => d.sgv}
+                    curve={curveMonotoneX}
+                    class="stroke-purple-400 stroke-2 fill-none"
+                    stroke-dasharray="6,3"
+                  />
+                {:else if predictionMode === "iob" && iobPredictionData.length > 0}
+                  <Spline
+                    data={iobPredictionData}
+                    x={(d) => d.time}
+                    y={(d) => d.sgv}
+                    curve={curveMonotoneX}
+                    class="stroke-cyan-400 stroke-2 fill-none"
+                    stroke-dasharray="6,3"
+                  />
+                {:else if predictionMode === "zt" && zeroTempPredictionData.length > 0}
+                  <Spline
+                    data={zeroTempPredictionData}
+                    x={(d) => d.time}
+                    y={(d) => d.sgv}
+                    curve={curveMonotoneX}
+                    class="stroke-orange-400 stroke-2 fill-none"
+                    stroke-dasharray="6,3"
+                  />
+                {:else if predictionMode === "uam" && uamPredictionData.length > 0}
+                  <Spline
+                    data={uamPredictionData}
+                    x={(d) => d.time}
+                    y={(d) => d.sgv}
+                    curve={curveMonotoneX}
+                    class="stroke-green-400 stroke-2 fill-none"
+                    stroke-dasharray="6,3"
+                  />
+                {:else if predictionMode === "cob" && cobPredictionData.length > 0}
+                  <Spline
+                    data={cobPredictionData}
+                    x={(d) => d.time}
+                    y={(d) => d.sgv}
+                    curve={curveMonotoneX}
+                    class="stroke-yellow-400 stroke-2 fill-none"
+                    stroke-dasharray="6,3"
+                  />
+                {/if}
+              {/if}
+              {#if showPredictions && predictionError}
+                <Text x={50} y={50} class="text-xs fill-red-400">
+                  Prediction unavailable
+                </Text>
+              {/if}
+
+              <!-- Bolus markers -->
+              {#each bolusMarkerData as marker}
+                <Group x={marker.time.getTime()} y={glucoseYMax - 20}>
+                  <Polygon
+                    points={[
+                      { x: 0, y: -8 },
+                      { x: -4, y: 0 },
+                      { x: 4, y: 0 },
+                    ]}
+                    fill="rgb(59 130 246)"
+                    class="opacity-90"
+                  />
+                </Group>
+              {/each}
+
+              <!-- Carb markers -->
+              {#each carbMarkerData as marker}
+                <Group x={marker.time.getTime()} y={glucoseYMin + 20}>
+                  <Polygon
+                    points={[
+                      { x: 0, y: 8 },
+                      { x: -4, y: 0 },
+                      { x: 4, y: 0 },
+                    ]}
+                    fill="rgb(245 158 11)"
+                    class="opacity-90"
+                  />
+                </Group>
+              {/each}
+            </ChartClipPath>
+
+            <!-- Axes -->
+            <Axis
+              placement="left"
+              format={(v) => String(v)}
+              tickLabelProps={{ class: "text-xs fill-slate-400" }}
+            />
+            <Axis
+              placement="bottom"
+              format={(v) => (v instanceof Date ? formatTime(v) : String(v))}
+              tickLabelProps={{ class: "text-xs fill-slate-400" }}
+            />
+
+            <!-- Threshold labels -->
+            <Text
+              x={98}
+              y={highThreshold}
+              textAnchor="end"
+              dy={-4}
+              class="text-[10px] fill-amber-500"
+            >
+              {highThreshold}
+            </Text>
+            <Text
+              x={98}
+              y={lowThreshold}
+              textAnchor="end"
+              dy={12}
+              class="text-[10px] fill-red-500"
+            >
+              {lowThreshold}
+            </Text>
+          </Svg>
+        </Chart>
+      </div>
+
+      <!-- Basal Chart -->
+      <div class="h-[60px] mt-1">
+        <Chart
+          data={basalData}
+          x={(d) => d.time}
+          y={(d) => d.rate}
+          xScale={scaleTime()}
+          yScale={scaleLinear()}
+          xDomain={[displayDateRange.from, displayDateRange.to]}
+          yDomain={[0, maxBasalRate]}
+          padding={{ left: 48, bottom: 0, top: 4, right: 12 }}
+        >
+          <Svg>
+            <ChartClipPath>
+              <!-- Default basal reference line -->
+              <Rule
+                y={defaultBasalRate}
+                class="stroke-slate-500"
+                stroke-dasharray="4,4"
+              />
+
+              <!-- Basal area -->
+              <Area
+                y0={0}
+                curve={curveStepAfter}
+                class="fill-blue-500/40 stroke-blue-400 stroke-1"
+              />
+            </ChartClipPath>
+
+            <!-- Label -->
+            <Text x={4} y={4} class="text-[8px] fill-slate-500 font-medium">
+              BASAL
+            </Text>
+            <Text
+              x={98}
+              y={defaultBasalRate}
+              textAnchor="end"
+              dy={-2}
+              class="text-[7px] fill-slate-400"
+            >
+              {defaultBasalRate.toFixed(1)}U/hr
+            </Text>
+          </Svg>
+        </Chart>
+      </div>
+
+      <!-- IOB/COB Chart -->
+      <div class="h-[60px] mt-1">
+        <Chart
+          data={iobData}
+          x={(d) => d.time}
+          y={(d) => d.iob}
+          xScale={scaleTime()}
+          yScale={scaleLinear()}
+          xDomain={[displayDateRange.from, displayDateRange.to]}
+          yDomain={[0, maxIOB]}
+          padding={{ left: 48, bottom: 0, top: 4, right: 12 }}
+        >
+          <Svg>
+            <ChartClipPath>
+              <!-- IOB area -->
+              {#if iobData.some((d) => d.iob > 0.01)}
+                <Area
+                  y0={0}
+                  curve={curveMonotoneX}
+                  class="fill-blue-600/30 stroke-blue-400 stroke-1"
+                />
+              {/if}
+            </ChartClipPath>
+
+            <!-- Label -->
+            <Text x={4} y={4} class="text-[8px] fill-slate-500 font-medium">
+              IOB
+            </Text>
+            {#if maxIOB >= 1}
+              <Text
+                x={98}
+                y={(1 / maxIOB) * 100}
+                textAnchor="end"
+                class="text-[6px] fill-blue-400"
+              >
+                1U
+              </Text>
             {/if}
-          {/snippet}
-        </Tooltip.Root>
-      </Chart>
+          </Svg>
+        </Chart>
+      </div>
     </div>
 
     <!-- Legend -->
@@ -671,8 +816,16 @@
         <span>IOB</span>
       </div>
       <div class="flex items-center gap-1">
-        <div class="w-3 h-2 bg-amber-600/40 border border-amber-400"></div>
-        <span>COB</span>
+        <div
+          class="w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-blue-500"
+        ></div>
+        <span>Bolus</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div
+          class="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-amber-500"
+        ></div>
+        <span>Carbs</span>
       </div>
     </div>
   </CardContent>

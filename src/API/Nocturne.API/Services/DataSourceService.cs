@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Nocturne.Connectors.Core.Services;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models.Services;
@@ -757,29 +758,14 @@ public class DataSourceService : IDataSourceService
             info.Icon = "tandem";
             info.Description = "Tandem Pump";
         }
-        else if (dataSource == DataSources.DexcomConnector)
+        // Check if this is data from a connector using centralized metadata
+        else if (ConnectorMetadataService.GetByDataSourceId(dataSource) is { } connectorInfo)
         {
-            info.Name = "Dexcom Connector";
-            info.SourceType = "dexcom-connector";
+            info.Name = connectorInfo.ConnectorName;
+            info.SourceType = connectorInfo.DataSourceId;
             info.Category = "connector";
-            info.Icon = "dexcom";
-            info.Description = "Nocturne Dexcom Share Connector";
-        }
-        else if (dataSource == DataSources.LibreConnector)
-        {
-            info.Name = "Libre Connector";
-            info.SourceType = "libre-connector";
-            info.Category = "connector";
-            info.Icon = "libre";
-            info.Description = "Nocturne LibreLinkUp Connector";
-        }
-        else if (dataSource == DataSources.NightscoutConnector)
-        {
-            info.Name = "Nightscout Bridge";
-            info.SourceType = "nightscout-connector";
-            info.Category = "connector";
-            info.Icon = "nightscout";
-            info.Description = "Data bridged from upstream Nightscout";
+            info.Icon = connectorInfo.Icon;
+            info.Description = connectorInfo.Description;
         }
         else if (dataSource == DataSources.DemoService)
         {
