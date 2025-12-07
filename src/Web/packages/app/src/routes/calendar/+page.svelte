@@ -10,6 +10,12 @@
   import type { DayStats } from "$lib/data/month-to-month.remote";
   import { getReportsData } from "$lib/data/reports.remote";
   import { cn } from "$lib/utils";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
+  import CalendarSkeleton from "$lib/components/calendar/CalendarSkeleton.svelte";
 
   // Current viewing month/year
   let viewDate = $state(new Date());
@@ -50,6 +56,10 @@
       today.getMonth() === currentMonth && today.getFullYear() === currentYear
     );
   });
+
+  // Get units preference
+  const units = $derived(glucoseUnitsState.units);
+  const unitLabel = $derived(getUnitLabel(units));
 
   // Size mode options
   type SizeMode = "difference" | "carbs" | "insulin";
@@ -313,352 +323,392 @@
   });
 </script>
 
-<div class="flex flex-col h-full">
-  <!-- Header -->
-  <div
-    class="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10"
-  >
-    <div class="flex items-center justify-between p-4">
-      <div class="flex items-center gap-4">
-        <Calendar class="h-6 w-6 text-muted-foreground" />
-        <h1 class="text-2xl font-bold">Calendar</h1>
-      </div>
+<svelte:boundary>
+  {#snippet pending()}
+    <CalendarSkeleton />
+  {/snippet}
 
-      <!-- Navigation Controls -->
-      <div class="flex items-center gap-2">
-        <Button variant="outline" size="icon" onclick={previousMonth}>
-          <ChevronLeft class="h-4 w-4" />
-        </Button>
-        <div class="text-lg font-semibold min-w-[180px] text-center">
-          {MONTH_NAMES[currentMonth]}
-          {currentYear}
-        </div>
-        <Button variant="outline" size="icon" onclick={nextMonth}>
-          <ChevronRight class="h-4 w-4" />
-        </Button>
-        {#if !isCurrentMonth}
-          <Button variant="outline" size="sm" onclick={goToToday}>Today</Button>
-        {/if}
-      </div>
-
-      <!-- Size Mode Selector -->
-      <div class="flex items-center gap-2">
-        <span class="text-sm text-muted-foreground">Pie Size:</span>
-        <Select.Root type="single" bind:value={selectedSizeMode}>
-          <Select.Trigger class="w-[180px]">
-            {sizeModeOptions.find((o) => o.value === selectedSizeMode)?.label}
-          </Select.Trigger>
-          <Select.Content>
-            {#each sizeModeOptions as option}
-              <Select.Item value={option.value}>{option.label}</Select.Item>
-            {/each}
-          </Select.Content>
-        </Select.Root>
-      </div>
+  {#snippet failed(error)}
+    <div class="flex items-center justify-center h-full p-6">
+      <Card.Root class="max-w-md border-destructive">
+        <Card.Content class="py-8">
+          <div class="text-center">
+            <p class="font-medium text-destructive">
+              Failed to load calendar data
+            </p>
+            <p class="text-sm text-muted-foreground mt-1">
+              {error instanceof Error ? error.message : "An error occurred"}
+            </p>
+            <Button class="mt-4" onclick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </Card.Content>
+      </Card.Root>
     </div>
+  {/snippet}
 
-    <!-- Legend -->
-    <div class="flex items-center justify-between px-4 pb-3">
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <div
-            class="h-3 w-3 rounded-full"
-            style="background-color: {GLUCOSE_COLORS.inRange}"
-          ></div>
-          <span class="text-sm">In Range</span>
+  <div class="flex flex-col h-full">
+    <!-- Header -->
+    <div
+      class="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10"
+    >
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-4">
+          <Calendar class="h-6 w-6 text-muted-foreground" />
+          <h1 class="text-2xl font-bold">Calendar</h1>
         </div>
+
+        <!-- Navigation Controls -->
         <div class="flex items-center gap-2">
-          <div
-            class="h-3 w-3 rounded-full"
-            style="background-color: {GLUCOSE_COLORS.low}"
-          ></div>
-          <span class="text-sm">Low</span>
+          <Button variant="outline" size="icon" onclick={previousMonth}>
+            <ChevronLeft class="h-4 w-4" />
+          </Button>
+          <div class="text-lg font-semibold min-w-[180px] text-center">
+            {MONTH_NAMES[currentMonth]}
+            {currentYear}
+          </div>
+          <Button variant="outline" size="icon" onclick={nextMonth}>
+            <ChevronRight class="h-4 w-4" />
+          </Button>
+          {#if !isCurrentMonth}
+            <Button variant="outline" size="sm" onclick={goToToday}>
+              Today
+            </Button>
+          {/if}
         </div>
+
+        <!-- Size Mode Selector -->
         <div class="flex items-center gap-2">
-          <div
-            class="h-3 w-3 rounded-full"
-            style="background-color: {GLUCOSE_COLORS.high}"
-          ></div>
-          <span class="text-sm">High</span>
+          <span class="text-sm text-muted-foreground">Pie Size:</span>
+          <Select.Root type="single" bind:value={selectedSizeMode}>
+            <Select.Trigger class="w-[180px]">
+              {sizeModeOptions.find((o) => o.value === selectedSizeMode)?.label}
+            </Select.Trigger>
+            <Select.Content>
+              {#each sizeModeOptions as option}
+                <Select.Item value={option.value}>{option.label}</Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
         </div>
       </div>
-      <div class="text-sm text-muted-foreground">
-        Click any day to view detailed report
-      </div>
-    </div>
-  </div>
 
-  <!-- Calendar Grid -->
-  <div class="flex-1 p-4">
-    <Card.Root class="h-full">
-      <Card.Content class="p-4 h-full flex flex-col">
-        <!-- Day of week headers -->
-        <div class="grid grid-cols-7 gap-1 mb-2">
-          {#each DAY_NAMES as dayName}
+      <!-- Legend -->
+      <div class="flex items-center justify-between px-4 pb-3">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
             <div
-              class="text-center text-sm font-medium text-muted-foreground py-2"
-            >
-              {dayName}
-            </div>
-          {/each}
+              class="h-3 w-3 rounded-full"
+              style="background-color: {GLUCOSE_COLORS.inRange}"
+            ></div>
+            <span class="text-sm">In Range</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="h-3 w-3 rounded-full"
+              style="background-color: {GLUCOSE_COLORS.low}"
+            ></div>
+            <span class="text-sm">Low</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="h-3 w-3 rounded-full"
+              style="background-color: {GLUCOSE_COLORS.high}"
+            ></div>
+            <span class="text-sm">High</span>
+          </div>
         </div>
+        <div class="text-sm text-muted-foreground">
+          Click any day to view detailed report
+        </div>
+      </div>
+    </div>
 
-        <!-- Calendar grid -->
-        <div class="flex-1 grid grid-rows-6 gap-1">
-          {#each calendarGrid as week}
-            <div class="grid grid-cols-7 gap-1">
-              {#each week as day}
-                <div class={getCellClasses(day)}>
-                  {#if day && "date" in day && day.totalReadings > 0}
-                    {@const complete = isDayComplete(day)}
-                    {@const radius = getRadius(day)}
-                    {@const pieData = [
-                      {
-                        name: "In Range",
-                        value: day.inRangePercent,
-                        color: GLUCOSE_COLORS.inRange,
-                      },
-                      {
-                        name: "Low",
-                        value: day.lowPercent,
-                        color: GLUCOSE_COLORS.low,
-                      },
-                      {
-                        name: "High",
-                        value: day.highPercent,
-                        color: GLUCOSE_COLORS.high,
-                      },
-                    ].filter((d) => d.value > 0)}
+    <!-- Calendar Grid -->
+    <div class="flex-1 p-4">
+      <Card.Root class="h-full">
+        <Card.Content class="p-4 h-full flex flex-col">
+          <!-- Day of week headers -->
+          <div class="grid grid-cols-7 gap-1 mb-2">
+            {#each DAY_NAMES as dayName}
+              <div
+                class="text-center text-sm font-medium text-muted-foreground py-2"
+              >
+                {dayName}
+              </div>
+            {/each}
+          </div>
 
-                    <!-- Day number in corner -->
-                    <span
-                      class="absolute top-1 left-2 text-xs text-muted-foreground font-medium"
-                    >
-                      {new Date(day.date).getDate()}
-                    </span>
+          <!-- Calendar grid -->
+          <div class="flex-1 grid grid-rows-6 gap-1">
+            {#each calendarGrid as week}
+              <div class="grid grid-cols-7 gap-1">
+                {#each week as day}
+                  <div class={getCellClasses(day)}>
+                    {#if day && "date" in day && day.totalReadings > 0}
+                      {@const complete = isDayComplete(day)}
+                      {@const radius = getRadius(day)}
+                      {@const pieData = [
+                        {
+                          name: "In Range",
+                          value: day.inRangePercent,
+                          color: GLUCOSE_COLORS.inRange,
+                        },
+                        {
+                          name: "Low",
+                          value: day.lowPercent,
+                          color: GLUCOSE_COLORS.low,
+                        },
+                        {
+                          name: "High",
+                          value: day.highPercent,
+                          color: GLUCOSE_COLORS.high,
+                        },
+                      ].filter((d) => d.value > 0)}
 
-                    {#if complete}
-                      <!-- Show pie chart for complete days -->
-                      <Tooltip.Root>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <button
-                              {...props}
-                              class="relative cursor-pointer hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
-                              onclick={() => handleDayClick(day)}
-                            >
-                              <svg
-                                width={radius * 2 + 4}
-                                height={radius * 2 + 4}
-                                viewBox="-{radius + 2} -{radius + 2} {radius *
-                                  2 +
-                                  4} {radius * 2 + 4}"
+                      <!-- Day number in corner -->
+                      <span
+                        class="absolute top-1 left-2 text-xs text-muted-foreground font-medium"
+                      >
+                        {new Date(day.date).getDate()}
+                      </span>
+
+                      {#if complete}
+                        <!-- Show pie chart for complete days -->
+                        <Tooltip.Root>
+                          <Tooltip.Trigger>
+                            {#snippet child({ props })}
+                              <button
+                                {...props}
+                                class="relative cursor-pointer hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
+                                onclick={() => handleDayClick(day)}
                               >
-                                {#each pieData as slice, i}
-                                  {@const total = pieData.reduce(
-                                    (sum, d) => sum + d.value,
-                                    0
-                                  )}
-                                  {@const startAngle =
-                                    pieData
-                                      .slice(0, i)
-                                      .reduce(
-                                        (sum, d) =>
-                                          sum + (d.value / total) * 360,
-                                        0
-                                      ) - 90}
-                                  {@const endAngle =
-                                    startAngle + (slice.value / total) * 360}
-                                  {@const startRad =
-                                    (startAngle * Math.PI) / 180}
-                                  {@const endRad = (endAngle * Math.PI) / 180}
-                                  {@const largeArc =
-                                    endAngle - startAngle > 180 ? 1 : 0}
-                                  {@const x1 = radius * Math.cos(startRad)}
-                                  {@const y1 = radius * Math.sin(startRad)}
-                                  {@const x2 = radius * Math.cos(endRad)}
-                                  {@const y2 = radius * Math.sin(endRad)}
-                                  <path
-                                    d="M 0 0 L {x1} {y1} A {radius} {radius} 0 {largeArc} 1 {x2} {y2} Z"
-                                    fill={slice.color}
-                                  />
-                                {/each}
-                              </svg>
-                            </button>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content
-                          side="top"
-                          class="bg-card text-card-foreground border shadow-lg p-3"
-                        >
-                          <div class="space-y-1.5">
-                            <div class="font-medium text-sm">
-                              {new Date(day.date).toLocaleDateString(
-                                undefined,
-                                {
-                                  weekday: "long",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </div>
-                            <div
-                              class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
-                            >
-                              <div class="flex items-center gap-1.5">
-                                <span
-                                  class="w-2 h-2 rounded-full"
-                                  style="background-color: {GLUCOSE_COLORS.inRange}"
-                                ></span>
-                                <span class="text-muted-foreground">
-                                  In Range:
+                                <svg
+                                  width={radius * 2 + 4}
+                                  height={radius * 2 + 4}
+                                  viewBox="-{radius + 2} -{radius + 2} {radius *
+                                    2 +
+                                    4} {radius * 2 + 4}"
+                                >
+                                  {#each pieData as slice, i}
+                                    {@const total = pieData.reduce(
+                                      (sum, d) => sum + d.value,
+                                      0
+                                    )}
+                                    {@const startAngle =
+                                      pieData
+                                        .slice(0, i)
+                                        .reduce(
+                                          (sum, d) =>
+                                            sum + (d.value / total) * 360,
+                                          0
+                                        ) - 90}
+                                    {@const endAngle =
+                                      startAngle + (slice.value / total) * 360}
+                                    {@const startRad =
+                                      (startAngle * Math.PI) / 180}
+                                    {@const endRad = (endAngle * Math.PI) / 180}
+                                    {@const largeArc =
+                                      endAngle - startAngle > 180 ? 1 : 0}
+                                    {@const x1 = radius * Math.cos(startRad)}
+                                    {@const y1 = radius * Math.sin(startRad)}
+                                    {@const x2 = radius * Math.cos(endRad)}
+                                    {@const y2 = radius * Math.sin(endRad)}
+                                    <path
+                                      d="M 0 0 L {x1} {y1} A {radius} {radius} 0 {largeArc} 1 {x2} {y2} Z"
+                                      fill={slice.color}
+                                    />
+                                  {/each}
+                                </svg>
+                              </button>
+                            {/snippet}
+                          </Tooltip.Trigger>
+                          <Tooltip.Content
+                            side="top"
+                            class="bg-card text-card-foreground border shadow-lg p-3"
+                          >
+                            <div class="space-y-1.5">
+                              <div class="font-medium text-sm">
+                                {new Date(day.date).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    weekday: "long",
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </div>
+                              <div
+                                class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
+                              >
+                                <div class="flex items-center gap-1.5">
+                                  <span
+                                    class="w-2 h-2 rounded-full"
+                                    style="background-color: {GLUCOSE_COLORS.inRange}"
+                                  ></span>
+                                  <span class="text-muted-foreground">
+                                    In Range:
+                                  </span>
+                                </div>
+                                <span class="font-medium">
+                                  {day.inRangePercent.toFixed(1)}%
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                  <span
+                                    class="w-2 h-2 rounded-full"
+                                    style="background-color: {GLUCOSE_COLORS.low}"
+                                  ></span>
+                                  <span class="text-muted-foreground">
+                                    Low:
+                                  </span>
+                                </div>
+                                <span class="font-medium">
+                                  {day.lowPercent.toFixed(1)}%
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                  <span
+                                    class="w-2 h-2 rounded-full"
+                                    style="background-color: {GLUCOSE_COLORS.high}"
+                                  ></span>
+                                  <span class="text-muted-foreground">
+                                    High:
+                                  </span>
+                                </div>
+                                <span class="font-medium">
+                                  {day.highPercent.toFixed(1)}%
                                 </span>
                               </div>
-                              <span class="font-medium">
-                                {day.inRangePercent.toFixed(1)}%
-                              </span>
-                              <div class="flex items-center gap-1.5">
-                                <span
-                                  class="w-2 h-2 rounded-full"
-                                  style="background-color: {GLUCOSE_COLORS.low}"
-                                ></span>
-                                <span class="text-muted-foreground">Low:</span>
-                              </div>
-                              <span class="font-medium">
-                                {day.lowPercent.toFixed(1)}%
-                              </span>
-                              <div class="flex items-center gap-1.5">
-                                <span
-                                  class="w-2 h-2 rounded-full"
-                                  style="background-color: {GLUCOSE_COLORS.high}"
-                                ></span>
-                                <span class="text-muted-foreground">High:</span>
-                              </div>
-                              <span class="font-medium">
-                                {day.highPercent.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div
-                              class="border-t pt-1.5 mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
-                            >
-                              <span class="text-muted-foreground">Carbs:</span>
-                              <span class="font-medium">
-                                {day.totalCarbs.toFixed(0)}g
-                              </span>
-                              <span class="text-muted-foreground">
-                                Insulin:
-                              </span>
-                              <span class="font-medium">
-                                {day.totalInsulin.toFixed(1)}U
-                              </span>
-                              <span class="text-muted-foreground">
-                                Avg Glucose:
-                              </span>
-                              <span class="font-medium">
-                                {day.averageGlucose.toFixed(0)} mg/dL
-                              </span>
-                            </div>
-                            <div
-                              class="text-xs text-muted-foreground italic pt-1"
-                            >
-                              Click to view full day report
-                            </div>
-                          </div>
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    {:else}
-                      <!-- Partial day - show small indicator -->
-                      <Tooltip.Root>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <button
-                              {...props}
-                              class="cursor-pointer hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-primary rounded-full opacity-60"
-                              onclick={() => handleDayClick(day)}
-                            >
                               <div
-                                class="w-8 h-8 rounded-full border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground"
-                                style="border-color: {GLUCOSE_COLORS.inRange}"
+                                class="border-t pt-1.5 mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs"
                               >
-                                {Math.round((day.totalReadings / 288) * 100)}%
+                                <span class="text-muted-foreground">
+                                  Carbs:
+                                </span>
+                                <span class="font-medium">
+                                  {day.totalCarbs.toFixed(0)}g
+                                </span>
+                                <span class="text-muted-foreground">
+                                  Insulin:
+                                </span>
+                                <span class="font-medium">
+                                  {day.totalInsulin.toFixed(1)}U
+                                </span>
+                                <span class="text-muted-foreground">
+                                  Avg Glucose:
+                                </span>
+                                <span class="font-medium">
+                                  {formatGlucoseValue(
+                                    day.averageGlucose,
+                                    units
+                                  )}
+                                  {unitLabel}
+                                </span>
                               </div>
-                            </button>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content side="top">
-                          <div class="text-sm">
-                            <div class="font-medium">Partial Data</div>
-                            <div class="text-muted-foreground">
-                              {day.totalReadings} of ~288 readings
+                              <div
+                                class="text-xs text-muted-foreground italic pt-1"
+                              >
+                                Click to view full day report
+                              </div>
                             </div>
-                          </div>
-                        </Tooltip.Content>
-                      </Tooltip.Root>
+                          </Tooltip.Content>
+                        </Tooltip.Root>
+                      {:else}
+                        <!-- Partial day - show small indicator -->
+                        <Tooltip.Root>
+                          <Tooltip.Trigger>
+                            {#snippet child({ props })}
+                              <button
+                                {...props}
+                                class="cursor-pointer hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-primary rounded-full opacity-60"
+                                onclick={() => handleDayClick(day)}
+                              >
+                                <div
+                                  class="w-8 h-8 rounded-full border-2 border-dashed flex items-center justify-center text-xs text-muted-foreground"
+                                  style="border-color: {GLUCOSE_COLORS.inRange}"
+                                >
+                                  {Math.round((day.totalReadings / 288) * 100)}%
+                                </div>
+                              </button>
+                            {/snippet}
+                          </Tooltip.Trigger>
+                          <Tooltip.Content side="top">
+                            <div class="text-sm">
+                              <div class="font-medium">Partial Data</div>
+                              <div class="text-muted-foreground">
+                                {day.totalReadings} of ~288 readings
+                              </div>
+                            </div>
+                          </Tooltip.Content>
+                        </Tooltip.Root>
+                      {/if}
+                    {:else if day && "empty" in day}
+                      <!-- Day with no data -->
+                      <span
+                        class="absolute top-1 left-2 text-xs text-muted-foreground"
+                      >
+                        {day.dayNumber}
+                      </span>
+                      <div
+                        class="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/20"
+                      ></div>
+                    {:else if day && "date" in day}
+                      <!-- Day exists in data but has no readings -->
+                      <span
+                        class="absolute top-1 left-2 text-xs text-muted-foreground"
+                      >
+                        {new Date(day.date).getDate()}
+                      </span>
+                      <div
+                        class="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/20"
+                      ></div>
+                    {:else}
+                      <!-- Empty cell (before/after month) -->
                     {/if}
-                  {:else if day && "empty" in day}
-                    <!-- Day with no data -->
-                    <span
-                      class="absolute top-1 left-2 text-xs text-muted-foreground"
-                    >
-                      {day.dayNumber}
-                    </span>
-                    <div
-                      class="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/20"
-                    ></div>
-                  {:else if day && "date" in day}
-                    <!-- Day exists in data but has no readings -->
-                    <span
-                      class="absolute top-1 left-2 text-xs text-muted-foreground"
-                    >
-                      {new Date(day.date).getDate()}
-                    </span>
-                    <div
-                      class="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/20"
-                    ></div>
-                  {:else}
-                    <!-- Empty cell (before/after month) -->
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          {/each}
-        </div>
-
-        <!-- Month Summary -->
-        {#if monthSummary.readings > 0}
-          <div class="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-green-600">
-                {monthSummary.readings > 0
-                  ? (
-                      (monthSummary.inRange / monthSummary.readings) *
-                      100
-                    ).toFixed(1)
-                  : 0}%
+                  </div>
+                {/each}
               </div>
-              <div class="text-sm text-muted-foreground">Time in Range</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold">
-                {monthSummary.readings.toLocaleString()}
-              </div>
-              <div class="text-sm text-muted-foreground">Total Readings</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold">
-                {monthSummary.carbs.toFixed(0)}g
-              </div>
-              <div class="text-sm text-muted-foreground">Total Carbs</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold">
-                {monthSummary.insulin.toFixed(1)}U
-              </div>
-              <div class="text-sm text-muted-foreground">Total Insulin</div>
-            </div>
+            {/each}
           </div>
-        {/if}
-      </Card.Content>
-    </Card.Root>
+
+          <!-- Month Summary -->
+          {#if monthSummary.readings > 0}
+            <div
+              class="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4"
+            >
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">
+                  {monthSummary.readings > 0
+                    ? (
+                        (monthSummary.inRange / monthSummary.readings) *
+                        100
+                      ).toFixed(1)
+                    : 0}%
+                </div>
+                <div class="text-sm text-muted-foreground">Time in Range</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold">
+                  {monthSummary.readings.toLocaleString()}
+                </div>
+                <div class="text-sm text-muted-foreground">Total Readings</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold">
+                  {monthSummary.carbs.toFixed(0)}g
+                </div>
+                <div class="text-sm text-muted-foreground">Total Carbs</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold">
+                  {monthSummary.insulin.toFixed(1)}U
+                </div>
+                <div class="text-sm text-muted-foreground">Total Insulin</div>
+              </div>
+            </div>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+    </div>
   </div>
-</div>
+</svelte:boundary>

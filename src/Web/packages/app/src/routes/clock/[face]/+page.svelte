@@ -3,6 +3,12 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    formatGlucoseDelta,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
   import { parseClockFace, type ClockConfig } from "$lib/clock-parser";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
@@ -24,12 +30,18 @@
   // Get profile timezone from query params (e.g., ?tz=Europe/Stockholm)
   const profileTimezone = $derived(page.url.searchParams.get("tz"));
 
-  // Get current glucose values from realtime store
-  const currentBG = $derived(realtimeStore.currentBG);
-  const bgDelta = $derived(realtimeStore.bgDelta);
+  // Get current glucose values from realtime store (raw mg/dL)
+  const rawCurrentBG = $derived(realtimeStore.currentBG);
+  const rawBgDelta = $derived(realtimeStore.bgDelta);
   const direction = $derived(realtimeStore.direction);
   const lastUpdated = $derived(realtimeStore.lastUpdated);
   const demoMode = $derived(realtimeStore.demoMode);
+
+  // Format for display based on user's unit preference
+  const units = $derived(glucoseUnitsState.units);
+  const displayBG = $derived(formatGlucoseValue(rawCurrentBG, units));
+  const displayDelta = $derived(formatGlucoseDelta(rawBgDelta, units));
+  const unitLabel = $derived(getUnitLabel(units));
 
   // Calculate staleness
   const isStale = $derived.by(() => {
@@ -102,21 +114,21 @@
     }
   });
 
-  // Get BG color class based on value
+  // Get BG color class based on value (always uses mg/dL thresholds)
   const bgColorClass = $derived.by(() => {
-    if (currentBG < 70) return "text-red-500";
-    if (currentBG < 80) return "text-yellow-500";
-    if (currentBG > 250) return "text-red-500";
-    if (currentBG > 180) return "text-orange-500";
+    if (rawCurrentBG < 70) return "text-red-500";
+    if (rawCurrentBG < 80) return "text-yellow-500";
+    if (rawCurrentBG > 250) return "text-red-500";
+    if (rawCurrentBG > 180) return "text-orange-500";
     return "text-green-500";
   });
 
   // Get BG background color for color mode
   const bgBgClass = $derived.by(() => {
-    if (currentBG < 70) return "bg-red-500";
-    if (currentBG < 80) return "bg-yellow-500";
-    if (currentBG > 250) return "bg-red-500";
-    if (currentBG > 180) return "bg-orange-500";
+    if (rawCurrentBG < 70) return "bg-red-500";
+    if (rawCurrentBG < 80) return "bg-yellow-500";
+    if (rawCurrentBG > 250) return "bg-red-500";
+    if (rawCurrentBG > 180) return "bg-orange-500";
     return "bg-green-500";
   });
 
@@ -240,7 +252,7 @@
                  {isStale ? 'line-through opacity-60' : ''}"
           style:font-size={getElementFontSize(element.size || 40)}
         >
-          {currentBG}
+          {displayBG}
         </div>
       {:else if element.type === "dt"}
         <div
@@ -248,7 +260,8 @@
                  {clockConfig.bgColor ? 'text-white' : bgColorClass}"
           style:font-size={getElementFontSize(element.size || 14)}
         >
-          {bgDelta > 0 ? "+" : ""}{bgDelta} mg/dL
+          {displayDelta}
+          {unitLabel}
         </div>
       {:else if element.type === "ar"}
         <div

@@ -8,16 +8,26 @@
     Group,
     Points,
     Rule,
+    Text,
+    Tooltip,
+    Highlight,
   } from "layerchart";
   import { scaleTime, scaleLinear } from "d3-scale";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import type { Entry, Treatment, TreatmentSummary } from "$lib/api";
+  import type {
+    Entry,
+    Treatment,
+    TreatmentSummary,
+    RetrospectiveDataResponse,
+  } from "$lib/api";
   import { DEFAULT_THRESHOLDS } from "$lib/constants";
   import { TIR_COLORS_HEX } from "$lib/constants/tir-colors";
   import * as Card from "$lib/components/ui/card";
   import * as Table from "$lib/components/ui/table";
+  import * as Select from "$lib/components/ui/select";
   import Button from "$lib/components/ui/button/button.svelte";
+  import { Badge } from "$lib/components/ui/badge";
   import {
     ChevronLeft,
     ChevronRight,
@@ -28,8 +38,23 @@
     Droplet,
     Activity,
     Target,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    Edit,
+    Filter,
+    X,
   } from "lucide-svelte";
   import { getDayInReviewData } from "./data.remote";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
+  import RetrospectiveStats from "$lib/components/reports/RetrospectiveStats.svelte";
+  import { TreatmentEditDialog } from "$lib/components/treatments";
+  import { getRetrospectiveAt } from "$lib/data/retrospective.remote";
+  import { getEventTypeStyle } from "$lib/constants/treatment-categories";
 
   // Get date from URL search params
   const dateParam = $derived(
@@ -41,6 +66,114 @@
 
   // Parse current date from URL
   const currentDate = $derived(new Date(dateParam));
+
+  // Retrospective time scrubber state - initialize to current time or noon
+  let scrubTime = $state(new Date());
+
+  // Initialize scrub time to noon of the current date
+  $effect(() => {
+    const noon = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      currentDate.getDate(),
+      12,
+      0,
+      0
+    );
+    scrubTime = noon;
+  });
+
+  // Fetch retrospective data when scrub time changes
+  $effect(() => {
+    // Explicitly capture the scrubTime value to ensure reactivity
+    const currentScrubTime = scrubTime;
+    const timeMs = currentScrubTime.getTime();
+
+    const fetchRetrospectiveData = async () => {
+      isLoadingRetrospective = true;
+      try {
+        const data = await getRetrospectiveAt({ time: timeMs });
+        retrospectiveData = data;
+      } catch (err) {
+        console.error("Error fetching retrospective data:", err);
+        retrospectiveData = null;
+      } finally {
+        isLoadingRetrospective = false;
+      }
+    };
+
+    // Debounce the fetch to avoid too many requests
+    const timeoutId = setTimeout(fetchRetrospectiveData, 150);
+    return () => clearTimeout(timeoutId);
+  });
+
+  // Treatment editing state
+  let selectedTreatment = $state<Treatment | null>(null);
+  let editDialogOpen = $state(false);
+
+  // Treatments timeline filter/sort state
+  let filterEventType = $state<string | null>(null);
+  let sortColumn = $state<"time" | "type" | "carbs" | "insulin">("time");
+  let sortDirection = $state<"asc" | "desc">("asc");
+
+  // Retrospective data from backend
+  let retrospectiveData = $state<RetrospectiveDataResponse | null>(null);
+  let isLoadingRetrospective = $state(false);
+
+  // Chart scrubbing state
+  let chartContainer: HTMLDivElement | null = $state(null);
+  let isDragging = $state(false);
+
+  // Handle chart click/drag to update scrub time
+  function handleChartInteraction(event: MouseEvent | TouchEvent) {
+    if (!chartContainer) return;
+
+    const rect = chartContainer.getBoundingClientRect();
+    const padding = { left: 50, right: 30 }; // Match chart padding
+    const chartWidth = rect.width - padding.left - padding.right;
+
+    // Get x position relative to chart area
+    let clientX: number;
+    if ("touches" in event) {
+      clientX = event.touches[0].clientX;
+    } else {
+      clientX = event.clientX;
+    }
+
+    const relativeX = clientX - rect.left - padding.left;
+    const ratio = Math.max(0, Math.min(1, relativeX / chartWidth));
+
+    // Convert ratio to time within the day
+    const dayStartMs = xDomain[0].getTime();
+    const dayEndMs = xDomain[1].getTime();
+    const newTimeMs = dayStartMs + ratio * (dayEndMs - dayStartMs);
+
+    scrubTime = new Date(newTimeMs);
+  }
+
+  function handleChartMouseDown(event: MouseEvent) {
+    isDragging = true;
+    handleChartInteraction(event);
+  }
+
+  function handleChartMouseMove(event: MouseEvent) {
+    if (isDragging) {
+      handleChartInteraction(event);
+    }
+  }
+
+  function handleChartMouseUp() {
+    isDragging = false;
+  }
+
+  function handleChartClick(event: MouseEvent) {
+    handleChartInteraction(event);
+  }
+
+  // Clean up dragging state on mouse leave
+  function handleChartMouseLeave() {
+    isDragging = false;
+  }
 
   // Date navigation
   function goToPreviousDay() {
@@ -78,6 +211,10 @@
       day: "numeric",
     });
   });
+
+  // Get units preference
+  const units = $derived(glucoseUnitsState.units);
+  const unitLabel = $derived(getUnitLabel(units));
 
   // Colors for glucose chart
   const GLUCOSE_COLORS = {
@@ -117,22 +254,76 @@
       .sort((a, b) => a.time.getTime() - b.time.getTime());
   });
 
-  // Process treatments for markers
+  // Process treatments for markers (with original treatment reference for editing)
   const treatmentMarkers = $derived.by(() => {
     const treatments = dayData.treatments as Treatment[];
 
     return treatments
-      .filter((t) => t.mills || t.createdAt)
+      .filter((t) => t.mills || t.createdAt || t.created_at)
       .map((t) => ({
-        time: new Date(t.mills ?? new Date(t.createdAt!).getTime()),
+        time: new Date(
+          t.mills ?? new Date(t.createdAt ?? t.created_at!).getTime()
+        ),
         carbs: t.carbs ?? 0,
         insulin: t.insulin ?? 0,
         eventType: t.eventType ?? "",
         notes: t.notes ?? "",
         rate: t.rate,
         duration: t.duration,
+        original: t, // Keep reference for editing
       }))
       .sort((a, b) => a.time.getTime() - b.time.getTime());
+  });
+
+  // Get unique event types for filter dropdown
+  const uniqueEventTypes = $derived.by(() => {
+    const types = new Set<string>();
+    for (const t of treatmentMarkers) {
+      if (t.eventType) types.add(t.eventType);
+    }
+    return Array.from(types).sort();
+  });
+
+  // Filtered and sorted treatments
+  const filteredTreatments = $derived.by(() => {
+    let result = [...treatmentMarkers];
+
+    // Apply filter
+    if (filterEventType) {
+      result = result.filter((t) => t.eventType === filterEventType);
+    }
+
+    // Apply sort
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortColumn) {
+        case "time":
+          comparison = a.time.getTime() - b.time.getTime();
+          break;
+        case "type":
+          comparison = (a.eventType || "").localeCompare(b.eventType || "");
+          break;
+        case "carbs":
+          comparison = a.carbs - b.carbs;
+          break;
+        case "insulin":
+          comparison = a.insulin - b.insulin;
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  });
+
+  // Bolus markers (for chart overlay)
+  const bolusMarkers = $derived.by(() => {
+    return treatmentMarkers.filter((t) => t.insulin > 0);
+  });
+
+  // Carb markers (for chart overlay)
+  const carbMarkers = $derived.by(() => {
+    return treatmentMarkers.filter((t) => t.carbs > 0);
   });
 
   // X-axis domain (full 24-hour period)
@@ -166,13 +357,60 @@
     return [Math.max(20, minY - 20), maxY + 40];
   });
 
-  // Calculate glucose statistics
-  const glucoseStats = $derived.by(() => {
-    const readings = chartData.map((d) => d.glucose);
+  // Basal rate timeline for chart - use simple step function from treatments
+  const basalTimeline = $derived.by(() => {
+    // Generate simple basal timeline from temp basal treatments
+    const treatments = dayData.treatments as Treatment[];
+    const result: Array<{ time: Date; rate: number; isTemp: boolean }> = [];
+    const intervalMs = 5 * 60 * 1000; // 5-minute intervals
 
-    if (readings.length === 0) {
+    let currentMs = xDomain[0].getTime();
+    const endMs = xDomain[1].getTime();
+    const defaultRate = 0.8; // Default scheduled basal rate
+
+    while (currentMs <= endMs) {
+      const currentTime = new Date(currentMs);
+      let rate = defaultRate;
+      let isTemp = false;
+
+      // Check for active temp basal
+      for (const t of treatments) {
+        if (t.eventType !== "Temp Basal" || !t.duration) continue;
+        const tRate = t.rate ?? t.absolute;
+        if (!tRate) continue;
+
+        const startMs = t.mills ?? 0;
+        const endTempMs = startMs + t.duration * 60 * 1000;
+
+        if (currentMs >= startMs && currentMs < endTempMs) {
+          rate = tRate;
+          isTemp = true;
+          break;
+        }
+      }
+
+      result.push({ time: currentTime, rate, isTemp });
+      currentMs += intervalMs;
+    }
+
+    return result;
+  });
+
+  // Scale basal rate to fit in bottom portion of chart
+  const basalYDomain: [number, number] = $derived.by(() => {
+    const maxRate = Math.max(...basalTimeline.map((b) => b.rate), 2);
+    return [0, maxRate * 1.2];
+  });
+
+  // Use backend-calculated glucose statistics from analysis
+  const glucoseStats = $derived.by(() => {
+    const analysis = dayData.analysis;
+    const basicStats = analysis?.basicStats;
+    const tir = analysis?.timeInRange?.percentages;
+
+    if (!basicStats || !tir) {
       return {
-        totalReadings: 0,
+        totalReadings: chartData.length,
         mean: 0,
         median: 0,
         stdDev: 0,
@@ -185,51 +423,28 @@
         lowPercent: 0,
         highPercent: 0,
         a1cEstimate: 0,
+        gmi: 0,
+        cv: 0,
       };
     }
 
-    const totalReadings = readings.length;
-    const mean = readings.reduce((a, b) => a + b, 0) / totalReadings;
-
-    const sorted = [...readings].sort((a, b) => a - b);
-    const median =
-      totalReadings % 2 === 0
-        ? (sorted[totalReadings / 2 - 1] + sorted[totalReadings / 2]) / 2
-        : sorted[Math.floor(totalReadings / 2)];
-
-    const stdDev = Math.sqrt(
-      readings.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
-        totalReadings
-    );
-
-    const min = Math.min(...readings);
-    const max = Math.max(...readings);
-
-    const low = readings.filter((r) => r < lowThreshold).length;
-    const high = readings.filter((r) => r >= highThreshold).length;
-    const inRange = totalReadings - low - high;
-
-    const inRangePercent = (inRange / totalReadings) * 100;
-    const lowPercent = (low / totalReadings) * 100;
-    const highPercent = (high / totalReadings) * 100;
-
-    // A1c estimate (DCCT formula)
-    const a1cEstimate = (mean + 46.7) / 28.7;
-
     return {
-      totalReadings,
-      mean,
-      median,
-      stdDev,
-      min,
-      max,
-      inRange,
-      low,
-      high,
-      inRangePercent,
-      lowPercent,
-      highPercent,
-      a1cEstimate,
+      totalReadings: basicStats.count ?? chartData.length,
+      mean: basicStats.mean ?? 0,
+      median: basicStats.median ?? 0,
+      stdDev: basicStats.standardDeviation ?? 0,
+      min: basicStats.min ?? 0,
+      max: basicStats.max ?? 0,
+      inRange: 0, // Count not available from backend
+      low: 0,
+      high: 0,
+      inRangePercent: tir.target ?? 0,
+      lowPercent: (tir.low ?? 0) + (tir.severeLow ?? 0),
+      highPercent: (tir.high ?? 0) + (tir.severeHigh ?? 0),
+      a1cEstimate:
+        analysis?.gmi?.value ?? ((basicStats.mean ?? 0) + 46.7) / 28.7,
+      gmi: analysis?.gmi?.value ?? 0,
+      cv: analysis?.glycemicVariability?.coefficientOfVariation ?? 0,
     };
   });
 
@@ -311,6 +526,43 @@
       return GLUCOSE_COLORS.severeHigh;
     if (value >= highThreshold) return GLUCOSE_COLORS.high;
     return GLUCOSE_COLORS.inRange;
+  }
+
+  // Handle treatment row click
+  function handleTreatmentClick(treatment: (typeof treatmentMarkers)[0]) {
+    selectedTreatment = treatment.original;
+    editDialogOpen = true;
+  }
+
+  // Handle treatment save
+  function handleTreatmentSave(updatedTreatment: Treatment) {
+    // TODO: Call API to update treatment
+    console.log("Saving treatment:", updatedTreatment);
+    editDialogOpen = false;
+    selectedTreatment = null;
+    // Refresh data after save
+    // getDayInReviewData.invalidate();
+  }
+
+  // Handle treatment dialog close
+  function handleDialogClose() {
+    editDialogOpen = false;
+    selectedTreatment = null;
+  }
+
+  // Toggle sort
+  function toggleSort(column: typeof sortColumn) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = column;
+      sortDirection = "asc";
+    }
+  }
+
+  // Clear filter
+  function clearFilter() {
+    filterEventType = null;
   }
 </script>
 
@@ -410,16 +662,44 @@
     </Card.Root>
   </div>
 
-  <!-- Main Glucose Chart -->
+  <!-- Retrospective Stats at Scrubbed Time -->
+  <RetrospectiveStats
+    currentTime={scrubTime}
+    data={retrospectiveData}
+    isLoading={isLoadingRetrospective}
+  />
+
+  <!-- Main Glucose Chart with Treatment Markers -->
   <Card.Root>
     <Card.Header class="pb-2">
       <Card.Title class="flex items-center gap-2">
         <Activity class="h-5 w-5" />
         Glucose Profile
+        <span
+          class="ml-auto text-sm font-normal text-muted-foreground tabular-nums"
+        >
+          {scrubTime.toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </span>
       </Card.Title>
+      <Card.Description>
+        Click or drag on the chart to scrub through the day
+      </Card.Description>
     </Card.Header>
     <Card.Content>
-      <div class="h-[400px]">
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div
+        class="h-[400px] w-full overflow-hidden cursor-crosshair select-none"
+        bind:this={chartContainer}
+        onmousedown={handleChartMouseDown}
+        onmousemove={handleChartMouseMove}
+        onmouseup={handleChartMouseUp}
+        onmouseleave={handleChartMouseLeave}
+        onclick={handleChartClick}
+      >
         {#if chartData.length > 0}
           <Chart
             data={chartData}
@@ -429,11 +709,11 @@
             yScale={scaleLinear()}
             {xDomain}
             {yDomain}
-            padding={{ top: 20, right: 30, bottom: 40, left: 50 }}
+            padding={{ top: 20, right: 30, bottom: 60, left: 50 }}
           >
             <Svg>
               <!-- Axes -->
-              <Axis placement="left" rule label="mg/dL" />
+              <Axis placement="left" rule label={unitLabel} />
               <Axis
                 placement="bottom"
                 rule
@@ -474,6 +754,27 @@
                 stroke-dasharray="4,4"
               />
 
+              <!-- Basal rate area (scaled to fit in lower portion) -->
+              {#if basalTimeline.length > 0}
+                <Group class="basal-area">
+                  {#each basalTimeline as point, i}
+                    {#if i < basalTimeline.length - 1}
+                      {@const nextPoint = basalTimeline[i + 1]}
+                      {@const yHeight = (point.rate / basalYDomain[1]) * 60}
+                      <Rect
+                        x={point.time.getTime()}
+                        y={yDomain[0] + 60 - yHeight}
+                        width={nextPoint.time.getTime() - point.time.getTime()}
+                        height={yHeight}
+                        class={point.isTemp
+                          ? "fill-cyan-400/30"
+                          : "fill-cyan-600/20"}
+                      />
+                    {/if}
+                  {/each}
+                </Group>
+              {/if}
+
               <!-- Glucose line -->
               <Spline
                 data={chartData}
@@ -483,18 +784,126 @@
                 stroke-width={2}
               />
 
-              <!-- Glucose points with color based on value -->
-              {#each chartData as point}
+              <!-- Glucose points with color based on value and tooltip -->
+              <Points
+                data={chartData}
+                x={(d) => d.time}
+                y={(d) => d.glucose}
+                r={4}
+                class="cursor-pointer"
+              />
+
+              <!-- Highlight point on hover -->
+              <Highlight
+                points={{
+                  r: 6,
+                  strokeWidth: 2,
+                  class: "stroke-primary fill-background",
+                }}
+              />
+
+              <!-- Bolus markers (blue diamonds) -->
+              {#each bolusMarkers as marker}
                 <Points
-                  data={[point]}
+                  data={[{ time: marker.time, y: yDomain[0] + 30 }]}
                   x={(d) => d.time}
-                  y={(d) => d.glucose}
-                  r={3}
-                  fill={getGlucoseColor(point.glucose)}
+                  y={(d) => d.y}
+                  r={6}
+                  fill={TREATMENT_COLORS.bolus}
+                  class="cursor-pointer"
+                />
+                <!-- Insulin amount label -->
+                <Text
+                  x={marker.time.getTime()}
+                  y={yDomain[0] + 15}
+                  value={`${marker.insulin.toFixed(1)}U`}
+                  class="text-xs fill-blue-600 font-medium"
+                  textAnchor="middle"
                 />
               {/each}
+
+              <!-- Carb markers (orange circles, sized by amount) -->
+              {#each carbMarkers as marker}
+                {@const radius = Math.min(
+                  12,
+                  Math.max(5, Math.sqrt(marker.carbs) * 1.5)
+                )}
+                <Points
+                  data={[{ time: marker.time, y: yDomain[1] - 20 }]}
+                  x={(d) => d.time}
+                  y={(d) => d.y}
+                  r={radius}
+                  fill={TREATMENT_COLORS.carbs}
+                  fill-opacity={0.8}
+                  class="cursor-pointer"
+                />
+                <!-- Carb amount label -->
+                <Text
+                  x={marker.time.getTime()}
+                  y={yDomain[1] - 35}
+                  value={`${marker.carbs}g`}
+                  class="text-xs fill-orange-600 font-medium"
+                  textAnchor="middle"
+                />
+              {/each}
+
+              <!-- Scrub time indicator (vertical line) -->
+              <Rule
+                x={scrubTime}
+                class="stroke-primary stroke-2"
+                stroke-dasharray="4,2"
+              />
+
+              <!-- Tooltip for glucose points -->
+              <Tooltip.Root>
+                {#snippet children({ data })}
+                  {#if data && data.glucose !== undefined}
+                    <Tooltip.Header value={data.time} format="time" />
+                    <Tooltip.List>
+                      <Tooltip.Item
+                        label="Glucose"
+                        value={`${formatGlucoseValue(data.glucose, units)} ${unitLabel}`}
+                      />
+                      {#if data.direction}
+                        <Tooltip.Item label="Trend" value={data.direction} />
+                      {/if}
+                    </Tooltip.List>
+                  {/if}
+                {/snippet}
+              </Tooltip.Root>
             </Svg>
           </Chart>
+
+          <!-- Chart Legend -->
+          <div
+            class="flex flex-wrap items-center justify-center gap-4 mt-2 text-xs"
+          >
+            <div class="flex items-center gap-1">
+              <div
+                class="w-3 h-3 rounded-full"
+                style="background-color: {TREATMENT_COLORS.bolus}"
+              ></div>
+              <span>Bolus</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div
+                class="w-3 h-3 rounded-full"
+                style="background-color: {TREATMENT_COLORS.carbs}"
+              ></div>
+              <span>Carbs</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div
+                class="w-3 h-0.5"
+                style="background-color: {GLUCOSE_COLORS.line}"
+              ></div>
+              <span>Glucose</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div class="w-3 h-3 bg-cyan-500/30"></div>
+              <span>Basal</span>
+            </div>
+          </div>
         {:else}
           <div
             class="flex h-full items-center justify-center text-muted-foreground"
@@ -590,25 +999,32 @@
             <Table.Row>
               <Table.Cell class="font-medium">Mean</Table.Cell>
               <Table.Cell class="text-right">
-                {glucoseStats.mean.toFixed(0)} mg/dL
+                {formatGlucoseValue(glucoseStats.mean, units)}
+                {unitLabel}
               </Table.Cell>
             </Table.Row>
             <Table.Row>
               <Table.Cell class="font-medium">Median</Table.Cell>
               <Table.Cell class="text-right">
-                {glucoseStats.median.toFixed(0)} mg/dL
+                {formatGlucoseValue(glucoseStats.median, units)}
+                {unitLabel}
               </Table.Cell>
             </Table.Row>
             <Table.Row>
               <Table.Cell class="font-medium">Std Dev</Table.Cell>
               <Table.Cell class="text-right">
-                {glucoseStats.stdDev.toFixed(1)} mg/dL
+                {formatGlucoseValue(glucoseStats.stdDev, units)}
+                {unitLabel}
               </Table.Cell>
             </Table.Row>
             <Table.Row>
               <Table.Cell class="font-medium">Min / Max</Table.Cell>
               <Table.Cell class="text-right">
-                {glucoseStats.min} / {glucoseStats.max} mg/dL
+                {formatGlucoseValue(glucoseStats.min, units)} / {formatGlucoseValue(
+                  glucoseStats.max,
+                  units
+                )}
+                {unitLabel}
               </Table.Cell>
             </Table.Row>
             <Table.Row>
@@ -681,29 +1097,140 @@
     </Card.Root>
   </div>
 
-  <!-- Treatments Timeline -->
+  <!-- Treatments Timeline with Filter/Sort -->
   <Card.Root>
     <Card.Header class="pb-2">
-      <Card.Title class="flex items-center gap-2">
-        <Apple class="h-5 w-5" />
-        Treatments Timeline
-      </Card.Title>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <Card.Title class="flex items-center gap-2">
+          <Apple class="h-5 w-5" />
+          Treatments Timeline
+        </Card.Title>
+
+        <!-- Filter/Sort Controls -->
+        <div class="flex items-center gap-2">
+          <!-- Event Type Filter -->
+          <Select.Root
+            type="single"
+            value={filterEventType ?? ""}
+            onValueChange={(v) => {
+              filterEventType = v === "" ? null : v;
+            }}
+          >
+            <Select.Trigger class="w-[180px]">
+              <div class="flex items-center gap-2">
+                <Filter class="h-4 w-4" />
+                {filterEventType || "All Types"}
+              </div>
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="">All Types</Select.Item>
+              {#each uniqueEventTypes as eventType}
+                <Select.Item value={eventType}>{eventType}</Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+
+          {#if filterEventType}
+            <Button variant="ghost" size="icon" onclick={clearFilter}>
+              <X class="h-4 w-4" />
+            </Button>
+          {/if}
+        </div>
+      </div>
+      <Card.Description>Click on a treatment to edit it</Card.Description>
     </Card.Header>
     <Card.Content>
-      {#if treatmentMarkers.length > 0}
+      {#if filteredTreatments.length > 0}
         <Table.Root>
           <Table.Header>
             <Table.Row>
-              <Table.Head>Time</Table.Head>
-              <Table.Head>Type</Table.Head>
-              <Table.Head class="text-right">Carbs</Table.Head>
-              <Table.Head class="text-right">Insulin</Table.Head>
+              <Table.Head>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="-ml-3"
+                  onclick={() => toggleSort("time")}
+                >
+                  Time
+                  {#if sortColumn === "time"}
+                    {#if sortDirection === "asc"}
+                      <ArrowUp class="ml-1 h-4 w-4" />
+                    {:else}
+                      <ArrowDown class="ml-1 h-4 w-4" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="ml-1 h-4 w-4 opacity-50" />
+                  {/if}
+                </Button>
+              </Table.Head>
+              <Table.Head>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="-ml-3"
+                  onclick={() => toggleSort("type")}
+                >
+                  Type
+                  {#if sortColumn === "type"}
+                    {#if sortDirection === "asc"}
+                      <ArrowUp class="ml-1 h-4 w-4" />
+                    {:else}
+                      <ArrowDown class="ml-1 h-4 w-4" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="ml-1 h-4 w-4 opacity-50" />
+                  {/if}
+                </Button>
+              </Table.Head>
+              <Table.Head class="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="-mr-3"
+                  onclick={() => toggleSort("carbs")}
+                >
+                  Carbs
+                  {#if sortColumn === "carbs"}
+                    {#if sortDirection === "asc"}
+                      <ArrowUp class="ml-1 h-4 w-4" />
+                    {:else}
+                      <ArrowDown class="ml-1 h-4 w-4" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="ml-1 h-4 w-4 opacity-50" />
+                  {/if}
+                </Button>
+              </Table.Head>
+              <Table.Head class="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="-mr-3"
+                  onclick={() => toggleSort("insulin")}
+                >
+                  Insulin
+                  {#if sortColumn === "insulin"}
+                    {#if sortDirection === "asc"}
+                      <ArrowUp class="ml-1 h-4 w-4" />
+                    {:else}
+                      <ArrowDown class="ml-1 h-4 w-4" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="ml-1 h-4 w-4 opacity-50" />
+                  {/if}
+                </Button>
+              </Table.Head>
               <Table.Head>Notes</Table.Head>
+              <Table.Head class="w-[50px]"></Table.Head>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {#each treatmentMarkers as treatment}
-              <Table.Row>
+            {#each filteredTreatments as treatment}
+              {@const style = getEventTypeStyle(treatment.eventType)}
+              <Table.Row
+                class="cursor-pointer hover:bg-muted/50 transition-colors"
+                onclick={() => handleTreatmentClick(treatment)}
+              >
                 <Table.Cell class="font-medium">
                   {treatment.time.toLocaleTimeString(undefined, {
                     hour: "2-digit",
@@ -711,9 +1238,12 @@
                   })}
                 </Table.Cell>
                 <Table.Cell>
-                  <span class="px-2 py-1 rounded text-xs font-medium bg-muted">
+                  <Badge
+                    variant="outline"
+                    class="{style.colorClass} {style.bgClass} {style.borderClass}"
+                  >
                     {treatment.eventType || "—"}
-                  </span>
+                  </Badge>
                 </Table.Cell>
                 <Table.Cell class="text-right">
                   {#if treatment.carbs > 0}
@@ -742,15 +1272,31 @@
                 >
                   {treatment.notes || "—"}
                 </Table.Cell>
+                <Table.Cell>
+                  <Button variant="ghost" size="icon" class="h-8 w-8">
+                    <Edit class="h-4 w-4" />
+                  </Button>
+                </Table.Cell>
               </Table.Row>
             {/each}
           </Table.Body>
         </Table.Root>
       {:else}
         <p class="text-center text-muted-foreground py-8">
-          No treatments recorded for this day
+          {filterEventType
+            ? `No ${filterEventType} treatments found for this day`
+            : "No treatments recorded for this day"}
         </p>
       {/if}
     </Card.Content>
   </Card.Root>
 </div>
+
+<!-- Treatment Edit Dialog -->
+<TreatmentEditDialog
+  bind:open={editDialogOpen}
+  treatment={selectedTreatment}
+  availableEventTypes={uniqueEventTypes}
+  onClose={handleDialogClose}
+  onSave={handleTreatmentSave}
+/>

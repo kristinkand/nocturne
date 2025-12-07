@@ -1,7 +1,7 @@
 //! Basal rate schedule lookups
 
 use chrono::{DateTime, Timelike, Utc};
-use crate::types::{BasalScheduleEntry, Profile};
+use crate::types::Profile;
 
 /// Look up the basal rate at a specific time
 pub fn basal_lookup(profile: &Profile, time: DateTime<Utc>) -> f64 {

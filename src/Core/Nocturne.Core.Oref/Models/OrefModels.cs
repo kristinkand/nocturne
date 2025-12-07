@@ -104,20 +104,20 @@ public class IobData
     public double Activity { get; set; }
 
     /// <summary>Basal IOB (U)</summary>
-    [JsonPropertyName("basaliob")]
+    [JsonPropertyName("basalIob")]
     public double BasalIob { get; set; }
 
     /// <summary>Bolus IOB (U)</summary>
-    [JsonPropertyName("bolussnooze")]
-    public double BolusSnooze { get; set; }
+    [JsonPropertyName("bolusIob")]
+    public double BolusIob { get; set; }
 
     /// <summary>Net basal insulin being delivered (U/hr)</summary>
-    [JsonPropertyName("netbasalinsulin")]
+    [JsonPropertyName("netBasalInsulin")]
     public double NetBasalInsulin { get; set; }
 
-    /// <summary>Timestamp</summary>
+    /// <summary>Timestamp as Unix milliseconds</summary>
     [JsonPropertyName("time")]
-    public string? Time { get; set; }
+    public long Time { get; set; }
 }
 
 /// <summary>
@@ -131,11 +131,11 @@ public class CurrentTemp
 
     /// <summary>Duration remaining (minutes)</summary>
     [JsonPropertyName("duration")]
-    public int Duration { get; set; }
+    public double Duration { get; set; }
 
-    /// <summary>Temp basal start time</summary>
+    /// <summary>Temp basal type (absolute or percent)</summary>
     [JsonPropertyName("temp")]
-    public string? Temp { get; set; }
+    public string Temp { get; set; } = "absolute";
 }
 
 /// <summary>
@@ -154,7 +154,7 @@ public class AutosensData
 public class MealData
 {
     /// <summary>Carbs on board (g)</summary>
-    [JsonPropertyName("cob")]
+    [JsonPropertyName("mealCob")]
     public double Cob { get; set; }
 
     /// <summary>Carbs absorbed (g)</summary>

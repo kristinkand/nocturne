@@ -194,10 +194,10 @@
               <span>{treatment.enteredBy}</span>
             </div>
           {/if}
-          {#if treatment.source}
+          {#if treatment.data_source}
             <div class="flex items-center gap-1.5">
               <Database class="h-3.5 w-3.5" />
-              <span>{treatment.source}</span>
+              <span>{treatment.data_source}</span>
             </div>
           {/if}
         </div>

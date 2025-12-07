@@ -44,10 +44,15 @@
     carbRatio?: number;
     /** Insulin Sensitivity Factor (mg/dL per unit) */
     isf?: number;
-    /** Show prediction lines (currently disabled - needs backend endpoint) */
+    /**
+     * Show prediction lines (controlled by both widget toggle and algorithm
+     * setting)
+     */
     showPredictions?: boolean;
     /** Default focus hours for time range selector (from settings) */
     defaultFocusHours?: number;
+    /** Prediction model from algorithm settings (ar2, linear, iob, cob, uam) */
+    predictionModel?: string;
   }
 
   const realtimeStore = getRealtimeStore();
@@ -61,6 +66,7 @@
     isf = 50,
     showPredictions = true, // Enable predictions by default
     defaultFocusHours,
+    predictionModel = "cone",
   }: ComponentProps = $props();
 
   // Prediction data state
@@ -77,6 +83,21 @@
     | "uam"
     | "cob";
   let predictionMode = $state<PredictionDisplayMode>("cone");
+
+  // Sync prediction mode with algorithm settings model
+  $effect(() => {
+    // Map algorithm model names to display modes
+    const modelToMode: Record<string, PredictionDisplayMode> = {
+      ar2: "cone",
+      linear: "cone",
+      iob: "iob",
+      cob: "cob",
+      uam: "uam",
+      cone: "cone",
+      lines: "lines",
+    };
+    predictionMode = modelToMode[predictionModel] ?? "cone";
+  });
 
   // Kept for future use - suppress unused variable warnings
   void isf;
@@ -395,7 +416,10 @@
   const maxCOB = $derived(
     Math.max(carbRatio * 3, ...cobData.map((d) => d.cob))
   );
-  void maxCOB;
+  // Suppress unused variable warning while keeping reactivity
+  $effect(() => {
+    void maxCOB;
+  });
 
   function getGlucoseColor(sgv: number): string {
     const low = chartConfig.low.threshold ?? 55;
@@ -431,6 +455,8 @@
       carbs: t.carbs ?? 0,
     }))
   );
+
+  $inspect(predictionData);
 </script>
 
 <Card class="bg-slate-950 border-slate-800">
@@ -448,20 +474,68 @@
         {/if}
       </CardTitle>
 
-      <ToggleGroup.Root
-        type="single"
-        bind:value={selectedTimeRange}
-        class="bg-slate-900 rounded-lg p-0.5"
-      >
-        {#each timeRangeOptions as option}
-          <ToggleGroup.Item
-            value={option.value}
-            class="px-3 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-slate-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+      <div class="flex items-center gap-2">
+        <!-- Prediction mode selector (shown when predictions enabled) -->
+        {#if showPredictions}
+          <ToggleGroup.Root
+            type="single"
+            bind:value={predictionMode}
+            class="bg-slate-900 rounded-lg p-0.5"
           >
-            {option.label}
-          </ToggleGroup.Item>
-        {/each}
-      </ToggleGroup.Root>
+            <ToggleGroup.Item
+              value="cone"
+              class="px-2 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-purple-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+              title="Cone of probabilities"
+            >
+              Cone
+            </ToggleGroup.Item>
+            <ToggleGroup.Item
+              value="lines"
+              class="px-2 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-purple-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+              title="All prediction lines"
+            >
+              Lines
+            </ToggleGroup.Item>
+            <ToggleGroup.Item
+              value="iob"
+              class="px-2 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-cyan-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+              title="IOB only"
+            >
+              IOB
+            </ToggleGroup.Item>
+            <ToggleGroup.Item
+              value="zt"
+              class="px-2 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-orange-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+              title="Zero Temp"
+            >
+              ZT
+            </ToggleGroup.Item>
+            <ToggleGroup.Item
+              value="uam"
+              class="px-2 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-green-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+              title="UAM"
+            >
+              UAM
+            </ToggleGroup.Item>
+          </ToggleGroup.Root>
+        {/if}
+
+        <!-- Time range selector -->
+        <ToggleGroup.Root
+          type="single"
+          bind:value={selectedTimeRange}
+          class="bg-slate-900 rounded-lg p-0.5"
+        >
+          {#each timeRangeOptions as option}
+            <ToggleGroup.Item
+              value={option.value}
+              class="px-3 py-1 text-xs font-medium text-slate-400 data-[state=on]:bg-slate-700 data-[state=on]:text-slate-100 rounded-md transition-colors"
+            >
+              {option.label}
+            </ToggleGroup.Item>
+          {/each}
+        </ToggleGroup.Root>
+      </div>
     </div>
   </CardHeader>
 

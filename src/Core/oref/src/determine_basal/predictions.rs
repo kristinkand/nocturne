@@ -1,6 +1,6 @@
 //! Glucose prediction calculations
 
-use crate::types::{GlucoseStatus, IOBData, MealData, Profile};
+use crate::types::{GlucoseStatus, IOBData, Profile};
 
 /// Predict future glucose values
 pub fn predict_glucose(

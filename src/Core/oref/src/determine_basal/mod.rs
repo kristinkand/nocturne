@@ -11,10 +11,9 @@ pub use smb::should_enable_smb;
 pub use predictions::predict_glucose;
 
 use crate::types::{
-    AutosensData, CurrentTemp, DetermineBasalResult, GlucoseStatus,
+    AutosensData, CurrentTemp, GlucoseStatus,
     IOBData, MealData, Profile,
 };
-use crate::Result;
 
 /// Inputs for the determine basal algorithm
 pub struct DetermineBasalInputs<'a> {

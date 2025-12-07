@@ -102,10 +102,25 @@ public class OrefService
     public static DetermineBasalResult? DetermineBasal(DetermineBasalInputs inputs)
     {
         var json = JsonSerializer.Serialize(inputs, JsonOptions);
+
+        // Log input for debugging
+        System.Diagnostics.Debug.WriteLine($"[OrefService.DetermineBasal] Input JSON (first 500 chars): {json[..Math.Min(json.Length, 500)]}");
+        Console.WriteLine($"[OrefService.DetermineBasal] Calling Rust with {json.Length} byte input");
+
         var result = OrefInterop.DetermineBasal(json);
+
+        // Log result for debugging
+        Console.WriteLine($"[OrefService.DetermineBasal] Rust returned: {(result?.Length > 0 ? result[..Math.Min(result.Length, 500)] : "(empty)")}");
 
         if (string.IsNullOrEmpty(result))
         {
+            Console.WriteLine("[OrefService.DetermineBasal] Result is empty!");
+            return null;
+        }
+
+        if (result.Contains("\"error\""))
+        {
+            Console.WriteLine($"[OrefService.DetermineBasal] Rust returned error: {result}");
             return null;
         }
 

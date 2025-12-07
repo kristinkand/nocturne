@@ -1,5 +1,11 @@
 <script lang="ts">
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    formatGlucoseDelta,
+  } from "$lib/utils/glucose-formatting";
+  import { GlucoseValueIndicator } from "$lib/components/shared";
   import { Badge } from "$lib/components/ui/badge";
   import { Chart, Svg, Spline, Rule } from "layerchart";
   import {
@@ -12,12 +18,40 @@
 
   const realtimeStore = getRealtimeStore();
 
-  // Get current glucose values
-  const currentBG = $derived(realtimeStore.currentBG);
-  const bgDelta = $derived(realtimeStore.bgDelta);
+  // Get current glucose values (raw mg/dL)
+  const rawCurrentBG = $derived(realtimeStore.currentBG);
+  const rawBgDelta = $derived(realtimeStore.bgDelta);
   const direction = $derived(realtimeStore.direction);
   const demoMode = $derived(realtimeStore.demoMode);
   const lastUpdated = $derived(realtimeStore.lastUpdated);
+
+  // Connection status
+  const isConnected = $derived(realtimeStore.isConnected);
+
+  // Stale threshold in milliseconds (10 minutes)
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+
+  // Stale detection - data older than threshold (recalculates every second)
+  let now = $state(Date.now());
+  $effect(() => {
+    const interval = setInterval(() => {
+      now = Date.now();
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+
+  const isStale = $derived(now - lastUpdated > STALE_THRESHOLD_MS);
+  const isDisconnected = $derived(!isConnected);
+
+  // Loading state - no data received yet
+  const isLoading = $derived(
+    rawCurrentBG === 0 && realtimeStore.entries.length === 0
+  );
+
+  // Format for display based on user's unit preference
+  const units = $derived(glucoseUnitsState.units);
+  const displayBG = $derived(formatGlucoseValue(rawCurrentBG, units));
+  const displayDelta = $derived(formatGlucoseDelta(rawBgDelta, units));
 
   // Get last 3 hours of entries for mini chart
   const chartEntries = $derived.by(() => {
@@ -37,15 +71,6 @@
     const values = chartEntries.map((e) => e.value);
     return Math.min(400, Math.max(...values) + 30);
   });
-
-  // Get background color based on BG value
-  const getBGColor = (bg: number) => {
-    if (bg < 70) return "bg-destructive text-destructive-foreground";
-    if (bg < 80) return "bg-yellow-500 text-black";
-    if (bg > 250) return "bg-destructive text-destructive-foreground";
-    if (bg > 180) return "bg-orange-500 text-black";
-    return "bg-green-500 text-white";
-  };
 
   // Get direction icon
   const getDirectionIcon = (dir: string) => {
@@ -69,35 +94,40 @@
 
   const DirectionIcon = $derived(getDirectionIcon(direction));
 
-  // Calculate time since last reading
+  // Calculate time since last reading for display
   const timeSince = $derived.by(() => {
-    const diff = Date.now() - lastUpdated;
+    const diff = now - lastUpdated;
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return "just now";
     if (mins === 1) return "1 min ago";
     return `${mins} min ago`;
   });
+
+  // Status text - show "Connection Error" when disconnected
+  const statusText = $derived(isDisconnected ? "Connection Error" : timeSince);
 </script>
 
 <div class="space-y-3 group-data-[collapsible=icon]:hidden">
   <!-- Current BG Display -->
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <div
-        class="text-3xl font-bold px-3 py-1.5 rounded-lg {getBGColor(
-          currentBG
-        )}"
-      >
-        {currentBG}
-      </div>
+      <GlucoseValueIndicator
+        displayValue={displayBG}
+        rawBgMgdl={rawCurrentBG}
+        {isLoading}
+        {isStale}
+        {isDisconnected}
+        {statusText}
+        statusTooltip="Last reading: {timeSince}"
+        size="sm"
+      />
       <div class="flex flex-col items-start">
         <div class="flex items-center gap-1">
           <DirectionIcon class="h-5 w-5" />
           <span class="text-sm font-medium">
-            {bgDelta > 0 ? "+" : ""}{bgDelta}
+            {displayDelta}
           </span>
         </div>
-        <span class="text-xs text-muted-foreground">{timeSince}</span>
       </div>
     </div>
     {#if demoMode}
@@ -105,9 +135,10 @@
     {/if}
   </div>
 
-  <!-- Mini Chart -->
-  <div
-    class="h-16 w-full rounded-md bg-card border border-border overflow-hidden"
+  <!-- Mini Chart (clickable link to dashboard) -->
+  <a
+    href="/"
+    class="block h-16 w-full rounded-md bg-card border border-border overflow-hidden hover:border-primary/50 transition-colors"
   >
     {#if chartEntries.length > 1}
       <Chart
@@ -133,12 +164,18 @@
         Waiting for data...
       </div>
     {/if}
-  </div>
+  </a>
 </div>
 
-<!-- Collapsed state: just show current BG -->
+<!-- Collapsed state: just show current BG with shared component styling -->
 <div class="hidden group-data-[collapsible=icon]:flex justify-center">
-  <div class="text-lg font-bold px-2 py-1 rounded-md {getBGColor(currentBG)}">
-    {currentBG}
-  </div>
+  <GlucoseValueIndicator
+    displayValue={displayBG}
+    rawBgMgdl={rawCurrentBG}
+    {isLoading}
+    {isStale}
+    {isDisconnected}
+    size="sm"
+    class="text-lg"
+  />
 </div>

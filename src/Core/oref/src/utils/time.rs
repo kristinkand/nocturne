@@ -1,6 +1,6 @@
 //! Time and timestamp utilities
 
-use chrono::{DateTime, Datelike, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use crate::Result;
 use crate::OrefError;
 
@@ -36,16 +36,6 @@ pub fn format_timestamp(dt: DateTime<Utc>) -> String {
     dt.to_rfc3339()
 }
 
-/// Get Unix milliseconds from a DateTime
-pub fn to_millis(dt: DateTime<Utc>) -> i64 {
-    dt.timestamp_millis()
-}
-
-/// Create a DateTime from Unix milliseconds
-pub fn from_millis(millis: i64) -> Option<DateTime<Utc>> {
-    DateTime::from_timestamp_millis(millis)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,8 +68,8 @@ mod tests {
     #[test]
     fn test_millis_round_trip() {
         let original = Utc::now();
-        let millis = to_millis(original);
-        let restored = from_millis(millis).unwrap();
+        let millis = original.timestamp_millis();
+        let restored = DateTime::from_timestamp_millis(millis).unwrap();
 
         // Should be within 1 millisecond
         assert!((original - restored).num_milliseconds().abs() < 1);

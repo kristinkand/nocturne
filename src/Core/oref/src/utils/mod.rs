@@ -6,7 +6,6 @@ mod time;
 pub use round::{round_basal, round_value};
 pub use time::{parse_timestamp, format_timestamp};
 
-use crate::types::Profile;
 
 /// Round a value to a specific number of decimal places
 pub fn round(value: f64, digits: u32) -> f64 {

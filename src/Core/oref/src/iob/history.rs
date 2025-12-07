@@ -3,7 +3,7 @@
 //! This module processes pump history events and converts them into
 //! insulin treatments that can be used for IOB calculations.
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use crate::types::{Profile, Treatment};
 use crate::Result;
 

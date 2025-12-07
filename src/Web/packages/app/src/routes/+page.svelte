@@ -27,6 +27,14 @@
 
   // Get focusHours setting for chart default time range
   const focusHours = $derived(settingsStore.features?.display?.focusHours ?? 3);
+
+  // Algorithm prediction settings - controls whether predictions are calculated and which model to use
+  const predictionEnabled = $derived(
+    settingsStore.algorithm?.prediction?.enabled ?? true
+  );
+  const predictionModel = $derived(
+    settingsStore.algorithm?.prediction?.model ?? "cone"
+  );
 </script>
 
 <div class="p-6 space-y-6">
@@ -49,8 +57,9 @@
     <GlucoseChartCard
       entries={realtimeStore.entries}
       treatments={realtimeStore.treatments}
-      showPredictions={widgets.predictions}
+      showPredictions={widgets.predictions && predictionEnabled}
       defaultFocusHours={focusHours}
+      {predictionModel}
     />
   {/if}
 

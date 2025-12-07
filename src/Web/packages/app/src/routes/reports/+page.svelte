@@ -104,6 +104,13 @@
   import { page } from "$app/state";
   import { getReportsData } from "$lib/data/reports.remote";
   import { getDateRangeInputFromUrl } from "$lib/utils/date-range";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    formatGlucoseRange,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
+  import ReportsSkeleton from "$lib/components/reports/ReportsSkeleton.svelte";
 
   // Build date range input from URL parameters
   const dateRangeInput = $derived(getDateRangeInputFromUrl(page.url));
@@ -124,6 +131,13 @@
       lastUpdated: new Date().toISOString(),
     },
   });
+
+  // Get units preference
+  const units = $derived(glucoseUnitsState.units);
+  const unitLabel = $derived(getUnitLabel(units));
+  const targetRangeDisplay = $derived(formatGlucoseRange(70, 180, units));
+  const lowThresholdDisplay = $derived(formatGlucoseValue(70, units));
+  const severeLowThresholdDisplay = $derived(formatGlucoseValue(54, units));
 
   // Helper functions for status determination
   function getTIRStatus(tir: number): ScoreCardStatus {
@@ -382,16 +396,7 @@
 
 <svelte:boundary>
   {#snippet pending()}
-    <div class="container mx-auto space-y-8 px-4 py-6">
-      <div class="flex items-center justify-center h-64">
-        <div class="text-center space-y-4">
-          <div
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"
-          ></div>
-          <p class="text-muted-foreground">Loading reports data...</p>
-        </div>
-      </div>
-    </div>
+    <ReportsSkeleton />
   {/snippet}
 
   {#snippet failed(error)}
@@ -479,7 +484,7 @@
           value={tir?.target?.toFixed(0) ?? "–"}
           unit="%"
           status={getTIRStatus(tir?.target ?? 0)}
-          explanation="This is how much time your glucose stays in your target zone (70-180 mg/dL). Higher is better!"
+          explanation={`This is how much time your glucose stays in your target zone (${targetRangeDisplay}). Higher is better!`}
           clinicalContext="ADA recommends >70% TIR for most adults with diabetes. Each 5% improvement is clinically meaningful."
           targetRange={{ optimal: 70 }}
           colorClass="text-green-600"
@@ -525,7 +530,7 @@
           unit="%"
           status={getLowStatus((tir?.low ?? 0) + (tir?.severeLow ?? 0))}
           explanation="Time spent with low blood sugar. Less is better — lows can be dangerous and feel awful."
-          clinicalContext="Target <4% time below 70 mg/dL and <1% below 54 mg/dL. Prioritize reducing lows, especially in elderly."
+          clinicalContext={`Target <4% time below ${lowThresholdDisplay} ${unitLabel} and <1% below ${severeLowThresholdDisplay} ${unitLabel}. Prioritize reducing lows, especially in elderly.`}
           targetRange={{ max: 4 }}
           colorClass="text-red-500"
         >
@@ -624,38 +629,40 @@
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">
-            {stats?.mean?.toFixed(0) ?? "–"}
+            {stats?.mean ? formatGlucoseValue(stats.mean, units) : "–"}
           </div>
           <div class="text-xs font-medium text-muted-foreground">Average</div>
-          <div class="text-[10px] text-muted-foreground/60">mg/dL</div>
+          <div class="text-[10px] text-muted-foreground/60">{unitLabel}</div>
         </Card>
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">
-            {stats?.median?.toFixed(0) ?? "–"}
+            {stats?.median ? formatGlucoseValue(stats.median, units) : "–"}
           </div>
           <div class="text-xs font-medium text-muted-foreground">Median</div>
-          <div class="text-[10px] text-muted-foreground/60">mg/dL</div>
+          <div class="text-[10px] text-muted-foreground/60">{unitLabel}</div>
         </Card>
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">
-            {stats?.min?.toFixed(0) ?? "–"}
+            {stats?.min ? formatGlucoseValue(stats.min, units) : "–"}
           </div>
           <div class="text-xs font-medium text-muted-foreground">Lowest</div>
-          <div class="text-[10px] text-muted-foreground/60">mg/dL</div>
+          <div class="text-[10px] text-muted-foreground/60">{unitLabel}</div>
         </Card>
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">
-            {stats?.max?.toFixed(0) ?? "–"}
+            {stats?.max ? formatGlucoseValue(stats.max, units) : "–"}
           </div>
           <div class="text-xs font-medium text-muted-foreground">Highest</div>
-          <div class="text-[10px] text-muted-foreground/60">mg/dL</div>
+          <div class="text-[10px] text-muted-foreground/60">{unitLabel}</div>
         </Card>
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">
-            {stats?.standardDeviation?.toFixed(0) ?? "–"}
+            {stats?.standardDeviation
+              ? formatGlucoseValue(stats.standardDeviation, units)
+              : "–"}
           </div>
           <div class="text-xs font-medium text-muted-foreground">Std Dev</div>
-          <div class="text-[10px] text-muted-foreground/60">mg/dL</div>
+          <div class="text-[10px] text-muted-foreground/60">{unitLabel}</div>
         </Card>
         <Card class="border bg-card p-4 text-center">
           <div class="text-2xl font-bold tabular-nums">

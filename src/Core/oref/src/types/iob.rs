@@ -32,8 +32,11 @@ pub struct IOBData {
     #[cfg_attr(feature = "serde", serde(default))]
     pub bolus_insulin: f64,
 
-    /// Time of calculation
-    #[cfg_attr(feature = "serde", serde(with = "chrono::serde::ts_milliseconds"))]
+    /// Time of calculation (Unix milliseconds, defaults to current time)
+    #[cfg_attr(feature = "serde", serde(
+        default = "default_time",
+        with = "chrono::serde::ts_milliseconds"
+    ))]
     pub time: DateTime<Utc>,
 
     /// IOB if zero temp is continued
@@ -47,6 +50,10 @@ pub struct IOBData {
     /// Last temp basal state
     #[cfg_attr(feature = "serde", serde(default))]
     pub last_temp: Option<TempBasalState>,
+}
+
+fn default_time() -> DateTime<Utc> {
+    Utc::now()
 }
 
 impl Default for IOBData {

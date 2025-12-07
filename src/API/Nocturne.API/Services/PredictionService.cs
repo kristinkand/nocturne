@@ -30,7 +30,11 @@ public class PredictionService : IPredictionService
         var now = DateTimeOffset.UtcNow;
 
         // Check if oref library is available
-        if (!OrefService.IsAvailable())
+        var orefAvailable = OrefService.IsAvailable();
+        _logger.LogInformation("[Predictions] Oref library available: {IsAvailable}, version: {Version}",
+            orefAvailable, orefAvailable ? OrefService.GetVersion() : "N/A");
+
+        if (!orefAvailable)
         {
             _logger.LogWarning("Oref library is not available - returning fallback prediction");
             return await GetFallbackPredictionsAsync(now, cancellationToken);
@@ -67,6 +71,8 @@ public class PredictionService : IPredictionService
 
         // Calculate glucose status (delta, avgdelta)
         var glucoseStatus = OrefService.CalculateGlucoseStatus(orefGlucose);
+        _logger.LogInformation("[Predictions] GlucoseStatus: glucose={Glucose}, delta={Delta}, status={HasStatus}",
+            glucoseStatus?.Glucose ?? 0, glucoseStatus?.Delta ?? 0, glucoseStatus != null);
         if (glucoseStatus == null)
         {
             _logger.LogWarning("Failed to calculate glucose status - using fallback");
@@ -99,7 +105,7 @@ public class PredictionService : IPredictionService
         var iobData = OrefService.CalculateIob(profile, orefTreatments, now);
         if (iobData == null)
         {
-            iobData = new OrefModels.IobData { Iob = 0, Activity = 0 };
+            iobData = new OrefModels.IobData { Iob = 0, Activity = 0, Time = now.ToUnixTimeMilliseconds() };
         }
 
         // Calculate COB
@@ -117,6 +123,15 @@ public class PredictionService : IPredictionService
             currentTemp,
             autosensRatio: 1.0,
             cob: cob);
+
+        _logger.LogInformation(
+            "[Predictions] Result: HasPredictions={HasPredictions}, MainCurve={MainLength}, IobCurve={IobLength}, UamCurve={UamLength}, CobCurve={CobLength}, ZtCurve={ZtLength}",
+            predictions != null,
+            predictions?.PredictedBg?.Count ?? 0,
+            predictions?.PredBgsIob?.Count ?? 0,
+            predictions?.PredBgsUam?.Count ?? 0,
+            predictions?.PredBgsCob?.Count ?? 0,
+            predictions?.PredBgsZt?.Count ?? 0);
 
         return new GlucosePredictionResponse
         {
@@ -193,6 +208,7 @@ public class PredictionService : IPredictionService
     /// <summary>
     /// Get fallback predictions when oref is not available.
     /// Uses simple linear extrapolation based on current delta.
+    /// Generates approximate curves for all prediction types for UI demonstration.
     /// </summary>
     private async Task<GlucosePredictionResponse> GetFallbackPredictionsAsync(
         DateTimeOffset now,
@@ -209,14 +225,38 @@ public class PredictionService : IPredictionService
         var currentBg = currentEntry.Sgv.Value;
         var delta = currentEntry.Delta ?? 0;
 
-        // Simple linear prediction (48 points = 4 hours)
-        var predictions = new List<double>();
+        // Generate 48 points = 4 hours at 5-minute intervals
+        var mainPredictions = new List<double>();
+        var iobPredictions = new List<double>();
+        var ztPredictions = new List<double>();
+        var uamPredictions = new List<double>();
+        var cobPredictions = new List<double>();
+
         for (int i = 0; i < 48; i++)
         {
             var minutes = i * 5;
             var decayFactor = Math.Exp(-minutes / 60.0); // Delta decays over time
-            var predicted = currentBg + (delta * i * decayFactor);
-            predictions.Add(Math.Max(39, Math.Min(400, predicted))); // Clamp to valid range
+
+            // Main prediction (weighted average approach)
+            var mainPredicted = currentBg + (delta * i * decayFactor * 0.8);
+            mainPredictions.Add(Math.Max(39, Math.Min(400, mainPredicted)));
+
+            // IOB prediction (assumes insulin brings glucose down more)
+            var iobPredicted = currentBg + (delta * i * decayFactor * 0.6) - (minutes * 0.3);
+            iobPredictions.Add(Math.Max(39, Math.Min(400, iobPredicted)));
+
+            // Zero Temp prediction (assumes no insulin, glucose rises more if rising)
+            var ztPredicted = currentBg + (delta * i * decayFactor * 1.2) + (delta > 0 ? minutes * 0.2 : 0);
+            ztPredictions.Add(Math.Max(39, Math.Min(400, ztPredicted)));
+
+            // UAM prediction (aggressive rise detection)
+            var uamPredicted = currentBg + (delta * i * decayFactor * 1.1);
+            uamPredictions.Add(Math.Max(39, Math.Min(400, uamPredicted)));
+
+            // COB prediction (carbs cause initial rise then insulin catches up)
+            var carbEffect = Math.Sin(minutes * Math.PI / 180.0) * 20; // Peak around 60 minutes
+            var cobPredicted = currentBg + (delta * i * decayFactor * 0.9) + carbEffect;
+            cobPredictions.Add(Math.Max(39, Math.Min(400, cobPredicted)));
         }
 
         return new GlucosePredictionResponse
@@ -224,13 +264,17 @@ public class PredictionService : IPredictionService
             Timestamp = now,
             CurrentBg = currentBg,
             Delta = delta,
-            EventualBg = predictions.LastOrDefault(),
+            EventualBg = mainPredictions.LastOrDefault(),
             Iob = 0,
             Cob = 0,
             IntervalMinutes = 5,
             Predictions = new PredictionCurves
             {
-                Default = predictions
+                Default = mainPredictions,
+                IobOnly = iobPredictions,
+                ZeroTemp = ztPredictions,
+                Uam = uamPredictions,
+                Cob = cobPredictions
             }
         };
     }

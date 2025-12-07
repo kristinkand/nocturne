@@ -92,6 +92,13 @@ public class ProfileController : ControllerBase
             _logger.LogDebug("Returning {Count} profiles", profilesArray.Length);
             return Ok(profilesArray);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Client cancelled the request (navigated away, closed tab, etc.)
+            // This is normal behavior, not an error
+            _logger.LogDebug("Profile request was cancelled by the client");
+            return StatusCode(499, Array.Empty<Profile>()); // 499 = Client Closed Request (nginx convention)
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching profiles");

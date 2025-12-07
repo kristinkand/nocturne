@@ -49,6 +49,7 @@ export const getDayInReviewData = query(
 			date: dateParam,
 			entries,
 			treatments,
+			analysis,
 			treatmentSummary: analysis?.treatmentSummary ?? null,
 			dateRange: {
 				from: dayStart.toISOString(),

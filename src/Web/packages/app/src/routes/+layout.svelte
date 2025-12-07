@@ -88,26 +88,52 @@
     }
   });
 
+  // Stale threshold in milliseconds (10 minutes)
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+
+  // Track current time for stale calculation
+  let now = $state(Date.now());
+  $effect(() => {
+    if (!browser) return;
+    const interval = setInterval(() => {
+      now = Date.now();
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+
   // Reactive updates when glucose changes or settings change
   $effect(() => {
     const bg = realtimeStore.currentBG;
     const enabled = titleFaviconSettings.enabled;
+    const lastUpdated = realtimeStore.lastUpdated;
+    const isConnected = realtimeStore.isConnected;
 
-    console.log(
-      "[TitleFavicon] Effect triggered - BG:",
-      bg,
-      "enabled:",
-      enabled
-    );
+    // Calculate stale and connection status
+    const isDisconnected = !isConnected;
+    const isStale = now - lastUpdated > STALE_THRESHOLD_MS;
+
+    // Calculate time since reading
+    const timeSinceMs = now - lastUpdated;
+    const mins = Math.floor(timeSinceMs / 60000);
+    let timeSinceReading: string;
+    if (mins < 1) {
+      timeSinceReading = "just now";
+    } else if (mins === 1) {
+      timeSinceReading = "1 min ago";
+    } else {
+      timeSinceReading = `${mins} min ago`;
+    }
 
     if (enabled && bg && bg > 0) {
-      console.log("[TitleFavicon] Updating title/favicon with BG:", bg);
       titleFaviconService.update(
         bg,
         realtimeStore.direction,
         realtimeStore.bgDelta,
         titleFaviconSettings,
-        defaultSettings.thresholds
+        defaultSettings.thresholds,
+        isDisconnected,
+        isStale,
+        timeSinceReading
       );
     }
   });

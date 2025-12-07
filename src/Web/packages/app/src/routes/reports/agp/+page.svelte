@@ -33,6 +33,7 @@
   import { page } from "$app/state";
   import { getReportsData } from "$lib/data/reports.remote";
   import { getDateRangeInputFromUrl } from "$lib/utils/date-range";
+  import ReportsSkeleton from "$lib/components/reports/ReportsSkeleton.svelte";
 
   const isDesktop = new MediaQuery("(min-width: 768px)");
   const perPage = $derived(isDesktop.current ? 4 : 8);
@@ -107,16 +108,7 @@
 
 <svelte:boundary>
   {#snippet pending()}
-    <div class="container mx-auto px-4 py-6 space-y-8 max-w-7xl">
-      <div class="flex items-center justify-center h-64">
-        <div class="text-center space-y-4">
-          <div
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"
-          ></div>
-          <p class="text-muted-foreground">Loading AGP data...</p>
-        </div>
-      </div>
-    </div>
+    <ReportsSkeleton />
   {/snippet}
 
   {#snippet failed(error)}

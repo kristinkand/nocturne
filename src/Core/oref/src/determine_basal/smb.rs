@@ -1,6 +1,6 @@
 //! SMB (Super Micro Bolus) logic
 
-use crate::types::{GlucoseStatus, MealData, Profile};
+use crate::types::{MealData, Profile};
 
 /// Determine if SMB should be enabled
 ///

@@ -28,8 +28,8 @@
     Trash2,
     RefreshCw,
     Battery,
-    Loader2,
   } from "lucide-svelte";
+  import SettingsPageSkeleton from "$lib/components/settings/SettingsPageSkeleton.svelte";
 
   const store = getSettingsStore();
 
@@ -83,9 +83,7 @@
   </div>
 
   {#if store.isLoading}
-    <div class="flex items-center justify-center py-12">
-      <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
+    <SettingsPageSkeleton cardCount={3} />
   {:else if store.hasError}
     <Card class="border-destructive">
       <CardContent class="flex items-center gap-3 pt-6">

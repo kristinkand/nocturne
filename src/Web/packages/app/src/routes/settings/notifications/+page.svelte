@@ -33,6 +33,7 @@
     Pencil,
     Copy,
   } from "lucide-svelte";
+  import SettingsPageSkeleton from "$lib/components/settings/SettingsPageSkeleton.svelte";
   import BrowserCapabilities from "$lib/components/settings/BrowserCapabilities.svelte";
   import AlarmProfileDialog from "$lib/components/settings/AlarmProfileDialog.svelte";
   import {
@@ -266,9 +267,7 @@
   </div>
 
   {#if store.isLoading}
-    <div class="flex items-center justify-center py-12">
-      <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
+    <SettingsPageSkeleton cardCount={5} />
   {:else if store.hasError}
     <Card class="border-destructive">
       <CardContent class="flex items-center gap-3 pt-6">

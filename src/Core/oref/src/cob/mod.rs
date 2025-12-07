@@ -3,10 +3,10 @@
 //! This module calculates carb absorption using glucose deviation analysis,
 //! implementing the algorithm from `lib/determine-basal/cob.js`.
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use crate::types::{COBResult, GlucoseReading, Profile, Treatment, IOBData};
 use crate::insulin::calculate_iob_contrib;
-use crate::profile::{isf_lookup, basal_lookup};
+use crate::profile::isf_lookup;
 use crate::Result;
 
 /// Bucketed glucose data point for interpolation

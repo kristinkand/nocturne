@@ -1,13 +1,15 @@
 //! Main determine basal algorithm
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use crate::types::{
-    AutosensData, CurrentTemp, DetermineBasalResult, GlucoseStatus,
+    DetermineBasalResult, GlucoseStatus,
     IOBData, MealData, Profile,
 };
 use crate::utils::round_basal;
 use crate::Result;
 use super::DetermineBasalInputs;
+use super::predictions;
+use super::smb;
 
 /// Run the determine basal algorithm
 ///
@@ -39,6 +41,13 @@ pub fn determine_basal(inputs: &DetermineBasalInputs) -> Result<DetermineBasalRe
     // Check if BG is too old
     let bg_mins_ago = (now.timestamp_millis() - glucose_status.date) as f64 / 60000.0;
 
+    // Generate all prediction curves
+    let pred_bgs = predictions::predict_glucose(glucose_status, iob_data, profile);
+    let pred_bgs_iob = generate_iob_only_predictions(glucose_status, iob_data, profile);
+    let pred_bgs_zt = generate_zero_temp_predictions(glucose_status, iob_data, profile);
+    let pred_bgs_uam = generate_uam_predictions(glucose_status, iob_data, profile);
+    let pred_bgs_cob = generate_cob_predictions(glucose_status, iob_data, meal_data, profile);
+
     // ============ Low Glucose Suspend ============
     if bg < 80.0 {
         // Low glucose - suspend insulin
@@ -53,18 +62,22 @@ pub fn determine_basal(inputs: &DetermineBasalInputs) -> Result<DetermineBasalRe
         result.eventual_bg = bg;
         result.bg_mins_ago = Some(bg_mins_ago);
         result.target_bg = Some(target_bg);
+        result.predicted_bg = Some(pred_bgs);
+        result.pred_bgs_iob = Some(pred_bgs_iob);
+        result.pred_bgs_zt = Some(pred_bgs_zt);
+        result.pred_bgs_uam = Some(pred_bgs_uam);
+        result.pred_bgs_cob = Some(pred_bgs_cob);
         return Ok(result);
     }
 
     // ============ Calculate Expected BG Impact ============
     // BGI = how much BG is expected to change based on current IOB activity
-    let bgi = -iob_data.activity * sens * 5.0;
-    let deviation = glucose_status.delta - bgi;
+    let bgi = predictions::calculate_bgi(iob_data.activity, sens);
+    let _deviation = glucose_status.delta - bgi;
 
     // ============ Calculate Eventual BG ============
     // Eventual BG if we continue at current temp and let IOB decay
-    let eventual_bg = bg + (glucose_status.delta * 12.0) - (iob_data.iob * sens);
-    let eventual_bg = eventual_bg.max(0.0);
+    let eventual_bg = predictions::calculate_eventual_bg(glucose_status, iob_data, profile);
 
     // ============ Determine Action ============
     let mut result = DetermineBasalResult::default();
@@ -74,6 +87,13 @@ pub fn determine_basal(inputs: &DetermineBasalInputs) -> Result<DetermineBasalRe
     result.bg_mins_ago = Some(bg_mins_ago);
     result.target_bg = Some(target_bg);
     result.sensitivity_ratio = Some(autosens_data.ratio);
+
+    // Always populate predictions
+    result.predicted_bg = Some(pred_bgs);
+    result.pred_bgs_iob = Some(pred_bgs_iob);
+    result.pred_bgs_zt = Some(pred_bgs_zt);
+    result.pred_bgs_uam = Some(pred_bgs_uam);
+    result.pred_bgs_cob = Some(pred_bgs_cob);
 
     // Calculate insulin required to get to target
     let insulin_req = (eventual_bg - target_bg) / sens;
@@ -108,12 +128,7 @@ pub fn determine_basal(inputs: &DetermineBasalInputs) -> Result<DetermineBasalRe
 
         // Check if SMB would help
         if *micro_bolus_allowed && insulin_req > 0.0 {
-            let smb_ratio = profile.smb_delivery_ratio.min(1.0);
-            let max_smb = (profile.max_smb_basal_minutes as f64 / 60.0) * basal;
-            let smb_amount = (insulin_req * smb_ratio).min(max_smb);
-            let smb_amount = (smb_amount / profile.bolus_increment).floor() * profile.bolus_increment;
-
-            if smb_amount >= profile.bolus_increment {
+            if let Some(smb_amount) = smb::calculate_smb(profile, insulin_req, iob_data.iob, meal_data.meal_cob, basal) {
                 result.units = Some(smb_amount);
             }
         }
@@ -148,6 +163,98 @@ pub fn determine_basal(inputs: &DetermineBasalInputs) -> Result<DetermineBasalRe
     // Default: no action
     result.reason = "No action needed".to_string();
     Ok(result)
+}
+
+/// Generate IOB-only predictions (no delta extrapolation)
+fn generate_iob_only_predictions(
+    glucose_status: &GlucoseStatus,
+    iob_data: &IOBData,
+    profile: &Profile,
+) -> Vec<f64> {
+    let bg = glucose_status.glucose;
+    let sens = profile.sens;
+
+    (0..48).map(|i| {
+        let minutes = i as f64 * 5.0;
+        let iob_factor = (-minutes / 60.0).exp();
+        let predicted_iob_effect = iob_data.iob * iob_factor * sens;
+        (bg - predicted_iob_effect).max(39.0)
+    }).collect()
+}
+
+/// Generate zero-temp predictions (no insulin delivery)
+fn generate_zero_temp_predictions(
+    glucose_status: &GlucoseStatus,
+    iob_data: &IOBData,
+    profile: &Profile,
+) -> Vec<f64> {
+    let bg = glucose_status.glucose;
+    let sens = profile.sens;
+    let basal = profile.current_basal;
+
+    (0..48).map(|i| {
+        let minutes = i as f64 * 5.0;
+        // IOB effect decays, but we're not adding new insulin
+        let iob_factor = (-minutes / 60.0).exp();
+        let predicted_iob_effect = iob_data.iob * iob_factor * sens;
+        // Add delta extrapolation (BG rises if we stop insulin)
+        let delta_factor = (-minutes / 45.0).exp();
+        let delta_effect = glucose_status.delta.max(0.0) * (minutes / 5.0) * delta_factor;
+        // Baseline BG rise from lack of basal
+        let basal_rise = (basal / 60.0) * minutes * sens * 0.5;
+        (bg + delta_effect + basal_rise - predicted_iob_effect).max(39.0)
+    }).collect()
+}
+
+/// Generate UAM predictions (unannounced meal detection)
+fn generate_uam_predictions(
+    glucose_status: &GlucoseStatus,
+    iob_data: &IOBData,
+    profile: &Profile,
+) -> Vec<f64> {
+    let bg = glucose_status.glucose;
+    let sens = profile.sens;
+
+    (0..48).map(|i| {
+        let minutes = i as f64 * 5.0;
+        let iob_factor = (-minutes / 60.0).exp();
+        let predicted_iob_effect = iob_data.iob * iob_factor * sens;
+        // UAM assumes delta continues longer
+        let delta_factor = (-minutes / 60.0).exp(); // Slower decay
+        let delta_effect = glucose_status.delta * (minutes / 5.0) * delta_factor;
+        (bg + delta_effect - predicted_iob_effect).max(39.0)
+    }).collect()
+}
+
+/// Generate COB predictions (with carb absorption)
+fn generate_cob_predictions(
+    glucose_status: &GlucoseStatus,
+    iob_data: &IOBData,
+    meal_data: &MealData,
+    profile: &Profile,
+) -> Vec<f64> {
+    let bg = glucose_status.glucose;
+    let sens = profile.sens;
+    let carb_ratio = profile.carb_ratio.max(1.0);
+    let cob = meal_data.meal_cob;
+
+    (0..48).map(|i| {
+        let minutes = i as f64 * 5.0;
+        let iob_factor = (-minutes / 60.0).exp();
+        let predicted_iob_effect = iob_data.iob * iob_factor * sens;
+        // Delta extrapolation
+        let delta_factor = (-minutes / 30.0).exp();
+        let delta_effect = glucose_status.delta * (minutes / 5.0) * delta_factor;
+        // Carb absorption effect (peaks at ~45 mins, decays after)
+        let carb_absorption = if cob > 0.0 {
+            let absorption_peak = (-((minutes - 45.0) / 30.0).powi(2)).exp();
+            let carb_effect = (cob / carb_ratio) * sens * 0.5 * absorption_peak;
+            carb_effect
+        } else {
+            0.0
+        };
+        (bg + delta_effect + carb_absorption - predicted_iob_effect).max(39.0)
+    }).collect()
 }
 
 #[cfg(test)]

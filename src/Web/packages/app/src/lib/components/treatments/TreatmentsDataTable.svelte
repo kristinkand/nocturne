@@ -88,7 +88,7 @@
   let uniqueSources = $derived.by(() => {
     const sources = new Set<string>();
     for (const t of treatments) {
-      const source = t.source || t.enteredBy;
+      const source = t.data_source || t.enteredBy;
       if (source) sources.add(source);
     }
     return Array.from(sources).sort();
@@ -249,7 +249,7 @@
       header: () => renderSnippet(sourceFilterHeaderSnippet, {}),
       cell: ({ row }) => {
         const enteredBy = row.original.enteredBy;
-        const source = row.original.source;
+        const source = row.original.data_source;
         // Show source first, then enteredBy as secondary
         const primary = source || enteredBy;
         if (!primary) return "—";
@@ -265,7 +265,7 @@
       },
       filterFn: (row, _id, filterValue: string[]) => {
         if (!filterValue.length) return true;
-        const source = row.original.source || row.original.enteredBy || "";
+        const source = row.original.data_source || row.original.enteredBy || "";
         return filterValue.includes(source);
       },
     },

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct MealData {
     /// Total carbs entered
+    #[cfg_attr(feature = "serde", serde(default))]
     pub carbs: f64,
 
     /// Nightscout carbs
@@ -24,21 +25,27 @@ pub struct MealData {
     pub journal_carbs: f64,
 
     /// Current Carbs on Board (grams)
+    #[cfg_attr(feature = "serde", serde(default))]
     pub meal_cob: f64,
 
     /// Current BG deviation from expected
+    #[cfg_attr(feature = "serde", serde(default))]
     pub current_deviation: f64,
 
     /// Maximum deviation seen
+    #[cfg_attr(feature = "serde", serde(default))]
     pub max_deviation: f64,
 
     /// Minimum deviation seen
+    #[cfg_attr(feature = "serde", serde(default))]
     pub min_deviation: f64,
 
     /// Slope from maximum deviation
+    #[cfg_attr(feature = "serde", serde(default))]
     pub slope_from_max_deviation: f64,
 
     /// Slope from minimum deviation
+    #[cfg_attr(feature = "serde", serde(default))]
     pub slope_from_min_deviation: f64,
 
     /// All deviation values

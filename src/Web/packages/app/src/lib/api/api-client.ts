@@ -33,6 +33,7 @@ import {
   OidcClient,
   BatteryClient,
   PredictionClient,
+  RetrospectiveClient,
 } from "./generated/nocturne-api-client";
 
 /**
@@ -77,6 +78,7 @@ export class ApiClient {
   public readonly oidc: OidcClient;
   public readonly battery: BatteryClient;
   public readonly predictions: PredictionClient;
+  public readonly retrospective: RetrospectiveClient;
 
   constructor(
     baseUrl: string,
@@ -127,6 +129,7 @@ export class ApiClient {
     this.oidc = new OidcClient(apiBaseUrl, http);
     this.battery = new BatteryClient(apiBaseUrl, http);
     this.predictions = new PredictionClient(apiBaseUrl, http);
+    this.retrospective = new RetrospectiveClient(apiBaseUrl, http);
   }
 
   /** Get the underlying main client for direct access if needed */

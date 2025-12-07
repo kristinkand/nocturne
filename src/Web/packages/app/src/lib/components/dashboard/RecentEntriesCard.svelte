@@ -4,6 +4,12 @@
   import { Badge } from "$lib/components/ui/badge";
   import { formatTime } from "$lib/utils";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    formatGlucoseDelta,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
 
   interface ComponentProps {
     entries?: Entry[];
@@ -17,6 +23,10 @@
   // Use realtime store entries as fallback when entries prop not provided
   const displayEntries = $derived(entries ?? realtimeStore.entries);
   const recentEntries = $derived(displayEntries.slice(0, maxEntries));
+
+  // Get units preference
+  const units = $derived(glucoseUnitsState.units);
+  const unitLabel = $derived(getUnitLabel(units));
 </script>
 
 <Card>
@@ -33,7 +43,7 @@
               <div>
                 <div class="font-medium">
                   {#if entry.sgv}
-                    {entry.sgv} mg/dL
+                    {formatGlucoseValue(entry.sgv, units)} {unitLabel}
                   {/if}
                   {#if entry.notes}
                     - {entry.notes}
@@ -45,7 +55,11 @@
               </div>
             </div>
             <div class="text-sm text-muted-foreground">
-              {entry.delta}
+              {#if entry.delta !== undefined}
+                {formatGlucoseDelta(entry.delta, units)}
+              {:else}
+                —
+              {/if}
             </div>
           </div>
         {/each}

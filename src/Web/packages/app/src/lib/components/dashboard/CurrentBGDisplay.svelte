@@ -3,7 +3,14 @@
   import type { Entry } from "$lib/api";
   import { Badge } from "$lib/components/ui/badge";
   import { StatusPillBar } from "$lib/components/status-pills";
+  import { GlucoseValueIndicator } from "$lib/components/shared";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
+  import { glucoseUnitsState } from "$lib/stores/glucose-units-store.svelte";
+  import {
+    formatGlucoseValue,
+    formatGlucoseDelta,
+    getUnitLabel,
+  } from "$lib/utils/glucose-formatting";
   import { Clock } from "lucide-svelte";
 
   interface ComponentProps {
@@ -33,10 +40,23 @@
   const realtimeStore = getRealtimeStore();
 
   // Use realtime store values as fallback when props not provided
-  const displayCurrentBG = $derived(currentBG ?? realtimeStore.currentBG);
+  const rawCurrentBG = $derived(currentBG ?? realtimeStore.currentBG);
   // Direction is derived but reserved for future use
   void (direction ?? realtimeStore.direction);
-  const displayBgDelta = $derived(bgDelta ?? realtimeStore.bgDelta);
+  const rawBgDelta = $derived(bgDelta ?? realtimeStore.bgDelta);
+  const lastUpdated = $derived(realtimeStore.lastUpdated);
+
+  // Connection status
+  const isConnected = $derived(realtimeStore.isConnected);
+
+  // Stale threshold in milliseconds (10 minutes)
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+
+  // Format values based on user's unit preference
+  const units = $derived(glucoseUnitsState.units);
+  const displayCurrentBG = $derived(formatGlucoseValue(rawCurrentBG, units));
+  const displayBgDelta = $derived(formatGlucoseDelta(rawBgDelta, units));
+  const unitLabel = $derived(getUnitLabel(units));
   const displayDemoMode = $derived(demoMode ?? realtimeStore.demoMode);
 
   // Current time state (updated every second)
@@ -49,6 +69,29 @@
     }, 1000);
     return () => clearInterval(interval);
   });
+
+  // Stale and connection status
+  const isStale = $derived(
+    currentTime.getTime() - lastUpdated > STALE_THRESHOLD_MS
+  );
+  const isDisconnected = $derived(!isConnected);
+
+  // Loading state - no data received yet
+  const isLoading = $derived(
+    rawCurrentBG === 0 && realtimeStore.entries.length === 0
+  );
+
+  // Time since last reading
+  const timeSince = $derived.by(() => {
+    const diff = currentTime.getTime() - lastUpdated;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins === 1) return "1 min ago";
+    return `${mins} min ago`;
+  });
+
+  // Status text - show "Connection Error" when disconnected
+  const statusText = $derived(isDisconnected ? "Connection Error" : timeSince);
 
   // Format current time in local timezone
   const formattedLocalTime = $derived(
@@ -92,15 +135,6 @@
       return null;
     }
   });
-
-  // Get background color based on BG value
-  const getBGColor = (bg: number) => {
-    if (bg < 70) return "bg-red-500";
-    if (bg < 80) return "bg-yellow-500";
-    if (bg > 250) return "bg-red-500";
-    if (bg > 180) return "bg-orange-500";
-    return "bg-green-500";
-  };
 </script>
 
 <div class="flex items-center justify-between">
@@ -131,23 +165,24 @@
       {/if}
     </div>
 
-    <!-- BG Display -->
+    <!-- BG Display with connection/stale status -->
     <div class="flex items-center gap-2">
-      <div class="relative">
-        <div
-          class="text-4xl font-bold {getBGColor(
-            displayCurrentBG
-          )} text-white px-4 py-2 rounded-lg"
-        >
-          {displayCurrentBG}
-        </div>
-      </div>
+      <GlucoseValueIndicator
+        displayValue={displayCurrentBG}
+        rawBgMgdl={rawCurrentBG}
+        {isLoading}
+        {isStale}
+        {isDisconnected}
+        {statusText}
+        statusTooltip="Last reading: {timeSince}"
+        size="lg"
+      />
       <div class="text-center">
         <div class="text-2xl">
           <!-- Direction display placeholder -->
         </div>
         <div class="text-sm text-muted-foreground">
-          {displayBgDelta > 0 ? "+" : ""}{displayBgDelta}
+          {displayBgDelta}
         </div>
       </div>
     </div>
@@ -164,7 +199,7 @@
       sage={realtimeStore.pillsData.sage}
       basal={realtimeStore.pillsData.basal}
       loop={realtimeStore.pillsData.loop}
-      units="mmol/L"
+      units={unitLabel}
     />
   </div>
 {/if}

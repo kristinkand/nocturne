@@ -25,8 +25,8 @@
     Zap,
     Clock,
     Shield,
-    Loader2,
   } from "lucide-svelte";
+  import SettingsPageSkeleton from "$lib/components/settings/SettingsPageSkeleton.svelte";
 
   const store = getSettingsStore();
 </script>
@@ -36,14 +36,7 @@
 </svelte:head>
 
 {#if store.isLoading}
-  <div
-    class="container mx-auto p-6 max-w-3xl flex items-center justify-center min-h-[400px]"
-  >
-    <div class="flex flex-col items-center gap-4">
-      <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-      <p class="text-muted-foreground">Loading algorithm settings...</p>
-    </div>
-  </div>
+  <SettingsPageSkeleton cardCount={4} />
 {:else if store.hasError}
   <div class="container mx-auto p-6 max-w-3xl">
     <Card class="border-destructive">
@@ -104,7 +97,7 @@
                   type="range"
                   value={store.algorithm.prediction.minutes ?? 30}
                   min={15}
-                  max={180}
+                  max={240}
                   step={15}
                   class="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                   oninput={(e) => {
@@ -122,7 +115,7 @@
                 <span class="font-medium text-foreground">
                   {store.algorithm.prediction.minutes ?? 30} minutes
                 </span>
-                <span>3 hours</span>
+                <span>4 hours</span>
               </div>
             </div>
           </div>

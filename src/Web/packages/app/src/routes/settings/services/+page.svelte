@@ -51,6 +51,7 @@
     Pencil,
     Download,
   } from "lucide-svelte";
+  import SettingsPageSkeleton from "$lib/components/settings/SettingsPageSkeleton.svelte";
   import Apple from "lucide-svelte/icons/apple";
   import TabletSmartphone from "lucide-svelte/icons/tablet-smartphone";
   import { getApiClient } from "$lib/api";
@@ -454,9 +455,7 @@
   </div>
 
   {#if isLoading && !servicesOverview}
-    <div class="flex items-center justify-center py-12">
-      <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
+    <SettingsPageSkeleton cardCount={3} />
   {:else if error}
     <Card class="border-destructive">
       <CardContent class="py-8">

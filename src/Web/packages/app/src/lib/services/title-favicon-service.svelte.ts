@@ -22,6 +22,9 @@ const STATUS_COLORS: Record<GlucoseStatus, string> = {
   "urgent-low": "#ef4444",  // red-500
 };
 
+/** Grey color for disconnected/stale states */
+const DISCONNECTED_COLOR = "#6b7280"; // gray-500
+
 /** Status labels for alarm display */
 const STATUS_LABELS: Record<GlucoseStatus, string> = {
   "urgent-high": "⚠️ HIGH",
@@ -85,18 +88,26 @@ export class TitleFaviconService {
 
   /**
    * Update the browser title and favicon based on current glucose data
+   * @param bg - Current blood glucose value
+   * @param direction - Trend direction
+   * @param delta - Change since last reading
+   * @param settings - Title/favicon settings
+   * @param thresholds - Glucose thresholds for status calculation
+   * @param isDisconnected - Whether the client is disconnected from server
+   * @param isStale - Whether the data is stale (old)
+   * @param timeSinceReading - Human-readable time since last reading (e.g., "5 min ago")
    */
   update(
     bg: number,
     direction: string,
     delta: number,
     settings: TitleFaviconSettings,
-    thresholds: ClientThresholds
+    thresholds: ClientThresholds,
+    isDisconnected: boolean = false,
+    isStale: boolean = false,
+    timeSinceReading: string = ""
   ): void {
-    console.log("[TitleFaviconService] update called - bg:", bg, "initialized:", this.initialized, "enabled:", settings.enabled);
-
     if (!browser || !this.initialized || !settings.enabled) {
-      console.log("[TitleFaviconService] Early return - browser:", browser, "initialized:", this.initialized, "enabled:", settings.enabled);
       return;
     }
 
@@ -109,18 +120,21 @@ export class TitleFaviconService {
 
     // Update title
     if (settings.showBgValue || settings.showDirection || settings.showDelta) {
-      this.currentTitle = this.buildTitle(bg, direction, delta, settings);
-      console.log("[TitleFaviconService] Built title:", this.currentTitle);
+      this.currentTitle = this.buildTitle(bg, direction, delta, settings, isDisconnected, isStale, timeSinceReading);
       // Only update if not currently flashing (flash handles its own updates)
       if (!this.flashInterval) {
         document.title = this.currentTitle;
-        console.log("[TitleFaviconService] Set document.title to:", document.title);
       }
     }
 
-    // Update favicon
+    // Update favicon - use grey when disconnected or stale
     if (settings.faviconEnabled && this.canvas && this.ctx && this.linkElement) {
-      const color = settings.faviconColorCoded ? STATUS_COLORS[status] : "#6b7280";
+      let color: string;
+      if (isDisconnected || isStale) {
+        color = DISCONNECTED_COLOR;
+      } else {
+        color = settings.faviconColorCoded ? STATUS_COLORS[status] : "#6b7280";
+      }
       const faviconDataUrl = this.generateFaviconDataUrl(
         settings.faviconShowBg ? bg : null,
         color
@@ -128,7 +142,6 @@ export class TitleFaviconService {
       // Only update if not currently flashing
       if (!this.flashInterval) {
         this.linkElement.href = faviconDataUrl;
-        console.log("[TitleFaviconService] Updated favicon");
       }
     }
   }
@@ -226,13 +239,21 @@ export class TitleFaviconService {
     bg: number,
     direction: string,
     delta: number,
-    settings: TitleFaviconSettings
+    settings: TitleFaviconSettings,
+    isDisconnected: boolean = false,
+    isStale: boolean = false,
+    timeSinceReading: string = ""
   ): string {
     const parts: string[] = [];
 
     // Add prefix if set
     if (settings.customPrefix) {
       parts.push(settings.customPrefix);
+    }
+
+    // Show connection error prominently if disconnected
+    if (isDisconnected) {
+      parts.push("⚠️ Connection Error");
     }
 
     // Build glucose info part
@@ -242,20 +263,25 @@ export class TitleFaviconService {
       bgParts.push(bg.toString());
     }
 
-    if (settings.showDirection) {
+    if (settings.showDirection && !isDisconnected) {
       const dirInfo = directions[direction as keyof typeof directions];
       if (dirInfo) {
         bgParts.push(dirInfo.label);
       }
     }
 
-    if (settings.showDelta && delta !== undefined) {
+    if (settings.showDelta && delta !== undefined && !isDisconnected) {
       const deltaStr = delta >= 0 ? `+${delta}` : delta.toString();
       bgParts.push(deltaStr);
     }
 
     if (bgParts.length > 0) {
       parts.push(bgParts.join(" "));
+    }
+
+    // Add time since reading when stale (but not disconnected - that already shows error)
+    if (isStale && !isDisconnected && timeSinceReading) {
+      parts.push(`(${timeSinceReading})`);
     }
 
     return parts.join(" - ");

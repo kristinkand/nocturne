@@ -3280,6 +3280,109 @@ export class CompatibilityClient {
     }
 }
 
+export class PredictionClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get glucose predictions based on current data.
+    Returns predicted glucose values for the next 4 hours in 5-minute intervals.
+     * @param profileId (optional) Optional profile ID to use for predictions
+     * @return Glucose predictions including IOB, UAM, COB, and zero-temp curves
+     */
+    getPredictions(profileId?: string | null | undefined, signal?: AbortSignal): Promise<GlucosePredictionResponse> {
+        let url_ = this.baseUrl + "/api/v4/predictions?";
+        if (profileId !== undefined && profileId !== null)
+            url_ += "profileId=" + encodeURIComponent("" + profileId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetPredictions(_response);
+        });
+    }
+
+    protected processGetPredictions(response: Response): Promise<GlucosePredictionResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as GlucosePredictionResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PredictionErrorResponse;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            let result500: any = null;
+            result500 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PredictionErrorResponse;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result500);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<GlucosePredictionResponse>(null as any);
+    }
+
+    /**
+     * Check if the oref prediction library is available.
+     * @return Status of the oref library
+     */
+    getStatus(signal?: AbortSignal): Promise<PredictionStatusResponse> {
+        let url_ = this.baseUrl + "/api/v4/predictions/status";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetStatus(_response);
+        });
+    }
+
+    protected processGetStatus(response: Response): Promise<PredictionStatusResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PredictionStatusResponse;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PredictionStatusResponse>(null as any);
+    }
+}
+
 export class ServicesClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -11517,6 +11620,189 @@ export class ProcessingClient {
     }
 }
 
+export class RetrospectiveClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get retrospective data at a specific point in time
+    Returns IOB, COB, glucose, basal rate, and recent treatments
+     * @param time (optional) Unix timestamp in milliseconds for the retrospective point
+     * @return Returns the retrospective data
+     */
+    getRetrospectiveData(time?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveDataResponse> {
+        let url_ = this.baseUrl + "/api/v1/Retrospective/at?";
+        if (time === null)
+            throw new globalThis.Error("The parameter 'time' cannot be null.");
+        else if (time !== undefined)
+            url_ += "time=" + encodeURIComponent("" + time) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRetrospectiveData(_response);
+        });
+    }
+
+    protected processGetRetrospectiveData(response: Response): Promise<RetrospectiveDataResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveDataResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("If the time parameter is invalid", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("If there was an internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RetrospectiveDataResponse>(null as any);
+    }
+
+    /**
+     * Get retrospective data for an entire day at specified interval
+    Returns IOB, COB, glucose, and basal data for every interval throughout the day
+     * @param date (optional) Date in YYYY-MM-DD format
+     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
+     * @return Returns the retrospective timeline data
+     */
+    getRetrospectiveTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveTimelineResponse> {
+        let url_ = this.baseUrl + "/api/v1/Retrospective/timeline?";
+        if (date === null)
+            throw new globalThis.Error("The parameter 'date' cannot be null.");
+        else if (date !== undefined)
+            url_ += "date=" + encodeURIComponent("" + date) + "&";
+        if (intervalMinutes === null)
+            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
+        else if (intervalMinutes !== undefined)
+            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRetrospectiveTimeline(_response);
+        });
+    }
+
+    protected processGetRetrospectiveTimeline(response: Response): Promise<RetrospectiveTimelineResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveTimelineResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("If parameters are invalid", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("If there was an internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RetrospectiveTimelineResponse>(null as any);
+    }
+
+    /**
+     * Get basal rate timeline for a day
+    Returns basal rate data points showing scheduled and temp basal changes
+     * @param date (optional) Date in YYYY-MM-DD format
+     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
+     * @return Basal rate timeline for the day
+     */
+    getBasalTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<BasalTimelineResponse> {
+        let url_ = this.baseUrl + "/api/v1/Retrospective/basal-timeline?";
+        if (date === null)
+            throw new globalThis.Error("The parameter 'date' cannot be null.");
+        else if (date !== undefined)
+            url_ += "date=" + encodeURIComponent("" + date) + "&";
+        if (intervalMinutes === null)
+            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
+        else if (intervalMinutes !== undefined)
+            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBasalTimeline(_response);
+        });
+    }
+
+    protected processGetBasalTimeline(response: Response): Promise<BasalTimelineResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BasalTimelineResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BasalTimelineResponse>(null as any);
+    }
+}
+
 export class TimeQueryClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -12706,7 +12992,6 @@ export interface Treatment extends ProcessableDocumentBase {
     timestamp?: string | undefined;
     cuttedby?: string | undefined;
     cutting?: string | undefined;
-    source?: string | undefined;
     eventTime?: string | undefined;
     preBolus?: number | undefined;
     rate?: number | undefined;
@@ -13244,6 +13529,58 @@ export interface MigrationReadinessReport {
 }
 
 export type MigrationReadinessLevel = 0 | 1 | 2 | 3;
+
+/** Response containing glucose predictions. */
+export interface GlucosePredictionResponse {
+    /** Timestamp when predictions were calculated */
+    timestamp?: Date;
+    /** Current blood glucose (mg/dL) */
+    currentBg?: number;
+    /** Rate of glucose change (mg/dL per 5 min) */
+    delta?: number;
+    /** Eventual blood glucose if trend continues (mg/dL) */
+    eventualBg?: number;
+    /** Current insulin on board (U) */
+    iob?: number;
+    /** Current carbs on board (g) */
+    cob?: number;
+    /** Sensitivity ratio used (1.0 = normal) */
+    sensitivityRatio?: number | undefined;
+    /** Prediction interval in minutes */
+    intervalMinutes?: number;
+    /** Prediction curves with different scenarios */
+    predictions?: PredictionCurves;
+}
+
+/** Different prediction curves for visualization. */
+export interface PredictionCurves {
+    /** Main prediction curve (mg/dL values at 5-min intervals) */
+    default?: number[] | undefined;
+    /** IOB-only prediction (ignoring COB) */
+    iobOnly?: number[] | undefined;
+    /** UAM (Unannounced Meal) prediction */
+    uam?: number[] | undefined;
+    /** COB-based prediction */
+    cob?: number[] | undefined;
+    /** Zero-temp prediction (what happens if basal stops) */
+    zeroTemp?: number[] | undefined;
+}
+
+/** Error response for prediction failures. */
+export interface PredictionErrorResponse {
+    /** Error message */
+    error?: string;
+}
+
+/** Status of the prediction service. */
+export interface PredictionStatusResponse {
+    /** Whether the oref library is available */
+    available?: boolean;
+    /** Version of the oref library */
+    version?: string | undefined;
+    /** Health check result (JSON) */
+    healthCheck?: string | undefined;
+}
 
 export interface ServicesOverview {
     activeDataSources?: DataSourceInfo[];
@@ -14690,6 +15027,105 @@ export interface ProcessingStatusResponse extends ProcessingStatus {
 
 export function isProcessingStatusResponse(object: any): object is ProcessingStatusResponse {
     return object && object[''] === 'ProcessingStatusResponse';
+}
+
+/** Response for single point retrospective data */
+export interface RetrospectiveDataResponse {
+    time?: number;
+    timeFormatted?: string | undefined;
+    glucose?: GlucoseData | undefined;
+    iob?: IobData | undefined;
+    cob?: CobData | undefined;
+    basal?: BasalData | undefined;
+    recentTreatments?: TreatmentSummaryData[] | undefined;
+}
+
+/** Glucose data at a specific point in time */
+export interface GlucoseData {
+    value?: number;
+    direction?: string | undefined;
+    delta?: number | undefined;
+}
+
+/** IOB data at a specific point in time */
+export interface IobData {
+    total?: number;
+    bolus?: number;
+    basal?: number;
+    activity?: number | undefined;
+    source?: string | undefined;
+}
+
+/** COB data at a specific point in time */
+export interface CobData {
+    total?: number;
+    isDecaying?: number;
+    carbsHr?: number | undefined;
+    rawCarbImpact?: number | undefined;
+    source?: string | undefined;
+}
+
+/** Basal rate data at a specific point in time */
+export interface BasalData {
+    rate?: number;
+    isTemp?: boolean;
+}
+
+/** Treatment summary for recent treatments */
+export interface TreatmentSummaryData {
+    id?: string | undefined;
+    mills?: number;
+    eventType?: string | undefined;
+    insulin?: number | undefined;
+    carbs?: number | undefined;
+    rate?: number | undefined;
+    duration?: number | undefined;
+    notes?: string | undefined;
+}
+
+/** Response for retrospective timeline */
+export interface RetrospectiveTimelineResponse {
+    date?: string | undefined;
+    startTime?: number;
+    endTime?: number;
+    intervalMinutes?: number;
+    totalPoints?: number;
+    data?: RetrospectiveDataPoint[] | undefined;
+}
+
+/** Data point for retrospective timeline */
+export interface RetrospectiveDataPoint {
+    time?: number;
+    hour?: number;
+    minute?: number;
+    timeLabel?: string | undefined;
+    glucose?: number | undefined;
+    glucoseDirection?: string | undefined;
+    iob?: number;
+    bolusIob?: number;
+    basalIob?: number;
+    cob?: number;
+    basalRate?: number;
+    isTemp?: boolean;
+}
+
+/** Response for basal timeline */
+export interface BasalTimelineResponse {
+    date?: string | undefined;
+    startTime?: number;
+    endTime?: number;
+    intervalMinutes?: number;
+    data?: BasalDataPoint[] | undefined;
+}
+
+/** Data point for basal timeline */
+export interface BasalDataPoint {
+    time?: number;
+    hour?: number;
+    minute?: number;
+    timeLabel?: string | undefined;
+    rate?: number;
+    isTemp?: boolean;
 }
 
 export interface StatusResponse {
