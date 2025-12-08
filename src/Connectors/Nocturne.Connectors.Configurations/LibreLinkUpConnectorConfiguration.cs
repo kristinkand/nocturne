@@ -19,7 +19,8 @@ namespace Nocturne.Connectors.Configurations
         dataSourceId: "libre-connector",
         icon: "libre",
         category: "cgm",
-        description: "Nocturne LibreLinkUp Connector"
+        description: "Connect to LibreView for CGM data",
+        displayName: "FreeStyle Libre"
     )]
     public class LibreLinkUpConnectorConfiguration : BaseConnectorConfiguration
     {

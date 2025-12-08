@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Nocturne.Connectors.Core.Extensions;
+using Nocturne.Core.Models.Configuration;
 
 #nullable enable
 
@@ -23,10 +24,29 @@ namespace Nocturne.Connectors.Core.Services
         public class ConnectorDisplayInfo
         {
             public string ConnectorName { get; set; } = string.Empty;
+            public string DisplayName { get; set; } = string.Empty;
             public string DataSourceId { get; set; } = string.Empty;
             public string Icon { get; set; } = string.Empty;
             public string Category { get; set; } = "connector";
             public string Description { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Converts this connector info to an AvailableService for UI consumption.
+            /// </summary>
+            public AvailableService ToAvailableService()
+            {
+                // Use connector name as the service ID (e.g., "glooko" not "glooko-connector")
+                var serviceId = ConnectorName.ToLowerInvariant();
+
+                return new AvailableService
+                {
+                    Id = serviceId,
+                    Name = DisplayName,
+                    Type = Category,
+                    Description = Description,
+                    Icon = Icon
+                };
+            }
         }
 
         /// <summary>
@@ -51,6 +71,17 @@ namespace Nocturne.Connectors.Core.Services
         {
             EnsureInitialized();
             return _connectorsByDataSourceId.Values.ToList().AsReadOnly();
+        }
+
+        /// <summary>
+        /// Gets all connectors as AvailableService objects for UI consumption.
+        /// </summary>
+        public static List<AvailableService> GetAvailableServices()
+        {
+            EnsureInitialized();
+            return _connectorsByDataSourceId.Values
+                .Select(c => c.ToAvailableService())
+                .ToList();
         }
 
         /// <summary>
@@ -91,6 +122,7 @@ namespace Nocturne.Connectors.Core.Services
                                 var info = new ConnectorDisplayInfo
                                 {
                                     ConnectorName = attr.ConnectorName,
+                                    DisplayName = attr.DisplayName,
                                     DataSourceId = attr.DataSourceId,
                                     Icon = attr.Icon,
                                     Category = attr.Category,
@@ -124,3 +156,4 @@ namespace Nocturne.Connectors.Core.Services
         }
     }
 }
+

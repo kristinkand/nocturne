@@ -19,7 +19,8 @@ namespace Nocturne.Connectors.Configurations
         dataSourceId: "glooko-connector",
         icon: "glooko",
         category: "data",
-        description: "Data synced from Glooko"
+        description: "Import data from Glooko platform",
+        displayName: "Glooko"
     )]
     public class GlookoConnectorConfiguration : BaseConnectorConfiguration
     {

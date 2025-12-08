@@ -18,8 +18,9 @@ namespace Nocturne.Connectors.Configurations
         connectSourceName: "ConnectSource.MyFitnessPal",
         dataSourceId: "myfitnesspal-connector",
         icon: "myfitnesspal",
-        category: "nutrition",
-        description: "Data synced from MyFitnessPal"
+        category: "food",
+        description: "Import meals and nutrition data",
+        displayName: "MyFitnessPal"
     )]
     public class MyFitnessPalConnectorConfiguration : BaseConnectorConfiguration
     {

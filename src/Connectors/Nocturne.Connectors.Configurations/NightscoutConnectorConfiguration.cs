@@ -19,7 +19,8 @@ namespace Nocturne.Connectors.Configurations
         dataSourceId: "nightscout-connector",
         icon: "nightscout",
         category: "data",
-        description: "Data bridged from upstream Nightscout"
+        description: "Sync with an existing Nightscout instance",
+        displayName: "Nightscout"
     )]
     public class NightscoutConnectorConfiguration : BaseConnectorConfiguration
     {

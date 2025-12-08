@@ -19,7 +19,8 @@ namespace Nocturne.Connectors.Configurations
         dataSourceId: "dexcom-connector",
         icon: "dexcom",
         category: "cgm",
-        description: "Nocturne Dexcom Share Connector"
+        description: "Connect to Dexcom Share or Clarity",
+        displayName: "Dexcom"
     )]
     public class DexcomConnectorConfiguration : BaseConnectorConfiguration
     {

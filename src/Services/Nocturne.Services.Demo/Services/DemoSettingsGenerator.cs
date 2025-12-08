@@ -1,3 +1,4 @@
+using Nocturne.Connectors.Core.Services;
 using Nocturne.Core.Models.Configuration;
 using Nocturne.Services.Demo.Configuration;
 
@@ -312,57 +313,7 @@ public class DemoSettingsGenerator
                     Enabled = true,
                 },
             },
-            AvailableServices = new List<AvailableService>
-            {
-                new()
-                {
-                    Id = "dexcom",
-                    Name = "Dexcom",
-                    Type = "cgm",
-                    Description = "Connect to Dexcom Share or Clarity",
-                    Icon = "dexcom",
-                },
-                new()
-                {
-                    Id = "freestyle",
-                    Name = "FreeStyle Libre",
-                    Type = "cgm",
-                    Description = "Connect to LibreView for CGM data",
-                    Icon = "libre",
-                },
-                new()
-                {
-                    Id = "medtronic",
-                    Name = "Medtronic CareLink",
-                    Type = "pump",
-                    Description = "Sync data from MiniMed pumps",
-                    Icon = "medtronic",
-                },
-                new()
-                {
-                    Id = "nightscout",
-                    Name = "Nightscout",
-                    Type = "data",
-                    Description = "Sync with an existing Nightscout instance",
-                    Icon = "nightscout",
-                },
-                new()
-                {
-                    Id = "glooko",
-                    Name = "Glooko",
-                    Type = "data",
-                    Description = "Import data from Glooko platform",
-                    Icon = "glooko",
-                },
-                new()
-                {
-                    Id = "myfitnesspal",
-                    Name = "MyFitnessPal",
-                    Type = "food",
-                    Description = "Import meals and nutrition data",
-                    Icon = "myfitnesspal",
-                },
-            },
+            AvailableServices = ConnectorMetadataService.GetAvailableServices(),
             SyncSettings = new SyncSettings
             {
                 AutoSync = true,

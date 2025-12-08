@@ -106,6 +106,12 @@ namespace Nocturne.Connectors.Core.Extensions
         /// </summary>
         public string Description { get; }
 
+        /// <summary>
+        /// Human-readable display name for UI (e.g., "FreeStyle Libre").
+        /// Falls back to ConnectorName if not specified.
+        /// </summary>
+        public string DisplayName { get; }
+
         public ConnectorRegistrationAttribute(
             string connectorName,
             string projectTypeName,
@@ -115,7 +121,8 @@ namespace Nocturne.Connectors.Core.Extensions
             string dataSourceId = "",
             string icon = "",
             string category = "connector",
-            string description = ""
+            string description = "",
+            string displayName = ""
         )
         {
             ConnectorName = connectorName;
@@ -127,6 +134,7 @@ namespace Nocturne.Connectors.Core.Extensions
             Icon = icon;
             Category = category;
             Description = description;
+            DisplayName = string.IsNullOrEmpty(displayName) ? connectorName : displayName;
         }
     }
 }

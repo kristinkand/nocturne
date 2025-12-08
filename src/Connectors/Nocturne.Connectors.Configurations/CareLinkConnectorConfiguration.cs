@@ -19,7 +19,8 @@ namespace Nocturne.Connectors.Configurations
         dataSourceId: "minimed-connector",
         icon: "medtronic",
         category: "pump",
-        description: "Data synced from Medtronic CareLink"
+        description: "Sync data from MiniMed pumps",
+        displayName: "Medtronic CareLink"
     )]
     public class CareLinkConnectorConfiguration : BaseConnectorConfiguration
     {
