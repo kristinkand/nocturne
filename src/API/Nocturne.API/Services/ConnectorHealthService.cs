@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nocturne.API.Models;
 using Nocturne.Core.Constants;
@@ -8,41 +9,69 @@ namespace Nocturne.API.Services;
 public class ConnectorHealthService : IConnectorHealthService
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<ConnectorHealthService> _logger;
 
-    private record ConnectorDefinition(string ServiceName, string HealthCheckName, string DisplayName);
+    public const string HttpClientName = "ConnectorHealth";
 
-    private static readonly ConnectorDefinition[] Connectors = new[]
+    private record ConnectorDefinition(
+        string Id,           // Matches AvailableConnector.Id and health check name
+        string ServiceName,
+        string ConfigKey);
+
+    private static readonly ConnectorDefinition[] AllConnectors = new[]
     {
-        new ConnectorDefinition(ServiceNames.NightscoutConnector, "nightscout", "Nightscout"),
-        new ConnectorDefinition(ServiceNames.DexcomConnector, "dexcom", "Dexcom API"),
-        new ConnectorDefinition(ServiceNames.LibreConnector, "freestyle", "LibreLinkUp"),
-        new ConnectorDefinition(ServiceNames.GlookoConnector, "glooko", "Glooko"),
-        new ConnectorDefinition(ServiceNames.MiniMedConnector, "minimed", "MiniMed CareLink"),
-        new ConnectorDefinition(ServiceNames.MyFitnessPalConnector, "myfitnesspal", "MyFitnessPal")
+        new ConnectorDefinition("nightscout", ServiceNames.NightscoutConnector, "Nightscout"),
+        new ConnectorDefinition("dexcom", ServiceNames.DexcomConnector, "Dexcom"),
+        new ConnectorDefinition("libre", ServiceNames.LibreConnector, "LibreLinkUp"),
+        new ConnectorDefinition("glooko", ServiceNames.GlookoConnector, "Glooko"),
+        new ConnectorDefinition("carelink", ServiceNames.MiniMedConnector, "CareLink"),
+        new ConnectorDefinition("myfitnesspal", ServiceNames.MyFitnessPalConnector, "MyFitnessPal")
     };
 
-    public ConnectorHealthService(IHttpClientFactory httpClientFactory, ILogger<ConnectorHealthService> logger)
+    public ConnectorHealthService(
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<ConnectorHealthService> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
         _logger = logger;
     }
 
     public async Task<IEnumerable<ConnectorStatusDto>> GetConnectorStatusesAsync(CancellationToken cancellationToken = default)
     {
-        var tasks = Connectors.Select(c => CheckConnectorStatusAsync(c, cancellationToken));
+        // Filter to only enabled connectors
+        var enabledConnectors = AllConnectors.Where(c => IsConnectorEnabled(c.ConfigKey)).ToList();
+
+        _logger.LogDebug("Checking {Count} enabled connectors out of {Total} total",
+            enabledConnectors.Count, AllConnectors.Length);
+
+        if (enabledConnectors.Count == 0)
+        {
+            return Enumerable.Empty<ConnectorStatusDto>();
+        }
+
+        var tasks = enabledConnectors.Select(c => CheckConnectorStatusAsync(c, cancellationToken));
         return await Task.WhenAll(tasks);
+    }
+
+    private bool IsConnectorEnabled(string configKey)
+    {
+        // Check Parameters:Connectors:{ConfigKey}:Enabled
+        var enabled = _configuration.GetValue<bool>($"Parameters:Connectors:{configKey}:Enabled");
+        return enabled;
     }
 
     private async Task<ConnectorStatusDto> CheckConnectorStatusAsync(ConnectorDefinition connector, CancellationToken cancellationToken)
     {
         try
         {
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient(HttpClientName);
             // Aspire service discovery handles the hostname resolution
             var url = $"http://{connector.ServiceName}/health";
 
-            _logger.LogDebug("Checking health for {Connector} at {Url}", connector.DisplayName, url);
+            _logger.LogDebug("Checking health for {Connector} at {Url}", connector.Id, url);
 
             var response = await client.GetAsync(url, cancellationToken);
 
@@ -50,7 +79,8 @@ public class ConnectorHealthService : IConnectorHealthService
             {
                 return new ConnectorStatusDto
                 {
-                    Name = connector.DisplayName,
+                    Id = connector.Id,
+                    Name = connector.Id,
                     Status = "Unhealthy",
                     Description = $"HTTP {response.StatusCode}",
                     IsHealthy = false
@@ -62,7 +92,7 @@ public class ConnectorHealthService : IConnectorHealthService
 
             // Navigate to results -> {checkName}
             if (doc.RootElement.TryGetProperty("results", out var results) &&
-                results.TryGetProperty(connector.HealthCheckName, out var checkResult))
+                results.TryGetProperty(connector.Id, out var checkResult))
             {
                 var status = checkResult.GetProperty("status").GetString() ?? "Unknown";
                 var description = checkResult.TryGetProperty("description", out var desc) ? desc.GetString() : null;
@@ -76,10 +106,6 @@ public class ConnectorHealthService : IConnectorHealthService
                     if (data.TryGetProperty("TotalEntries", out var msgEl) && msgEl.ValueKind == JsonValueKind.Number)
                     {
                          totalEntries = msgEl.GetInt64();
-                    }
-                    else // Fallback if it was serialized as string or other
-                    {
-                        // Some serializers might output numbers as strings if configured loosely, but Utf8JsonWriter usually strong types
                     }
 
                     if (data.TryGetProperty("LastEntryTime", out var timeEl))
@@ -98,7 +124,8 @@ public class ConnectorHealthService : IConnectorHealthService
 
                 return new ConnectorStatusDto
                 {
-                    Name = connector.DisplayName,
+                    Id = connector.Id,
+                    Name = connector.Id,
                     Status = status,
                     Description = description,
                     TotalEntries = totalEntries,
@@ -110,9 +137,10 @@ public class ConnectorHealthService : IConnectorHealthService
 
             // If we have a healthy root status but missing specific check results
             var rootStatus = doc.RootElement.GetProperty("status").GetString();
-             return new ConnectorStatusDto
+            return new ConnectorStatusDto
             {
-                Name = connector.DisplayName,
+                Id = connector.Id,
+                Name = connector.Id,
                 Status = rootStatus ?? "Unknown",
                 Description = "Detailed metrics unavailable",
                 IsHealthy = rootStatus == "Healthy"
@@ -121,10 +149,11 @@ public class ConnectorHealthService : IConnectorHealthService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to check status for {Connector}", connector.DisplayName);
+            _logger.LogWarning(ex, "Failed to check status for {Connector}", connector.Id);
             return new ConnectorStatusDto
             {
-                Name = connector.DisplayName,
+                Id = connector.Id,
+                Name = connector.Id,
                 Status = "Unreachable",
                 Description = ex.Message,
                 IsHealthy = false

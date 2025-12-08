@@ -73,7 +73,6 @@
 
     // Reload settings after hydration (SSR fix)
     titleFaviconSettings = loadTitleFaviconSettings();
-    console.log("[TitleFavicon] Settings loaded:", titleFaviconSettings);
 
     // Listen for localStorage changes (from settings page)
     if (browser) {

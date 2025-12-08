@@ -34,6 +34,7 @@ import {
   BatteryClient,
   PredictionClient,
   RetrospectiveClient,
+  ConnectorStatusClient,
 } from "./generated/nocturne-api-client";
 
 /**
@@ -79,6 +80,7 @@ export class ApiClient {
   public readonly battery: BatteryClient;
   public readonly predictions: PredictionClient;
   public readonly retrospective: RetrospectiveClient;
+  public readonly connectorStatus: ConnectorStatusClient;
 
   constructor(
     baseUrl: string,
@@ -130,6 +132,7 @@ export class ApiClient {
     this.battery = new BatteryClient(apiBaseUrl, http);
     this.predictions = new PredictionClient(apiBaseUrl, http);
     this.retrospective = new RetrospectiveClient(apiBaseUrl, http);
+    this.connectorStatus = new ConnectorStatusClient(apiBaseUrl, http);
   }
 
   /** Get the underlying main client for direct access if needed */

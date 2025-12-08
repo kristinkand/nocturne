@@ -7,6 +7,7 @@
     Rect,
     Group,
     Points,
+    Polygon,
     Rule,
     Text,
     Tooltip,
@@ -55,6 +56,7 @@
   import { TreatmentEditDialog } from "$lib/components/treatments";
   import { getRetrospectiveAt } from "$lib/data/retrospective.remote";
   import { getEventTypeStyle } from "$lib/constants/treatment-categories";
+  import BasalRateChart from "$lib/components/reports/BasalRateChart.svelte";
 
   // Get date from URL search params
   const dateParam = $derived(
@@ -366,7 +368,7 @@
 
     let currentMs = xDomain[0].getTime();
     const endMs = xDomain[1].getTime();
-    const defaultRate = 0.8; // Default scheduled basal rate
+    const defaultRate = 0; // No scheduled basal info available - only show temp basals
 
     while (currentMs <= endMs) {
       const currentTime = new Date(currentMs);
@@ -394,12 +396,6 @@
     }
 
     return result;
-  });
-
-  // Scale basal rate to fit in bottom portion of chart
-  const basalYDomain: [number, number] = $derived.by(() => {
-    const maxRate = Math.max(...basalTimeline.map((b) => b.rate), 2);
-    return [0, maxRate * 1.2];
   });
 
   // Use backend-calculated glucose statistics from analysis
@@ -448,40 +444,26 @@
     };
   });
 
+  // Treatment statistics - uses backend-calculated values only
+  // The backend TreatmentSummary is the source of truth
   const treatmentStats = $derived.by(() => {
     const summary = dayData.treatmentSummary as TreatmentSummary | null;
+    const treatments = dayData.treatments as Treatment[];
+    const treatmentCount = summary?.treatmentCount ?? treatments.length;
+
+    // All totals come from backend calculation
     const totalBolus = summary?.totals?.insulin?.bolus ?? 0;
     const totalBasal = summary?.totals?.insulin?.basal ?? 0;
     const totalCarbs = summary?.totals?.food?.carbs ?? 0;
     const totalInsulin = totalBolus + totalBasal;
-
-    // Count treatments with bolus/carbs for display
-    const treatments = dayData.treatments as Treatment[];
-    let bolusCount = 0;
-    let carbCount = 0;
-    for (const treatment of treatments) {
-      if (treatment.carbs && treatment.carbs > 0) {
-        carbCount++;
-      }
-      if (treatment.insulin && treatment.insulin > 0) {
-        const eventType = treatment.eventType?.toLowerCase() ?? "";
-        if (!eventType.includes("basal") && !eventType.includes("temp")) {
-          bolusCount++;
-        }
-      }
-    }
 
     return {
       totalCarbs,
       totalBolus,
       totalBasal,
       totalInsulin,
-      bolusCount,
-      carbCount,
-      positiveBasalTemp: 0, // Not calculated on frontend
-      negativeBasalTemp: 0,
-      baseBasal: totalBasal * 0.8, // Approximate
       totalDailyInsulin: totalInsulin,
+      treatmentCount,
     };
   });
 
@@ -516,16 +498,6 @@
         : hours > 12
           ? `${hours - 12}p`
           : `${hours}a`;
-  }
-
-  // Get color for glucose value
-  function getGlucoseColor(value: number): string {
-    if (value < DEFAULT_THRESHOLDS.severeLow!) return GLUCOSE_COLORS.severeLow;
-    if (value < lowThreshold) return GLUCOSE_COLORS.low;
-    if (value >= (DEFAULT_THRESHOLDS.severeHigh ?? 250))
-      return GLUCOSE_COLORS.severeHigh;
-    if (value >= highThreshold) return GLUCOSE_COLORS.high;
-    return GLUCOSE_COLORS.inRange;
   }
 
   // Handle treatment row click
@@ -754,27 +726,6 @@
                 stroke-dasharray="4,4"
               />
 
-              <!-- Basal rate area (scaled to fit in lower portion) -->
-              {#if basalTimeline.length > 0}
-                <Group class="basal-area">
-                  {#each basalTimeline as point, i}
-                    {#if i < basalTimeline.length - 1}
-                      {@const nextPoint = basalTimeline[i + 1]}
-                      {@const yHeight = (point.rate / basalYDomain[1]) * 60}
-                      <Rect
-                        x={point.time.getTime()}
-                        y={yDomain[0] + 60 - yHeight}
-                        width={nextPoint.time.getTime() - point.time.getTime()}
-                        height={yHeight}
-                        class={point.isTemp
-                          ? "fill-cyan-400/30"
-                          : "fill-cyan-600/20"}
-                      />
-                    {/if}
-                  {/each}
-                </Group>
-              {/if}
-
               <!-- Glucose line -->
               <Spline
                 data={chartData}
@@ -802,47 +753,48 @@
                 }}
               />
 
-              <!-- Bolus markers (blue diamonds) -->
+              <!-- Bolus markers (blue triangles) -->
               {#each bolusMarkers as marker}
-                <Points
-                  data={[{ time: marker.time, y: yDomain[0] + 30 }]}
-                  x={(d) => d.time}
-                  y={(d) => d.y}
-                  r={6}
-                  fill={TREATMENT_COLORS.bolus}
-                  class="cursor-pointer"
-                />
+                <Group x={marker.time.getTime()} y={yDomain[1] - 25}>
+                  <Polygon
+                    points={[
+                      { x: 0, y: -8 },
+                      { x: -5, y: 0 },
+                      { x: 5, y: 0 },
+                    ]}
+                    fill={TREATMENT_COLORS.bolus}
+                    class="cursor-pointer"
+                  />
+                </Group>
                 <!-- Insulin amount label -->
                 <Text
                   x={marker.time.getTime()}
-                  y={yDomain[0] + 15}
+                  y={yDomain[1] - 38}
                   value={`${marker.insulin.toFixed(1)}U`}
-                  class="text-xs fill-blue-600 font-medium"
+                  class="text-xs fill-blue-400 font-medium"
                   textAnchor="middle"
                 />
               {/each}
 
-              <!-- Carb markers (orange circles, sized by amount) -->
+              <!-- Carb markers (orange triangles) -->
               {#each carbMarkers as marker}
-                {@const radius = Math.min(
-                  12,
-                  Math.max(5, Math.sqrt(marker.carbs) * 1.5)
-                )}
-                <Points
-                  data={[{ time: marker.time, y: yDomain[1] - 20 }]}
-                  x={(d) => d.time}
-                  y={(d) => d.y}
-                  r={radius}
-                  fill={TREATMENT_COLORS.carbs}
-                  fill-opacity={0.8}
-                  class="cursor-pointer"
-                />
+                <Group x={marker.time.getTime()} y={yDomain[0] + 25}>
+                  <Polygon
+                    points={[
+                      { x: 0, y: 8 },
+                      { x: -5, y: 0 },
+                      { x: 5, y: 0 },
+                    ]}
+                    fill={TREATMENT_COLORS.carbs}
+                    class="cursor-pointer"
+                  />
+                </Group>
                 <!-- Carb amount label -->
                 <Text
                   x={marker.time.getTime()}
-                  y={yDomain[1] - 35}
+                  y={yDomain[0] + 45}
                   value={`${marker.carbs}g`}
-                  class="text-xs fill-orange-600 font-medium"
+                  class="text-xs fill-orange-400 font-medium"
                   textAnchor="middle"
                 />
               {/each}
@@ -875,7 +827,7 @@
           </Chart>
 
           <!-- Chart Legend -->
-          <div
+          <!-- <div
             class="flex flex-wrap items-center justify-center gap-4 mt-2 text-xs"
           >
             <div class="flex items-center gap-1">
@@ -903,7 +855,15 @@
               <div class="w-3 h-3 bg-cyan-500/30"></div>
               <span>Basal</span>
             </div>
-          </div>
+          </div> -->
+
+          <!-- Basal Rate Chart -->
+          <BasalRateChart
+            data={basalTimeline}
+            {xDomain}
+            defaultRate={0}
+            showDefaultLine={true}
+          />
         {:else}
           <div
             class="flex h-full items-center justify-center text-muted-foreground"
@@ -1074,21 +1034,15 @@
               </Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell class="font-medium">Bolus Count</Table.Cell>
-              <Table.Cell class="text-right">
-                {treatmentStats.bolusCount}
-              </Table.Cell>
-            </Table.Row>
-            <Table.Row>
               <Table.Cell class="font-medium">Total Carbs</Table.Cell>
               <Table.Cell class="text-right font-bold">
                 {treatmentStats.totalCarbs.toFixed(0)}g
               </Table.Cell>
             </Table.Row>
             <Table.Row>
-              <Table.Cell class="font-medium">Carb Entries</Table.Cell>
+              <Table.Cell class="font-medium">Treatment Count</Table.Cell>
               <Table.Cell class="text-right">
-                {treatmentStats.carbCount}
+                {treatmentStats.treatmentCount}
               </Table.Cell>
             </Table.Row>
           </Table.Body>

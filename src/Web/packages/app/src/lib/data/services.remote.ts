@@ -80,3 +80,18 @@ export const deleteDataSourceData = command(z.string(), async (dataSourceId) => 
 		};
 	}
 });
+
+/**
+ * Get connector health status and metrics
+ */
+export const getConnectorStatuses = query(async () => {
+	const { locals } = getRequestEvent();
+	const { apiClient } = locals;
+
+	try {
+		return await apiClient.connectorStatus.getStatus();
+	} catch (err) {
+		console.error('Error loading connector statuses:', err);
+		return [];
+	}
+});

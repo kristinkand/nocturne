@@ -67,7 +67,7 @@ public class Program
         builder.Services.AddHostedService<MiniMedHostedService>();
 
         // Add health checks
-        builder.Services.AddHealthChecks().AddConnectorHealthCheck("minimed");
+        builder.Services.AddHealthChecks().AddConnectorHealthCheck("carelink");
 
         var app = builder.Build();
 

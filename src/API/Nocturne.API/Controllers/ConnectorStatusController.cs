@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nocturne.API.Models;
 using Nocturne.API.Services;
@@ -7,7 +6,6 @@ namespace Nocturne.API.Controllers;
 
 [ApiController]
 [Route("api/v1/connectors")]
-[Authorize] // Ensure endpoints are protected
 public class ConnectorStatusController : ControllerBase
 {
     private readonly IConnectorHealthService _healthService;

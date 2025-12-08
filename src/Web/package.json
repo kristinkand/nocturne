@@ -33,10 +33,6 @@
     }
   },
   "dependencies": {
-    "@oslojs/crypto": "^1.0.1",
-    "@oslojs/jwt": "^0.3.0",
-    "@oslojs/oauth2": "^0.5.0",
-    "@oslojs/otp": "^1.1.0",
     "runed": "^0.37.0"
   }
 }

@@ -83,7 +83,7 @@ public class Program
         builder.Services.AddHostedService<FreeStyleHostedService>();
 
         // Add health checks
-        builder.Services.AddHealthChecks().AddConnectorHealthCheck("freestyle");
+        builder.Services.AddHealthChecks().AddConnectorHealthCheck("libre");
 
         var app = builder.Build();
 

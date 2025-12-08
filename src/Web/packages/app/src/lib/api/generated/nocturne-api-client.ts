@@ -1049,6 +1049,54 @@ export class AuthorizationClient {
     }
 }
 
+export class ConnectorStatusClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Gets the current status and metrics for all registered connectors
+     */
+    getStatus(signal?: AbortSignal): Promise<ConnectorStatusDto[]> {
+        let url_ = this.baseUrl + "/api/v1/connectors/status";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetStatus(_response);
+        });
+    }
+
+    protected processGetStatus(response: Response): Promise<ConnectorStatusDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectorStatusDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConnectorStatusDto[]>(null as any);
+    }
+}
+
 export class LocalAuthClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -3277,6 +3325,53 @@ export class CompatibilityClient {
             });
         }
         return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Test API compatibility by comparing responses from Nightscout and Nocturne
+     */
+    testApiComparison(request: ManualTestRequest, signal?: AbortSignal): Promise<ManualTestResult> {
+        let url_ = this.baseUrl + "/api/v4/compatibility/test";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processTestApiComparison(_response);
+        });
+    }
+
+    protected processTestApiComparison(response: Response): Promise<ManualTestResult> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ManualTestResult;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ManualTestResult>(null as any);
     }
 }
 
@@ -12591,6 +12686,17 @@ export interface Role {
     modified?: Date;
 }
 
+export interface ConnectorStatusDto {
+    id?: string;
+    name?: string;
+    status?: string;
+    description?: string | undefined;
+    totalEntries?: number;
+    lastEntryTime?: Date | undefined;
+    entriesLast24Hours?: number;
+    isHealthy?: boolean;
+}
+
 /** Local auth configuration response */
 export interface LocalAuthConfigResponse {
     enabled?: boolean;
@@ -13529,6 +13635,46 @@ export interface MigrationReadinessReport {
 }
 
 export type MigrationReadinessLevel = 0 | 1 | 2 | 3;
+
+/** Result of manual API comparison test */
+export interface ManualTestResult {
+    /** The API path that was tested */
+    queryPath?: string;
+    /** HTTP method used */
+    method?: string;
+    /** When the test was performed */
+    timestamp?: Date;
+    /** Raw JSON response from Nightscout */
+    nightscoutResponse?: string | undefined;
+    /** Raw JSON response from Nocturne */
+    nocturneResponse?: string | undefined;
+    /** HTTP status code from Nightscout */
+    nightscoutStatusCode?: number | undefined;
+    /** HTTP status code from Nocturne */
+    nocturneStatusCode?: number | undefined;
+    /** Response time from Nightscout in milliseconds */
+    nightscoutResponseTimeMs?: number;
+    /** Response time from Nocturne in milliseconds */
+    nocturneResponseTimeMs?: number;
+    /** Error message if Nightscout request failed */
+    nightscoutError?: string | undefined;
+    /** Error message if Nocturne request failed */
+    nocturneError?: string | undefined;
+}
+
+/** Request for manual API comparison test */
+export interface ManualTestRequest {
+    /** Base URL of the Nightscout server to compare against */
+    nightscoutUrl?: string;
+    /** API secret (SHA1 hash or plain text) */
+    apiSecret?: string | undefined;
+    /** API path to test (e.g., /api/v1/entries?count=10) */
+    queryPath?: string;
+    /** HTTP method (GET, POST, etc.) - defaults to GET */
+    method?: string | undefined;
+    /** Optional request body for POST/PUT requests */
+    requestBody?: string | undefined;
+}
 
 /** Response containing glucose predictions. */
 export interface GlucosePredictionResponse {

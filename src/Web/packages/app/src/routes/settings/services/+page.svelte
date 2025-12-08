@@ -5,6 +5,7 @@
     getUploaderSetup,
     deleteDemoData as deleteDemoDataRemote,
     deleteDataSourceData as deleteDataSourceDataRemote,
+    getConnectorStatuses,
   } from "$lib/data/services.remote";
   import type {
     ServicesOverview,
@@ -13,6 +14,7 @@
     DataSourceInfo,
     AvailableConnector,
     ManualSyncResult,
+    ConnectorStatusDto,
   } from "$lib/api/generated/nocturne-api-client";
   import {
     Card,
@@ -90,10 +92,18 @@
   let showManualSyncDialog = $state(false);
   let manualSyncResult = $state<ManualSyncResult | null>(null);
 
+  // Connector heartbeat metrics state
+  let connectorStatuses = $state<ConnectorStatusDto[]>([]);
+  let isLoadingConnectorStatuses = $state(false);
+  let selectedConnector = $state<ConnectorStatusDto | null>(null);
+  let showConnectorDialog = $state(false);
+
   onMount(async () => {
     await loadServices();
+    await loadConnectorStatuses();
   });
 
+  $inspect(connectorStatuses);
   async function loadServices() {
     isLoading = true;
     error = null;
@@ -103,6 +113,18 @@
       error = e instanceof Error ? e.message : "Failed to load services";
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function loadConnectorStatuses() {
+    isLoadingConnectorStatuses = true;
+    try {
+      connectorStatuses = await getConnectorStatuses();
+    } catch (e) {
+      console.error("Failed to load connector statuses", e);
+      connectorStatuses = [];
+    } finally {
+      isLoadingConnectorStatuses = false;
     }
   }
 
@@ -327,19 +349,6 @@
     for (const source of servicesOverview.activeDataSources) {
       const matchingUploader = getMatchingUploader(source);
       if (matchingUploader?.id === uploader.id) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function isConnectorActive(connector: AvailableConnector): boolean {
-    if (!servicesOverview?.activeDataSources) return false;
-
-    for (const source of servicesOverview.activeDataSources) {
-      const matchingConnector = getMatchingConnector(source);
-      if (matchingConnector?.id === connector.id) {
         return true;
       }
     }
@@ -760,78 +769,121 @@
               Connectors that run on the server to pull data from cloud services
             </CardDescription>
           </div>
-          {#if servicesOverview.manualSyncEnabled}
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={triggerManualSync}
-              disabled={isManualSyncing}
-              class="gap-2"
-            >
-              {#if isManualSyncing}
-                <Loader2 class="h-4 w-4 animate-spin" />
-                Syncing...
-              {:else}
-                <Download class="h-4 w-4" />
-                Manual Sync
-              {/if}
-            </Button>
-          {/if}
+          <div class="flex gap-2">
+            {#if connectorStatuses.length > 0}
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={loadConnectorStatuses}
+                disabled={isLoadingConnectorStatuses}
+                class="gap-2"
+              >
+                <RefreshCw
+                  class="h-4 w-4 {isLoadingConnectorStatuses
+                    ? 'animate-spin'
+                    : ''}"
+                />
+                Refresh
+              </Button>
+            {/if}
+            {#if servicesOverview.manualSyncEnabled}
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={triggerManualSync}
+                disabled={isManualSyncing}
+                class="gap-2"
+              >
+                {#if isManualSyncing}
+                  <Loader2 class="h-4 w-4 animate-spin" />
+                  Syncing...
+                {:else}
+                  <Download class="h-4 w-4" />
+                  Manual Sync
+                {/if}
+              </Button>
+            {/if}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div class="grid gap-3 sm:grid-cols-2">
           {#each servicesOverview.availableConnectors ?? [] as connector}
             {@const Icon = getCategoryIcon(connector.category)}
-            {@const active = isConnectorActive(connector)}
-            <div
-              class="flex items-center gap-4 p-4 rounded-lg border {active
-                ? 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20'
-                : 'bg-muted/30'}"
-            >
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {active
-                  ? 'bg-green-100 dark:bg-green-900/30'
-                  : 'bg-primary/10'}"
+            {@const connectorStatus = connectorStatuses.find(
+              (cs) => cs.id === connector.id
+            )}
+            {@const isConnected = connectorStatus?.isHealthy === true}
+
+            {#if isConnected && connectorStatus}
+              <!-- Connected connector - clickable button with dialog -->
+              <button
+                class="flex items-center gap-4 p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left group border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20"
+                onclick={() => {
+                  selectedConnector = connectorStatus;
+                  showConnectorDialog = true;
+                }}
               >
-                <Icon
-                  class="h-5 w-5 {active
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-primary'}"
-                />
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-medium">{connector.name}</span>
-                  {#if active}
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30"
+                >
+                  <Icon class="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-medium">{connector.name}</span>
                     <Badge
                       class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs"
                     >
                       <CheckCircle class="h-3 w-3 mr-1" />
                       Active
                     </Badge>
-                  {:else if connector.requiresServerConfig}
-                    <Badge variant="outline" class="text-xs">
-                      Server Config
-                    </Badge>
-                  {/if}
+                  </div>
+                  <p class="text-sm text-muted-foreground">
+                    {connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0} entries
+                    (24h)
+                  </p>
                 </div>
-                <p class="text-sm text-muted-foreground">
-                  {connector.description}
-                </p>
+                <ChevronRight
+                  class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                />
+              </button>
+            {:else}
+              <!-- Not connected - show with help link -->
+              <div
+                class="flex items-center gap-4 p-4 rounded-lg border bg-muted/30"
+              >
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"
+                >
+                  <Icon class="h-5 w-5 text-primary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-medium">{connector.name}</span>
+                    {#if connector.requiresServerConfig}
+                      <Badge variant="outline" class="text-xs">
+                        Server Config
+                      </Badge>
+                    {/if}
+                  </div>
+                  <p class="text-sm text-muted-foreground">
+                    {connector.description}
+                  </p>
+                </div>
+                {#if connector.documentationUrl}
+                  <Button variant="ghost" size="sm">
+                    <a
+                      href={connector.documentationUrl}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <ExternalLink class="h-4 w-4" />
+                    </a>
+                  </Button>
+                {/if}
               </div>
-              {#if connector.documentationUrl}
-                <Button variant="ghost" size="sm">
-                  <a
-                    href={connector.documentationUrl}
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    <ExternalLink class="h-4 w-4" />
-                  </a>
-                </Button>
-              {/if}
-            </div>
+            {/if}
           {/each}
         </div>
         <p class="text-sm text-muted-foreground mt-4">
@@ -1447,5 +1499,106 @@
         Close
       </Button>
     </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
+<!-- Connector Details Dialog -->
+<Dialog.Root bind:open={showConnectorDialog}>
+  <Dialog.Content class="max-w-md">
+    {#if selectedConnector}
+      <Dialog.Header>
+        <Dialog.Title class="flex items-center gap-2">
+          <Cloud class="h-5 w-5" />
+          {selectedConnector.name}
+        </Dialog.Title>
+        <Dialog.Description>
+          Connector health and data metrics
+        </Dialog.Description>
+      </Dialog.Header>
+
+      <div class="space-y-4 py-4">
+        <!-- Status Badge -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Status</span>
+          {#if selectedConnector.isHealthy}
+            <Badge
+              class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+            >
+              <CheckCircle class="h-3 w-3 mr-1" />
+              Healthy
+            </Badge>
+          {:else if selectedConnector.status === "Unreachable"}
+            <Badge variant="outline">
+              <WifiOff class="h-3 w-3 mr-1" />
+              Offline
+            </Badge>
+          {:else}
+            <Badge variant="destructive">
+              <AlertCircle class="h-3 w-3 mr-1" />
+              {selectedConnector.status}
+            </Badge>
+          {/if}
+        </div>
+
+        {#if selectedConnector.description}
+          <div class="text-sm text-muted-foreground">
+            {selectedConnector.description}
+          </div>
+        {/if}
+
+        {#if selectedConnector.status !== "Unreachable"}
+          <Separator />
+
+          <!-- Metrics -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted-foreground">
+                Total entries processed
+              </span>
+              <span class="font-mono font-medium">
+                {selectedConnector.totalEntries?.toLocaleString() ?? 0}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-muted-foreground">
+                Entries in last 24 hours
+              </span>
+              <span class="font-mono font-medium">
+                {selectedConnector.entriesLast24Hours?.toLocaleString() ?? 0}
+              </span>
+            </div>
+            {#if selectedConnector.lastEntryTime}
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-muted-foreground">
+                  Last entry received
+                </span>
+                <span class="font-medium">
+                  {formatLastSeen(selectedConnector.lastEntryTime)}
+                </span>
+              </div>
+            {/if}
+          </div>
+        {:else}
+          <div
+            class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/20 p-4"
+          >
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <WifiOff class="h-5 w-5" />
+              <span class="font-medium">Connector Offline</span>
+            </div>
+            <p class="text-sm text-muted-foreground mt-1">
+              This connector is not currently running or cannot be reached.
+              Check your server configuration and logs.
+            </p>
+          </div>
+        {/if}
+      </div>
+
+      <Dialog.Footer>
+        <Button variant="outline" onclick={() => (showConnectorDialog = false)}>
+          Close
+        </Button>
+      </Dialog.Footer>
+    {/if}
   </Dialog.Content>
 </Dialog.Root>

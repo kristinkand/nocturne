@@ -336,6 +336,10 @@ builder.Services.Configure<AnalyticsConfiguration>(
 
 // Register analytics services
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+// Register connector health service with service discovery-enabled HTTP client
+builder.Services.AddHttpClient(ConnectorHealthService.HttpClientName)
+    .AddServiceDiscovery();
 builder.Services.AddScoped<IConnectorHealthService, ConnectorHealthService>();
 
 // Configure and register connector services as background workers
