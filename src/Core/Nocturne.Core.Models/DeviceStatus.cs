@@ -340,10 +340,22 @@ public class LoopStatus
     public object? Recommended { get; set; }
 
     /// <summary>
-    /// Gets or sets the enacted action
+    /// Gets or sets the enacted action with details about temp basals and automatic boluses
     /// </summary>
     [JsonPropertyName("enacted")]
-    public object? Enacted { get; set; }
+    public LoopEnacted? Enacted { get; set; }
+
+    /// <summary>
+    /// Gets or sets the recommended temporary basal rate
+    /// </summary>
+    [JsonPropertyName("recommendedTempBasal")]
+    public LoopRecommendedTempBasal? RecommendedTempBasal { get; set; }
+
+    /// <summary>
+    /// Gets or sets the failure reason if Loop encountered an error
+    /// </summary>
+    [JsonPropertyName("failureReason")]
+    public string? FailureReason { get; set; }
 }
 
 /// <summary>
@@ -398,6 +410,84 @@ public class LoopIob
     /// </summary>
     [JsonPropertyName("iob")]
     public double? Iob { get; set; }
+
+    /// <summary>
+    /// Gets or sets the basal IOB component
+    /// </summary>
+    [JsonPropertyName("basaliob")]
+    public double? BasalIob { get; set; }
+
+    /// <summary>
+    /// Gets or sets the net basal insulin
+    /// </summary>
+    [JsonPropertyName("netbasalinsulin")]
+    public double? NetBasalInsulin { get; set; }
+}
+
+/// <summary>
+/// Represents Loop enacted action details (temp basals and automatic boluses)
+/// </summary>
+public class LoopEnacted
+{
+    /// <summary>
+    /// Gets or sets the automatic bolus volume in units
+    /// </summary>
+    [JsonPropertyName("bolusVolume")]
+    public double? BolusVolume { get; set; }
+
+    /// <summary>
+    /// Gets or sets the temp basal rate in U/hr
+    /// </summary>
+    [JsonPropertyName("rate")]
+    public double? Rate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the temp basal duration in minutes
+    /// </summary>
+    [JsonPropertyName("duration")]
+    public int? Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp of the enacted action
+    /// </summary>
+    [JsonPropertyName("timestamp")]
+    public string? Timestamp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the reason for the enacted action
+    /// </summary>
+    [JsonPropertyName("reason")]
+    public string? Reason { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the pump received the command
+    /// </summary>
+    [JsonPropertyName("received")]
+    public bool? Received { get; set; }
+}
+
+/// <summary>
+/// Represents Loop recommended temporary basal rate
+/// </summary>
+public class LoopRecommendedTempBasal
+{
+    /// <summary>
+    /// Gets or sets the recommended rate in U/hr
+    /// </summary>
+    [JsonPropertyName("rate")]
+    public double? Rate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the recommended duration in minutes
+    /// </summary>
+    [JsonPropertyName("duration")]
+    public int? Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp of the recommendation
+    /// </summary>
+    [JsonPropertyName("timestamp")]
+    public string? Timestamp { get; set; }
 }
 
 /// <summary>

@@ -150,3 +150,106 @@ public class LoopNotificationResponse
     [JsonPropertyName("data")]
     public object? Data { get; set; }
 }
+
+/// <summary>
+/// Loop override preset configuration stored in profiles
+/// Used by Nightscout to display and trigger override presets
+/// </summary>
+public class LoopOverridePreset
+{
+    /// <summary>
+    /// Gets or sets the preset name
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the emoji symbol for the preset
+    /// </summary>
+    [JsonPropertyName("symbol")]
+    public string? Symbol { get; set; }
+
+    /// <summary>
+    /// Gets or sets the duration in seconds
+    /// </summary>
+    [JsonPropertyName("duration")]
+    public double? Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the target glucose range
+    /// </summary>
+    [JsonPropertyName("targetRange")]
+    public LoopTargetRange? TargetRange { get; set; }
+
+    /// <summary>
+    /// Gets or sets the insulin needs scale factor (e.g., 0.9 for 90%)
+    /// </summary>
+    [JsonPropertyName("insulinNeedsScaleFactor")]
+    public double? InsulinNeedsScaleFactor { get; set; }
+}
+
+/// <summary>
+/// Loop target glucose range
+/// </summary>
+public class LoopTargetRange
+{
+    /// <summary>
+    /// Gets or sets the minimum target value
+    /// </summary>
+    [JsonPropertyName("minValue")]
+    public double? MinValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum target value
+    /// </summary>
+    [JsonPropertyName("maxValue")]
+    public double? MaxValue { get; set; }
+}
+
+/// <summary>
+/// Loop settings stored in profile (loopSettings field)
+/// </summary>
+public class LoopProfileSettings
+{
+    /// <summary>
+    /// Gets or sets the Apple Push Notification device token
+    /// </summary>
+    [JsonPropertyName("deviceToken")]
+    public string? DeviceToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets the iOS bundle identifier for the Loop app
+    /// </summary>
+    [JsonPropertyName("bundleIdentifier")]
+    public string? BundleIdentifier { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of override presets
+    /// </summary>
+    [JsonPropertyName("overridePresets")]
+    public List<LoopOverridePreset>? OverridePresets { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether closed loop dosing is enabled
+    /// </summary>
+    [JsonPropertyName("dosingEnabled")]
+    public bool? DosingEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum BG guard value
+    /// </summary>
+    [JsonPropertyName("minimumBGGuard")]
+    public double? MinimumBGGuard { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pre-meal target range
+    /// </summary>
+    [JsonPropertyName("preMealTargetRange")]
+    public LoopTargetRange? PreMealTargetRange { get; set; }
+
+    /// <summary>
+    /// Gets or sets the workout target range
+    /// </summary>
+    [JsonPropertyName("workoutTargetRange")]
+    public LoopTargetRange? WorkoutTargetRange { get; set; }
+}

@@ -418,6 +418,38 @@ public class Treatment : ProcessableDocumentBase
     public string? TransmitterId { get; set; }
 
     /// <summary>
+    /// Gets or sets the remote carb entry amount in grams (for Loop remote commands)
+    /// </summary>
+    [JsonPropertyName("remoteCarbs")]
+    public double? RemoteCarbs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the remote carb absorption time in hours (for Loop remote commands)
+    /// </summary>
+    [JsonPropertyName("remoteAbsorption")]
+    public double? RemoteAbsorption { get; set; }
+
+    /// <summary>
+    /// Gets or sets the remote bolus amount in units (for Loop remote commands)
+    /// </summary>
+    [JsonPropertyName("remoteBolus")]
+    public double? RemoteBolus { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name for override reason
+    /// </summary>
+    [JsonPropertyName("reasonDisplay")]
+    [Sanitizable]
+    public string? ReasonDisplay { get; set; }
+
+    /// <summary>
+    /// Gets or sets the one-time password for secure remote operations
+    /// </summary>
+    [JsonPropertyName("otp")]
+    [Sanitizable]
+    public string? Otp { get; set; }
+
+    /// <summary>
     /// Gets or sets the data source identifier indicating where this treatment originated from.
     /// Use constants from <see cref="Core.Constants.DataSources"/> for consistent values.
     /// </summary>

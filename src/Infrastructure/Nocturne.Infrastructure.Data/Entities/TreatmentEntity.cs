@@ -367,6 +367,38 @@ public class TreatmentEntity
     public string? DataSource { get; set; }
 
     /// <summary>
+    /// Remote carb entry amount in grams (for Loop remote commands)
+    /// </summary>
+    [Column("remoteCarbs")]
+    public double? RemoteCarbs { get; set; }
+
+    /// <summary>
+    /// Remote carb absorption time in hours (for Loop remote commands)
+    /// </summary>
+    [Column("remoteAbsorption")]
+    public double? RemoteAbsorption { get; set; }
+
+    /// <summary>
+    /// Remote bolus amount in units (for Loop remote commands)
+    /// </summary>
+    [Column("remoteBolus")]
+    public double? RemoteBolus { get; set; }
+
+    /// <summary>
+    /// Display name for override reason
+    /// </summary>
+    [Column("reasonDisplay")]
+    [MaxLength(255)]
+    public string? ReasonDisplay { get; set; }
+
+    /// <summary>
+    /// One-time password for secure remote operations
+    /// </summary>
+    [Column("otp")]
+    [MaxLength(255)]
+    public string? Otp { get; set; }
+
+    /// <summary>
     /// System tracking: when record was inserted
     /// </summary>
     [Column("sys_created_at")]
