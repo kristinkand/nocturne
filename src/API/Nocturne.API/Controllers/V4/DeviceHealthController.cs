@@ -5,14 +5,15 @@ using Nocturne.API.Extensions;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 
-namespace Nocturne.API.Controllers.V1;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
 /// Controller for device health management operations
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/devices")]
+[Route("api/v4/devices")]
+[Tags("V4 Device Health")]
 public class DeviceHealthController : ControllerBase
 {
     private readonly IDeviceRegistryService _deviceRegistryService;

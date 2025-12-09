@@ -1,5 +1,24 @@
 /** Central exports for all constants */
 
+import type { ExternalUrls } from "$lib/api";
+
+/**
+ * External URLs from the backend - single source of truth
+ * These values match UrlConstants.External in the backend.
+ * The types are generated from the API via NSwag.
+ */
+export const EXTERNAL_URLS: ExternalUrls = {
+  website: "https://nightscoutfoundation.org/nocturne",
+  docsBase: "https://nightscoutfoundation.org/nocturne/docs",
+  connectorDocs: {
+    dexcom: "https://nightscoutfoundation.org/nocturne/docs/connectors/dexcom",
+    libre: "https://nightscoutfoundation.org/nocturne/docs/connectors/libre",
+    careLink: "https://nightscoutfoundation.org/nocturne/docs/connectors/carelink",
+    nightscout: "https://nightscoutfoundation.org/nocturne/docs/connectors/nightscout",
+    glooko: "https://nightscoutfoundation.org/nocturne/docs/connectors/glooko",
+  },
+};
+
 export * from "./tir-colors";
 export { default as TIR_COLORS } from "./tir-colors";
 import type { GlycemicThresholds } from "../api";

@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
-using Nocturne.API.Attributes;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 
-namespace Nocturne.API.Controllers.V1;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
 /// Controller for async processing status tracking
 /// </summary>
 [ApiController]
-[Route("api/v1/processing")]
+[Route("api/v4/processing")]
+[Tags("V4 Processing")]
 public class ProcessingController : ControllerBase
 {
     private readonly IProcessingStatusService _processingStatusService;
@@ -31,7 +31,6 @@ public class ProcessingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Processing status or 404 if not found</returns>
     [HttpGet("status/{correlationId}")]
-    [NightscoutEndpoint("/api/v1/processing/status/{correlationId}")]
     [ProducesResponseType(typeof(ProcessingStatusResponse), 200)]
     [ProducesResponseType(typeof(object), 404)]
     [ProducesResponseType(typeof(object), 500)]
@@ -133,7 +132,6 @@ public class ProcessingController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Processing status when completed or timeout response</returns>
     [HttpGet("status/{correlationId}/wait")]
-    [NightscoutEndpoint("/api/v1/processing/status/{correlationId}/wait")]
     [ProducesResponseType(typeof(ProcessingStatusResponse), 200)]
     [ProducesResponseType(typeof(object), 404)]
     [ProducesResponseType(typeof(object), 408)]

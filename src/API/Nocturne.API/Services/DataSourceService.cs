@@ -181,7 +181,7 @@ public class DataSourceService : IDataSourceService
                         },
                     },
                 },
-                DocumentationUrl = "https://docs.nocturne.health/connectors/dexcom",
+                DocumentationUrl = UrlConstants.External.DocsDexcom,
             },
             new()
             {
@@ -227,7 +227,7 @@ public class DataSourceService : IDataSourceService
                         },
                     },
                 },
-                DocumentationUrl = "https://docs.nocturne.health/connectors/libre",
+                DocumentationUrl = UrlConstants.External.DocsLibre,
             },
             new()
             {
@@ -264,7 +264,7 @@ public class DataSourceService : IDataSourceService
                         HelpText = "Two-letter country code",
                     },
                 },
-                DocumentationUrl = "https://docs.nocturne.health/connectors/carelink",
+                DocumentationUrl = UrlConstants.External.DocsCareLink,
             },
             new()
             {
@@ -294,7 +294,7 @@ public class DataSourceService : IDataSourceService
                         HelpText = "Required if Nightscout is secured",
                     },
                 },
-                DocumentationUrl = "https://docs.nocturne.health/connectors/nightscout",
+                DocumentationUrl = UrlConstants.External.DocsNightscout,
             },
             new()
             {
@@ -322,7 +322,7 @@ public class DataSourceService : IDataSourceService
                         Required = true,
                     },
                 },
-                DocumentationUrl = "https://docs.nocturne.health/connectors/glooko",
+                DocumentationUrl = UrlConstants.External.DocsGlooko,
             },
         };
     }

@@ -8,14 +8,15 @@ namespace Nocturne.Connectors.Core.Health
     {
         public static IHealthChecksBuilder AddConnectorHealthCheck(this IHealthChecksBuilder builder, string connectorName)
         {
-            // Use factory method to properly inject the connector name
-            return builder.AddCheck(
+            // Use HealthCheckRegistration to properly inject the connector name with IServiceProvider
+            return builder.Add(new HealthCheckRegistration(
                 connectorName,
                 sp => new ConnectorHealthCheck(
                     sp.GetRequiredService<IConnectorMetricsTracker>(),
                     connectorName),
+                failureStatus: HealthStatus.Degraded,
                 tags: new[] { "connector", "metrics" }
-            );
+            ));
         }
     }
 }

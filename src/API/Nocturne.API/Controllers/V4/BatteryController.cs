@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
-using Nocturne.API.Attributes;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models.Battery;
 
-namespace Nocturne.API.Controllers.V1;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
 /// Battery controller for tracking and analyzing device battery status
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v4/[controller]")]
+[Tags("V4 Battery")]
 public class BatteryController : ControllerBase
 {
     private readonly IBatteryService _batteryService;
@@ -28,7 +28,6 @@ public class BatteryController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Current battery status for all devices</returns>
     [HttpGet("current")]
-    [NightscoutEndpoint("/api/v1/battery/current")]
     [ProducesResponseType(typeof(CurrentBatteryStatus), 200)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<CurrentBatteryStatus>> GetCurrentBatteryStatus(
@@ -66,7 +65,6 @@ public class BatteryController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Battery readings for the specified period</returns>
     [HttpGet("readings")]
-    [NightscoutEndpoint("/api/v1/battery/readings")]
     [ProducesResponseType(typeof(IEnumerable<BatteryReading>), 200)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<IEnumerable<BatteryReading>>> GetBatteryReadings(
@@ -110,7 +108,6 @@ public class BatteryController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Battery statistics for the specified period</returns>
     [HttpGet("statistics")]
-    [NightscoutEndpoint("/api/v1/battery/statistics")]
     [ProducesResponseType(typeof(IEnumerable<BatteryStatistics>), 200)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<IEnumerable<BatteryStatistics>>> GetBatteryStatistics(
@@ -155,7 +152,6 @@ public class BatteryController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Charge cycles for the specified period</returns>
     [HttpGet("cycles")]
-    [NightscoutEndpoint("/api/v1/battery/cycles")]
     [ProducesResponseType(typeof(IEnumerable<ChargeCycle>), 200)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<IEnumerable<ChargeCycle>>> GetChargeCycles(
@@ -199,7 +195,6 @@ public class BatteryController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of device identifiers</returns>
     [HttpGet("devices")]
-    [NightscoutEndpoint("/api/v1/battery/devices")]
     [ProducesResponseType(typeof(IEnumerable<string>), 200)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<IEnumerable<string>>> GetKnownDevices(

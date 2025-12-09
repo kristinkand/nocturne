@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Nocturne.Core.Constants;
+using Nocturne.Core.Models;
 
 namespace Nocturne.API.Controllers;
 
@@ -25,6 +26,32 @@ public class MetadataController : ControllerBase
             {
                 AvailableEvents = Enum.GetValues<WebSocketEvents>(),
                 Description = "Available WebSocket event types for real-time communication",
+            }
+        );
+    }
+
+    /// <summary>
+    /// Get external URLs for documentation and website
+    /// This endpoint provides a single source of truth for all external Nocturne URLs
+    /// </summary>
+    /// <returns>External URLs configuration</returns>
+    [HttpGet("external-urls")]
+    [ProducesResponseType(typeof(ExternalUrls), 200)]
+    public ActionResult<ExternalUrls> GetExternalUrls()
+    {
+        return Ok(
+            new ExternalUrls
+            {
+                Website = UrlConstants.External.NocturneWebsite,
+                DocsBase = UrlConstants.External.NocturneDocsBase,
+                ConnectorDocs = new ConnectorDocsUrls
+                {
+                    Dexcom = UrlConstants.External.DocsDexcom,
+                    Libre = UrlConstants.External.DocsLibre,
+                    CareLink = UrlConstants.External.DocsCareLink,
+                    Nightscout = UrlConstants.External.DocsNightscout,
+                    Glooko = UrlConstants.External.DocsGlooko,
+                },
             }
         );
     }

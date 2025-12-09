@@ -21,3 +21,4 @@ TestResults/
 .cursor
 cloudflared-config.yml
 appsettings.json
+appsettings.*.json

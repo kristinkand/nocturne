@@ -27,6 +27,9 @@
     Calendar,
     BatteryFull,
     Sunrise,
+    CheckCircle,
+    Terminal,
+    TestTube,
   } from "lucide-svelte";
   import type { AuthUser } from "$lib/stores/auth.svelte";
 
@@ -115,6 +118,22 @@
       title: "Profile",
       href: "/profile",
       icon: User,
+    },
+    {
+      title: "Dev Tools",
+      icon: Terminal,
+      children: [
+        {
+          title: "Compatibility",
+          href: "/compatibility",
+          icon: CheckCircle,
+        },
+        {
+          title: "Test Endpoint Compatibility",
+          href: "/compatibility/test",
+          icon: TestTube,
+        },
+      ],
     },
     {
       title: "Settings",

@@ -3,15 +3,16 @@ using Nocturne.API.Services.Compatibility;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Repositories;
 
-namespace Nocturne.API.Controllers.V3;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
 /// Controller for discrepancy analysis and compatibility dashboard
 /// Provides endpoints for monitoring Nightscout/Nocturne compatibility
 /// </summary>
 [ApiController]
-[Route("api/v3/[controller]")]
+[Route("api/v4/[controller]")]
 [Produces("application/json")]
+[Tags("V4 Discrepancy")]
 public class DiscrepancyController : ControllerBase
 {
     private readonly DiscrepancyAnalysisRepository _discrepancyRepository;

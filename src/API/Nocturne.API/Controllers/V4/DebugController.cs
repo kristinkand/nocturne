@@ -4,26 +4,27 @@ using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Abstractions;
 
-namespace Nocturne.API.Controllers.V1;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
-/// Controller for echo and debug endpoints
+/// Controller for debug and query inspection endpoints
 /// Provides query debugging and MongoDB query inspection capabilities
 /// </summary>
 [ApiController]
-[Route("api/v1")]
+[Route("api/v4/debug")]
 [Produces("application/json")]
-public class EchoController : ControllerBase
+[Tags("V4 Debug")]
+public class DebugController : ControllerBase
 {
     private readonly IPostgreSqlService _postgreSqlService;
-    private readonly ILogger<EchoController> _logger;
+    private readonly ILogger<DebugController> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the EchoController
+    /// Initializes a new instance of the DebugController
     /// </summary>
     /// <param name="postgreSqlService">PostgreSQL service for data operations</param>
     /// <param name="logger">Logger instance</param>
-    public EchoController(IPostgreSqlService postgreSqlService, ILogger<EchoController> logger)
+    public DebugController(IPostgreSqlService postgreSqlService, ILogger<DebugController> logger)
     {
         _postgreSqlService =
             postgreSqlService ?? throw new ArgumentNullException(nameof(postgreSqlService));

@@ -5,14 +5,15 @@ using Nocturne.API.Extensions;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 
-namespace Nocturne.API.Controllers.V1;
+namespace Nocturne.API.Controllers.V4;
 
 /// <summary>
 /// Controller for device alert management operations
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("api/v1/devices/alerts")]
+[Route("api/v4/devices/alerts")]
+[Tags("V4 Device Alerts")]
 public class DeviceAlertsController : ControllerBase
 {
     private readonly IDeviceAlertEngine _alertEngine;

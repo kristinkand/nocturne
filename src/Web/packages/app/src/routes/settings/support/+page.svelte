@@ -28,6 +28,7 @@
     HelpCircle,
     CheckCircle,
   } from "lucide-svelte";
+  import { EXTERNAL_URLS } from "$lib/constants";
 
   let includeDeviceInfo = $state(true);
   let includeRecentLogs = $state(true);
@@ -54,7 +55,7 @@
       name: "Documentation",
       description: "Guides, tutorials, and API reference",
       icon: BookOpen,
-      href: "https://nocturne.dev/docs",
+      href: EXTERNAL_URLS.docsBase!,
     },
     {
       name: "Nightscout Foundation",

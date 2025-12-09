@@ -1562,6 +1562,45 @@ export class MetadataClient {
         }
         return Promise.resolve<WebSocketEventsMetadata>(null as any);
     }
+
+    /**
+     * Get external URLs for documentation and website
+    This endpoint provides a single source of truth for all external Nocturne URLs
+     * @return External URLs configuration
+     */
+    getExternalUrls(signal?: AbortSignal): Promise<ExternalUrls> {
+        let url_ = this.baseUrl + "/api/Metadata/external-urls";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetExternalUrls(_response);
+        });
+    }
+
+    protected processGetExternalUrls(response: Response): Promise<ExternalUrls> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ExternalUrls;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ExternalUrls>(null as any);
+    }
 }
 
 export class OidcClient {
@@ -3000,6 +3039,264 @@ export class WellKnownClient {
     }
 }
 
+export class BatteryClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get the current battery status for all tracked devices
+     * @param recentMinutes (optional) How many minutes back to consider for "recent" readings (default: 30)
+     * @return Current battery status for all devices
+     */
+    getCurrentBatteryStatus(recentMinutes?: number | undefined, signal?: AbortSignal): Promise<CurrentBatteryStatus> {
+        let url_ = this.baseUrl + "/api/v4/Battery/current?";
+        if (recentMinutes === null)
+            throw new globalThis.Error("The parameter 'recentMinutes' cannot be null.");
+        else if (recentMinutes !== undefined)
+            url_ += "recentMinutes=" + encodeURIComponent("" + recentMinutes) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetCurrentBatteryStatus(_response);
+        });
+    }
+
+    protected processGetCurrentBatteryStatus(response: Response): Promise<CurrentBatteryStatus> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CurrentBatteryStatus;
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CurrentBatteryStatus>(null as any);
+    }
+
+    /**
+     * Get battery readings for a device over a time period
+     * @param device (optional) Device identifier (optional, returns all devices if not specified)
+     * @param from (optional) Start time in milliseconds since Unix epoch
+     * @param to (optional) End time in milliseconds since Unix epoch
+     * @return Battery readings for the specified period
+     */
+    getBatteryReadings(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, signal?: AbortSignal): Promise<BatteryReading[]> {
+        let url_ = this.baseUrl + "/api/v4/Battery/readings?";
+        if (device !== undefined && device !== null)
+            url_ += "device=" + encodeURIComponent("" + device) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent("" + from) + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent("" + to) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBatteryReadings(_response);
+        });
+    }
+
+    protected processGetBatteryReadings(response: Response): Promise<BatteryReading[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatteryReading[];
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BatteryReading[]>(null as any);
+    }
+
+    /**
+     * Get battery statistics for a device or all devices
+     * @param device (optional) Device identifier (optional, returns all devices if not specified)
+     * @param from (optional) Start time in milliseconds since Unix epoch (default: 7 days ago)
+     * @param to (optional) End time in milliseconds since Unix epoch (default: now)
+     * @return Battery statistics for the specified period
+     */
+    getBatteryStatistics(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, signal?: AbortSignal): Promise<BatteryStatistics[]> {
+        let url_ = this.baseUrl + "/api/v4/Battery/statistics?";
+        if (device !== undefined && device !== null)
+            url_ += "device=" + encodeURIComponent("" + device) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent("" + from) + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent("" + to) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBatteryStatistics(_response);
+        });
+    }
+
+    protected processGetBatteryStatistics(response: Response): Promise<BatteryStatistics[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatteryStatistics[];
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BatteryStatistics[]>(null as any);
+    }
+
+    /**
+     * Get charge cycle history for a device
+     * @param device (optional) Device identifier (optional, returns all devices if not specified)
+     * @param from (optional) Start time in milliseconds since Unix epoch
+     * @param to (optional) End time in milliseconds since Unix epoch
+     * @param limit (optional) Maximum number of cycles to return (default: 100)
+     * @return Charge cycles for the specified period
+     */
+    getChargeCycles(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, limit?: number | undefined, signal?: AbortSignal): Promise<ChargeCycle[]> {
+        let url_ = this.baseUrl + "/api/v4/Battery/cycles?";
+        if (device !== undefined && device !== null)
+            url_ += "device=" + encodeURIComponent("" + device) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent("" + from) + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent("" + to) + "&";
+        if (limit === null)
+            throw new globalThis.Error("The parameter 'limit' cannot be null.");
+        else if (limit !== undefined)
+            url_ += "limit=" + encodeURIComponent("" + limit) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetChargeCycles(_response);
+        });
+    }
+
+    protected processGetChargeCycles(response: Response): Promise<ChargeCycle[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ChargeCycle[];
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ChargeCycle[]>(null as any);
+    }
+
+    /**
+     * Get list of all known devices with battery data
+     * @return List of device identifiers
+     */
+    getKnownDevices(signal?: AbortSignal): Promise<string[]> {
+        let url_ = this.baseUrl + "/api/v4/Battery/devices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetKnownDevices(_response);
+        });
+    }
+
+    protected processGetKnownDevices(response: Response): Promise<string[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string[];
+            return result200;
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string[]>(null as any);
+    }
+}
+
 export class CompatibilityClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -3375,6 +3672,1328 @@ export class CompatibilityClient {
     }
 }
 
+export class DebugClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Echo endpoint for debugging MongoDB queries
+    Returns information about how REST API parameters translate into MongoDB queries
+     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
+     * @return Query information returned successfully
+     */
+    echoQuery(echo: string, signal?: AbortSignal): Promise<any> {
+        let url_ = this.baseUrl + "/api/v4/debug/echo/{echo}";
+        if (echo === undefined || echo === null)
+            throw new globalThis.Error("The parameter 'echo' must be defined.");
+        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processEchoQuery(_response);
+        });
+    }
+
+    protected processEchoQuery(response: Response): Promise<any> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Invalid parameters", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<any>(null as any);
+    }
+
+    /**
+     * Echo endpoint for debugging MongoDB queries with model
+    Returns information about how REST API parameters translate into MongoDB queries
+     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
+     * @param model Model specification
+     * @return Query information returned successfully
+     */
+    echoQueryWithModel(echo: string, model: string, signal?: AbortSignal): Promise<any> {
+        let url_ = this.baseUrl + "/api/v4/debug/echo/{echo}/{model}";
+        if (echo === undefined || echo === null)
+            throw new globalThis.Error("The parameter 'echo' must be defined.");
+        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
+        if (model === undefined || model === null)
+            throw new globalThis.Error("The parameter 'model' must be defined.");
+        url_ = url_.replace("{model}", encodeURIComponent("" + model));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processEchoQueryWithModel(_response);
+        });
+    }
+
+    protected processEchoQueryWithModel(response: Response): Promise<any> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Invalid parameters", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<any>(null as any);
+    }
+
+    /**
+     * Echo endpoint for debugging MongoDB queries with model and spec
+    Returns information about how REST API parameters translate into MongoDB queries
+     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
+     * @param model Model specification
+     * @param spec Specification parameter
+     * @return Query information returned successfully
+     */
+    echoQueryWithModelAndSpec(echo: string, model: string, spec: string, signal?: AbortSignal): Promise<any> {
+        let url_ = this.baseUrl + "/api/v4/debug/echo/{echo}/{model}/{spec}";
+        if (echo === undefined || echo === null)
+            throw new globalThis.Error("The parameter 'echo' must be defined.");
+        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
+        if (model === undefined || model === null)
+            throw new globalThis.Error("The parameter 'model' must be defined.");
+        url_ = url_.replace("{model}", encodeURIComponent("" + model));
+        if (spec === undefined || spec === null)
+            throw new globalThis.Error("The parameter 'spec' must be defined.");
+        url_ = url_.replace("{spec}", encodeURIComponent("" + spec));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processEchoQueryWithModelAndSpec(_response);
+        });
+    }
+
+    protected processEchoQueryWithModelAndSpec(response: Response): Promise<any> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Invalid parameters", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<any>(null as any);
+    }
+
+    /**
+     * Preview endpoint for entry creation without persistence
+    Allows previewing entry data without actually storing it in the database
+     * @param entries Entry data to preview (single object or array)
+     * @return Entry data previewed successfully
+     */
+    previewEntries(entries: any, signal?: AbortSignal): Promise<any> {
+        let url_ = this.baseUrl + "/api/v4/debug/entries/preview";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(entries);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPreviewEntries(_response);
+        });
+    }
+
+    protected processPreviewEntries(response: Response): Promise<any> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("Invalid entry data", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<any>(null as any);
+    }
+
+    testPostgreSqlConnection(signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v1/Debug/postgresql-test";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processTestPostgreSqlConnection(_response);
+        });
+    }
+
+    protected processTestPostgreSqlConnection(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    getEntriesDirect(signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v1/Debug/entries-direct";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetEntriesDirect(_response);
+        });
+    }
+
+    protected processGetEntriesDirect(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+}
+
+export class DeviceAlertsClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get active device alerts for the current user
+     * @param deviceId (optional) Optional device ID filter
+     * @return List of active device alerts
+     */
+    getActiveDeviceAlerts(deviceId?: string | null | undefined, signal?: AbortSignal): Promise<DeviceAlert[]> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts?";
+        if (deviceId !== undefined && deviceId !== null)
+            url_ += "deviceId=" + encodeURIComponent("" + deviceId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetActiveDeviceAlerts(_response);
+        });
+    }
+
+    protected processGetActiveDeviceAlerts(response: Response): Promise<DeviceAlert[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlert[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceAlert[]>(null as any);
+    }
+
+    /**
+     * Get device alerts summary by type
+     * @return Alert summary
+     */
+    getDeviceAlertSummary(signal?: AbortSignal): Promise<DeviceAlertSummary> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts/summary";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDeviceAlertSummary(_response);
+        });
+    }
+
+    protected processGetDeviceAlertSummary(response: Response): Promise<DeviceAlertSummary> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlertSummary;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceAlertSummary>(null as any);
+    }
+
+    /**
+     * Acknowledge a device alert
+     * @param alertId Alert identifier
+     * @return Success response
+     */
+    acknowledgeDeviceAlert(alertId: string, signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts/{alertId}/acknowledge";
+        if (alertId === undefined || alertId === null)
+            throw new globalThis.Error("The parameter 'alertId' must be defined.");
+        url_ = url_.replace("{alertId}", encodeURIComponent("" + alertId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            signal,
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAcknowledgeDeviceAlert(_response);
+        });
+    }
+
+    protected processAcknowledgeDeviceAlert(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Test device alert generation for a specific device
+     * @param deviceId Device identifier
+     * @return List of generated alerts
+     */
+    testDeviceAlerts(deviceId: string, signal?: AbortSignal): Promise<DeviceAlert[]> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts/test/{deviceId}";
+        if (deviceId === undefined || deviceId === null)
+            throw new globalThis.Error("The parameter 'deviceId' must be defined.");
+        url_ = url_.replace("{deviceId}", encodeURIComponent("" + deviceId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processTestDeviceAlerts(_response);
+        });
+    }
+
+    protected processTestDeviceAlerts(response: Response): Promise<DeviceAlert[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlert[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceAlert[]>(null as any);
+    }
+
+    /**
+     * Get alert settings/preferences for device alerts
+     * @return Alert settings
+     */
+    getAlertSettings(signal?: AbortSignal): Promise<DeviceAlertSettings> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAlertSettings(_response);
+        });
+    }
+
+    protected processGetAlertSettings(response: Response): Promise<DeviceAlertSettings> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlertSettings;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceAlertSettings>(null as any);
+    }
+
+    /**
+     * Update alert settings/preferences for device alerts
+     * @param settings Alert settings
+     * @return Success response
+     */
+    updateAlertSettings(settings: DeviceAlertSettings, signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v4/devices/alerts/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(settings);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateAlertSettings(_response);
+        });
+    }
+
+    protected processUpdateAlertSettings(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+}
+
+export class DeviceHealthClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get all devices for the current user
+     * @return List of user's devices
+     */
+    getUserDevices(signal?: AbortSignal): Promise<DeviceHealth[]> {
+        let url_ = this.baseUrl + "/api/v4/devices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUserDevices(_response);
+        });
+    }
+
+    protected processGetUserDevices(response: Response): Promise<DeviceHealth[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceHealth[]>(null as any);
+    }
+
+    /**
+     * Register a new device
+     * @param request Device registration request
+     * @return Registered device information
+     */
+    registerDevice(request: DeviceRegistrationRequest, signal?: AbortSignal): Promise<DeviceHealth> {
+        let url_ = this.baseUrl + "/api/v4/devices";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processRegisterDevice(_response);
+        });
+    }
+
+    protected processRegisterDevice(response: Response): Promise<DeviceHealth> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceHealth>(null as any);
+    }
+
+    /**
+     * Get device health information
+     * @param id Device identifier
+     * @return Device health information
+     */
+    getDeviceHealth(id: string, signal?: AbortSignal): Promise<DeviceHealthAnalysis> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}/health";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDeviceHealth(_response);
+        });
+    }
+
+    protected processGetDeviceHealth(response: Response): Promise<DeviceHealthAnalysis> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealthAnalysis;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceHealthAnalysis>(null as any);
+    }
+
+    /**
+     * Update device health metrics
+     * @param id Device identifier
+     * @param update Device health update
+     * @return Success response
+     */
+    updateDeviceHealth(id: string, update: DeviceHealthUpdate, signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}/health";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(update);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateDeviceHealth(_response);
+        });
+    }
+
+    protected processUpdateDeviceHealth(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Get device information
+     * @param id Device identifier
+     * @return Device information
+     */
+    getDevice(id: string, signal?: AbortSignal): Promise<DeviceHealth> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDevice(_response);
+        });
+    }
+
+    protected processGetDevice(response: Response): Promise<DeviceHealth> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceHealth>(null as any);
+    }
+
+    /**
+     * Remove a device from the registry
+     * @param id Device identifier
+     * @return Success response
+     */
+    removeDevice(id: string, signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processRemoveDevice(_response);
+        });
+    }
+
+    protected processRemoveDevice(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Update device settings
+     * @param id Device identifier
+     * @param settings Device settings update
+     * @return Success response
+     */
+    updateDeviceSettings(id: string, settings: DeviceSettingsUpdate, signal?: AbortSignal): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}/settings";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(settings);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateDeviceSettings(_response);
+        });
+    }
+
+    protected processUpdateDeviceSettings(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Get device health report
+     * @param id Device identifier
+     * @param period (optional) Report period in days (default: 30)
+     * @return Device health report
+     */
+    getDeviceHealthReport(id: string, period?: number | undefined, signal?: AbortSignal): Promise<DeviceHealthReport> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}/report?";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (period === null)
+            throw new globalThis.Error("The parameter 'period' cannot be null.");
+        else if (period !== undefined)
+            url_ += "period=" + encodeURIComponent("" + period) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDeviceHealthReport(_response);
+        });
+    }
+
+    protected processGetDeviceHealthReport(response: Response): Promise<DeviceHealthReport> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealthReport;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DeviceHealthReport>(null as any);
+    }
+
+    /**
+     * Get maintenance predictions for a device
+     * @param id Device identifier
+     * @return Maintenance prediction
+     */
+    getMaintenancePrediction(id: string, signal?: AbortSignal): Promise<MaintenancePrediction> {
+        let url_ = this.baseUrl + "/api/v4/devices/{id}/maintenance/prediction";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetMaintenancePrediction(_response);
+        });
+    }
+
+    protected processGetMaintenancePrediction(response: Response): Promise<MaintenancePrediction> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MaintenancePrediction;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MaintenancePrediction>(null as any);
+    }
+}
+
+export class DiscrepancyClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get overall compatibility metrics for dashboard overview
+     * @param fromDate (optional) Start date for metrics (optional)
+     * @param toDate (optional) End date for metrics (optional)
+     * @return Compatibility metrics including success rate and response times
+     */
+    getCompatibilityMetrics(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<CompatibilityMetrics> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/metrics?";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetCompatibilityMetrics(_response);
+        });
+    }
+
+    protected processGetCompatibilityMetrics(response: Response): Promise<CompatibilityMetrics> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompatibilityMetrics;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CompatibilityMetrics>(null as any);
+    }
+
+    /**
+     * Get per-endpoint compatibility metrics
+     * @param fromDate (optional) Start date for metrics (optional)
+     * @param toDate (optional) End date for metrics (optional)
+     * @return List of endpoint-specific compatibility metrics
+     */
+    getEndpointMetrics(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<EndpointMetrics[]> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/endpoints?";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetEndpointMetrics(_response);
+        });
+    }
+
+    protected processGetEndpointMetrics(response: Response): Promise<EndpointMetrics[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EndpointMetrics[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<EndpointMetrics[]>(null as any);
+    }
+
+    /**
+     * Get detailed discrepancy analyses with filtering and pagination
+     * @param requestPath (optional) Filter by request path (optional)
+     * @param overallMatch (optional) Filter by overall match type (optional)
+     * @param fromDate (optional) Start date for filter (optional)
+     * @param toDate (optional) End date for filter (optional)
+     * @param count (optional) Number of results to return (default: 100, max: 1000)
+     * @param skip (optional) Number of results to skip for pagination (default: 0)
+     * @return List of detailed discrepancy analyses
+     */
+    getDiscrepancyAnalyses(requestPath?: string | null | undefined, overallMatch?: number | null | undefined, fromDate?: Date | null | undefined, toDate?: Date | null | undefined, count?: number | undefined, skip?: number | undefined, signal?: AbortSignal): Promise<DiscrepancyAnalysisDto[]> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/analyses?";
+        if (requestPath !== undefined && requestPath !== null)
+            url_ += "requestPath=" + encodeURIComponent("" + requestPath) + "&";
+        if (overallMatch !== undefined && overallMatch !== null)
+            url_ += "overallMatch=" + encodeURIComponent("" + overallMatch) + "&";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (count === null)
+            throw new globalThis.Error("The parameter 'count' cannot be null.");
+        else if (count !== undefined)
+            url_ += "count=" + encodeURIComponent("" + count) + "&";
+        if (skip === null)
+            throw new globalThis.Error("The parameter 'skip' cannot be null.");
+        else if (skip !== undefined)
+            url_ += "skip=" + encodeURIComponent("" + skip) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDiscrepancyAnalyses(_response);
+        });
+    }
+
+    protected processGetDiscrepancyAnalyses(response: Response): Promise<DiscrepancyAnalysisDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DiscrepancyAnalysisDto[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DiscrepancyAnalysisDto[]>(null as any);
+    }
+
+    /**
+     * Get a specific discrepancy analysis by ID
+     * @param id Analysis ID
+     * @return Detailed discrepancy analysis
+     */
+    getDiscrepancyAnalysis(id: string, signal?: AbortSignal): Promise<DiscrepancyAnalysisDto> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/analyses/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDiscrepancyAnalysis(_response);
+        });
+    }
+
+    protected processGetDiscrepancyAnalysis(response: Response): Promise<DiscrepancyAnalysisDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DiscrepancyAnalysisDto;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DiscrepancyAnalysisDto>(null as any);
+    }
+
+    /**
+     * Get real-time compatibility status summary
+     * @return Current compatibility status
+     */
+    getCompatibilityStatus(signal?: AbortSignal): Promise<CompatibilityStatus> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/status";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetCompatibilityStatus(_response);
+        });
+    }
+
+    protected processGetCompatibilityStatus(response: Response): Promise<CompatibilityStatus> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompatibilityStatus;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CompatibilityStatus>(null as any);
+    }
+
+    /**
+     * Generate a text-based compatibility report
+     * @param fromDate (optional) Start date for report (optional)
+     * @param toDate (optional) End date for report (optional)
+     * @return Text-based compatibility report
+     */
+    getTextReport(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<string> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/reports/text?";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetTextReport(_response);
+        });
+    }
+
+    protected processGetTextReport(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Generate a migration readiness assessment
+     * @param fromDate (optional) Start date for assessment (optional)
+     * @param toDate (optional) End date for assessment (optional)
+     * @return Migration readiness assessment
+     */
+    getMigrationAssessment(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<MigrationReadinessReport> {
+        let url_ = this.baseUrl + "/api/v4/Discrepancy/reports/migration-assessment?";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetMigrationAssessment(_response);
+        });
+    }
+
+    protected processGetMigrationAssessment(response: Response): Promise<MigrationReadinessReport> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MigrationReadinessReport;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MigrationReadinessReport>(null as any);
+    }
+}
+
 export class PredictionClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -3475,6 +5094,319 @@ export class PredictionClient {
             });
         }
         return Promise.resolve<PredictionStatusResponse>(null as any);
+    }
+}
+
+export class ProcessingClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get the processing status for a correlation ID
+     * @param correlationId The correlation ID to check
+     * @return Processing status or 404 if not found
+     */
+    getProcessingStatus(correlationId: string, signal?: AbortSignal): Promise<ProcessingStatusResponse> {
+        let url_ = this.baseUrl + "/api/v4/processing/status/{correlationId}";
+        if (correlationId === undefined || correlationId === null)
+            throw new globalThis.Error("The parameter 'correlationId' must be defined.");
+        url_ = url_.replace("{correlationId}", encodeURIComponent("" + correlationId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetProcessingStatus(_response);
+        });
+    }
+
+    protected processGetProcessingStatus(response: Response): Promise<ProcessingStatusResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProcessingStatusResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            let result500: any = null;
+            result500 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result500);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ProcessingStatusResponse>(null as any);
+    }
+
+    /**
+     * Wait for processing to complete with long polling
+     * @param correlationId The correlation ID to wait for
+     * @param timeoutSeconds (optional) Maximum time to wait in seconds (default: 30)
+     * @return Processing status when completed or timeout response
+     */
+    waitForCompletion(correlationId: string, timeoutSeconds?: number | undefined, signal?: AbortSignal): Promise<ProcessingStatusResponse> {
+        let url_ = this.baseUrl + "/api/v4/processing/status/{correlationId}/wait?";
+        if (correlationId === undefined || correlationId === null)
+            throw new globalThis.Error("The parameter 'correlationId' must be defined.");
+        url_ = url_.replace("{correlationId}", encodeURIComponent("" + correlationId));
+        if (timeoutSeconds === null)
+            throw new globalThis.Error("The parameter 'timeoutSeconds' cannot be null.");
+        else if (timeoutSeconds !== undefined)
+            url_ += "timeoutSeconds=" + encodeURIComponent("" + timeoutSeconds) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processWaitForCompletion(_response);
+        });
+    }
+
+    protected processWaitForCompletion(response: Response): Promise<ProcessingStatusResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProcessingStatusResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status === 408) {
+            return response.text().then((_responseText) => {
+            let result408: any = null;
+            result408 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result408);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            let result500: any = null;
+            result500 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result500);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ProcessingStatusResponse>(null as any);
+    }
+}
+
+export class RetrospectiveClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get retrospective data at a specific point in time
+    Returns IOB, COB, glucose, basal rate, and recent treatments
+     * @param time (optional) Unix timestamp in milliseconds for the retrospective point
+     * @return Returns the retrospective data
+     */
+    getRetrospectiveData(time?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveDataResponse> {
+        let url_ = this.baseUrl + "/api/v4/Retrospective/at?";
+        if (time === null)
+            throw new globalThis.Error("The parameter 'time' cannot be null.");
+        else if (time !== undefined)
+            url_ += "time=" + encodeURIComponent("" + time) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRetrospectiveData(_response);
+        });
+    }
+
+    protected processGetRetrospectiveData(response: Response): Promise<RetrospectiveDataResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveDataResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("If the time parameter is invalid", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("If there was an internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RetrospectiveDataResponse>(null as any);
+    }
+
+    /**
+     * Get retrospective data for an entire day at specified interval
+    Returns IOB, COB, glucose, and basal data for every interval throughout the day
+     * @param date (optional) Date in YYYY-MM-DD format
+     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
+     * @return Returns the retrospective timeline data
+     */
+    getRetrospectiveTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveTimelineResponse> {
+        let url_ = this.baseUrl + "/api/v4/Retrospective/timeline?";
+        if (date === null)
+            throw new globalThis.Error("The parameter 'date' cannot be null.");
+        else if (date !== undefined)
+            url_ += "date=" + encodeURIComponent("" + date) + "&";
+        if (intervalMinutes === null)
+            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
+        else if (intervalMinutes !== undefined)
+            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRetrospectiveTimeline(_response);
+        });
+    }
+
+    protected processGetRetrospectiveTimeline(response: Response): Promise<RetrospectiveTimelineResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveTimelineResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("If parameters are invalid", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("If there was an internal server error", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RetrospectiveTimelineResponse>(null as any);
+    }
+
+    /**
+     * Get basal rate timeline for a day
+    Returns basal rate data points showing scheduled and temp basal changes
+     * @param date (optional) Date in YYYY-MM-DD format
+     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
+     * @return Basal rate timeline for the day
+     */
+    getBasalTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<BasalTimelineResponse> {
+        let url_ = this.baseUrl + "/api/v4/Retrospective/basal-timeline?";
+        if (date === null)
+            throw new globalThis.Error("The parameter 'date' cannot be null.");
+        else if (date !== undefined)
+            url_ += "date=" + encodeURIComponent("" + date) + "&";
+        if (intervalMinutes === null)
+            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
+        else if (intervalMinutes !== undefined)
+            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBasalTimeline(_response);
+        });
+    }
+
+    protected processGetBasalTimeline(response: Response): Promise<BasalTimelineResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BasalTimelineResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BasalTimelineResponse>(null as any);
     }
 }
 
@@ -4891,333 +6823,6 @@ export class DeviceStatusClient {
             });
         }
         return Promise.resolve<DeviceStatus[]>(null as any);
-    }
-}
-
-export class DiscrepancyClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get overall compatibility metrics for dashboard overview
-     * @param fromDate (optional) Start date for metrics (optional)
-     * @param toDate (optional) End date for metrics (optional)
-     * @return Compatibility metrics including success rate and response times
-     */
-    getCompatibilityMetrics(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<CompatibilityMetrics> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/metrics?";
-        if (fromDate !== undefined && fromDate !== null)
-            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
-        if (toDate !== undefined && toDate !== null)
-            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetCompatibilityMetrics(_response);
-        });
-    }
-
-    protected processGetCompatibilityMetrics(response: Response): Promise<CompatibilityMetrics> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompatibilityMetrics;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<CompatibilityMetrics>(null as any);
-    }
-
-    /**
-     * Get per-endpoint compatibility metrics
-     * @param fromDate (optional) Start date for metrics (optional)
-     * @param toDate (optional) End date for metrics (optional)
-     * @return List of endpoint-specific compatibility metrics
-     */
-    getEndpointMetrics(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<EndpointMetrics[]> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/endpoints?";
-        if (fromDate !== undefined && fromDate !== null)
-            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
-        if (toDate !== undefined && toDate !== null)
-            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetEndpointMetrics(_response);
-        });
-    }
-
-    protected processGetEndpointMetrics(response: Response): Promise<EndpointMetrics[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EndpointMetrics[];
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<EndpointMetrics[]>(null as any);
-    }
-
-    /**
-     * Get detailed discrepancy analyses with filtering and pagination
-     * @param requestPath (optional) Filter by request path (optional)
-     * @param overallMatch (optional) Filter by overall match type (optional)
-     * @param fromDate (optional) Start date for filter (optional)
-     * @param toDate (optional) End date for filter (optional)
-     * @param count (optional) Number of results to return (default: 100, max: 1000)
-     * @param skip (optional) Number of results to skip for pagination (default: 0)
-     * @return List of detailed discrepancy analyses
-     */
-    getDiscrepancyAnalyses(requestPath?: string | null | undefined, overallMatch?: number | null | undefined, fromDate?: Date | null | undefined, toDate?: Date | null | undefined, count?: number | undefined, skip?: number | undefined, signal?: AbortSignal): Promise<DiscrepancyAnalysisDto[]> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/analyses?";
-        if (requestPath !== undefined && requestPath !== null)
-            url_ += "requestPath=" + encodeURIComponent("" + requestPath) + "&";
-        if (overallMatch !== undefined && overallMatch !== null)
-            url_ += "overallMatch=" + encodeURIComponent("" + overallMatch) + "&";
-        if (fromDate !== undefined && fromDate !== null)
-            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
-        if (toDate !== undefined && toDate !== null)
-            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
-        if (count === null)
-            throw new globalThis.Error("The parameter 'count' cannot be null.");
-        else if (count !== undefined)
-            url_ += "count=" + encodeURIComponent("" + count) + "&";
-        if (skip === null)
-            throw new globalThis.Error("The parameter 'skip' cannot be null.");
-        else if (skip !== undefined)
-            url_ += "skip=" + encodeURIComponent("" + skip) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDiscrepancyAnalyses(_response);
-        });
-    }
-
-    protected processGetDiscrepancyAnalyses(response: Response): Promise<DiscrepancyAnalysisDto[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DiscrepancyAnalysisDto[];
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DiscrepancyAnalysisDto[]>(null as any);
-    }
-
-    /**
-     * Get a specific discrepancy analysis by ID
-     * @param id Analysis ID
-     * @return Detailed discrepancy analysis
-     */
-    getDiscrepancyAnalysis(id: string, signal?: AbortSignal): Promise<DiscrepancyAnalysisDto> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/analyses/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDiscrepancyAnalysis(_response);
-        });
-    }
-
-    protected processGetDiscrepancyAnalysis(response: Response): Promise<DiscrepancyAnalysisDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DiscrepancyAnalysisDto;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DiscrepancyAnalysisDto>(null as any);
-    }
-
-    /**
-     * Get real-time compatibility status summary
-     * @return Current compatibility status
-     */
-    getCompatibilityStatus(signal?: AbortSignal): Promise<CompatibilityStatus> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/status";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetCompatibilityStatus(_response);
-        });
-    }
-
-    protected processGetCompatibilityStatus(response: Response): Promise<CompatibilityStatus> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompatibilityStatus;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<CompatibilityStatus>(null as any);
-    }
-
-    /**
-     * Generate a text-based compatibility report
-     * @param fromDate (optional) Start date for report (optional)
-     * @param toDate (optional) End date for report (optional)
-     * @return Text-based compatibility report
-     */
-    getTextReport(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<string> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/reports/text?";
-        if (fromDate !== undefined && fromDate !== null)
-            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
-        if (toDate !== undefined && toDate !== null)
-            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetTextReport(_response);
-        });
-    }
-
-    protected processGetTextReport(response: Response): Promise<string> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<string>(null as any);
-    }
-
-    /**
-     * Generate a migration readiness assessment
-     * @param fromDate (optional) Start date for assessment (optional)
-     * @param toDate (optional) End date for assessment (optional)
-     * @return Migration readiness assessment
-     */
-    getMigrationAssessment(fromDate?: Date | null | undefined, toDate?: Date | null | undefined, signal?: AbortSignal): Promise<MigrationReadinessReport> {
-        let url_ = this.baseUrl + "/api/v3/Discrepancy/reports/migration-assessment?";
-        if (fromDate !== undefined && fromDate !== null)
-            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
-        if (toDate !== undefined && toDate !== null)
-            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetMigrationAssessment(_response);
-        });
-    }
-
-    protected processGetMigrationAssessment(response: Response): Promise<MigrationReadinessReport> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MigrationReadinessReport;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<MigrationReadinessReport>(null as any);
     }
 }
 
@@ -9657,264 +11262,6 @@ export class AlexaClient {
     }
 }
 
-export class BatteryClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get the current battery status for all tracked devices
-     * @param recentMinutes (optional) How many minutes back to consider for "recent" readings (default: 30)
-     * @return Current battery status for all devices
-     */
-    getCurrentBatteryStatus(recentMinutes?: number | undefined, signal?: AbortSignal): Promise<CurrentBatteryStatus> {
-        let url_ = this.baseUrl + "/api/v1/Battery/current?";
-        if (recentMinutes === null)
-            throw new globalThis.Error("The parameter 'recentMinutes' cannot be null.");
-        else if (recentMinutes !== undefined)
-            url_ += "recentMinutes=" + encodeURIComponent("" + recentMinutes) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetCurrentBatteryStatus(_response);
-        });
-    }
-
-    protected processGetCurrentBatteryStatus(response: Response): Promise<CurrentBatteryStatus> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CurrentBatteryStatus;
-            return result200;
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<CurrentBatteryStatus>(null as any);
-    }
-
-    /**
-     * Get battery readings for a device over a time period
-     * @param device (optional) Device identifier (optional, returns all devices if not specified)
-     * @param from (optional) Start time in milliseconds since Unix epoch
-     * @param to (optional) End time in milliseconds since Unix epoch
-     * @return Battery readings for the specified period
-     */
-    getBatteryReadings(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, signal?: AbortSignal): Promise<BatteryReading[]> {
-        let url_ = this.baseUrl + "/api/v1/Battery/readings?";
-        if (device !== undefined && device !== null)
-            url_ += "device=" + encodeURIComponent("" + device) + "&";
-        if (from !== undefined && from !== null)
-            url_ += "from=" + encodeURIComponent("" + from) + "&";
-        if (to !== undefined && to !== null)
-            url_ += "to=" + encodeURIComponent("" + to) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetBatteryReadings(_response);
-        });
-    }
-
-    protected processGetBatteryReadings(response: Response): Promise<BatteryReading[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatteryReading[];
-            return result200;
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BatteryReading[]>(null as any);
-    }
-
-    /**
-     * Get battery statistics for a device or all devices
-     * @param device (optional) Device identifier (optional, returns all devices if not specified)
-     * @param from (optional) Start time in milliseconds since Unix epoch (default: 7 days ago)
-     * @param to (optional) End time in milliseconds since Unix epoch (default: now)
-     * @return Battery statistics for the specified period
-     */
-    getBatteryStatistics(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, signal?: AbortSignal): Promise<BatteryStatistics[]> {
-        let url_ = this.baseUrl + "/api/v1/Battery/statistics?";
-        if (device !== undefined && device !== null)
-            url_ += "device=" + encodeURIComponent("" + device) + "&";
-        if (from !== undefined && from !== null)
-            url_ += "from=" + encodeURIComponent("" + from) + "&";
-        if (to !== undefined && to !== null)
-            url_ += "to=" + encodeURIComponent("" + to) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetBatteryStatistics(_response);
-        });
-    }
-
-    protected processGetBatteryStatistics(response: Response): Promise<BatteryStatistics[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BatteryStatistics[];
-            return result200;
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BatteryStatistics[]>(null as any);
-    }
-
-    /**
-     * Get charge cycle history for a device
-     * @param device (optional) Device identifier (optional, returns all devices if not specified)
-     * @param from (optional) Start time in milliseconds since Unix epoch
-     * @param to (optional) End time in milliseconds since Unix epoch
-     * @param limit (optional) Maximum number of cycles to return (default: 100)
-     * @return Charge cycles for the specified period
-     */
-    getChargeCycles(device?: string | null | undefined, from?: number | null | undefined, to?: number | null | undefined, limit?: number | undefined, signal?: AbortSignal): Promise<ChargeCycle[]> {
-        let url_ = this.baseUrl + "/api/v1/Battery/cycles?";
-        if (device !== undefined && device !== null)
-            url_ += "device=" + encodeURIComponent("" + device) + "&";
-        if (from !== undefined && from !== null)
-            url_ += "from=" + encodeURIComponent("" + from) + "&";
-        if (to !== undefined && to !== null)
-            url_ += "to=" + encodeURIComponent("" + to) + "&";
-        if (limit === null)
-            throw new globalThis.Error("The parameter 'limit' cannot be null.");
-        else if (limit !== undefined)
-            url_ += "limit=" + encodeURIComponent("" + limit) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetChargeCycles(_response);
-        });
-    }
-
-    protected processGetChargeCycles(response: Response): Promise<ChargeCycle[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ChargeCycle[];
-            return result200;
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ChargeCycle[]>(null as any);
-    }
-
-    /**
-     * Get list of all known devices with battery data
-     * @return List of device identifiers
-     */
-    getKnownDevices(signal?: AbortSignal): Promise<string[]> {
-        let url_ = this.baseUrl + "/api/v1/Battery/devices";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetKnownDevices(_response);
-        });
-    }
-
-    protected processGetKnownDevices(response: Response): Promise<string[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as string[];
-            return result200;
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<string[]>(null as any);
-    }
-}
-
 export class CountClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -10148,95 +11495,6 @@ export class CountClient {
             });
         }
         return Promise.resolve<CountResponse>(null as any);
-    }
-}
-
-export class DebugClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    testPostgreSqlConnection(signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/Debug/postgresql-test";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processTestPostgreSqlConnection(_response);
-        });
-    }
-
-    protected processTestPostgreSqlConnection(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    getEntriesDirect(signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/Debug/entries-direct";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetEntriesDirect(_response);
-        });
-    }
-
-    protected processGetEntriesDirect(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
     }
 }
 
@@ -10506,923 +11764,6 @@ export class DeviceAgeClient {
     }
 }
 
-export class DeviceAlertsClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get active device alerts for the current user
-     * @param deviceId (optional) Optional device ID filter
-     * @return List of active device alerts
-     */
-    getActiveDeviceAlerts(deviceId?: string | null | undefined, signal?: AbortSignal): Promise<DeviceAlert[]> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts?";
-        if (deviceId !== undefined && deviceId !== null)
-            url_ += "deviceId=" + encodeURIComponent("" + deviceId) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetActiveDeviceAlerts(_response);
-        });
-    }
-
-    protected processGetActiveDeviceAlerts(response: Response): Promise<DeviceAlert[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlert[];
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceAlert[]>(null as any);
-    }
-
-    /**
-     * Get device alerts summary by type
-     * @return Alert summary
-     */
-    getDeviceAlertSummary(signal?: AbortSignal): Promise<DeviceAlertSummary> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts/summary";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDeviceAlertSummary(_response);
-        });
-    }
-
-    protected processGetDeviceAlertSummary(response: Response): Promise<DeviceAlertSummary> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlertSummary;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceAlertSummary>(null as any);
-    }
-
-    /**
-     * Acknowledge a device alert
-     * @param alertId Alert identifier
-     * @return Success response
-     */
-    acknowledgeDeviceAlert(alertId: string, signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts/{alertId}/acknowledge";
-        if (alertId === undefined || alertId === null)
-            throw new globalThis.Error("The parameter 'alertId' must be defined.");
-        url_ = url_.replace("{alertId}", encodeURIComponent("" + alertId));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "POST",
-            signal,
-            headers: {
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processAcknowledgeDeviceAlert(_response);
-        });
-    }
-
-    protected processAcknowledgeDeviceAlert(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    /**
-     * Test device alert generation for a specific device
-     * @param deviceId Device identifier
-     * @return List of generated alerts
-     */
-    testDeviceAlerts(deviceId: string, signal?: AbortSignal): Promise<DeviceAlert[]> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts/test/{deviceId}";
-        if (deviceId === undefined || deviceId === null)
-            throw new globalThis.Error("The parameter 'deviceId' must be defined.");
-        url_ = url_.replace("{deviceId}", encodeURIComponent("" + deviceId));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "POST",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processTestDeviceAlerts(_response);
-        });
-    }
-
-    protected processTestDeviceAlerts(response: Response): Promise<DeviceAlert[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlert[];
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceAlert[]>(null as any);
-    }
-
-    /**
-     * Get alert settings/preferences for device alerts
-     * @return Alert settings
-     */
-    getAlertSettings(signal?: AbortSignal): Promise<DeviceAlertSettings> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts/settings";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetAlertSettings(_response);
-        });
-    }
-
-    protected processGetAlertSettings(response: Response): Promise<DeviceAlertSettings> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceAlertSettings;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceAlertSettings>(null as any);
-    }
-
-    /**
-     * Update alert settings/preferences for device alerts
-     * @param settings Alert settings
-     * @return Success response
-     */
-    updateAlertSettings(settings: DeviceAlertSettings, signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/devices/alerts/settings";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(settings);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "PUT",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processUpdateAlertSettings(_response);
-        });
-    }
-
-    protected processUpdateAlertSettings(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-}
-
-export class DeviceHealthClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get all devices for the current user
-     * @return List of user's devices
-     */
-    getUserDevices(signal?: AbortSignal): Promise<DeviceHealth[]> {
-        let url_ = this.baseUrl + "/api/v1/devices";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetUserDevices(_response);
-        });
-    }
-
-    protected processGetUserDevices(response: Response): Promise<DeviceHealth[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth[];
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceHealth[]>(null as any);
-    }
-
-    /**
-     * Register a new device
-     * @param request Device registration request
-     * @return Registered device information
-     */
-    registerDevice(request: DeviceRegistrationRequest, signal?: AbortSignal): Promise<DeviceHealth> {
-        let url_ = this.baseUrl + "/api/v1/devices";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processRegisterDevice(_response);
-        });
-    }
-
-    protected processRegisterDevice(response: Response): Promise<DeviceHealth> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceHealth>(null as any);
-    }
-
-    /**
-     * Get device health information
-     * @param id Device identifier
-     * @return Device health information
-     */
-    getDeviceHealth(id: string, signal?: AbortSignal): Promise<DeviceHealthAnalysis> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}/health";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDeviceHealth(_response);
-        });
-    }
-
-    protected processGetDeviceHealth(response: Response): Promise<DeviceHealthAnalysis> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealthAnalysis;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceHealthAnalysis>(null as any);
-    }
-
-    /**
-     * Update device health metrics
-     * @param id Device identifier
-     * @param update Device health update
-     * @return Success response
-     */
-    updateDeviceHealth(id: string, update: DeviceHealthUpdate, signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}/health";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(update);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "PUT",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processUpdateDeviceHealth(_response);
-        });
-    }
-
-    protected processUpdateDeviceHealth(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    /**
-     * Get device information
-     * @param id Device identifier
-     * @return Device information
-     */
-    getDevice(id: string, signal?: AbortSignal): Promise<DeviceHealth> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDevice(_response);
-        });
-    }
-
-    protected processGetDevice(response: Response): Promise<DeviceHealth> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceHealth>(null as any);
-    }
-
-    /**
-     * Remove a device from the registry
-     * @param id Device identifier
-     * @return Success response
-     */
-    removeDevice(id: string, signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "DELETE",
-            signal,
-            headers: {
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processRemoveDevice(_response);
-        });
-    }
-
-    protected processRemoveDevice(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    /**
-     * Update device settings
-     * @param id Device identifier
-     * @param settings Device settings update
-     * @return Success response
-     */
-    updateDeviceSettings(id: string, settings: DeviceSettingsUpdate, signal?: AbortSignal): Promise<FileResponse> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}/settings";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(settings);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "PUT",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/octet-stream"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processUpdateDeviceSettings(_response);
-        });
-    }
-
-    protected processUpdateDeviceSettings(response: Response): Promise<FileResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200 || status === 206) {
-            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
-            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
-            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
-            if (fileName) {
-                fileName = decodeURIComponent(fileName);
-            } else {
-                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
-                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
-            }
-            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<FileResponse>(null as any);
-    }
-
-    /**
-     * Get device health report
-     * @param id Device identifier
-     * @param period (optional) Report period in days (default: 30)
-     * @return Device health report
-     */
-    getDeviceHealthReport(id: string, period?: number | undefined, signal?: AbortSignal): Promise<DeviceHealthReport> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}/report?";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        if (period === null)
-            throw new globalThis.Error("The parameter 'period' cannot be null.");
-        else if (period !== undefined)
-            url_ += "period=" + encodeURIComponent("" + period) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetDeviceHealthReport(_response);
-        });
-    }
-
-    protected processGetDeviceHealthReport(response: Response): Promise<DeviceHealthReport> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealthReport;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<DeviceHealthReport>(null as any);
-    }
-
-    /**
-     * Get maintenance predictions for a device
-     * @param id Device identifier
-     * @return Maintenance prediction
-     */
-    getMaintenancePrediction(id: string, signal?: AbortSignal): Promise<MaintenancePrediction> {
-        let url_ = this.baseUrl + "/api/v1/devices/{id}/maintenance/prediction";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetMaintenancePrediction(_response);
-        });
-    }
-
-    protected processGetMaintenancePrediction(response: Response): Promise<MaintenancePrediction> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MaintenancePrediction;
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<MaintenancePrediction>(null as any);
-    }
-}
-
-export class EchoClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Echo endpoint for debugging MongoDB queries
-    Returns information about how REST API parameters translate into MongoDB queries
-     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
-     * @return Query information returned successfully
-     */
-    echoQuery(echo: string, signal?: AbortSignal): Promise<any> {
-        let url_ = this.baseUrl + "/api/v1/echo/{echo}";
-        if (echo === undefined || echo === null)
-            throw new globalThis.Error("The parameter 'echo' must be defined.");
-        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processEchoQuery(_response);
-        });
-    }
-
-    protected processEchoQuery(response: Response): Promise<any> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Invalid parameters", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("Internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<any>(null as any);
-    }
-
-    /**
-     * Echo endpoint for debugging MongoDB queries with model
-    Returns information about how REST API parameters translate into MongoDB queries
-     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
-     * @param model Model specification
-     * @return Query information returned successfully
-     */
-    echoQueryWithModel(echo: string, model: string, signal?: AbortSignal): Promise<any> {
-        let url_ = this.baseUrl + "/api/v1/echo/{echo}/{model}";
-        if (echo === undefined || echo === null)
-            throw new globalThis.Error("The parameter 'echo' must be defined.");
-        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
-        if (model === undefined || model === null)
-            throw new globalThis.Error("The parameter 'model' must be defined.");
-        url_ = url_.replace("{model}", encodeURIComponent("" + model));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processEchoQueryWithModel(_response);
-        });
-    }
-
-    protected processEchoQueryWithModel(response: Response): Promise<any> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Invalid parameters", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("Internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<any>(null as any);
-    }
-
-    /**
-     * Echo endpoint for debugging MongoDB queries with model and spec
-    Returns information about how REST API parameters translate into MongoDB queries
-     * @param echo Storage type to query (entries, treatments, devicestatus, activity)
-     * @param model Model specification
-     * @param spec Specification parameter
-     * @return Query information returned successfully
-     */
-    echoQueryWithModelAndSpec(echo: string, model: string, spec: string, signal?: AbortSignal): Promise<any> {
-        let url_ = this.baseUrl + "/api/v1/echo/{echo}/{model}/{spec}";
-        if (echo === undefined || echo === null)
-            throw new globalThis.Error("The parameter 'echo' must be defined.");
-        url_ = url_.replace("{echo}", encodeURIComponent("" + echo));
-        if (model === undefined || model === null)
-            throw new globalThis.Error("The parameter 'model' must be defined.");
-        url_ = url_.replace("{model}", encodeURIComponent("" + model));
-        if (spec === undefined || spec === null)
-            throw new globalThis.Error("The parameter 'spec' must be defined.");
-        url_ = url_.replace("{spec}", encodeURIComponent("" + spec));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processEchoQueryWithModelAndSpec(_response);
-        });
-    }
-
-    protected processEchoQueryWithModelAndSpec(response: Response): Promise<any> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Invalid parameters", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("Internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<any>(null as any);
-    }
-
-    /**
-     * Preview endpoint for entry creation without persistence
-    Allows previewing entry data without actually storing it in the database
-     * @param entries Entry data to preview (single object or array)
-     * @return Entry data previewed successfully
-     */
-    previewEntries(entries: any, signal?: AbortSignal): Promise<any> {
-        let url_ = this.baseUrl + "/api/v1/entries/preview";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(entries);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processPreviewEntries(_response);
-        });
-    }
-
-    protected processPreviewEntries(response: Response): Promise<any> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("Invalid entry data", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("Internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<any>(null as any);
-    }
-}
-
 export class IobClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -11582,319 +11923,6 @@ export class IobClient {
             });
         }
         return Promise.resolve<HourlyIobResponse>(null as any);
-    }
-}
-
-export class ProcessingClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get the processing status for a correlation ID
-     * @param correlationId The correlation ID to check
-     * @return Processing status or 404 if not found
-     */
-    getProcessingStatus(correlationId: string, signal?: AbortSignal): Promise<ProcessingStatusResponse> {
-        let url_ = this.baseUrl + "/api/v1/processing/status/{correlationId}";
-        if (correlationId === undefined || correlationId === null)
-            throw new globalThis.Error("The parameter 'correlationId' must be defined.");
-        url_ = url_.replace("{correlationId}", encodeURIComponent("" + correlationId));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetProcessingStatus(_response);
-        });
-    }
-
-    protected processGetProcessingStatus(response: Response): Promise<ProcessingStatusResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProcessingStatusResponse;
-            return result200;
-            });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            let result404: any = null;
-            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            let result500: any = null;
-            result500 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result500);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ProcessingStatusResponse>(null as any);
-    }
-
-    /**
-     * Wait for processing to complete with long polling
-     * @param correlationId The correlation ID to wait for
-     * @param timeoutSeconds (optional) Maximum time to wait in seconds (default: 30)
-     * @return Processing status when completed or timeout response
-     */
-    waitForCompletion(correlationId: string, timeoutSeconds?: number | undefined, signal?: AbortSignal): Promise<ProcessingStatusResponse> {
-        let url_ = this.baseUrl + "/api/v1/processing/status/{correlationId}/wait?";
-        if (correlationId === undefined || correlationId === null)
-            throw new globalThis.Error("The parameter 'correlationId' must be defined.");
-        url_ = url_.replace("{correlationId}", encodeURIComponent("" + correlationId));
-        if (timeoutSeconds === null)
-            throw new globalThis.Error("The parameter 'timeoutSeconds' cannot be null.");
-        else if (timeoutSeconds !== undefined)
-            url_ += "timeoutSeconds=" + encodeURIComponent("" + timeoutSeconds) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processWaitForCompletion(_response);
-        });
-    }
-
-    protected processWaitForCompletion(response: Response): Promise<ProcessingStatusResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProcessingStatusResponse;
-            return result200;
-            });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            let result404: any = null;
-            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
-            });
-        } else if (status === 408) {
-            return response.text().then((_responseText) => {
-            let result408: any = null;
-            result408 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result408);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            let result500: any = null;
-            result500 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result500);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ProcessingStatusResponse>(null as any);
-    }
-}
-
-export class RetrospectiveClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Get retrospective data at a specific point in time
-    Returns IOB, COB, glucose, basal rate, and recent treatments
-     * @param time (optional) Unix timestamp in milliseconds for the retrospective point
-     * @return Returns the retrospective data
-     */
-    getRetrospectiveData(time?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveDataResponse> {
-        let url_ = this.baseUrl + "/api/v1/Retrospective/at?";
-        if (time === null)
-            throw new globalThis.Error("The parameter 'time' cannot be null.");
-        else if (time !== undefined)
-            url_ += "time=" + encodeURIComponent("" + time) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetRetrospectiveData(_response);
-        });
-    }
-
-    protected processGetRetrospectiveData(response: Response): Promise<RetrospectiveDataResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveDataResponse;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("If the time parameter is invalid", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("If there was an internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<RetrospectiveDataResponse>(null as any);
-    }
-
-    /**
-     * Get retrospective data for an entire day at specified interval
-    Returns IOB, COB, glucose, and basal data for every interval throughout the day
-     * @param date (optional) Date in YYYY-MM-DD format
-     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
-     * @return Returns the retrospective timeline data
-     */
-    getRetrospectiveTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<RetrospectiveTimelineResponse> {
-        let url_ = this.baseUrl + "/api/v1/Retrospective/timeline?";
-        if (date === null)
-            throw new globalThis.Error("The parameter 'date' cannot be null.");
-        else if (date !== undefined)
-            url_ += "date=" + encodeURIComponent("" + date) + "&";
-        if (intervalMinutes === null)
-            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
-        else if (intervalMinutes !== undefined)
-            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetRetrospectiveTimeline(_response);
-        });
-    }
-
-    protected processGetRetrospectiveTimeline(response: Response): Promise<RetrospectiveTimelineResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RetrospectiveTimelineResponse;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("If parameters are invalid", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("If there was an internal server error", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<RetrospectiveTimelineResponse>(null as any);
-    }
-
-    /**
-     * Get basal rate timeline for a day
-    Returns basal rate data points showing scheduled and temp basal changes
-     * @param date (optional) Date in YYYY-MM-DD format
-     * @param intervalMinutes (optional) Interval in minutes between data points (default: 5)
-     * @return Basal rate timeline for the day
-     */
-    getBasalTimeline(date?: string | undefined, intervalMinutes?: number | undefined, signal?: AbortSignal): Promise<BasalTimelineResponse> {
-        let url_ = this.baseUrl + "/api/v1/Retrospective/basal-timeline?";
-        if (date === null)
-            throw new globalThis.Error("The parameter 'date' cannot be null.");
-        else if (date !== undefined)
-            url_ += "date=" + encodeURIComponent("" + date) + "&";
-        if (intervalMinutes === null)
-            throw new globalThis.Error("The parameter 'intervalMinutes' cannot be null.");
-        else if (intervalMinutes !== undefined)
-            url_ += "intervalMinutes=" + encodeURIComponent("" + intervalMinutes) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetBasalTimeline(_response);
-        });
-    }
-
-    protected processGetBasalTimeline(response: Response): Promise<BasalTimelineResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BasalTimelineResponse;
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            let result400: any = null;
-            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
-            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
-            });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BasalTimelineResponse>(null as any);
     }
 }
 
@@ -12825,6 +12853,20 @@ export interface WebSocketEventsMetadata {
 
 export type WebSocketEvents = "connect" | "disconnect" | "connect_error" | "reconnect" | "reconnect_failed" | "connect_ack" | "dataUpdate" | "treatmentUpdate" | "create" | "update" | "delete" | "announcement" | "alarm" | "urgent_alarm" | "clear_alarm" | "notification" | "statusUpdate" | "status" | "authenticate" | "authenticated" | "join" | "leave";
 
+export interface ExternalUrls {
+    website?: string;
+    docsBase?: string;
+    connectorDocs?: ConnectorDocsUrls;
+}
+
+export interface ConnectorDocsUrls {
+    dexcom?: string;
+    libre?: string;
+    careLink?: string;
+    nightscout?: string;
+    glooko?: string;
+}
+
 /** OIDC provider info for login page */
 export interface OidcProviderInfo {
     /** Provider ID */
@@ -13123,6 +13165,11 @@ export interface Treatment extends ProcessableDocumentBase {
     percentage?: number | undefined;
     timeshift?: number | undefined;
     transmitterId?: string | undefined;
+    remoteCarbs?: number | undefined;
+    remoteAbsorption?: number | undefined;
+    remoteBolus?: number | undefined;
+    reasonDisplay?: string | undefined;
+    otp?: string | undefined;
     data_source?: string | undefined;
     additional_properties?: { [key: string]: any; } | undefined;
 }
@@ -13518,6 +13565,80 @@ export interface OAuthAuthorizationServerMetadata {
     serviceDocumentation?: string | undefined;
 }
 
+export interface CurrentBatteryStatus {
+    level?: number | undefined;
+    display?: string;
+    status?: string;
+    min?: BatteryReading | undefined;
+    devices?: { [key: string]: DeviceBatteryStatus; };
+}
+
+export interface BatteryReading {
+    id?: string | undefined;
+    device?: string;
+    battery?: number | undefined;
+    voltage?: number | undefined;
+    isCharging?: boolean;
+    temperature?: number | undefined;
+    mills?: number;
+    timestamp?: string | undefined;
+    display?: string;
+    level?: number;
+    notification?: string | undefined;
+}
+
+export interface DeviceBatteryStatus {
+    uri?: string;
+    name?: string;
+    statuses?: BatteryReading[];
+    min?: BatteryReading | undefined;
+}
+
+export interface BatteryStatistics {
+    device?: string;
+    displayName?: string;
+    periodStartMills?: number;
+    periodEndMills?: number;
+    readingCount?: number;
+    currentLevel?: number | undefined;
+    isCharging?: boolean;
+    lastReadingMills?: number | undefined;
+    averageLevel?: number | undefined;
+    minLevel?: number | undefined;
+    maxLevel?: number | undefined;
+    chargeCycleCount?: number;
+    averageChargeDurationMinutes?: number | undefined;
+    averageDischargeDurationMinutes?: number | undefined;
+    averageTimeBetweenChargesHours?: number | undefined;
+    longestDischargeDurationMinutes?: number | undefined;
+    shortestDischargeDurationMinutes?: number | undefined;
+    timeAbove80Percent?: number;
+    timeBetween30And80Percent?: number;
+    timeBelow30Percent?: number;
+    timeBelow20Percent?: number;
+    warningEventCount?: number;
+    urgentEventCount?: number;
+    display?: string;
+    level?: number;
+    status?: string;
+}
+
+export interface ChargeCycle {
+    id?: string | undefined;
+    device?: string;
+    chargeStartMills?: number | undefined;
+    chargeStartLevel?: number | undefined;
+    chargeEndMills?: number | undefined;
+    chargeEndLevel?: number | undefined;
+    dischargeStartMills?: number | undefined;
+    dischargeStartLevel?: number | undefined;
+    dischargeEndMills?: number | undefined;
+    dischargeEndLevel?: number | undefined;
+    chargeDurationMinutes?: number | undefined;
+    dischargeDurationMinutes?: number | undefined;
+    isComplete?: boolean;
+}
+
 /** Proxy configuration DTO */
 export interface ProxyConfigurationDto {
     nightscoutUrl?: string;
@@ -13676,6 +13797,201 @@ export interface ManualTestRequest {
     requestBody?: string | undefined;
 }
 
+export interface DeviceAlert {
+    id?: string;
+    deviceId?: string;
+    userId?: string;
+    alertType?: DeviceAlertType;
+    severity?: DeviceIssueSeverity;
+    title?: string;
+    message?: string;
+    triggerTime?: Date;
+    acknowledged?: boolean;
+    acknowledgedAt?: Date | undefined;
+    data?: { [key: string]: any; } | undefined;
+}
+
+export type DeviceAlertType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+export type DeviceIssueSeverity = 0 | 1 | 2 | 3;
+
+/** Device alert summary model */
+export interface DeviceAlertSummary {
+    /** Total number of registered devices */
+    totalDevices?: number;
+    /** Number of active alerts */
+    activeAlerts?: number;
+    /** Number of critical alerts */
+    criticalAlerts?: number;
+    /** Number of warning alerts */
+    warningAlerts?: number;
+    /** Alerts grouped by type */
+    alertsByType?: { [key in DeviceAlertType]?: number; };
+}
+
+/** Device alert settings model */
+export interface DeviceAlertSettings {
+    /** Enable email notifications */
+    emailEnabled?: boolean;
+    /** Enable push notifications */
+    pushEnabled?: boolean;
+    /** Enable SMS notifications */
+    smsEnabled?: boolean;
+    /** Enable quiet hours */
+    quietHoursEnabled?: boolean;
+    /** Quiet hours start time */
+    quietHoursStart?: string;
+    /** Quiet hours end time */
+    quietHoursEnd?: string;
+    /** Critical alerts override quiet hours */
+    criticalAlertsOverrideQuietHours?: boolean;
+    /** Battery low threshold percentage */
+    batteryLowThreshold?: number;
+    /** Sensor expiration warning hours */
+    sensorExpirationWarningHours?: number;
+    /** Data gap warning minutes */
+    dataGapWarningMinutes?: number;
+    /** Calibration reminder hours */
+    calibrationReminderHours?: number;
+}
+
+export interface DeviceHealth {
+    id?: string;
+    userId?: string;
+    deviceId?: string;
+    deviceType?: DeviceType;
+    deviceName?: string;
+    manufacturer?: string | undefined;
+    model?: string | undefined;
+    serialNumber?: string | undefined;
+    batteryLevel?: number | undefined;
+    sensorExpiration?: Date | undefined;
+    lastCalibration?: Date | undefined;
+    lastDataReceived?: Date | undefined;
+    lastMaintenanceAlert?: Date | undefined;
+    batteryWarningThreshold?: number;
+    sensorExpirationWarningHours?: number;
+    dataGapWarningMinutes?: number;
+    calibrationReminderHours?: number;
+    status?: DeviceStatusType;
+    lastErrorMessage?: string | undefined;
+    lastStatusUpdate?: Date | undefined;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export type DeviceType = 0 | 1 | 2 | 3;
+
+export type DeviceStatusType = 0 | 1 | 2 | 3 | 4;
+
+export interface DeviceRegistrationRequest {
+    deviceId?: string;
+    deviceType?: DeviceType;
+    deviceName?: string;
+    manufacturer?: string | undefined;
+    model?: string | undefined;
+    serialNumber?: string | undefined;
+    batteryLevel?: number | undefined;
+    sensorExpiration?: Date | undefined;
+}
+
+export interface DeviceHealthAnalysis {
+    deviceId?: string;
+    healthScore?: number;
+    healthStatus?: DeviceHealthStatus;
+    timestamp?: Date;
+    issues?: DeviceHealthIssue[];
+    recommendations?: string[];
+    nextMaintenanceDate?: Date | undefined;
+}
+
+export type DeviceHealthStatus = 0 | 1 | 2 | 3 | 4;
+
+export interface DeviceHealthIssue {
+    type?: DeviceIssueType;
+    severity?: DeviceIssueSeverity;
+    description?: string;
+    detectedAt?: Date;
+    suggestedResolution?: string | undefined;
+}
+
+export type DeviceIssueType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface DeviceSettingsUpdate {
+    batteryWarningThreshold?: number | undefined;
+    sensorExpirationWarningHours?: number | undefined;
+    dataGapWarningMinutes?: number | undefined;
+    calibrationReminderHours?: number | undefined;
+}
+
+export interface DeviceHealthUpdate {
+    batteryLevel?: number | undefined;
+    sensorExpiration?: Date | undefined;
+    lastCalibration?: Date | undefined;
+    status?: DeviceStatusType | undefined;
+    lastErrorMessage?: string | undefined;
+    deviceSpecificData?: { [key: string]: any; } | undefined;
+}
+
+export interface DeviceHealthReport {
+    deviceId?: string;
+    periodStart?: Date;
+    periodEnd?: Date;
+    averageHealthScore?: number;
+    uptimePercentage?: number;
+    totalAlerts?: number;
+    healthTrend?: HealthTrend;
+    keyMetrics?: { [key: string]: any; };
+}
+
+export type HealthTrend = 0 | 1 | 2 | 3;
+
+export interface MaintenancePrediction {
+    deviceId?: string;
+    predictedMaintenanceDate?: Date;
+    confidenceLevel?: number;
+    maintenanceType?: MaintenanceType;
+    reasons?: string[];
+}
+
+export type MaintenanceType = 0 | 1 | 2 | 3 | 4;
+
+export interface DiscrepancyAnalysisDto {
+    id?: string;
+    correlationId?: string;
+    analysisTimestamp?: Date;
+    requestMethod?: string;
+    requestPath?: string;
+    overallMatch?: number;
+    statusCodeMatch?: boolean;
+    bodyMatch?: boolean;
+    nightscoutStatusCode?: number | undefined;
+    nocturneStatusCode?: number | undefined;
+    nightscoutResponseTimeMs?: number | undefined;
+    nocturneResponseTimeMs?: number | undefined;
+    totalProcessingTimeMs?: number;
+    summary?: string;
+    selectedResponseTarget?: string | undefined;
+    selectionReason?: string | undefined;
+    criticalDiscrepancyCount?: number;
+    majorDiscrepancyCount?: number;
+    minorDiscrepancyCount?: number;
+    nightscoutMissing?: boolean;
+    nocturneMissing?: boolean;
+    errorMessage?: string | undefined;
+    discrepancies?: DiscrepancyDetailDto[];
+}
+
+export interface CompatibilityStatus {
+    overallScore?: number;
+    totalRequests?: number;
+    healthStatus?: string;
+    lastUpdated?: Date;
+    criticalIssues?: number;
+    majorIssues?: number;
+    minorIssues?: number;
+}
+
 /** Response containing glucose predictions. */
 export interface GlucosePredictionResponse {
     /** Timestamp when predictions were calculated */
@@ -13726,6 +14042,124 @@ export interface PredictionStatusResponse {
     version?: string | undefined;
     /** Health check result (JSON) */
     healthCheck?: string | undefined;
+}
+
+export interface ProcessingStatus {
+    correlationId?: string;
+    status?: string;
+    progress?: number;
+    processedCount?: number;
+    totalCount?: number;
+    startedAt?: Date;
+    completedAt?: Date | undefined;
+    errors?: string[];
+    results?: any | undefined;
+}
+
+export interface ProcessingStatusResponse extends ProcessingStatus {
+}
+
+export function isProcessingStatusResponse(object: any): object is ProcessingStatusResponse {
+    return object && object[''] === 'ProcessingStatusResponse';
+}
+
+/** Response for single point retrospective data */
+export interface RetrospectiveDataResponse {
+    time?: number;
+    timeFormatted?: string | undefined;
+    glucose?: GlucoseData | undefined;
+    iob?: IobData | undefined;
+    cob?: CobData | undefined;
+    basal?: BasalData | undefined;
+    recentTreatments?: TreatmentSummaryData[] | undefined;
+}
+
+/** Glucose data at a specific point in time */
+export interface GlucoseData {
+    value?: number;
+    direction?: string | undefined;
+    delta?: number | undefined;
+}
+
+/** IOB data at a specific point in time */
+export interface IobData {
+    total?: number;
+    bolus?: number;
+    basal?: number;
+    activity?: number | undefined;
+    source?: string | undefined;
+}
+
+/** COB data at a specific point in time */
+export interface CobData {
+    total?: number;
+    isDecaying?: number;
+    carbsHr?: number | undefined;
+    rawCarbImpact?: number | undefined;
+    source?: string | undefined;
+}
+
+/** Basal rate data at a specific point in time */
+export interface BasalData {
+    rate?: number;
+    isTemp?: boolean;
+}
+
+/** Treatment summary for recent treatments */
+export interface TreatmentSummaryData {
+    id?: string | undefined;
+    mills?: number;
+    eventType?: string | undefined;
+    insulin?: number | undefined;
+    carbs?: number | undefined;
+    rate?: number | undefined;
+    duration?: number | undefined;
+    notes?: string | undefined;
+}
+
+/** Response for retrospective timeline */
+export interface RetrospectiveTimelineResponse {
+    date?: string | undefined;
+    startTime?: number;
+    endTime?: number;
+    intervalMinutes?: number;
+    totalPoints?: number;
+    data?: RetrospectiveDataPoint[] | undefined;
+}
+
+/** Data point for retrospective timeline */
+export interface RetrospectiveDataPoint {
+    time?: number;
+    hour?: number;
+    minute?: number;
+    timeLabel?: string | undefined;
+    glucose?: number | undefined;
+    glucoseDirection?: string | undefined;
+    iob?: number;
+    bolusIob?: number;
+    basalIob?: number;
+    cob?: number;
+    basalRate?: number;
+    isTemp?: boolean;
+}
+
+/** Response for basal timeline */
+export interface BasalTimelineResponse {
+    date?: string | undefined;
+    startTime?: number;
+    endTime?: number;
+    intervalMinutes?: number;
+    data?: BasalDataPoint[] | undefined;
+}
+
+/** Data point for basal timeline */
+export interface BasalDataPoint {
+    time?: number;
+    hour?: number;
+    minute?: number;
+    timeLabel?: string | undefined;
+    rate?: number;
+    isTemp?: boolean;
 }
 
 export interface ServicesOverview {
@@ -14308,12 +14742,16 @@ export interface LoopStatus {
     version?: string | undefined;
     timestamp?: string | undefined;
     recommended?: any | undefined;
-    enacted?: any | undefined;
+    enacted?: LoopEnacted | undefined;
+    recommendedTempBasal?: LoopRecommendedTempBasal | undefined;
+    failureReason?: string | undefined;
 }
 
 export interface LoopIob {
     timestamp?: string | undefined;
     iob?: number | undefined;
+    basaliob?: number | undefined;
+    netbasalinsulin?: number | undefined;
 }
 
 export interface LoopCob {
@@ -14324,6 +14762,21 @@ export interface LoopCob {
 export interface LoopPredicted {
     values?: number[] | undefined;
     startDate?: string | undefined;
+}
+
+export interface LoopEnacted {
+    bolusVolume?: number | undefined;
+    rate?: number | undefined;
+    duration?: number | undefined;
+    timestamp?: string | undefined;
+    reason?: string | undefined;
+    received?: boolean | undefined;
+}
+
+export interface LoopRecommendedTempBasal {
+    rate?: number | undefined;
+    duration?: number | undefined;
+    timestamp?: string | undefined;
 }
 
 export interface XDripJsStatus {
@@ -14380,42 +14833,6 @@ export interface InsulinPenStatus {
     insulinType?: string | undefined;
     needleAttached?: boolean | undefined;
     cartridgeExpiration?: Date | undefined;
-}
-
-export interface DiscrepancyAnalysisDto {
-    id?: string;
-    correlationId?: string;
-    analysisTimestamp?: Date;
-    requestMethod?: string;
-    requestPath?: string;
-    overallMatch?: number;
-    statusCodeMatch?: boolean;
-    bodyMatch?: boolean;
-    nightscoutStatusCode?: number | undefined;
-    nocturneStatusCode?: number | undefined;
-    nightscoutResponseTimeMs?: number | undefined;
-    nocturneResponseTimeMs?: number | undefined;
-    totalProcessingTimeMs?: number;
-    summary?: string;
-    selectedResponseTarget?: string | undefined;
-    selectionReason?: string | undefined;
-    criticalDiscrepancyCount?: number;
-    majorDiscrepancyCount?: number;
-    minorDiscrepancyCount?: number;
-    nightscoutMissing?: boolean;
-    nocturneMissing?: boolean;
-    errorMessage?: string | undefined;
-    discrepancies?: DiscrepancyDetailDto[];
-}
-
-export interface CompatibilityStatus {
-    overallScore?: number;
-    totalRequests?: number;
-    healthStatus?: string;
-    lastUpdated?: Date;
-    criticalIssues?: number;
-    majorIssues?: number;
-    minorIssues?: number;
 }
 
 export interface Food {
@@ -14795,80 +15212,6 @@ export interface AlexaSlot {
     value?: string;
 }
 
-export interface CurrentBatteryStatus {
-    level?: number | undefined;
-    display?: string;
-    status?: string;
-    min?: BatteryReading | undefined;
-    devices?: { [key: string]: DeviceBatteryStatus; };
-}
-
-export interface BatteryReading {
-    id?: string | undefined;
-    device?: string;
-    battery?: number | undefined;
-    voltage?: number | undefined;
-    isCharging?: boolean;
-    temperature?: number | undefined;
-    mills?: number;
-    timestamp?: string | undefined;
-    display?: string;
-    level?: number;
-    notification?: string | undefined;
-}
-
-export interface DeviceBatteryStatus {
-    uri?: string;
-    name?: string;
-    statuses?: BatteryReading[];
-    min?: BatteryReading | undefined;
-}
-
-export interface BatteryStatistics {
-    device?: string;
-    displayName?: string;
-    periodStartMills?: number;
-    periodEndMills?: number;
-    readingCount?: number;
-    currentLevel?: number | undefined;
-    isCharging?: boolean;
-    lastReadingMills?: number | undefined;
-    averageLevel?: number | undefined;
-    minLevel?: number | undefined;
-    maxLevel?: number | undefined;
-    chargeCycleCount?: number;
-    averageChargeDurationMinutes?: number | undefined;
-    averageDischargeDurationMinutes?: number | undefined;
-    averageTimeBetweenChargesHours?: number | undefined;
-    longestDischargeDurationMinutes?: number | undefined;
-    shortestDischargeDurationMinutes?: number | undefined;
-    timeAbove80Percent?: number;
-    timeBetween30And80Percent?: number;
-    timeBelow30Percent?: number;
-    timeBelow20Percent?: number;
-    warningEventCount?: number;
-    urgentEventCount?: number;
-    display?: string;
-    level?: number;
-    status?: string;
-}
-
-export interface ChargeCycle {
-    id?: string | undefined;
-    device?: string;
-    chargeStartMills?: number | undefined;
-    chargeStartLevel?: number | undefined;
-    chargeEndMills?: number | undefined;
-    chargeEndLevel?: number | undefined;
-    dischargeStartMills?: number | undefined;
-    dischargeStartLevel?: number | undefined;
-    dischargeEndMills?: number | undefined;
-    dischargeEndLevel?: number | undefined;
-    chargeDurationMinutes?: number | undefined;
-    dischargeDurationMinutes?: number | undefined;
-    isComplete?: boolean;
-}
-
 /** Response object for count endpoints */
 export interface CountResponse {
     /** Number of records matching the query criteria */
@@ -14901,165 +15244,6 @@ export interface SensorAgeInfo {
     "Sensor Change"?: DeviceAgeInfo;
     min?: string;
 }
-
-export interface DeviceAlert {
-    id?: string;
-    deviceId?: string;
-    userId?: string;
-    alertType?: DeviceAlertType;
-    severity?: DeviceIssueSeverity;
-    title?: string;
-    message?: string;
-    triggerTime?: Date;
-    acknowledged?: boolean;
-    acknowledgedAt?: Date | undefined;
-    data?: { [key: string]: any; } | undefined;
-}
-
-export type DeviceAlertType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
-export type DeviceIssueSeverity = 0 | 1 | 2 | 3;
-
-/** Device alert summary model */
-export interface DeviceAlertSummary {
-    /** Total number of registered devices */
-    totalDevices?: number;
-    /** Number of active alerts */
-    activeAlerts?: number;
-    /** Number of critical alerts */
-    criticalAlerts?: number;
-    /** Number of warning alerts */
-    warningAlerts?: number;
-    /** Alerts grouped by type */
-    alertsByType?: { [key in DeviceAlertType]?: number; };
-}
-
-/** Device alert settings model */
-export interface DeviceAlertSettings {
-    /** Enable email notifications */
-    emailEnabled?: boolean;
-    /** Enable push notifications */
-    pushEnabled?: boolean;
-    /** Enable SMS notifications */
-    smsEnabled?: boolean;
-    /** Enable quiet hours */
-    quietHoursEnabled?: boolean;
-    /** Quiet hours start time */
-    quietHoursStart?: string;
-    /** Quiet hours end time */
-    quietHoursEnd?: string;
-    /** Critical alerts override quiet hours */
-    criticalAlertsOverrideQuietHours?: boolean;
-    /** Battery low threshold percentage */
-    batteryLowThreshold?: number;
-    /** Sensor expiration warning hours */
-    sensorExpirationWarningHours?: number;
-    /** Data gap warning minutes */
-    dataGapWarningMinutes?: number;
-    /** Calibration reminder hours */
-    calibrationReminderHours?: number;
-}
-
-export interface DeviceHealth {
-    id?: string;
-    userId?: string;
-    deviceId?: string;
-    deviceType?: DeviceType;
-    deviceName?: string;
-    manufacturer?: string | undefined;
-    model?: string | undefined;
-    serialNumber?: string | undefined;
-    batteryLevel?: number | undefined;
-    sensorExpiration?: Date | undefined;
-    lastCalibration?: Date | undefined;
-    lastDataReceived?: Date | undefined;
-    lastMaintenanceAlert?: Date | undefined;
-    batteryWarningThreshold?: number;
-    sensorExpirationWarningHours?: number;
-    dataGapWarningMinutes?: number;
-    calibrationReminderHours?: number;
-    status?: DeviceStatusType;
-    lastErrorMessage?: string | undefined;
-    lastStatusUpdate?: Date | undefined;
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
-export type DeviceType = 0 | 1 | 2 | 3;
-
-export type DeviceStatusType = 0 | 1 | 2 | 3 | 4;
-
-export interface DeviceRegistrationRequest {
-    deviceId?: string;
-    deviceType?: DeviceType;
-    deviceName?: string;
-    manufacturer?: string | undefined;
-    model?: string | undefined;
-    serialNumber?: string | undefined;
-    batteryLevel?: number | undefined;
-    sensorExpiration?: Date | undefined;
-}
-
-export interface DeviceHealthAnalysis {
-    deviceId?: string;
-    healthScore?: number;
-    healthStatus?: DeviceHealthStatus;
-    timestamp?: Date;
-    issues?: DeviceHealthIssue[];
-    recommendations?: string[];
-    nextMaintenanceDate?: Date | undefined;
-}
-
-export type DeviceHealthStatus = 0 | 1 | 2 | 3 | 4;
-
-export interface DeviceHealthIssue {
-    type?: DeviceIssueType;
-    severity?: DeviceIssueSeverity;
-    description?: string;
-    detectedAt?: Date;
-    suggestedResolution?: string | undefined;
-}
-
-export type DeviceIssueType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-export interface DeviceSettingsUpdate {
-    batteryWarningThreshold?: number | undefined;
-    sensorExpirationWarningHours?: number | undefined;
-    dataGapWarningMinutes?: number | undefined;
-    calibrationReminderHours?: number | undefined;
-}
-
-export interface DeviceHealthUpdate {
-    batteryLevel?: number | undefined;
-    sensorExpiration?: Date | undefined;
-    lastCalibration?: Date | undefined;
-    status?: DeviceStatusType | undefined;
-    lastErrorMessage?: string | undefined;
-    deviceSpecificData?: { [key: string]: any; } | undefined;
-}
-
-export interface DeviceHealthReport {
-    deviceId?: string;
-    periodStart?: Date;
-    periodEnd?: Date;
-    averageHealthScore?: number;
-    uptimePercentage?: number;
-    totalAlerts?: number;
-    healthTrend?: HealthTrend;
-    keyMetrics?: { [key: string]: any; };
-}
-
-export type HealthTrend = 0 | 1 | 2 | 3;
-
-export interface MaintenancePrediction {
-    deviceId?: string;
-    predictedMaintenanceDate?: Date;
-    confidenceLevel?: number;
-    maintenanceType?: MaintenanceType;
-    reasons?: string[];
-}
-
-export type MaintenanceType = 0 | 1 | 2 | 3 | 4;
 
 export interface AsyncProcessingResponse {
     correlationId?: string;
@@ -15154,124 +15338,6 @@ export interface PushoverNotificationRequest {
     urlTitle?: string | undefined;
     retry?: number | undefined;
     expire?: number | undefined;
-}
-
-export interface ProcessingStatus {
-    correlationId?: string;
-    status?: string;
-    progress?: number;
-    processedCount?: number;
-    totalCount?: number;
-    startedAt?: Date;
-    completedAt?: Date | undefined;
-    errors?: string[];
-    results?: any | undefined;
-}
-
-export interface ProcessingStatusResponse extends ProcessingStatus {
-}
-
-export function isProcessingStatusResponse(object: any): object is ProcessingStatusResponse {
-    return object && object[''] === 'ProcessingStatusResponse';
-}
-
-/** Response for single point retrospective data */
-export interface RetrospectiveDataResponse {
-    time?: number;
-    timeFormatted?: string | undefined;
-    glucose?: GlucoseData | undefined;
-    iob?: IobData | undefined;
-    cob?: CobData | undefined;
-    basal?: BasalData | undefined;
-    recentTreatments?: TreatmentSummaryData[] | undefined;
-}
-
-/** Glucose data at a specific point in time */
-export interface GlucoseData {
-    value?: number;
-    direction?: string | undefined;
-    delta?: number | undefined;
-}
-
-/** IOB data at a specific point in time */
-export interface IobData {
-    total?: number;
-    bolus?: number;
-    basal?: number;
-    activity?: number | undefined;
-    source?: string | undefined;
-}
-
-/** COB data at a specific point in time */
-export interface CobData {
-    total?: number;
-    isDecaying?: number;
-    carbsHr?: number | undefined;
-    rawCarbImpact?: number | undefined;
-    source?: string | undefined;
-}
-
-/** Basal rate data at a specific point in time */
-export interface BasalData {
-    rate?: number;
-    isTemp?: boolean;
-}
-
-/** Treatment summary for recent treatments */
-export interface TreatmentSummaryData {
-    id?: string | undefined;
-    mills?: number;
-    eventType?: string | undefined;
-    insulin?: number | undefined;
-    carbs?: number | undefined;
-    rate?: number | undefined;
-    duration?: number | undefined;
-    notes?: string | undefined;
-}
-
-/** Response for retrospective timeline */
-export interface RetrospectiveTimelineResponse {
-    date?: string | undefined;
-    startTime?: number;
-    endTime?: number;
-    intervalMinutes?: number;
-    totalPoints?: number;
-    data?: RetrospectiveDataPoint[] | undefined;
-}
-
-/** Data point for retrospective timeline */
-export interface RetrospectiveDataPoint {
-    time?: number;
-    hour?: number;
-    minute?: number;
-    timeLabel?: string | undefined;
-    glucose?: number | undefined;
-    glucoseDirection?: string | undefined;
-    iob?: number;
-    bolusIob?: number;
-    basalIob?: number;
-    cob?: number;
-    basalRate?: number;
-    isTemp?: boolean;
-}
-
-/** Response for basal timeline */
-export interface BasalTimelineResponse {
-    date?: string | undefined;
-    startTime?: number;
-    endTime?: number;
-    intervalMinutes?: number;
-    data?: BasalDataPoint[] | undefined;
-}
-
-/** Data point for basal timeline */
-export interface BasalDataPoint {
-    time?: number;
-    hour?: number;
-    minute?: number;
-    timeLabel?: string | undefined;
-    rate?: number;
-    isTemp?: boolean;
 }
 
 export interface StatusResponse {

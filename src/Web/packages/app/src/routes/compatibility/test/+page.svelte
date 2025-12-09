@@ -43,8 +43,8 @@
   let error = $state<string | null>(null);
 
   // Refs for scroll synchronization
-  let leftPanelRef = $state<HTMLPreElement | null>(null);
-  let rightPanelRef = $state<HTMLPreElement | null>(null);
+  let leftPanelRef = $state<HTMLElement | null>(null);
+  let rightPanelRef = $state<HTMLElement | null>(null);
   let isScrolling = false;
 
   function syncScrollLeft() {
@@ -76,6 +76,11 @@
     try {
       let nsJson = JSON.parse(nsResponse);
       let ncJson = JSON.parse(ncResponse);
+
+      // Match Nocturne entries to Nightscout's _id order (for arrays)
+      if (Array.isArray(nsJson) && Array.isArray(ncJson)) {
+        ncJson = matchEntriesById(ncJson, nsJson);
+      }
 
       // Remove null values from Nocturne that don't exist in Nightscout
       if (hideNullValues) {
@@ -149,6 +154,47 @@
     return nocturneObj;
   }
 
+  // Match and reorder Nocturne array entries to align with Nightscout's _id order
+  function matchEntriesById(nocturneArr: any[], nightscoutArr: any[]): any[] {
+    // Build a map of Nocturne entries by _id
+    const ncById = new Map<string, any>();
+    const ncWithoutId: any[] = [];
+
+    for (const item of nocturneArr) {
+      if (item && typeof item === "object" && item._id) {
+        ncById.set(item._id, item);
+      } else {
+        ncWithoutId.push(item);
+      }
+    }
+
+    // Reorder Nocturne entries to match Nightscout's _id order
+    const matched: any[] = [];
+    const usedIds = new Set<string>();
+
+    for (const nsItem of nightscoutArr) {
+      if (nsItem && typeof nsItem === "object" && nsItem._id) {
+        const ncItem = ncById.get(nsItem._id);
+        if (ncItem) {
+          matched.push(ncItem);
+          usedIds.add(nsItem._id);
+        }
+      }
+    }
+
+    // Add any unmatched Nocturne entries at the end
+    for (const [id, item] of ncById) {
+      if (!usedIds.has(id)) {
+        matched.push(item);
+      }
+    }
+
+    // Add entries without _id at the end
+    matched.push(...ncWithoutId);
+
+    return matched;
+  }
+
   // Remove Nocturne-specific fields recursively
   function removeNocturneFields(obj: any): any {
     if (Array.isArray(obj)) {
@@ -170,9 +216,25 @@
   function reorderToMatch(nocturneObj: any, nightscoutObj: any): any {
     if (Array.isArray(nocturneObj)) {
       if (Array.isArray(nightscoutObj)) {
-        return nocturneObj.map((item, index) =>
-          reorderToMatch(item, nightscoutObj[index])
-        );
+        // Build a map of Nightscout entries by _id for matching
+        const nsById = new Map<string, any>();
+        for (const item of nightscoutObj) {
+          if (item && typeof item === "object" && item._id) {
+            nsById.set(item._id, item);
+          }
+        }
+
+        // Match each Nocturne entry with its corresponding Nightscout entry by _id
+        return nocturneObj.map((ncItem, index) => {
+          if (ncItem && typeof ncItem === "object" && ncItem._id) {
+            const nsItem = nsById.get(ncItem._id);
+            if (nsItem) {
+              return reorderToMatch(ncItem, nsItem);
+            }
+          }
+          // Fall back to index-based matching if no _id
+          return reorderToMatch(ncItem, nightscoutObj[index]);
+        });
       }
       return nocturneObj.map((item) => reorderToMatch(item, undefined));
     }
@@ -190,7 +252,6 @@
       // First, add keys in Nightscout's order
       for (const key of nsKeys) {
         if (key in nocturneObj) {
-          //
           reordered[key] = reorderToMatch(nocturneObj[key], nightscoutObj[key]);
         }
       }
@@ -226,6 +287,43 @@
       }
       return { line, type, index };
     });
+  });
+
+  // Parse diff for side-by-side view
+  const sideBySideDiff = $derived.by(() => {
+    if (!diffOutput) return { left: [], right: [] };
+
+    const lines = diffOutput.split("\n");
+    const left: { line: string; type: "normal" | "removed" | "empty" }[] = [];
+    const right: { line: string; type: "normal" | "added" | "empty" }[] = [];
+
+    for (const line of lines) {
+      // Skip meta lines (---, +++, @@)
+      if (
+        line.startsWith("---") ||
+        line.startsWith("+++") ||
+        line.startsWith("@@")
+      ) {
+        continue;
+      }
+
+      if (line.startsWith("-")) {
+        // Removed line - show on left, empty on right
+        left.push({ line: line.slice(1), type: "removed" });
+        right.push({ line: "", type: "empty" });
+      } else if (line.startsWith("+")) {
+        // Added line - empty on left, show on right
+        left.push({ line: "", type: "empty" });
+        right.push({ line: line.slice(1), type: "added" });
+      } else if (line.startsWith(" ") || line === "") {
+        // Context line - show on both sides
+        const content = line.startsWith(" ") ? line.slice(1) : line;
+        left.push({ line: content, type: "normal" });
+        right.push({ line: content, type: "normal" });
+      }
+    }
+
+    return { left, right };
   });
 
   // Check if responses are identical
@@ -488,32 +586,50 @@
 
     <!-- Diff View -->
     {#if showSideBySide}
-      <!-- Side by Side View -->
+      <!-- Side by Side Diff View -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card.Root>
           <Card.Header class="py-3">
-            <Card.Title class="text-base">Nightscout Response</Card.Title>
+            <Card.Title class="text-base text-red-600">
+              Nightscout Response
+            </Card.Title>
           </Card.Header>
           <Card.Content class="p-0">
-            <pre
+            <div
               bind:this={leftPanelRef}
               onscroll={syncScrollLeft}
-              class="p-4 overflow-x-auto text-sm font-mono max-h-[600px] overflow-y-auto bg-muted/50">{filteredResponses.ns ||
-                result.nightscoutError ||
-                "No response"}</pre>
+              class="overflow-x-auto max-h-[600px] overflow-y-auto"
+            >
+              <pre
+                class="text-xs font-mono leading-tight">{#each sideBySideDiff.left as { line, type }}<span
+                    class="block px-3 min-h-[1.25em] {type === 'removed'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                      : type === 'empty'
+                        ? 'bg-muted/30'
+                        : ''}">{line}</span>{/each}</pre>
+            </div>
           </Card.Content>
         </Card.Root>
         <Card.Root>
           <Card.Header class="py-3">
-            <Card.Title class="text-base">Nocturne Response</Card.Title>
+            <Card.Title class="text-base text-green-600">
+              Nocturne Response
+            </Card.Title>
           </Card.Header>
           <Card.Content class="p-0">
-            <pre
+            <div
               bind:this={rightPanelRef}
               onscroll={syncScrollRight}
-              class="p-4 overflow-x-auto text-sm font-mono max-h-[600px] overflow-y-auto bg-muted/50">{filteredResponses.nc ||
-                result.nocturneError ||
-                "No response"}</pre>
+              class="overflow-x-auto max-h-[600px] overflow-y-auto"
+            >
+              <pre
+                class="text-xs font-mono leading-tight">{#each sideBySideDiff.right as { line, type }}<span
+                    class="block px-3 min-h-[1.25em] {type === 'added'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+                      : type === 'empty'
+                        ? 'bg-muted/30'
+                        : ''}">{line}</span>{/each}</pre>
+            </div>
           </Card.Content>
         </Card.Root>
       </div>
@@ -530,9 +646,9 @@
         </Card.Header>
         <Card.Content class="p-0">
           <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <pre class="text-sm font-mono">{#each parsedDiff as { line, type }}
-                <span
-                  class="block px-4 py-0.5 {type === 'add'
+            <pre
+              class="text-xs font-mono leading-tight">{#each parsedDiff as { line, type }}<span
+                  class="block px-3 {type === 'add'
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
                     : type === 'remove'
                       ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
@@ -540,8 +656,7 @@
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
                         : type === 'meta'
                           ? 'text-muted-foreground'
-                          : ''}">{line}</span>
-              {/each}</pre>
+                          : ''}">{line}</span>{/each}</pre>
           </div>
         </Card.Content>
       </Card.Root>
