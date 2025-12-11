@@ -690,8 +690,6 @@
             tickLabelProps={{ class: "text-xs fill-muted-foreground" }}
           />
 
-          <Highlight points lines />
-
           <!-- Glucose line -->
           <Spline
             class="stroke-[var(--glucose-in-range)] stroke-2 fill-none"
@@ -840,6 +838,7 @@
         yDomain={[0, maxIOB]}
         yRange={({ height }) => [height * (1 - trackRatios.iob), height]}
         padding={{ left: 48, bottom: 0, top: 0, right: 48 }}
+        tooltip={{ mode: "quadtree-x" }}
       >
         <Svg>
           <!-- IOB axis on right -->
@@ -912,11 +911,14 @@
               </Text>
             </Group>
           {/each}
+
+          <Highlight points lines />
         </Svg>
         <Tooltip.Root
           class="bg-slate-900/95 border border-slate-800 rounded-lg shadow-xl text-xs z-50 backdrop-blur-sm"
         >
           {#snippet children({ data })}
+            {@const activeGlucose = findSeriesValue(glucoseData, data.time)}
             {@const activeBasal = findBasalValue(basalData, data.time)}
             {@const activeIob = findSeriesValue(iobData, data.time)}
 
@@ -929,10 +931,10 @@
               class="text-slate-300 border-b border-slate-800 pb-1 mb-1 font-mono"
             />
             <Tooltip.List>
-              {#if data?.sgv}
+              {#if activeGlucose?.sgv}
                 <Tooltip.Item
                   label="Glucose"
-                  value={data.sgv}
+                  value={activeGlucose.sgv}
                   format="integer"
                   color="var(--glucose-in-range)"
                   class="text-slate-100 font-bold"
