@@ -35,6 +35,28 @@
     class: className = "",
   }: Props = $props();
 
+  // Track value changes to trigger pulse animation
+  let isPulsing = $state(false);
+  let previousValue = $state<string | null>(null);
+
+  // Trigger pulse animation when displayValue changes
+  $effect(() => {
+    // Skip initial render and only pulse on actual value changes
+    if (
+      previousValue !== null &&
+      displayValue !== previousValue &&
+      !isLoading
+    ) {
+      isPulsing = true;
+      // Remove the class after animation completes
+      const timeout = setTimeout(() => {
+        isPulsing = false;
+      }, 600); // Match animation duration
+      return () => clearTimeout(timeout);
+    }
+    previousValue = displayValue;
+  });
+
   // Get background color based on BG value (only when not stale)
   const getBGColor = (bg: number, stale: boolean) => {
     if (stale) return "bg-muted text-muted-foreground";
@@ -80,7 +102,9 @@
       class="font-bold rounded-lg {sizeClasses} {getBGColor(
         rawBgMgdl,
         isStale
-      )} {getBorderStyle(isDisconnected, isStale)}"
+      )} {getBorderStyle(isDisconnected, isStale)} {isPulsing
+        ? 'pulse-once'
+        : ''}"
     >
       {displayValue}
     </div>
@@ -120,5 +144,24 @@
 
   .animate-flash-border {
     animation: flash-border 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-once {
+    0% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      transform: scale(1.05);
+      filter: brightness(1.15);
+    }
+    100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+  }
+
+  .pulse-once {
+    animation: pulse-once 0.6s ease-in-out;
   }
 </style>
