@@ -5,7 +5,6 @@
     GlucoseChartCard,
     RecentEntriesCard,
     RecentTreatmentsCard,
-    BatteryStatusCard,
   } from "$lib/components/dashboard";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import { getSettingsStore } from "$lib/stores/settings-store.svelte";
@@ -21,8 +20,6 @@
     treatments: settingsStore.features?.dashboardWidgets?.treatments ?? true,
     predictions: settingsStore.features?.dashboardWidgets?.predictions ?? true,
     dailyStats: settingsStore.features?.dashboardWidgets?.dailyStats ?? true,
-    batteryStatus:
-      settingsStore.features?.dashboardWidgets?.batteryStatus ?? true,
   });
 
   // Get focusHours setting for chart default time range
@@ -40,17 +37,8 @@
 <div class="p-6 space-y-6">
   <CurrentBGDisplay />
 
-  {#if widgets.statistics || widgets.batteryStatus}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {#if widgets.statistics}
-        <div class="md:col-span-3">
-          <BGStatisticsCards />
-        </div>
-      {/if}
-      {#if widgets.batteryStatus}
-        <BatteryStatusCard />
-      {/if}
-    </div>
+  {#if widgets.statistics}
+    <BGStatisticsCards />
   {/if}
 
   {#if widgets.glucoseChart}

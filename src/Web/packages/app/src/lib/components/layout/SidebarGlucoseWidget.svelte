@@ -68,8 +68,12 @@
   // Oref prediction data from backend
   let orefPredictions = $state<PredictionData | null>(null);
 
-  // Fetch oref predictions
+  // Fetch oref predictions (re-fetch when new data arrives)
   $effect(() => {
+    // Depend on lastUpdated to trigger refetch when new data comes in
+    const _lastUpdated = lastUpdated;
+    void _lastUpdated; // Ensure dependency is tracked
+
     // Only fetch if we have valid glucose data
     if (rawCurrentBG > 0 && !isStale && !isDisconnected) {
       getPredictions({})
