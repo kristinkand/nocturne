@@ -34,16 +34,17 @@ Nocturne/
 - **Real-time** - SignalR hubs for live data streaming
 - **Data Connectors** - Dexcom Share, Glooko, LibreLinkUp, MiniMed CareLink, MyFitnessPal, Nightscout
 - **PostgreSQL** - Modern relational database with EF Core migrations
-- **Redis Cache** - Distributed caching for optimal performance
-- **Observability** - OpenTelemetry integration for monitoring
+- **Observability** - OpenTelemetry integration for monitoring (Soon)
 - **Containerized** - Docker support for all services
 
 ## Quick Start with .NET Aspire
 
 ### Prerequisites
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (for local PostgreSQL)
+
+Copy the appsettings.example.json, and rename it to `appsettings.json`. Fill in the values for the connection strings, and any other settings you want to change. If you'd like to pipe in your Nightscout values into it just to test it out, do so in the `Connector.Nightscout` section, *not* the CompatibilityProxy; they are fundamentally different things.
 
 ### Run with Aspire
 
@@ -61,6 +62,8 @@ Aspire will automatically:
 - Launch any configured data connectors
 - Set up service discovery and health checks
 - Open the Aspire dashboard at `http://localhost:17257`
+
+You can then access the frontend from the port assigned to it.
 
 ### Access the API
 
@@ -100,6 +103,8 @@ Authentication__ApiSecret="my-secret"
 ASPNETCORE_ENVIRONMENT=Production
 ```
 
+You generally shouldn't have to do this, ever- configuration lives in the appsettings, and is automagically passed through to the frontend.
+
 ## Data Connectors
 
 Nocturne includes native connectors for popular diabetes platforms:
@@ -126,6 +131,8 @@ dotnet run --project Nocturne.Tools.Connect test --all
 # Run in daemon mode
 dotnet run --project Nocturne.Tools.Connect run --daemon
 ```
+
+If you set up the connector's settings in the appsettings, then it'll automatically start.
 
 ## Development
 
@@ -247,4 +254,4 @@ Nocturne is a community project and is not affiliated with or endorsed by the Ni
 ## Acknowledgments
 
 - Built on the shoulders of the [Nightscout Project](https://github.com/nightscout/cgm-remote-monitor)
-- Powered by [.NET 9](https://dotnet.microsoft.com/) and [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/)
+- Powered by [.NET 10](https://dotnet.microsoft.com/) and [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/)
