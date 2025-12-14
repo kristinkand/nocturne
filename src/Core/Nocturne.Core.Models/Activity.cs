@@ -86,6 +86,37 @@ public class Activity : ProcessableDocumentBase
     public string? DateString { get; set; }
 
     /// <summary>
+    /// Gets or sets the distance covered during the activity
+    /// </summary>
+    [JsonPropertyName("distance")]
+    public double? Distance { get; set; }
+
+    /// <summary>
+    /// Gets or sets the units for distance (e.g., "meters", "kilometers", "miles")
+    /// </summary>
+    [JsonPropertyName("distanceUnits")]
+    public string? DistanceUnits { get; set; }
+
+    /// <summary>
+    /// Gets or sets the energy expended during the activity (calories)
+    /// </summary>
+    [JsonPropertyName("energy")]
+    public double? Energy { get; set; }
+
+    /// <summary>
+    /// Gets or sets the units for energy (e.g., "calories", "kilocalories", "joules")
+    /// </summary>
+    [JsonPropertyName("energyUnits")]
+    public string? EnergyUnits { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name/title of the activity
+    /// </summary>
+    [JsonPropertyName("name")]
+    [Sanitizable]
+    public string? Name { get; set; }
+
+    /// <summary>
     /// Gets or sets additional properties as a dynamic object
     /// </summary>
     [JsonExtensionData]

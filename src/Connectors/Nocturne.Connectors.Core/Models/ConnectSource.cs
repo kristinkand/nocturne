@@ -37,4 +37,9 @@ public enum ConnectSource
     /// MyFitnessPal data source
     /// </summary>
     MyFitnessPal,
+
+    /// <summary>
+    /// Tidepool data source
+    /// </summary>
+    Tidepool,
 }
