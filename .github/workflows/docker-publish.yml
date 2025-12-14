@@ -12,7 +12,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_REPOSITORY: ${{ github.repository }}
   DOTNET_VERSION: '10.0.x'
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
   PNPM_VERSION: '9'
 
 jobs:
@@ -166,7 +166,7 @@ jobs:
         run: |
           # Create optimized Dockerfile for SvelteKit production build
           cat > Dockerfile.web << 'EOF'
-          FROM node:20-alpine AS builder
+          FROM node:24-alpine AS builder
           WORKDIR /app
           RUN npm install -g pnpm@9
 
@@ -191,7 +191,7 @@ jobs:
           # Build the app
           RUN pnpm --filter @nocturne/app run build
 
-          FROM node:20-alpine
+          FROM node:24-alpine
           WORKDIR /app
 
           # Copy built artifacts
