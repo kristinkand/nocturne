@@ -10,6 +10,7 @@ import { query, form, getRequestEvent } from "$app/server";
 
 import { redirect, invalid } from "@sveltejs/kit";
 import type { LoginResponse, OidcProviderInfo, RegisterResponse } from "$lib/api/generated/nocturne-api-client";
+import { AUTH_COOKIE_NAMES } from "$lib/config/auth-cookies";
 
 // ============================================================================
 // Zod Schemas
@@ -208,7 +209,7 @@ export const loginForm = form(loginSchema, async (data, issue) => {
     const isSecure = event.url.protocol === "https:";
 
     if (response.accessToken) {
-      event.cookies.set(".Nocturne.AccessToken", response.accessToken, {
+      event.cookies.set(AUTH_COOKIE_NAMES.accessToken, response.accessToken, {
         path: "/",
         httpOnly: true,
         secure: isSecure,
@@ -218,7 +219,7 @@ export const loginForm = form(loginSchema, async (data, issue) => {
     }
 
     if (response.refreshToken) {
-      event.cookies.set(".Nocturne.RefreshToken", response.refreshToken, {
+      event.cookies.set(AUTH_COOKIE_NAMES.refreshToken, response.refreshToken, {
         path: "/",
         httpOnly: true,
         secure: isSecure,
@@ -525,7 +526,7 @@ export const refreshSession = query(async () => {
     if (result.accessToken) {
       const isSecure = event.url.protocol === "https:";
 
-      event.cookies.set(".Nocturne.AccessToken", result.accessToken, {
+      event.cookies.set(AUTH_COOKIE_NAMES.accessToken, result.accessToken, {
         path: "/",
         httpOnly: true,
         secure: isSecure,
@@ -568,8 +569,8 @@ export const logoutSession = query(z.string().optional(), async (_providerId) =>
     await api.oidc.logout();
 
     // Clear all auth cookies
-    event.cookies.delete(".Nocturne.AccessToken", { path: "/" });
-    event.cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+    event.cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+    event.cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
     event.cookies.delete("IsAuthenticated", { path: "/" });
 
     return { success: true };
@@ -577,8 +578,8 @@ export const logoutSession = query(z.string().optional(), async (_providerId) =>
     console.error("Failed to logout:", error);
 
     // Still clear cookies even if backend call fails
-    event.cookies.delete(".Nocturne.AccessToken", { path: "/" });
-    event.cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+    event.cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+    event.cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
     event.cookies.delete("IsAuthenticated", { path: "/" });
 
     return { success: true };

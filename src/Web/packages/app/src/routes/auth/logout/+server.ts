@@ -2,6 +2,7 @@ import type { RequestHandler } from "./$types";
 import { redirect } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
+import { AUTH_COOKIE_NAMES } from "$lib/config/auth-cookies";
 
 /**
  * POST handler for logout
@@ -15,7 +16,7 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
 
     if (apiBaseUrl) {
       // Get the refresh token to send with the logout request
-      const refreshToken = cookies.get(".Nocturne.RefreshToken");
+      const refreshToken = cookies.get(AUTH_COOKIE_NAMES.refreshToken);
 
       const headers: HeadersInit = {
         "Content-Type": "application/json",
@@ -23,7 +24,7 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
 
       // Forward refresh token cookie
       if (refreshToken) {
-        headers["Cookie"] = `.Nocturne.RefreshToken=${refreshToken}`;
+        headers["Cookie"] = `${AUTH_COOKIE_NAMES.refreshToken}=${refreshToken}`;
       }
 
       const logoutUrl = new URL("/auth/logout", apiBaseUrl);
@@ -36,8 +37,8 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
         const result = await response.json();
 
         // Clear all auth cookies
-        cookies.delete(".Nocturne.AccessToken", { path: "/" });
-        cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+        cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+        cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
         cookies.delete("IsAuthenticated", { path: "/" });
 
         // If provider has a logout URL, redirect there
@@ -48,8 +49,8 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
     }
 
     // Clear cookies even if API call fails
-    cookies.delete(".Nocturne.AccessToken", { path: "/" });
-    cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+    cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+    cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
     cookies.delete("IsAuthenticated", { path: "/" });
   } catch (error) {
     // If it's a redirect, re-throw it
@@ -60,8 +61,8 @@ export const POST: RequestHandler = async ({ fetch, cookies }) => {
     console.error("Logout error:", error);
 
     // Clear cookies on error too
-    cookies.delete(".Nocturne.AccessToken", { path: "/" });
-    cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+    cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+    cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
     cookies.delete("IsAuthenticated", { path: "/" });
   }
 
@@ -82,14 +83,14 @@ export const GET: RequestHandler = async ({ fetch, cookies }) => {
     const apiBaseUrl = env.NOCTURNE_API_URL || publicEnv.PUBLIC_API_URL;
 
     if (apiBaseUrl) {
-      const refreshToken = cookies.get(".Nocturne.RefreshToken");
+      const refreshToken = cookies.get(AUTH_COOKIE_NAMES.refreshToken);
 
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
 
       if (refreshToken) {
-        headers["Cookie"] = `.Nocturne.RefreshToken=${refreshToken}`;
+        headers["Cookie"] = `${AUTH_COOKIE_NAMES.refreshToken}=${refreshToken}`;
       }
 
       const logoutUrl = new URL("/auth/logout", apiBaseUrl);
@@ -103,8 +104,8 @@ export const GET: RequestHandler = async ({ fetch, cookies }) => {
   }
 
   // Clear cookies
-  cookies.delete(".Nocturne.AccessToken", { path: "/" });
-  cookies.delete(".Nocturne.RefreshToken", { path: "/" });
+  cookies.delete(AUTH_COOKIE_NAMES.accessToken, { path: "/" });
+  cookies.delete(AUTH_COOKIE_NAMES.refreshToken, { path: "/" });
   cookies.delete("IsAuthenticated", { path: "/" });
 
   // Redirect to login page

@@ -344,6 +344,15 @@ class Program
             .WithEnvironment(
                 "PUBLIC_WEBSOCKET_PING_INTERVAL",
                 builder.Configuration["WebSocket:PingInterval"] ?? "20000"
+            )
+            // Cookie names for authentication - must match API's Oidc:Cookie configuration
+            .WithEnvironment(
+                "COOKIE_ACCESS_TOKEN_NAME",
+                builder.Configuration["Oidc:Cookie:AccessTokenName"] ?? ".Nocturne.AccessToken"
+            )
+            .WithEnvironment(
+                "COOKIE_REFRESH_TOKEN_NAME",
+                builder.Configuration["Oidc:Cookie:RefreshTokenName"] ?? ".Nocturne.RefreshToken"
             );
 
         apiSecret.WithParentRelationship(web);

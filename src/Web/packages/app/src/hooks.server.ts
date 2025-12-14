@@ -6,6 +6,7 @@ import { env as publicEnv } from "$env/dynamic/public";
 import { createHash } from "crypto";
 import { sequence } from "@sveltejs/kit/hooks";
 import type { AuthUser } from "./app.d";
+import { AUTH_COOKIE_NAMES } from "$lib/config/auth-cookies";
 
 /**
  * Helper to get the API base URL (server-side internal or public)
@@ -43,7 +44,7 @@ function createServerApiClient(
 
       // Forward access token cookie if provided
       if (options?.accessToken) {
-        headers.set("Cookie", `.Nocturne.AccessToken=${options.accessToken}`);
+        headers.set("Cookie", `${AUTH_COOKIE_NAMES.accessToken}=${options.accessToken}`);
       }
 
       return fetchFn(url, {
@@ -72,7 +73,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 
   // Check for auth cookie
   const authCookie = event.cookies.get("IsAuthenticated");
-  const accessToken = event.cookies.get(".Nocturne.AccessToken");
+  const accessToken = event.cookies.get(AUTH_COOKIE_NAMES.accessToken);
 
   if (!authCookie && !accessToken) {
     // No auth cookies, user is not authenticated
