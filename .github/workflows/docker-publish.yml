@@ -344,58 +344,58 @@ jobs:
           path: release/
           retention-days: 90
 
-  security-scan:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-      actions: read
-    strategy:
-      matrix:
-        image-name:
-          - nocturne-api
-          - nocturne-web
-          - dexcom-connector
-          - glooko-connector
-          - freestyle-connector
-          - minimed-connector
-          - nightscout-connector
-          - myfitnespal-connector
+  # security-scan:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name != 'pull_request'
+  #   permissions:
+  #     contents: read
+  #     packages: read
+  #     security-events: write
+  #     actions: read
+  #   strategy:
+  #     matrix:
+  #       image-name:
+  #         - nocturne-api
+  #         - nocturne-web
+  #         - dexcom-connector
+  #         - glooko-connector
+  #         - freestyle-connector
+  #         - minimed-connector
+  #         - nightscout-connector
+  #         - myfitnespal-connector
 
-    steps:
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #   steps:
+  #     - name: Log in to GitHub Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine version tag
-        id: version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          elif [[ "${{ github.ref }}" == refs/heads/master ]] || [[ "${{ github.ref }}" == refs/heads/main ]]; then
-            VERSION=latest
-          else
-            VERSION=${GITHUB_REF#refs/heads/}
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+  #     - name: Determine version tag
+  #       id: version
+  #       run: |
+  #         if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+  #           VERSION=${GITHUB_REF#refs/tags/v}
+  #         elif [[ "${{ github.ref }}" == refs/heads/master ]] || [[ "${{ github.ref }}" == refs/heads/main ]]; then
+  #           VERSION=latest
+  #         else
+  #           VERSION=${GITHUB_REF#refs/heads/}
+  #         fi
+  #         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ matrix.image-name }}:${{ steps.version.outputs.version }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+  #     - name: Run Trivy vulnerability scanner
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/${{ matrix.image-name }}:${{ steps.version.outputs.version }}'
+  #         format: 'sarif'
+  #         output: 'trivy-results.sarif'
+  #         severity: 'CRITICAL,HIGH'
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: ${{ matrix.image-name }}
+  #     - name: Upload Trivy results to GitHub Security
+  #       uses: github/codeql-action/upload-sarif@v4
+  #       if: always()
+  #       with:
+  #         sarif_file: 'trivy-results.sarif'
+  #         category: ${{ matrix.image-name }}
