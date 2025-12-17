@@ -56,9 +56,10 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
         ILogger<MyFitnessPalConnectorService> logger,
         IApiDataSubmitter? apiDataSubmitter = null,
         IConnectorMetricsTracker? metricsTracker = null,
-        Func<IEnumerable<Food>, CancellationToken, Task<IEnumerable<Food>>>? createFoodAsync = null
+        Func<IEnumerable<Food>, CancellationToken, Task<IEnumerable<Food>>>? createFoodAsync = null,
+        IConnectorStateService? stateService = null
     )
-        : base(httpClient, logger, apiDataSubmitter, metricsTracker)
+        : base(httpClient, logger, apiDataSubmitter, metricsTracker, stateService)
     {
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _createFoodAsync = createFoodAsync;
@@ -456,6 +457,7 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
         try
         {
             _logger.LogInformation("Starting MyFitnessPal food sync for user {Username}", username);
+            _stateService?.SetState(ConnectorState.Syncing, "Downloading food data...");
 
             // Fetch diary data from MyFitnessPal
             var diaryResponse = await FetchDiaryAsync(username, fromDate, toDate);
@@ -467,9 +469,11 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
             if (!foodList.Any())
             {
                 _logger.LogInformation("No food entries found to sync");
+                _stateService?.SetState(ConnectorState.Idle, "No food entries found");
                 return true;
             }
 
+            _stateService?.SetState(ConnectorState.Syncing, "Uploading food data...");
             // Upload foods
             var success = await UploadFoodToNightscoutAsync(
                 foodList,
@@ -484,10 +488,12 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
                     "Successfully synced {FoodCount} food entries from MyFitnessPal",
                     foodList.Count
                 );
+                _stateService?.SetState(ConnectorState.Idle, "MyFitnessPal sync complete");
             }
             else
             {
                 _logger.LogError("Failed to sync food entries from MyFitnessPal");
+                _stateService?.SetState(ConnectorState.Error, "Failed to upload food entries");
             }
 
             return success;
@@ -499,6 +505,7 @@ public class MyFitnessPalConnectorService : BaseConnectorService<MyFitnessPalCon
                 "Error during MyFitnessPal food sync for user {Username}",
                 username
             );
+            _stateService?.SetState(ConnectorState.Error, $"Error: {ex.Message}");
             return false;
         }
     }

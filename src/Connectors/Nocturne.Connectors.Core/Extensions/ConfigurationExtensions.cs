@@ -163,9 +163,14 @@ namespace Nocturne.Connectors.Core.Extensions
                 config.ApiSecret = apiSecret;
             }
 
+            // Bind TimezoneOffset from environment variable (set by Aspire)
+            if (double.TryParse(configuration["TimezoneOffset"], out var timezoneOffset))
+            {
+                config.TimezoneOffset = timezoneOffset;
+            }
 
-
-            // Bind TimezoneOffset from dynamic environment variable: CONNECT_{CONNECTORNAME}_TIMEZONE_OFFSET
+            // Also check dynamic environment variable: CONNECT_{CONNECTORNAME}_TIMEZONE_OFFSET
+            // This takes precedence over the simple TimezoneOffset env var
             var timezoneEnvVar = $"CONNECT_{connectorName.ToUpperInvariant()}_TIMEZONE_OFFSET";
             var timezoneEnvValue = configuration[timezoneEnvVar];
             if (!string.IsNullOrEmpty(timezoneEnvValue) && double.TryParse(timezoneEnvValue, out var envTimezoneOffset))

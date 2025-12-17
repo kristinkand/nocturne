@@ -42,6 +42,13 @@ public class Program
             new OptionsWrapper<GlookoConnectorConfiguration>(glookoConfig)
         );
 
+        // Debug: Log configuration values at startup
+        Console.WriteLine($"[Glooko] Configuration loaded:");
+        Console.WriteLine($"  TimezoneOffset: {glookoConfig.TimezoneOffset}");
+        Console.WriteLine($"  SaveRawData: {glookoConfig.SaveRawData}");
+        Console.WriteLine($"  Server: {glookoConfig.GlookoServer}");
+        Console.WriteLine($"  Username: {glookoConfig.GlookoUsername}");
+
         var server = glookoConfig.GlookoServer?.ToUpperInvariant() switch
         {
             "US" => GlookoConstants.Servers.US,

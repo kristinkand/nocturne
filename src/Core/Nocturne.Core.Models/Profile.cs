@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Nocturne.Core.Models.Serializers;
+using Nocturne.Core.Models.Attributes;
 
 namespace Nocturne.Core.Models;
 
@@ -67,6 +68,12 @@ public class Profile
     /// </summary>
     [JsonPropertyName("loopSettings")]
     public LoopProfileSettings? LoopSettings { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this profile is managed by an external service (e.g. Glooko)
+    /// </summary>
+    [NocturneOnly]
+    public bool IsExternallyManaged { get; set; }
 
     /// <summary>
     /// Gets or sets whether this profile was converted on the fly from legacy format

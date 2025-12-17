@@ -69,8 +69,6 @@ namespace Nocturne.Connectors.Configurations
         )]
         public string GlookoServer { get; set; } = "US";
 
-
-
         protected override void ValidateSourceSpecificConfiguration()
         {
             if (string.IsNullOrWhiteSpace(GlookoUsername))

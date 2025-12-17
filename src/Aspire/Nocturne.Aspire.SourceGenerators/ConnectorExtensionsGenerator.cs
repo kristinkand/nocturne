@@ -390,6 +390,9 @@ namespace Nocturne.Aspire.SourceGenerators
             sb.AppendLine(
                 $"            connector.WithEnvironment(\"DataDirectory\", dataDirectory);"
             );
+            sb.AppendLine(
+                $"            connector.WithEnvironment(\"TimezoneOffset\", timezoneOffset);"
+            );
             sb.AppendLine();
 
             // Set parent relationships
@@ -400,6 +403,7 @@ namespace Nocturne.Aspire.SourceGenerators
             }
             sb.AppendLine($"            saveRawData.WithParentRelationship(connector);");
             sb.AppendLine($"            dataDirectory.WithParentRelationship(connector);");
+            sb.AppendLine($"            timezoneOffset.WithParentRelationship(connector);");
 
             // Add reference from API to connector for service discovery
             // This allows the API to resolve the connector's endpoint for health checks
@@ -456,6 +460,25 @@ namespace Nocturne.Aspire.SourceGenerators
             );
             sb.AppendLine(
                 $"            dataDirectory.WithDescription(\"Directory to save raw data files\");"
+            );
+            sb.AppendLine();
+
+            // TimezoneOffset parameter
+            sb.AppendLine(
+                $"            var config_timezoneOffset = builder.Configuration[\"Parameters:Connectors:{connectorName}:TimezoneOffset\"];"
+            );
+            sb.AppendLine(
+                $"            var val_timezoneOffset = !string.IsNullOrEmpty(config_timezoneOffset) ? config_timezoneOffset : \"0\";"
+            );
+            sb.AppendLine($"            var timezoneOffset = val_timezoneOffset is not null");
+            sb.AppendLine(
+                $"                ? builder.AddParameter(\"{connectorNameLower}-timezone-offset\", val_timezoneOffset, secret: false)"
+            );
+            sb.AppendLine(
+                $"                : builder.AddParameter(\"{connectorNameLower}-timezone-offset\", secret: false);"
+            );
+            sb.AppendLine(
+                $"            timezoneOffset.WithDescription(\"Timezone offset in hours to convert pump local time to UTC\");"
             );
             sb.AppendLine();
         }

@@ -61,12 +61,21 @@ namespace Nocturne.Connectors.Glooko.Models
 
         [JsonPropertyName("pumpEvents")]
         public GlookoPumpEvent[]? PumpEvents { get; set; }
+
+        [JsonPropertyName("reservoirChange")]
+        public GlookoReservoirChange[]? ReservoirChanges { get; set; }
+
+        public GlookoDevice[]? Devices { get; set; }
+        public GlookoDevicesAndSettings? DeviceSettings { get; set; }
     }
 
     public class GlookoFood
     {
         [JsonPropertyName("timestamp")]
         public string Timestamp { get; set; } = string.Empty;
+
+        [JsonPropertyName("pumpTimestamp")]
+        public string PumpTimestamp { get; set; } = string.Empty;
 
         [JsonPropertyName("carbs")]
         public double Carbs { get; set; }
@@ -82,6 +91,9 @@ namespace Nocturne.Connectors.Glooko.Models
     {
         [JsonPropertyName("timestamp")]
         public string Timestamp { get; set; } = string.Empty;
+
+        [JsonPropertyName("pumpTimestamp")]
+        public string PumpTimestamp { get; set; } = string.Empty;
 
         [JsonPropertyName("value")]
         public double Value { get; set; }

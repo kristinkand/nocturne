@@ -62,9 +62,10 @@ namespace Nocturne.Connectors.Nightscout.Services
             IRetryDelayStrategy retryDelayStrategy,
             IRateLimitingStrategy rateLimitingStrategy,
             IApiDataSubmitter? apiDataSubmitter = null,
-            IConnectorMetricsTracker? metricsTracker = null
+            IConnectorMetricsTracker? metricsTracker = null,
+            IConnectorStateService? stateService = null
         )
-            : base(httpClient, logger, apiDataSubmitter, metricsTracker)
+            : base(httpClient, logger, apiDataSubmitter, metricsTracker, stateService)
         {
             _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
             _retryDelayStrategy =
@@ -612,6 +613,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync entries
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading entries...");
                     var entries = await FetchEntriesV3Async(sinceTimestamp);
                     var entriesArray = entries.ToArray();
 
@@ -645,6 +647,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync treatments
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading treatments...");
                     var treatments = await FetchTreatmentsV3Async(sinceTimestamp);
                     var treatmentsArray = treatments.ToArray();
 
@@ -678,6 +681,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync device status
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading device status...");
                     var deviceStatuses = await FetchDeviceStatusV3Async(sinceTimestamp);
                     var deviceStatusArray = deviceStatuses.ToArray();
 
@@ -711,6 +715,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync profiles
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading profiles...");
                     var profiles = await FetchProfilesV3Async(null);
                     var profilesArray = profiles.ToArray();
 
@@ -744,6 +749,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync food
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading food...");
                     var foods = await FetchFoodV3Async(null);
                     var foodsArray = foods.ToArray();
 
@@ -777,10 +783,12 @@ namespace Nocturne.Connectors.Nightscout.Services
                 if (allSuccess)
                 {
                     _logger.LogInformation("Nightscout v3 API data sync completed successfully");
+                    _stateService?.SetState(ConnectorState.Idle, "Nightscout sync complete");
                 }
                 else
                 {
                     _logger.LogWarning("Nightscout v3 API data sync completed with some failures");
+                    _stateService?.SetState(ConnectorState.Error, "Nightscout sync completed with errors");
                 }
 
                 return allSuccess;
@@ -788,6 +796,7 @@ namespace Nocturne.Connectors.Nightscout.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during Nightscout v3 API data sync");
+                _stateService?.SetState(ConnectorState.Error, "Error during Nightscout sync");
                 return false;
             }
         }
@@ -1395,6 +1404,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync glucose entries
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading entries...");
                     var entries = await FetchGlucoseDataAsync(sinceTimestamp);
                     var entriesArray = entries.ToArray();
 
@@ -1433,6 +1443,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync treatments (insulin, carbs, temp basals, etc.)
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading treatments...");
                     var treatments = await FetchTreatmentsAsync(sinceTimestamp);
                     var treatmentsArray = treatments.ToArray();
 
@@ -1471,6 +1482,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync device status (pump data, loop status, etc.)
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading device status...");
                     var deviceStatuses = await FetchDeviceStatusAsync(sinceTimestamp);
                     var deviceStatusArray = deviceStatuses.ToArray();
 
@@ -1509,6 +1521,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync profiles
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading profiles...");
                     var profiles = await FetchProfilesAsync(null);
                     var profilesArray = profiles.ToArray();
 
@@ -1547,6 +1560,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync food entries
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading food...");
                     var foods = await FetchFoodAsync(null);
                     var foodsArray = foods.ToArray();
 
@@ -1585,6 +1599,7 @@ namespace Nocturne.Connectors.Nightscout.Services
                 // Sync activity entries
                 try
                 {
+                    _stateService?.SetState(ConnectorState.Syncing, "Downloading activity...");
                     var activities = await FetchActivityAsync(sinceTimestamp);
                     var activitiesArray = activities.ToArray();
 
@@ -1623,10 +1638,12 @@ namespace Nocturne.Connectors.Nightscout.Services
                 if (allSuccess)
                 {
                     _logger.LogInformation("Nightscout data sync completed successfully");
+                    _stateService?.SetState(ConnectorState.Idle, "Nightscout sync complete");
                 }
                 else
                 {
                     _logger.LogWarning("Nightscout data sync completed with some failures");
+                    _stateService?.SetState(ConnectorState.Error, "Nightscout sync completed with errors");
                 }
 
                 return allSuccess;

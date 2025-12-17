@@ -30,7 +30,8 @@ namespace Nocturne.Connectors.Core.Services
         }
 
         /// <summary>
-        /// Save connector data to a timestamped JSON file
+        /// Save connector data to a timestamped JSON file.
+        /// Only saves if the content differs from the most recent file.
         /// </summary>
         public async Task<string?> SaveDataAsync(
             TData data,
@@ -49,11 +50,28 @@ namespace Nocturne.Connectors.Core.Services
                     );
                 }
 
+                var json = JsonSerializer.Serialize(data, _jsonOptions);
+
+                // Check if we already have a file with the same content
+                var mostRecentFile = GetMostRecentDataFile(dataDirectory, filePrefix);
+                if (mostRecentFile != null)
+                {
+                    var existingContent = await File.ReadAllTextAsync(mostRecentFile);
+                    if (existingContent == json)
+                    {
+                        _logger.LogDebug(
+                            "Skipping save - {DataType} data unchanged from: {FilePath}",
+                            typeof(TData).Name,
+                            mostRecentFile
+                        );
+                        return mostRecentFile;
+                    }
+                }
+
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
                 var fileName = $"{filePrefix}_{timestamp}.json";
                 var filePath = Path.Combine(dataDirectory, fileName);
 
-                var json = JsonSerializer.Serialize(data, _jsonOptions);
                 await File.WriteAllTextAsync(filePath, json);
 
                 _logger.LogInformation(

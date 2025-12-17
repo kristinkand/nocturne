@@ -74,9 +74,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         IRetryDelayStrategy retryDelayStrategy,
         IRateLimitingStrategy rateLimitingStrategy,
         IApiDataSubmitter? apiDataSubmitter = null,
-        IConnectorMetricsTracker? metricsTracker = null
+        IConnectorMetricsTracker? metricsTracker = null,
+        IConnectorStateService? stateService = null
     )
-        : base(httpClient, logger, apiDataSubmitter, metricsTracker)
+        : base(httpClient, logger, apiDataSubmitter, metricsTracker, stateService)
     {
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _retryDelayStrategy =
@@ -566,6 +567,7 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
     {
         try
         {
+            _stateService?.SetState(ConnectorState.Syncing, "Downloading treatments...");
             var since = DateTime.UtcNow.AddDays(-1);
 
             // Fetch bolus data
@@ -603,19 +605,27 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
 
             if (treatments.Count > 0)
             {
+                _stateService?.SetState(ConnectorState.Syncing, "Uploading treatments...");
                 await PublishTreatmentDataAsync(treatments, _config, cancellationToken);
                 _logger.LogInformation(
                     "Synced {Count} treatments from Tidepool",
                     treatments.Count
                 );
             }
+            else
+            {
+                _stateService?.SetState(ConnectorState.Syncing, "No new treatments found");
+            }
 
             // Fetch and sync physical activity data to Activity table
             await SyncPhysicalActivityAsync(since, cancellationToken);
+
+            _stateService?.SetState(ConnectorState.Idle, "Tidepool sync complete");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error syncing treatments from Tidepool");
+            _stateService?.SetState(ConnectorState.Error, "Error syncing treatments");
         }
     }
 
@@ -623,6 +633,7 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
     {
         try
         {
+            _stateService?.SetState(ConnectorState.Syncing, "Downloading physical activity...");
             var physicalActivities = await FetchPhysicalActivityAsync(since);
             var activities = new List<Activity>();
 
