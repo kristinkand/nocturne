@@ -48,6 +48,11 @@
       CopyToOutputDirectory="PreserveNewest"
       Condition="Exists('..\..\..\appsettings.Development.json')"
     />
+    <Content
+      Include="..\..\Core\oref\target\wasm32-unknown-unknown\release\oref.wasm"
+      Link="oref.wasm"
+      CopyToOutputDirectory="PreserveNewest"
+    />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Aspire\Nocturne.Aspire.ServiceDefaults\Nocturne.Aspire.ServiceDefaults.csproj" />
