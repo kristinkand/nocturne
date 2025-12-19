@@ -21,6 +21,7 @@ export type AlarmTriggerType =
   | "RisingFast"
   | "FallingFast"
   | "StaleData"
+  | "ForecastLow"
   | "Custom";
 
 /** Priority levels for alarms */
@@ -69,7 +70,9 @@ export interface AlarmVisualSettings {
   /** Whether to turn on the screen when alarm triggers */
   wakeScreen: boolean;
   /** Whether to show emergency contacts during alarm overlay */
-  showEmergencyContacts?: boolean;
+  showEmergencyContacts: boolean;
+  /** Custom instructions for emergency contacts */
+  emergencyInstructions?: string;
 }
 
 /** Snooze settings for an alarm */
@@ -289,6 +292,7 @@ export const ALARM_TYPE_LABELS: Record<AlarmTriggerType, string> = {
   RisingFast: "Rising Fast",
   FallingFast: "Falling Fast",
   StaleData: "Stale Data",
+  ForecastLow: "Forecast Low",
   Custom: "Custom Range",
 };
 
@@ -308,6 +312,7 @@ export const ALARM_TYPE_COLORS: Record<AlarmTriggerType, { bg: string; border: s
   UrgentLow: { bg: "bg-red-50 dark:bg-red-950/20", border: "border-red-200 dark:border-red-900", text: "text-red-600" },
   RisingFast: { bg: "bg-orange-50 dark:bg-orange-950/20", border: "border-orange-200 dark:border-orange-900", text: "text-orange-600" },
   FallingFast: { bg: "bg-blue-50 dark:bg-blue-950/20", border: "border-blue-200 dark:border-blue-900", text: "text-blue-600" },
+  ForecastLow: { bg: "bg-yellow-50 dark:bg-yellow-950/20", border: "border-yellow-200 dark:border-yellow-900", text: "text-yellow-600" },
   StaleData: { bg: "bg-gray-50 dark:bg-gray-950/20", border: "border-gray-200 dark:border-gray-900", text: "text-gray-600" },
   Custom: { bg: "bg-purple-50 dark:bg-purple-950/20", border: "border-purple-200 dark:border-purple-900", text: "text-purple-600" },
 };
@@ -329,6 +334,7 @@ export function createDefaultAlarmProfile(
     threshold: defaults.threshold,
     thresholdHigh: undefined,
     persistenceMinutes: 0,
+    forecastLeadTimeMinutes: undefined, // Added this line
     audio: {
       enabled: true,
       soundId: defaults.soundId,
@@ -473,6 +479,17 @@ function getDefaultsForType(type: AlarmTriggerType): {
         snoozeDefault: 30,
         reraiseMinutes: 15,
         priority: "Normal",
+      };
+    case "ForecastLow":
+      return {
+        name: "Forecast Low",
+        description: "Predicted to go low soon",
+        threshold: 80,
+        soundId: "alarm-low",
+        flashColor: "#eab308",
+        snoozeDefault: 15,
+        reraiseMinutes: 10,
+        priority: "High",
       };
     case "Custom":
       return {

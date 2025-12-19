@@ -54,7 +54,12 @@ export const getTreatments = query(treatmentsQuerySchema, async (props) => {
   if (!from || !to) throw new Error("Invalid date range");
 
   // Build the find query for the API
-  const treatmentsQuery = `find[created_at][$gte]=${from.toISOString()}&find[created_at][$lte]=${to.toISOString()}`;
+  const treatmentsQuery = JSON.stringify({
+    created_at: {
+      $gte: from.toISOString(),
+      $lte: to.toISOString(),
+    },
+  });
 
   // Fetch treatments with pagination
   const treatments = await apiClient.treatments.getTreatments2(
@@ -100,7 +105,12 @@ export const getAllTreatments = query(
     const { apiClient } = locals;
 
     const { from, to } = props.dateRange;
-    const treatmentsQuery = `find[created_at][$gte]=${from.toISOString()}&find[created_at][$lte]=${to.toISOString()}`;
+    const treatmentsQuery = JSON.stringify({
+      created_at: {
+        $gte: from.toISOString(),
+        $lte: to.toISOString(),
+      },
+    });
 
     const pageSize = 1000;
     let allTreatments: Treatment[] = [];
@@ -147,7 +157,12 @@ export const getTreatmentStats = query(
     const { apiClient } = locals;
 
     const { from, to } = props.dateRange;
-    const treatmentsQuery = `find[created_at][$gte]=${from.toISOString()}&find[created_at][$lte]=${to.toISOString()}`;
+    const treatmentsQuery = JSON.stringify({
+      created_at: {
+        $gte: from.toISOString(),
+        $lte: to.toISOString(),
+      },
+    });
 
     // Get all treatments for stats
     const treatments = await apiClient.treatments.getTreatments2(treatmentsQuery, 10000, 0);

@@ -62,7 +62,12 @@ export const getEntries = query(
 		const { apiClient } = locals;
 		const { startDate, endDate } = calculateDateRange(input);
 
-		const entriesQuery = `find[date][$gte]=${startDate.toISOString()}&find[date][$lte]=${endDate.toISOString()}`;
+		const entriesQuery = JSON.stringify({
+			date: {
+				$gte: startDate.toISOString(),
+				$lte: endDate.toISOString(),
+			},
+		});
 		const entries = await apiClient.entries.getEntries2(entriesQuery);
 
 		return {
@@ -85,7 +90,12 @@ export const getTreatments = query(
 		const { apiClient } = locals;
 		const { startDate, endDate } = calculateDateRange(input);
 
-		const treatmentsQuery = `find[created_at][$gte]=${startDate.toISOString()}&find[created_at][$lte]=${endDate.toISOString()}`;
+		const treatmentsQuery = JSON.stringify({
+			created_at: {
+				$gte: startDate.toISOString(),
+				$lte: endDate.toISOString(),
+			},
+		});
 		const pageSize = 1000;
 
 		// Fetch all treatments by paginating through results
@@ -161,8 +171,18 @@ export const getReportsData = query(
 		const { apiClient } = locals;
 		const { startDate, endDate } = calculateDateRange(input);
 
-		const entriesQuery = `find[date][$gte]=${startDate.toISOString()}&find[date][$lte]=${endDate.toISOString()}`;
-		const treatmentsQuery = `find[created_at][$gte]=${startDate.toISOString()}&find[created_at][$lte]=${endDate.toISOString()}`;
+		const entriesQuery = JSON.stringify({
+			date: {
+				$gte: startDate.toISOString(),
+				$lte: endDate.toISOString(),
+			},
+		});
+		const treatmentsQuery = JSON.stringify({
+			created_at: {
+				$gte: startDate.toISOString(),
+				$lte: endDate.toISOString(),
+			},
+		});
 
 		// Fetch entries first
 		const entries = await apiClient.entries.getEntries2(entriesQuery);

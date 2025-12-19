@@ -10,6 +10,7 @@
   } from "$lib/components/ui/dialog";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
+  import { Textarea } from "$lib/components/ui/textarea";
   import { Switch } from "$lib/components/ui/switch";
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
@@ -155,10 +156,13 @@
   }
 
   const alarmTypes: AlarmTriggerType[] = [
-    "UrgentHigh",
-    "High",
-    "Low",
     "UrgentLow",
+    "Low",
+    "High",
+    "UrgentHigh",
+    "ForecastLow",
+    "RisingFast",
+    "FallingFast",
     "StaleData",
     "Custom",
   ];
@@ -299,8 +303,19 @@
                 type="single"
                 value={editedProfile.alarmType}
                 onValueChange={(value) => {
-                  if (value)
+                  if (value) {
                     editedProfile.alarmType = value as AlarmTriggerType;
+
+                    // Auto-fill emergency instructions for Urgent Low if empty
+                    if (
+                      editedProfile.alarmType === "UrgentLow" &&
+                      !editedProfile.visual.emergencyInstructions
+                    ) {
+                      editedProfile.visual.emergencyInstructions =
+                        "Administer carbs ONLY if they are conscious and able to swallow by themselves.";
+                      editedProfile.visual.showEmergencyContacts = true;
+                    }
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -656,6 +671,20 @@
 
         <!-- Visual Tab -->
         <TabsContent value="visual" class="space-y-6 mt-6">
+          <!-- Preview Section -->
+          <div class="p-4 rounded-lg border bg-muted/30">
+            <div class="flex items-center justify-between mb-3">
+              <Label>Test Alarm</Label>
+              <span class="text-xs text-muted-foreground">
+                Preview sound and visual effects
+              </span>
+            </div>
+            <AlarmPreview
+              profile={editedProfile}
+              isOpen={open}
+              {emergencyContacts}
+            />
+          </div>
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Eye class="h-5 w-5 text-muted-foreground" />
@@ -765,6 +794,20 @@
             </div>
             <Switch bind:checked={editedProfile.visual.showEmergencyContacts} />
           </div>
+
+          {#if editedProfile.visual.showEmergencyContacts}
+            <div class="space-y-2 animate-in slide-in-from-top-2 duration-200">
+              <Label>Specific Instructions</Label>
+              <Textarea
+                bind:value={editedProfile.visual.emergencyInstructions}
+                placeholder="e.g. Spare key is under the mat..."
+                class="resize-none h-24"
+              />
+              <p class="text-xs text-muted-foreground">
+                Instructions to display to your emergency contacts.
+              </p>
+            </div>
+          {/if}
         </TabsContent>
 
         <!-- Snooze Tab -->

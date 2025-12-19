@@ -72,8 +72,18 @@ export const getPointInTimeData = query(pointInTimeSchema, async ({ timestamp })
   const endTime = new Date(timestamp + windowMs);
 
   // Fetch entries, treatments, and device status for the time window
-  const entriesQuery = `find[date][$gte]=${startTime.toISOString()}&find[date][$lte]=${endTime.toISOString()}`;
-  const treatmentsQuery = `find[created_at][$gte]=${startTime.toISOString()}&find[created_at][$lte]=${endTime.toISOString()}`;
+  const entriesQuery = JSON.stringify({
+    date: {
+      $gte: startTime.toISOString(),
+      $lte: endTime.toISOString(),
+    },
+  });
+  const treatmentsQuery = JSON.stringify({
+    created_at: {
+      $gte: startTime.toISOString(),
+      $lte: endTime.toISOString(),
+    },
+  });
 
   const [entries, treatments] = await Promise.all([
     apiClient.entries.getEntries2(entriesQuery).catch(() => [] as Entry[]),

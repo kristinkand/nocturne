@@ -1,12 +1,14 @@
+<script context="module" lang="ts">
+  interface CachedSoundData {
+    peaks: number[];
+    duration: number;
+  }
+  /** Module-level cache for computed peaks (persists across component remounts) */
+  const peaksCache = new Map<string, CachedSoundData>();
+</script>
+
 <script lang="ts">
-  /**
-   * Alarm Waveform Visualization Component Adapted from svelte-audio-waveform
-   * (MIT License) https://github.com/Catsvilles/svelte-audio-waveform
-   *
-   * Displays actual waveform peaks for alarm sounds with volume envelope
-   * visualization
-   */
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import {
     subscribeToPreviewState,
     isCustomSound,
@@ -38,9 +40,8 @@
   let canvasEl: HTMLCanvasElement | undefined = $state();
   let progressCanvasEl: HTMLCanvasElement | undefined = $state();
   let animationFrame: number | null = null;
-  let startTime: number = 0;
+  let startTime = $state(0);
   let previewState = $state<PreviewState>({ isPlaying: false, soundId: null });
-  let unsubscribe: (() => void) | null = null;
   let pixelRatio = $state(1);
 
   // Computed: whether we're actively playing
@@ -48,14 +49,11 @@
 
   // Waveform peaks - actual audio data or generated for synthesized sounds
   let peaks = $state<number[]>([]);
+  let audioDuration = $state(0);
 
   // Progress position (0-1)
   let progressPosition = $state(0);
 
-  // In-memory cache for computed peaks (no persistence needed)
-  let peaksCache: Map<string, number[]> = new Map();
-
-  /** Generates an array of peak values from an AudioBuffer */
   function getPeaksFromBuffer(
     buffer: AudioBuffer,
     numberOfBuckets: number = 64,
@@ -92,7 +90,9 @@
   }
 
   /** Load peaks from custom audio file */
-  async function loadCustomSoundPeaks(soundId: string): Promise<number[]> {
+  async function loadCustomSoundPeaks(
+    soundId: string
+  ): Promise<CachedSoundData> {
     // Check cache first
     if (peaksCache.has(soundId)) {
       return peaksCache.get(soundId)!;
@@ -113,12 +113,15 @@
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
       const extractedPeaks = getPeaksFromBuffer(audioBuffer, 64);
+      const duration = audioBuffer.duration;
+
+      const data = { peaks: extractedPeaks, duration };
 
       // Cache the result in memory
-      peaksCache.set(soundId, extractedPeaks);
+      peaksCache.set(soundId, data);
 
       await audioContext.close();
-      return extractedPeaks;
+      return data;
     } catch (err) {
       console.error("Failed to extract peaks from audio:", err);
       return generateSynthesizedPeaks(soundId);
@@ -133,7 +136,7 @@
   function generateSynthesizedPeaks(
     soundId: string,
     numberOfBuckets: number = 64
-  ): number[] {
+  ): CachedSoundData {
     const generatedPeaks: number[] = [];
 
     // Different waveform patterns for different alarm types
@@ -201,20 +204,19 @@
       generatedPeaks.push(Math.max(0.15, Math.min(1, value + variation)));
     }
 
-    return generatedPeaks;
+    return { peaks: generatedPeaks, duration: 5 }; // Assume 5s loop for synthesized
   }
 
   /** Load peaks for the current sound (custom or synthesized) */
   async function loadPeaks(soundId: string): Promise<void> {
-    try {
-      if (isCustomSound(soundId)) {
-        peaks = await loadCustomSoundPeaks(soundId);
-      } else {
-        peaks = generateSynthesizedPeaks(soundId);
-      }
-    } finally {
-      updateCanvas();
+    let data: CachedSoundData;
+    if (isCustomSound(soundId)) {
+      data = await loadCustomSoundPeaks(soundId);
+    } else {
+      data = generateSynthesizedPeaks(soundId);
     }
+    peaks = data.peaks;
+    audioDuration = data.duration;
   }
 
   /** Find max absolute value in peaks array */
@@ -227,14 +229,26 @@
     return max || 1;
   }
 
+  /** Calculate volume at a specific time point */
+  function getVolumeAtTime(time: number): number {
+    if (!audioSettings.ascendingVolume) return audioSettings.maxVolume / 100;
+
+    const startVol = audioSettings.startVolume / 100;
+    const maxVol = audioSettings.maxVolume / 100;
+
+    if (time >= audioSettings.ascendDurationSeconds) return maxVol;
+
+    const progress = time / audioSettings.ascendDurationSeconds;
+    return startVol + (maxVol - startVol) * progress;
+  }
+
   /** Draw waveform bars on canvas */
   function drawBars(
     ctx: CanvasRenderingContext2D,
     canvasWidth: number,
     canvasHeight: number,
     peakData: number[],
-    fillColor: string,
-    volumeScale: number = 1
+    fillColor: string
   ) {
     const gap = Math.max(pixelRatio, 1);
     const bar = barWidth * pixelRatio;
@@ -247,7 +261,15 @@
 
     for (let i = 0; i < canvasWidth; i += step) {
       const peakIndex = Math.floor(i * scale);
-      let h = Math.round((peakData[peakIndex] / maxVal) * halfH * volumeScale);
+
+      // Calculate active volume scale for this point
+      const timeAtPixel = (i / canvasWidth) * (audioDuration || 1);
+      const vol = getVolumeAtTime(timeAtPixel);
+
+      // Apply global mute/dimming if needed (e.g. valid 'volumeScale' context)
+      // For now, we mix the 'shape' volume with the max height
+
+      let h = Math.round((peakData[peakIndex] / maxVal) * halfH * vol);
       if (h === 0) h = 1;
 
       // Draw bar from center
@@ -267,8 +289,7 @@
     canvasWidth: number,
     canvasHeight: number,
     peakData: number[],
-    fillColor: string,
-    volumeScale: number = 1
+    fillColor: string
   ) {
     const halfH = canvasHeight / 2;
     const maxVal = absMax(peakData);
@@ -281,14 +302,22 @@
 
     // Draw top half
     for (let i = 0; i < length; i++) {
-      const h = Math.round((peakData[i] / maxVal) * halfH * volumeScale);
-      ctx.lineTo(i * scale, halfH - h);
+      const x = i * scale;
+      const timeAtPixel = (x / canvasWidth) * (audioDuration || 1);
+      const vol = getVolumeAtTime(timeAtPixel);
+
+      const h = Math.round((peakData[i] / maxVal) * halfH * vol);
+      ctx.lineTo(x, halfH - h);
     }
 
     // Draw bottom half (mirror)
     for (let i = length - 1; i >= 0; i--) {
-      const h = Math.round((peakData[i] / maxVal) * halfH * volumeScale);
-      ctx.lineTo(i * scale, halfH + h);
+      const x = i * scale;
+      const timeAtPixel = (x / canvasWidth) * (audioDuration || 1);
+      const vol = getVolumeAtTime(timeAtPixel);
+
+      const h = Math.round((peakData[i] / maxVal) * halfH * vol);
+      ctx.lineTo(x, halfH + h);
     }
 
     ctx.closePath();
@@ -321,19 +350,12 @@
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     progressCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // Calculate volume for visualization
-    let volumeScale = playing ? 1 : 0.6;
-    if (!playing && audioSettings.ascendingVolume) {
-      volumeScale = (audioSettings.startVolume / 100) * 0.8;
-    } else if (!playing) {
-      volumeScale = (audioSettings.maxVolume / 100) * 0.6;
-    }
-
+    // Draw background waveform
     // Draw background waveform
     if (barWidth > 0) {
-      drawBars(ctx, canvasWidth, canvasHeight, peaks, color, volumeScale);
+      drawBars(ctx, canvasWidth, canvasHeight, peaks, color);
     } else {
-      drawWave(ctx, canvasWidth, canvasHeight, peaks, color, volumeScale);
+      drawWave(ctx, canvasWidth, canvasHeight, peaks, color);
     }
 
     // Draw progress waveform (clipped)
@@ -345,23 +367,9 @@
       progressCtx.clip();
 
       if (barWidth > 0) {
-        drawBars(
-          progressCtx,
-          canvasWidth,
-          canvasHeight,
-          peaks,
-          progressColor,
-          1
-        );
+        drawBars(progressCtx, canvasWidth, canvasHeight, peaks, progressColor);
       } else {
-        drawWave(
-          progressCtx,
-          canvasWidth,
-          canvasHeight,
-          peaks,
-          progressColor,
-          1
-        );
+        drawWave(progressCtx, canvasWidth, canvasHeight, peaks, progressColor);
       }
 
       progressCtx.restore();
@@ -395,15 +403,23 @@
     ctx.moveTo(0, halfH);
 
     for (let x = 0; x < canvasWidth; x++) {
-      const t = x / canvasWidth;
-      const vol = startVol + (maxVol - startVol) * t;
+      const timeAtPixel = (x / canvasWidth) * audioDuration;
+      const progress = Math.min(
+        timeAtPixel / audioSettings.ascendDurationSeconds,
+        1
+      );
+      const vol = startVol + (maxVol - startVol) * progress;
       const amp = vol * maxAmplitude;
       ctx.lineTo(x, halfH - amp);
     }
 
     for (let x = canvasWidth - 1; x >= 0; x--) {
-      const t = x / canvasWidth;
-      const vol = startVol + (maxVol - startVol) * t;
+      const timeAtPixel = (x / canvasWidth) * audioDuration;
+      const progress = Math.min(
+        timeAtPixel / audioSettings.ascendDurationSeconds,
+        1
+      );
+      const vol = startVol + (maxVol - startVol) * progress;
       const amp = vol * maxAmplitude;
       ctx.lineTo(x, halfH + amp);
     }
@@ -475,8 +491,6 @@
 
     progressPosition = Math.min(elapsed / duration, 1);
 
-    updateCanvas();
-
     if (progressPosition < 1) {
       animationFrame = requestAnimationFrame(animate);
     }
@@ -485,105 +499,53 @@
   onMount(() => {
     pixelRatio = window.devicePixelRatio || 1;
 
-    unsubscribe = subscribeToPreviewState((state) => {
+    const unsubscribe = subscribeToPreviewState((state) => {
       previewState = state;
-      if (state.isPlaying && !startTime) {
-        startTime = performance.now();
-        progressPosition = 0;
-      } else if (!state.isPlaying) {
-        startTime = 0;
-        progressPosition = 0;
-      }
     });
 
+    return () => {
+      unsubscribe();
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  });
+
+  // Effect: Load peaks when sound ID changes
+  $effect(() => {
     loadPeaks(audioSettings.soundId);
   });
 
-  onDestroy(() => {
-    unsubscribe?.();
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-    }
-  });
-
-  // Track previous sound ID to avoid unnecessary regeneration
-  let prevSoundId = audioSettings.soundId;
-
-  // Regenerate peaks when sound changes
+  // Effect: Handle playing state
   $effect(() => {
-    const currentSoundId = audioSettings.soundId;
-    if (currentSoundId !== prevSoundId) {
-      prevSoundId = currentSoundId;
-      loadPeaks(currentSoundId);
-    }
-  });
-
-  // Track previous playing state
-  let prevPlaying = false;
-
-  // Handle playing state changes
-  $effect(() => {
-    const currentPlaying = playing;
-    if (currentPlaying !== prevPlaying) {
-      prevPlaying = currentPlaying;
-      if (currentPlaying) {
-        startTime = performance.now();
-        progressPosition = 0;
-        animate();
-      } else {
-        if (animationFrame) {
-          cancelAnimationFrame(animationFrame);
-          animationFrame = null;
-        }
-        progressPosition = 0;
-        if (canvasEl) {
-          updateCanvas();
-        }
+    if (playing) {
+      startTime = performance.now();
+      progressPosition = 0;
+      animate();
+    } else {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
       }
+      progressPosition = 0;
     }
   });
 
-  // Track previous settings for comparison
-  let prevSettings = {
-    ascendingVolume: audioSettings.ascendingVolume,
-    startVolume: audioSettings.startVolume,
-    maxVolume: audioSettings.maxVolume,
-    ascendDurationSeconds: audioSettings.ascendDurationSeconds,
-  };
-
-  // Redraw when settings change
+  // Effect: Update canvas when visual dependencies change
   $effect(() => {
-    const current = {
-      ascendingVolume: audioSettings.ascendingVolume,
-      startVolume: audioSettings.startVolume,
-      maxVolume: audioSettings.maxVolume,
-      ascendDurationSeconds: audioSettings.ascendDurationSeconds,
-    };
-
-    if (
-      current.ascendingVolume !== prevSettings.ascendingVolume ||
-      current.startVolume !== prevSettings.startVolume ||
-      current.maxVolume !== prevSettings.maxVolume ||
-      current.ascendDurationSeconds !== prevSettings.ascendDurationSeconds
-    ) {
-      prevSettings = current;
-      if (canvasEl && !playing) {
-        updateCanvas();
-      }
-    }
+    updateCanvas();
   });
 
   // Handle resize
   function handleResize() {
     pixelRatio = window.devicePixelRatio || 1;
-    updateCanvas();
   }
 </script>
 
 <svelte:window onresize={handleResize} />
 
 <div
-  class="waveform-container rounded-md overflow-hidden border bg-accent-foreground"
+  class="waveform-container rounded-md overflow-hidden border bg-muted"
   style="position: relative; width: {width}px; height: {height}px;"
 >
   <canvas

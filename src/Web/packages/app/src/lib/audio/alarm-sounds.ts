@@ -21,6 +21,7 @@ export interface AlarmSoundOptions {
   notificationTitle?: string;
   notificationBody?: string;
   preventSleep?: boolean;
+  minDurationSeconds?: number;
 }
 
 type OscillatorType = 'sine' | 'square' | 'sawtooth' | 'triangle';
@@ -443,7 +444,22 @@ export async function playAlarmSound(
   }
 
   try {
-    for (let loop = 0; loop < definition.loops; loop++) {
+  // Calculate natural duration of one loop
+  let loopDuration = 0;
+  for (const pattern of definition.patterns) {
+    loopDuration += pattern.duration;
+  }
+  loopDuration += definition.repeatDelay;
+
+  // Determine number of loops
+  let totalLoops = definition.loops;
+  if (options.minDurationSeconds) {
+    const minDurationMs = options.minDurationSeconds * 1000;
+    const requiredLoops = Math.ceil(minDurationMs / loopDuration);
+    totalLoops = Math.max(totalLoops, requiredLoops);
+  }
+
+    for (let loop = 0; loop < totalLoops; loop++) {
       if (stopRequested) break;
 
       for (const pattern of definition.patterns) {
@@ -451,7 +467,7 @@ export async function playAlarmSound(
         await playTone(ctx, gainNode, pattern, baseVolume);
       }
 
-      if (loop < definition.loops - 1 && definition.repeatDelay > 0) {
+      if (loop < totalLoops - 1 && definition.repeatDelay > 0) {
         await new Promise(resolve => setTimeout(resolve, definition.repeatDelay));
       }
     }

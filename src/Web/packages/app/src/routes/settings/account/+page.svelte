@@ -50,15 +50,15 @@
   <title>Account - Settings - Nocturne</title>
 </svelte:head>
 
-<div class="container max-w-4xl py-6 space-y-6">
-  <div class="space-y-1">
-    <h1 class="text-2xl font-bold tracking-tight">Account</h1>
-    <p class="text-muted-foreground">
-      View and manage your account information
-    </p>
-  </div>
-
+<div class="w-full py-6 space-y-6">
   {#if user}
+    <div class="space-y-1">
+      <h1 class="text-2xl font-bold tracking-tight">Account</h1>
+      <p class="text-muted-foreground">
+        View and manage your account information
+      </p>
+    </div>
+
     <!-- User Profile Card -->
     <Card.Root>
       <Card.Header>
@@ -178,19 +178,32 @@
     </Card.Root>
   {:else}
     <!-- Not logged in -->
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>Not Signed In</Card.Title>
-        <Card.Description>
-          You need to sign in to view your account information.
-        </Card.Description>
-      </Card.Header>
-      <Card.Content>
-        <Button href="/auth/login">
-          <User class="mr-2 h-4 w-4" />
-          Sign In
-        </Button>
-      </Card.Content>
-    </Card.Root>
+    <div
+      class="min-h-[70vh] flex flex-col items-center justify-center p-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+    >
+      <Card.Root class="w-full max-w-md text-center shadow-lg">
+        <Card.Header className="pb-4 pt-8">
+          <div
+            class="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6"
+          >
+            <User class="h-8 w-8 text-primary" />
+          </div>
+          <Card.Title class="text-2xl font-bold">Not Signed In</Card.Title>
+          <Card.Description class="text-base mt-2">
+            Sign in to access your account dashboard and manage your settings.
+          </Card.Description>
+        </Card.Header>
+        <Card.Content class="pb-8">
+          <Button
+            href="/auth/login"
+            size="lg"
+            class="w-full sm:w-auto min-w-[200px] font-medium"
+          >
+            <User class="mr-2 h-5 w-5" />
+            Sign In with Nocturne
+          </Button>
+        </Card.Content>
+      </Card.Root>
+    </div>
   {/if}
 </div>
