@@ -27,7 +27,7 @@
   } from "layerchart";
   import { chartConfig } from "$lib/constants";
   import { curveStepAfter, curveMonotoneX, bisector } from "d3";
-  import { scaleTime } from "d3-scale";
+  import { scaleTime, scaleLinear } from "d3-scale";
   import {
     getPredictions,
     type PredictionData,
@@ -41,7 +41,7 @@
     predictionMinutes,
     predictionEnabled,
   } from "$lib/stores/appearance-store.svelte";
-  import { convertToDisplayUnits } from "$lib/utils/formatting";
+  import { bg } from "$lib/utils/formatting";
   import PredictionSettings from "./PredictionSettings.svelte";
   import { cn } from "$lib/utils";
 
@@ -301,24 +301,13 @@
   }
 
   // Thresholds (convert to display units)
-  const units = $derived(glucoseUnits.current);
-  const isMMOL = $derived(units === "mmol");
-  const lowThreshold = $derived(
-    convertToDisplayUnits(chartConfig.low.threshold ?? 55, units)
-  );
-  const highThreshold = $derived(
-    convertToDisplayUnits(chartConfig.high.threshold ?? 180, units)
-  );
+  const lowThreshold = $derived(Number(bg(chartConfig.low.threshold ?? 55)));
+  const highThreshold = $derived(Number(bg(chartConfig.high.threshold ?? 180)));
 
-  // Y domain for glucose (dynamic based on data, unit-aware)
-  const glucoseYMin = $derived(isMMOL ? 2.2 : 40);
   const glucoseYMax = $derived.by(() => {
     const maxSgv = Math.max(...filteredEntries.map((e) => e.sgv ?? 0));
-    const maxDisplayValue = convertToDisplayUnits(
-      Math.min(400, Math.max(280, maxSgv) + 20),
-      units
-    );
-    return maxDisplayValue;
+    const maxDisplayValue = bg(Math.min(400, Math.max(280, maxSgv) + 20));
+    return Number(maxDisplayValue);
   });
 
   // Glucose data for chart (convert to display units)
@@ -327,7 +316,7 @@
       .filter((e) => e.sgv !== null && e.sgv !== undefined)
       .map((e) => ({
         time: new Date(e.mills ?? 0),
-        sgv: convertToDisplayUnits(e.sgv ?? 0, units),
+        sgv: Number(bg(e.sgv ?? 0)),
         color: getGlucoseColor(e.sgv ?? 0),
       }))
       .sort((a, b) => a.time.getTime() - b.time.getTime())
@@ -341,7 +330,7 @@
       .filter((p) => p.timestamp <= predictionEndTime)
       .map((p) => ({
         time: new Date(p.timestamp),
-        sgv: convertToDisplayUnits(p.value, units),
+        sgv: bg(p.value),
       })) ?? []
   );
 
@@ -350,7 +339,7 @@
       .filter((p) => p.timestamp <= predictionEndTime)
       .map((p) => ({
         time: new Date(p.timestamp),
-        sgv: convertToDisplayUnits(p.value, units),
+        sgv: bg(p.value),
       })) ?? []
   );
 
@@ -359,7 +348,7 @@
       .filter((p) => p.timestamp <= predictionEndTime)
       .map((p) => ({
         time: new Date(p.timestamp),
-        sgv: convertToDisplayUnits(p.value, units),
+        sgv: bg(p.value),
       })) ?? []
   );
 
@@ -368,7 +357,7 @@
       .filter((p) => p.timestamp <= predictionEndTime)
       .map((p) => ({
         time: new Date(p.timestamp),
-        sgv: convertToDisplayUnits(p.value, units),
+        sgv: bg(p.value),
       })) ?? []
   );
 
@@ -377,7 +366,7 @@
       .filter((p) => p.timestamp <= predictionEndTime)
       .map((p) => ({
         time: new Date(p.timestamp),
-        sgv: convertToDisplayUnits(p.value, units),
+        sgv: bg(p.value),
       })) ?? []
   );
 
@@ -402,12 +391,9 @@
         const valuesAtTime = curves.map((c) => c[i]?.value ?? point.value);
         return {
           time: new Date(point.timestamp),
-          min: convertToDisplayUnits(Math.min(...valuesAtTime), units),
-          max: convertToDisplayUnits(Math.max(...valuesAtTime), units),
-          mid: convertToDisplayUnits(
-            (Math.min(...valuesAtTime) + Math.max(...valuesAtTime)) / 2,
-            units
-          ),
+          min: bg(Math.min(...valuesAtTime)),
+          max: bg(Math.max(...valuesAtTime)),
+          mid: bg((Math.min(...valuesAtTime) + Math.max(...valuesAtTime)) / 2),
         };
       });
   });
@@ -544,178 +530,8 @@
   </CardHeader>
 
   <CardContent class="p-2">
-    <!-- Compound chart using grid-stack -->
-    <div class="h-[450px] grid stack p-4">
-      <!-- ===== BASAL CHART (TOP) ===== -->
-      <Chart
-        data={basalData}
-        x={(d) => d.time}
-        y={(d) => d.rate}
-        debug
-        xScale={scaleTime()}
-        xDomain={[chartXDomain.from, chartXDomain.to]}
-        yDomain={[maxBasalRate, 0]}
-        yRange={({ height }) => [height * trackRatios.basal, 0]}
-        padding={{ left: 48, bottom: 0, top: 8, right: 48 }}
-      >
-        <Svg>
-          {#if staleBasalData}
-            <ChartClipPath>
-              <AnnotationRange
-                x={[
-                  staleBasalData.start.getTime(),
-                  staleBasalData.end.getTime(),
-                ]}
-                y={[maxBasalRate, 0]}
-                pattern={{
-                  size: 8,
-
-                  lines: {
-                    rotate: -45,
-                    opacity: 0.1,
-                  },
-                }}
-              />
-              <!-- Optional: Add a line at the start of stale period -->
-              <Rule
-                x={staleBasalData.start}
-                class="stroke-yellow-500/50 stroke-1"
-                stroke-dasharray="2,2"
-              />
-            </ChartClipPath>
-          {/if}
-          <!-- Scheduled basal rate line (profile rate without temp modifications) -->
-          {#if scheduledBasalData.length > 0}
-            <Spline
-              data={scheduledBasalData}
-              x={(d) => d.time}
-              y={(d) => d.rate}
-              curve={curveStepAfter}
-              class="stroke-muted-foreground/50 stroke-1 fill-none"
-              stroke-dasharray="4,4"
-            />
-          {/if}
-
-          <!-- Basal axis on right -->
-          <Axis
-            placement="right"
-            ticks={2}
-            tickLabelProps={{
-              class: "text-[9px] fill-muted-foreground",
-            }}
-          />
-
-          <!-- Track label -->
-          <Text
-            x={4}
-            y={4}
-            class="text-[8px] fill-muted-foreground font-medium"
-          >
-            BASAL
-          </Text>
-
-          <!-- Effective basal area (includes temp basals - drips from top due to inverted yRange) -->
-          {#if basalData.length > 0}
-            <!-- This has to use y0 and y1, don't change it -->
-            <Area
-              y0={(d) => d.rate}
-              y1={(d) => 0}
-              curve={curveStepAfter}
-              fill="var(--insulin-basal)"
-              class="stroke-[var(--insulin)] stroke-1"
-            />
-          {/if}
-        </Svg>
-      </Chart>
-
-      <!-- ===== IOB CHART (BOTTOM) with Treatment Markers ===== -->
-      <Chart
-        data={iobData}
-        x={(d) => d.time}
-        y="value"
-        xScale={scaleTime()}
-        xDomain={[chartXDomain.from, chartXDomain.to]}
-        yDomain={[maxIOB, 0]}
-        yRange={({ height }) => [height * (1 - trackRatios.iob), height]}
-        padding={{ left: 48, bottom: 0, top: 0, right: 48 }}
-      >
-        <Svg>
-          <!-- IOB axis on right -->
-          <Axis
-            placement="right"
-            ticks={2}
-            tickLabelProps={{ class: "text-[9px] fill-muted-foreground" }}
-          />
-
-          <!-- Track label -->
-          <Text
-            x={4}
-            y={4}
-            class="text-[8px] fill-muted-foreground font-medium"
-          >
-            IOB
-          </Text>
-
-          <!-- IOB area -->
-          {#if iobData.length > 0 && iobData.some((d) => d.value > 0.01)}
-            <Area
-              y0={0}
-              y1="value"
-              motion="spring"
-              curve={curveMonotoneX}
-              fill="var(--iob-basal)"
-              class="stroke-[var(--insulin)] stroke-1"
-            />
-          {/if}
-          <!-- Bolus markers with values (triangles pointing up) -->
-          {#each bolusMarkersForIob as marker}
-            <Group x={marker.time.getTime()} y={0}>
-              <Polygon
-                points={[
-                  { x: 0, y: -10 },
-                  { x: -5, y: 0 },
-                  { x: 5, y: 0 },
-                ]}
-                fill="var(--insulin-bolus)"
-                class="opacity-90"
-              />
-              <Text
-                y={-14}
-                textAnchor="middle"
-                class="text-[8px] fill-[var(--insulin-bolus)] font-medium"
-              >
-                {marker.insulin.toFixed(1)}U
-              </Text>
-            </Group>
-          {/each}
-
-          <!-- Carb markers with values (triangles pointing down) -->
-          {#each carbMarkersForIob as marker}
-            <Group x={marker.time.getTime()} y={0}>
-              <Polygon
-                points={[
-                  { x: 0, y: 10 },
-                  { x: -5, y: 0 },
-                  { x: 5, y: 0 },
-                ]}
-                fill="var(--carbs)"
-                class="opacity-90"
-              />
-              <Text
-                y={18}
-                textAnchor="middle"
-                class="text-[8px] fill-[var(--carbs)] font-medium"
-              >
-                {marker.carbs}g
-              </Text>
-            </Group>
-          {/each}
-
-          <Highlight points lines />
-        </Svg>
-      </Chart>
-
-      <!-- ===== GLUCOSE CHART (MIDDLE) - Main glucose display with highlights ===== -->
+    <!-- Single compound chart with remapped scales for basal, glucose, and IOB -->
+    <div class="h-[450px] p-4">
       <Chart
         data={glucoseData}
         x={(d) => d.time}
@@ -727,17 +543,168 @@
         tooltip={{ mode: "quadtree-x" }}
       >
         {#snippet children({ context })}
+          <!-- Create remapped scales for basal, glucose, and IOB tracks -->
+          <!-- Layout from top to bottom: BASAL | GLUCOSE | IOB -->
+          {@const basalTrackHeight = context.height * trackRatios.basal}
+          {@const glucoseTrackHeight = context.height * trackRatios.glucose}
+          {@const iobTrackHeight = context.height * trackRatios.iob}
+
+          <!-- Track positions (y coordinates in SVG where 0 = top) -->
+          {@const basalTrackTop = 0}
+          {@const basalTrackBottom = basalTrackHeight}
+          {@const glucoseTrackTop = basalTrackBottom}
+          {@const glucoseTrackBottom = glucoseTrackTop + glucoseTrackHeight}
+          {@const iobTrackTop = glucoseTrackBottom}
+          {@const iobTrackBottom = iobTrackTop + iobTrackHeight}
+
+          <!-- The Chart's internal yScale maps [0, glucoseYMax] -> [height, 0] (standard D3 convention: 0 at bottom, max at top) -->
+          <!-- We need to create scales that output VALUES in the Chart's domain, so that when Chart applies its yScale, we get correct pixels -->
+
+          <!-- Chart's yScale: domain=[0, glucoseYMax], range=[height, 0] -->
+          <!-- So yScale(0) = height (bottom), yScale(glucoseYMax) = 0 (top) -->
+          <!-- To place something at pixel Y, we need to find the data value V where yScale(V) = Y -->
+          <!-- yScale inverse: pixelToData(Y) = glucoseYMax * (1 - Y/height) -->
+
+          <!-- Helper: convert a pixel Y position to the glucose data domain value that will render at that Y -->
+          {@const pixelToGlucoseDomain = (pixelY: number) =>
+            glucoseYMax * (1 - pixelY / context.height)}
+
+          <!-- Basal scale: TOP track, 0 at top (pixel 0), max at bottom (pixel basalTrackBottom) -->
+          <!-- Returns glucose-domain values that Chart will convert to correct pixels -->
+          {@const basalScale = (rate: number) => {
+            const pixelY =
+              basalTrackTop + (rate / maxBasalRate) * basalTrackHeight;
+            return pixelToGlucoseDomain(pixelY);
+          }}
+          {@const basalZero = pixelToGlucoseDomain(basalTrackTop)}
+          <!-- D3 scale for basal Axis (maps rate -> pixel Y directly) -->
+          {@const basalAxisScale = scaleLinear()
+            .domain([0, maxBasalRate])
+            .range([basalTrackTop, basalTrackBottom])}
+
+          <!-- Glucose scale: MIDDLE track, 0 at bottom of glucose track, max at top -->
+          {@const glucoseScale = scaleLinear()
+            .domain([0, glucoseYMax])
+            .range([
+              pixelToGlucoseDomain(glucoseTrackBottom),
+              pixelToGlucoseDomain(glucoseTrackTop),
+            ])}
+          <!-- D3 scale for glucose Axis (maps glucose -> pixel Y directly) -->
+          {@const glucoseAxisScale = scaleLinear()
+            .domain([0, glucoseYMax])
+            .range([glucoseTrackBottom, glucoseTrackTop])}
+
+          <!-- IOB scale: BOTTOM track, 0 at bottom (pixel iobTrackBottom), max at top (pixel iobTrackTop) -->
+          {@const iobScale = (value: number) => {
+            const pixelY = iobTrackBottom - (value / maxIOB) * iobTrackHeight;
+            return pixelToGlucoseDomain(pixelY);
+          }}
+          {@const iobZero = pixelToGlucoseDomain(iobTrackBottom)}
+          <!-- D3 scale for IOB Axis (maps IOB -> pixel Y directly) -->
+          {@const iobAxisScale = scaleLinear()
+            .domain([0, maxIOB])
+            .range([iobTrackBottom, iobTrackTop])}
+          {@const test = console.log({
+            totalHeight: context.height,
+            glucoseYMax,
+            // Track pixel positions
+            basalTrackTop,
+            basalTrackBottom: basalTrackBottom.toFixed(2),
+            glucoseTrackTop: glucoseTrackTop.toFixed(2),
+            glucoseTrackBottom: glucoseTrackBottom.toFixed(2),
+            iobTrackTop: iobTrackTop.toFixed(2),
+            iobTrackBottom: iobTrackBottom.toFixed(2),
+            // Domain values (what we pass to layerchart, which then converts to pixels)
+            basalZero: basalZero.toFixed(2),
+            basalScale1: basalScale(1).toFixed(2),
+            glucoseScale0: glucoseScale(0).toFixed(2),
+            glucoseScale100: glucoseScale(100).toFixed(2),
+            glucoseScaleMax: glucoseScale(glucoseYMax).toFixed(2),
+            iobZero: iobZero.toFixed(2),
+            iobScale1: iobScale(1).toFixed(2),
+          })}
           <Svg>
+            <!-- ===== BASAL TRACK (TOP) ===== -->
+            {#if staleBasalData}
+              <ChartClipPath>
+                <AnnotationRange
+                  x={[
+                    staleBasalData.start.getTime(),
+                    staleBasalData.end.getTime(),
+                  ]}
+                  y={[basalScale(maxBasalRate), basalZero]}
+                  pattern={{
+                    size: 8,
+                    lines: {
+                      rotate: -45,
+                      opacity: 0.1,
+                    },
+                  }}
+                />
+              </ChartClipPath>
+              <Rule
+                x={staleBasalData.start}
+                class="stroke-yellow-500/50 stroke-1"
+                stroke-dasharray="2,2"
+              />
+            {/if}
+
+            <!-- Scheduled basal rate line -->
+            {#if scheduledBasalData.length > 0}
+              <Spline
+                data={scheduledBasalData}
+                x={(d) => d.time}
+                y={(d) => basalScale(d.rate)}
+                curve={curveStepAfter}
+                class="stroke-muted-foreground/50 stroke-1 fill-none"
+                stroke-dasharray="4,4"
+              />
+            {/if}
+
+            <!-- Basal axis on right -->
+            <Axis
+              placement="right"
+              scale={basalAxisScale}
+              ticks={2}
+              tickLabelProps={{
+                class: "text-[9px] fill-muted-foreground",
+              }}
+            />
+
+            <!-- Basal track label -->
+            <Text
+              x={4}
+              y={basalTrackTop + 12}
+              class="text-[8px] fill-muted-foreground font-medium"
+            >
+              BASAL
+            </Text>
+
+            <!-- Effective basal area (drips down from top of basal track) -->
+            <!-- y0 = baseline (0 rate at top), y1 = actual rate (grows down) -->
+            {#if basalData.length > 0}
+              <Area
+                data={basalData}
+                x={(d) => d.time}
+                y0={() => basalZero}
+                y1={(d) => basalScale(d.rate)}
+                curve={curveStepAfter}
+                fill="var(--insulin-basal)"
+                class="stroke-insulin stroke-1"
+              />
+            {/if}
+
+            <!-- ===== GLUCOSE TRACK (MIDDLE) ===== -->
             <!-- High threshold line -->
             <Rule
-              y={highThreshold}
+              y={glucoseScale(highThreshold)}
               class="stroke-glucose-high/50"
               stroke-dasharray="4,4"
             />
 
             <!-- Low threshold line -->
             <Rule
-              y={lowThreshold}
+              y={glucoseScale(lowThreshold)}
               class="stroke-glucose-very-low/50"
               stroke-dasharray="4,4"
             />
@@ -745,12 +712,16 @@
             <!-- Glucose axis on left -->
             <Axis
               placement="left"
+              scale={glucoseAxisScale}
               ticks={5}
               tickLabelProps={{ class: "text-xs fill-muted-foreground" }}
             />
 
             <!-- Glucose line -->
             <Spline
+              data={glucoseData}
+              x={(d) => d.time}
+              y={(d) => glucoseScale(d.sgv)}
               class="stroke-glucose-in-range stroke-2 fill-none"
               motion="spring"
               curve={curveMonotoneX}
@@ -760,16 +731,17 @@
             {#each glucoseData as point}
               <Points
                 data={[point]}
+                x={(d) => d.time}
+                y={(d) => glucoseScale(d.sgv)}
                 r={3}
                 fill={point.color}
                 class="opacity-90"
               />
             {/each}
 
-            <!-- Prediction visualizations with boundary for graceful loading -->
+            <!-- Prediction visualizations -->
             <svelte:boundary>
               {#snippet pending()}
-                <!-- Prediction loading indicator - subtle dashed line -->
                 <Spline
                   data={[
                     {
@@ -784,14 +756,14 @@
                     },
                   ]}
                   x={(d) => d.time}
-                  y="sgv"
+                  y={(d) => glucoseScale(d.sgv)}
                   curve={curveMonotoneX}
                   class="stroke-slate-500/50 stroke-1 fill-none animate-pulse"
                   stroke-dasharray="4,4"
                 />
                 <Text
                   x={chartXDomain.to.getTime() + 5 * 60 * 1000}
-                  y={glucoseData.at(-1)?.sgv ?? 100}
+                  y={glucoseScale(Number(glucoseData.at(-1)?.sgv) ?? 100)}
                   class="text-[9px] fill-slate-500 animate-pulse"
                 >
                   Loading predictions...
@@ -799,7 +771,11 @@
               {/snippet}
 
               {#snippet failed(error)}
-                <Text x={50} y={50} class="text-xs fill-red-400">
+                <Text
+                  x={50}
+                  y={glucoseTrackTop + 20}
+                  class="text-xs fill-red-400"
+                >
                   Prediction unavailable: {error instanceof Error
                     ? error.message
                     : "Error"}
@@ -811,8 +787,8 @@
                   <Area
                     data={predictionConeData}
                     x={(d) => d.time}
-                    y0="max"
-                    y1="min"
+                    y0={(d) => glucoseScale(d.max)}
+                    y1={(d) => glucoseScale(d.min)}
                     curve={curveMonotoneX}
                     class="fill-purple-500/20 stroke-none"
                     motion="spring"
@@ -820,7 +796,7 @@
                   <Spline
                     data={predictionConeData}
                     x={(d) => d.time}
-                    y="mid"
+                    y={(d) => glucoseScale(d.mid)}
                     curve={curveMonotoneX}
                     motion="spring"
                     class="stroke-purple-400 stroke-1 fill-none"
@@ -830,7 +806,8 @@
                   {#if predictionCurveData.length > 0}
                     <Spline
                       data={predictionCurveData}
-                      y="sgv"
+                      x={(d) => d.time}
+                      y={(d) => glucoseScale(d.sgv)}
                       curve={curveMonotoneX}
                       motion="spring"
                       class="stroke-purple-400 stroke-2 fill-none"
@@ -840,7 +817,8 @@
                   {#if iobPredictionData.length > 0}
                     <Spline
                       data={iobPredictionData}
-                      y="sgv"
+                      x={(d) => d.time}
+                      y={(d) => glucoseScale(d.sgv)}
                       curve={curveMonotoneX}
                       motion="spring"
                       class="stroke-cyan-400 stroke-1 fill-none opacity-80"
@@ -850,7 +828,8 @@
                   {#if zeroTempPredictionData.length > 0}
                     <Spline
                       data={zeroTempPredictionData}
-                      y="sgv"
+                      x={(d) => d.time}
+                      y={(d) => glucoseScale(d.sgv)}
                       curve={curveMonotoneX}
                       motion="spring"
                       class="stroke-orange-400 stroke-1 fill-none opacity-80"
@@ -860,7 +839,8 @@
                   {#if uamPredictionData.length > 0}
                     <Spline
                       data={uamPredictionData}
-                      y="sgv"
+                      x={(d) => d.time}
+                      y={(d) => glucoseScale(d.sgv)}
                       curve={curveMonotoneX}
                       motion="spring"
                       class="stroke-green-400 stroke-1 fill-none opacity-80"
@@ -870,7 +850,8 @@
                   {#if cobPredictionData.length > 0}
                     <Spline
                       data={cobPredictionData}
-                      y="sgv"
+                      x={(d) => d.time}
+                      y={(d) => glucoseScale(d.sgv)}
                       motion="spring"
                       curve={curveMonotoneX}
                       class="stroke-yellow-400 stroke-1 fill-none opacity-80"
@@ -880,7 +861,8 @@
                 {:else if predictionMode === "main" && predictionCurveData.length > 0}
                   <Spline
                     data={predictionCurveData}
-                    y="sgv"
+                    x={(d) => d.time}
+                    y={(d) => glucoseScale(d.sgv)}
                     motion="spring"
                     curve={curveMonotoneX}
                     class="stroke-purple-400 stroke-2 fill-none"
@@ -889,7 +871,8 @@
                 {:else if predictionMode === "iob" && iobPredictionData.length > 0}
                   <Spline
                     data={iobPredictionData}
-                    y="sgv"
+                    x={(d) => d.time}
+                    y={(d) => glucoseScale(d.sgv)}
                     motion="spring"
                     curve={curveMonotoneX}
                     class="stroke-cyan-400 stroke-2 fill-none"
@@ -898,7 +881,8 @@
                 {:else if predictionMode === "zt" && zeroTempPredictionData.length > 0}
                   <Spline
                     data={zeroTempPredictionData}
-                    y="sgv"
+                    x={(d) => d.time}
+                    y={(d) => glucoseScale(d.sgv)}
                     motion="spring"
                     curve={curveMonotoneX}
                     class="stroke-orange-400 stroke-2 fill-none"
@@ -907,7 +891,8 @@
                 {:else if predictionMode === "uam" && uamPredictionData.length > 0}
                   <Spline
                     data={uamPredictionData}
-                    y="sgv"
+                    x={(d) => d.time}
+                    y={(d) => glucoseScale(d.sgv)}
                     motion="spring"
                     curve={curveMonotoneX}
                     class="stroke-green-400 stroke-2 fill-none"
@@ -916,7 +901,8 @@
                 {:else if predictionMode === "cob" && cobPredictionData.length > 0}
                   <Spline
                     data={cobPredictionData}
-                    y="sgv"
+                    x={(d) => d.time}
+                    y={(d) => glucoseScale(d.sgv)}
                     motion="spring"
                     curve={curveMonotoneX}
                     class="stroke-yellow-400 stroke-2 fill-none"
@@ -925,11 +911,91 @@
                 {/if}
               {/if}
               {#if showPredictions && predictionError}
-                <Text x={50} y={50} class="text-xs fill-red-400">
+                <Text
+                  x={50}
+                  y={glucoseTrackTop + 20}
+                  class="text-xs fill-red-400"
+                >
                   Prediction unavailable
                 </Text>
               {/if}
             </svelte:boundary>
+
+            <!-- ===== IOB TRACK (BOTTOM) with Treatment Markers ===== -->
+            <!-- IOB axis on right -->
+            <Axis
+              placement="right"
+              scale={iobAxisScale}
+              ticks={2}
+              tickLabelProps={{ class: "text-[9px] fill-muted-foreground" }}
+            />
+
+            <!-- IOB track label -->
+            <Text
+              x={4}
+              y={iobTrackTop + 12}
+              class="text-[8px] fill-muted-foreground font-medium"
+            >
+              IOB
+            </Text>
+
+            <!-- IOB area (grows up from bottom of IOB track) -->
+            {#if iobData.length > 0 && iobData.some((d) => d.value > 0.01)}
+              <Area
+                data={iobData}
+                x={(d) => d.time}
+                y0={() => iobZero}
+                y1={(d) => iobScale(d.value)}
+                motion="spring"
+                curve={curveMonotoneX}
+                fill="var(--iob-basal)"
+                class="stroke-insulin stroke-1"
+              />
+            {/if}
+
+            <!-- Bolus markers with values (triangles pointing up from IOB baseline) -->
+            {#each bolusMarkersForIob as marker}
+              <Group x={marker.time.getTime()} y={iobZero}>
+                <Polygon
+                  points={[
+                    { x: 0, y: -10 },
+                    { x: -5, y: 0 },
+                    { x: 5, y: 0 },
+                  ]}
+                  fill="var(--insulin-bolus)"
+                  class="opacity-90"
+                />
+                <Text
+                  y={-14}
+                  textAnchor="middle"
+                  class="text-[8px] fill-insulin-bolus font-medium"
+                >
+                  {marker.insulin.toFixed(1)}U
+                </Text>
+              </Group>
+            {/each}
+
+            <!-- Carb markers with values (triangles pointing down) -->
+            {#each carbMarkersForIob as marker}
+              <Group x={marker.time.getTime()} y={iobZero}>
+                <Polygon
+                  points={[
+                    { x: 0, y: 10 },
+                    { x: -5, y: 0 },
+                    { x: 5, y: 0 },
+                  ]}
+                  fill="var(--carbs)"
+                  class="opacity-90"
+                />
+                <Text
+                  y={18}
+                  textAnchor="middle"
+                  class="text-[8px] fill-carbs font-medium"
+                >
+                  {marker.carbs}g
+                </Text>
+              </Group>
+            {/each}
 
             <!-- X-Axis (bottom) -->
             <Axis
@@ -939,31 +1005,25 @@
             />
 
             <!-- Glucose highlight (main) -->
-            <Highlight points lines />
+            <Highlight
+              data={glucoseData}
+              points
+              lines
+              y={(d) => glucoseScale(d.sgv)}
+            />
 
             <!-- Basal highlight with remapped scale -->
             <Highlight
               data={basalData}
-              points={{ class: "fill-[var(--insulin-basal)]" }}
-              y={(d) => {
-                // Remap basal to top track area (inverted: 0 at top)
-                const basalAreaHeight = context.height * trackRatios.basal;
-                const normalized = d.rate / maxBasalRate;
-                return basalAreaHeight * normalized;
-              }}
+              points={{ class: "fill-insulin-basal" }}
+              y={(d) => basalScale(d.rate)}
             />
 
             <!-- IOB highlight with remapped scale -->
             <Highlight
               data={iobData}
-              points={{ class: "fill-[var(--iob-basal)]" }}
-              y={(d) => {
-                // Remap IOB to bottom track area
-                const iobAreaTop = context.height * (1 - trackRatios.iob);
-                const iobAreaHeight = context.height * trackRatios.iob;
-                const normalized = d.value / maxIOB;
-                return iobAreaTop + iobAreaHeight * (1 - normalized);
-              }}
+              points={{ class: "fill-iob-basal" }}
+              y={(d) => iobScale(d.value)}
             />
           </Svg>
 
@@ -977,8 +1037,8 @@
 
               <Tooltip.Header
                 value={data?.time}
-                format="time"
-                class="text-slate-100 border-b border-slate-800 pb-1 mb-1 font-semibold"
+                format="minute"
+                class="text-slate-100 border-b border-slate-800 pb-1 mb-1 text-sm font-semibold"
               />
               <Tooltip.List>
                 {#if data?.sgv}
