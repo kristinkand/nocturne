@@ -731,14 +731,14 @@
             <!-- High threshold line -->
             <Rule
               y={highThreshold}
-              class="stroke-[var(--glucose-high)]/50"
+              class="stroke-glucose-high/50"
               stroke-dasharray="4,4"
             />
 
             <!-- Low threshold line -->
             <Rule
               y={lowThreshold}
-              class="stroke-[var(--glucose-very-low)]/50"
+              class="stroke-glucose-very-low/50"
               stroke-dasharray="4,4"
             />
 
@@ -751,7 +751,7 @@
 
             <!-- Glucose line -->
             <Spline
-              class="stroke-[var(--glucose-in-range)] stroke-2 fill-none"
+              class="stroke-glucose-in-range stroke-2 fill-none"
               motion="spring"
               curve={curveMonotoneX}
             />
@@ -976,12 +976,9 @@
               {@const activeIob = findSeriesValue(iobData, data.time)}
 
               <Tooltip.Header
-                value={data?.time?.toLocaleTimeString([], {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                value={data?.time}
                 format="time"
-                class="text-slate-300 border-b border-slate-800 pb-1 mb-1 font-mono"
+                class="text-slate-100 border-b border-slate-800 pb-1 mb-1 font-semibold"
               />
               <Tooltip.List>
                 {#if data?.sgv}
