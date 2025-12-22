@@ -32,7 +32,6 @@ public class BaseConnectorServiceTests
 
         // Assert
         Assert.True(config.UseAsyncProcessing);
-        Assert.True(config.FallbackToDirectApi);
         Assert.Equal(TimeSpan.FromMinutes(5), config.MessageTimeout);
         Assert.Equal(3, config.MaxRetryAttempts);
         Assert.Equal(50, config.BatchSize);

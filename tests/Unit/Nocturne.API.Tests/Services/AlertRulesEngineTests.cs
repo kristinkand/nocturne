@@ -19,6 +19,7 @@ public class AlertRulesEngineTests
     private readonly Mock<AlertRuleRepository> _mockAlertRuleRepository;
     private readonly Mock<AlertHistoryRepository> _mockAlertHistoryRepository;
     private readonly Mock<NotificationPreferencesRepository> _mockNotificationPreferencesRepository;
+    private readonly Mock<IPredictionService> _mockPredictionService;
     private readonly Mock<IOptions<AlertMonitoringOptions>> _mockOptions;
     private readonly Mock<ILogger<AlertRulesEngine>> _mockLogger;
     private readonly AlertRulesEngine _alertRulesEngine;
@@ -33,6 +34,7 @@ public class AlertRulesEngineTests
         {
             CallBase = true,
         };
+        _mockPredictionService = new Mock<IPredictionService>();
         _mockOptions = new Mock<IOptions<AlertMonitoringOptions>>();
         _mockLogger = new Mock<ILogger<AlertRulesEngine>>();
 
@@ -53,6 +55,7 @@ public class AlertRulesEngineTests
             _mockAlertRuleRepository.Object,
             _mockAlertHistoryRepository.Object,
             _mockNotificationPreferencesRepository.Object,
+            _mockPredictionService.Object,
             _mockOptions.Object,
             _mockLogger.Object
         );

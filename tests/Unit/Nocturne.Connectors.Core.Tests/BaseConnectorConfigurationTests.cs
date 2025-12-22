@@ -128,7 +128,6 @@ public class BaseConnectorConfigurationTests
         Assert.False(config.LoadFromFile);
         Assert.False(config.DeleteAfterUpload);
         Assert.True(config.UseAsyncProcessing);
-        Assert.True(config.FallbackToDirectApi);
         Assert.Equal(TimeSpan.FromMinutes(5), config.MessageTimeout);
         Assert.Equal(3, config.MaxRetryAttempts);
         Assert.Equal(50, config.BatchSize);
