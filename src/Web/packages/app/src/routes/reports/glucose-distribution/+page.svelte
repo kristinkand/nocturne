@@ -19,6 +19,7 @@
     entries: reportsQuery.current?.entries ?? [],
     treatments: reportsQuery.current?.treatments ?? [],
     analysis: reportsQuery.current?.analysis,
+    averagedStats: reportsQuery.current?.averagedStats,
     dateRange: reportsQuery.current?.dateRange ?? {
       from: new Date().toISOString(),
       to: new Date().toISOString(),
@@ -309,7 +310,7 @@
         </Card.Description>
       </Card.Header>
       <Card.Content>
-        <HourlyGlucoseDistributionChart entries={data.entries} />
+        <HourlyGlucoseDistributionChart averagedStats={data.averagedStats} />
       </Card.Content>
     </Card.Root>
 

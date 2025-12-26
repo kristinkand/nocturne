@@ -1,10 +1,7 @@
 <script lang="ts">
-  import type { Entry } from "$lib/api";
   import type { AveragedStats } from "$lib/api";
-  import { calculateAveragedStats } from "$lib/data/statistics.remote";
   import { DEFAULT_THRESHOLDS } from "$lib/constants";
   import { AreaChart } from "layerchart";
-  import { onMount } from "svelte";
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { BarChart3 } from "lucide-svelte";
   import {
@@ -14,22 +11,13 @@
   import { convertToDisplayUnits } from "$lib/utils/formatting";
 
   let {
-    entries,
     averagedStats,
   }: {
-    entries?: Entry[];
     averagedStats?: AveragedStats[];
   } = $props();
 
-  // Local state for calculated stats if not provided via props
-  let calculatedStats = $state<AveragedStats[]>([]);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
-
-  // Use props if available, otherwise fall back to locally calculated stats
-  const rawData = $derived(
-    averagedStats?.length ? averagedStats : calculatedStats
-  );
+  // Use props directly - parent should provide pre-fetched stats
+  const rawData = $derived(averagedStats ?? []);
 
   // Reactive unit-aware data transformation
   const units = $derived(glucoseUnits.current);
@@ -75,48 +63,9 @@
     if (hour < 12) return `${hour}am`;
     return `${hour - 12}pm`;
   }
-
-  onMount(async () => {
-    // If we already have averaged stats, we don't need to load
-    if (averagedStats?.length) {
-      loading = false;
-      return;
-    }
-
-    // If we have entries but no stats, calculate them
-    if (entries?.length) {
-      try {
-        const stats = await calculateAveragedStats({ entries });
-        calculatedStats = stats;
-        loading = false;
-      } catch (err) {
-        console.error("Failed to calculate averaged stats:", err);
-        error = err instanceof Error ? err.message : "Failed to load data";
-        loading = false;
-      }
-    } else {
-      // No data to work with
-      loading = false;
-    }
-  });
 </script>
 
-{#if loading}
-  <div class="flex h-full w-full flex-col items-center justify-center gap-3">
-    <Skeleton class="h-3/4 w-full rounded-lg" />
-    <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <BarChart3 class="h-4 w-4 animate-pulse" />
-      <span>Calculating glucose patterns...</span>
-    </div>
-  </div>
-{:else if error}
-  <div class="flex h-full w-full items-center justify-center">
-    <div class="text-center">
-      <p class="text-sm font-medium text-destructive">Failed to load chart</p>
-      <p class="mt-1 text-xs text-muted-foreground">{error}</p>
-    </div>
-  </div>
-{:else if data.length > 0}
+{#if rawData.length > 0}
   <AreaChart
     {data}
     x={(d) => d.hour}

@@ -1,13 +1,12 @@
 <script lang="ts">
   import { AreaChart } from "layerchart";
-  import type { Entry, AveragedStats } from "$lib/api";
+  import type { AveragedStats } from "$lib/api";
   import { timeFormat } from "$lib/stores/appearance-store.svelte";
   import { bg } from "$lib/utils/formatting";
-  import { calculateAveragedStats } from "$lib/data/statistics.remote";
   import { BarChart2 } from "lucide-svelte";
 
   interface Props {
-    entries: Entry[];
+    averagedStats?: AveragedStats[];
   }
 
   interface HourlyRangeData {
@@ -22,10 +21,7 @@
     count: number;
   }
 
-  let { entries }: Props = $props();
-
-  // Fetch hourly statistics from backend
-  const hourlyStatsQuery = $derived(calculateAveragedStats({ entries }));
+  let { averagedStats }: Props = $props();
 
   // Transform backend data to chart format
   function transformToChartData(stats: AveragedStats[]): HourlyRangeData[] {
@@ -64,61 +60,47 @@
     { key: "veryHigh", label: `${bg(200)}-${bg(220)}`, color: "#f97316" }, // orange
     { key: "severeHigh", label: `>${bg(220)}`, color: "#ea580c" }, // dark orange
   ]);
+
+  // Derived chart data
+  const chartData = $derived(
+    averagedStats && averagedStats.length > 0
+      ? transformToChartData(averagedStats)
+      : []
+  );
+  const hasData = $derived(chartData?.some((d) => d.count > 0));
 </script>
 
 <div class="w-full">
-  {#await hourlyStatsQuery}
-    <div class="flex h-[350px] w-full items-center justify-center">
-      <div
-        class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-      ></div>
+  {#if hasData}
+    <div class="h-[350px] w-full">
+      <AreaChart
+        data={chartData}
+        x="hour"
+        yDomain={[0, 100]}
+        series={chartSeries}
+        seriesLayout="stack"
+        legend
+        props={{
+          xAxis: {
+            format: formatHour,
+          },
+          yAxis: {
+            label: "Percentage",
+            format: (v: number) => `${v}%`,
+          },
+        }}
+        padding={{ top: 20, right: 20, bottom: 40, left: 50 }}
+      />
     </div>
-  {:then hourlyStats}
-    {@const chartData =
-      hourlyStats && hourlyStats.length > 0
-        ? transformToChartData(hourlyStats)
-        : []}
-    {@const hasData = chartData?.some((d) => d.count > 0)}
-    {#if hasData}
-      <div class="h-[350px] w-full">
-        <AreaChart
-          data={chartData}
-          x="hour"
-          yDomain={[0, 100]}
-          series={chartSeries}
-          seriesLayout="stack"
-          legend
-          props={{
-            xAxis: {
-              format: formatHour,
-            },
-            yAxis: {
-              label: "Percentage",
-              format: (v: number) => `${v}%`,
-            },
-          }}
-          padding={{ top: 20, right: 20, bottom: 40, left: 50 }}
-        />
-      </div>
-    {:else}
-      <div
-        class="flex h-[350px] w-full items-center justify-center text-muted-foreground"
-      >
-        <div class="text-center">
-          <BarChart2 class="mx-auto h-10 w-10 opacity-30" />
-          <p class="mt-2 font-medium">No glucose data available</p>
-          <p class="text-sm">Hourly distribution requires glucose entries</p>
-        </div>
-      </div>
-    {/if}
-  {:catch}
+  {:else}
     <div
       class="flex h-[350px] w-full items-center justify-center text-muted-foreground"
     >
       <div class="text-center">
         <BarChart2 class="mx-auto h-10 w-10 opacity-30" />
-        <p class="mt-2 font-medium">Error loading chart data</p>
+        <p class="mt-2 font-medium">No glucose data available</p>
+        <p class="text-sm">Hourly distribution requires glucose entries</p>
       </div>
     </div>
-  {/await}
+  {/if}
 </div>

@@ -363,34 +363,55 @@
   async function triggerGranularSync() {
     if (!selectedConnector?.id) return;
 
-    isGranularSyncing = true;
+    const connectorId = selectedConnector.id;
+
+    // Immediately close the dialog
+    showConnectorDialog = false;
+
+    // Optimistically update the connector state to "Syncing"
+    connectorStatuses = connectorStatuses.map((c) =>
+      c.id === connectorId ? { ...c, state: "Syncing" } : c
+    );
+
+    // Reset the form state
+    const fromDate = granularSyncFrom;
+    const toDate = granularSyncTo;
+    granularSyncFrom = "";
+    granularSyncTo = "";
     granularSyncResult = null;
 
     try {
       const apiClient = getApiClient();
       const request: SyncRequest = {
-        from: new Date(granularSyncFrom),
-        to: new Date(granularSyncTo),
+        from: new Date(fromDate),
+        to: new Date(toDate),
       };
 
-      granularSyncResult = await apiClient.services.triggerConnectorSync(
-        selectedConnector.id,
+      const result = await apiClient.services.triggerConnectorSync(
+        connectorId,
         request
       );
 
-      if (granularSyncResult.success) {
-        // Refresh stats after a delay
-        setTimeout(loadConnectorStatuses, 2000);
+      // After sync completes, refresh the connector statuses to get real state
+      await loadConnectorStatuses();
+
+      // If user reopens the dialog, show the result
+      if (selectedConnector?.id === connectorId) {
+        granularSyncResult = result;
       }
     } catch (e) {
-      granularSyncResult = {
-        success: false,
-        message: e instanceof Error ? e.message : "Failed to trigger sync",
-        errors: [],
-        itemsSynced: {},
-      };
-    } finally {
-      isGranularSyncing = false;
+      // On error, refresh to get the real state
+      await loadConnectorStatuses();
+
+      // Store error in case user reopens the dialog
+      if (selectedConnector?.id === connectorId) {
+        granularSyncResult = {
+          success: false,
+          message: e instanceof Error ? e.message : "Failed to trigger sync",
+          errors: [],
+          itemsSynced: {},
+        };
+      }
     }
   }
 

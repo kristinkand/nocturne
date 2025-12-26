@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GlucoseChart } from "$lib/components/glucose-chart";
+  import GlucoseChartCard from "$lib/components/dashboard/GlucoseChartCard.svelte";
   import { getReportsData } from "$lib/data/reports.remote";
   import { useDateRange } from "$lib/hooks/use-date-range.svelte.js";
 
@@ -20,7 +20,7 @@
     </div>
   </div>
 {:then data}
-  <GlucoseChart
+  <GlucoseChartCard
     entries={data.entries}
     treatments={data.treatments}
     dateRange={data.dateRange}

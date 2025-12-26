@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { Entry, Treatment, DeviceStatus } from "$lib/api";
+  import { TreatmentEditDialog } from "$lib/components/treatments";
+  import { updateTreatment } from "$lib/data/treatments.remote";
+  import { toast } from "svelte-sonner";
   import {
     Card,
     CardContent,
@@ -269,8 +272,94 @@
     filteredTreatments.filter((t) => t.carbs && t.carbs > 0)
   );
 
+  // Device event types for chart markers
+  const DEVICE_EVENT_TYPES = [
+    "Sensor Start",
+    "Sensor Change",
+    "Sensor Stop",
+    "Site Change",
+    "Insulin Change",
+    "Pump Battery Change",
+  ] as const;
+
+  type DeviceEventType = (typeof DEVICE_EVENT_TYPES)[number];
+
+  // Device event treatments (sensor, site, reservoir, battery changes)
+  const deviceEventTreatments = $derived(
+    filteredTreatments.filter(
+      (t) =>
+        t.eventType &&
+        DEVICE_EVENT_TYPES.includes(t.eventType as DeviceEventType)
+    )
+  );
+
+  // Calculate median glucose value for positioning device markers
+  const medianGlucose = $derived.by(() => {
+    if (glucoseData.length === 0) return 100; // Default fallback
+    const sorted = [...glucoseData].sort((a, b) => a.sgv - b.sgv);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0
+      ? sorted[mid].sgv
+      : (sorted[mid - 1].sgv + sorted[mid].sgv) / 2;
+  });
+
+  // Device event icon configuration
+  const deviceEventConfig: Record<
+    DeviceEventType,
+    { label: string; color: string; bgColor: string }
+  > = {
+    "Sensor Start": {
+      label: "Sensor",
+      color: "var(--glucose-in-range)",
+      bgColor: "hsl(var(--glucose-in-range) / 0.2)",
+    },
+    "Sensor Change": {
+      label: "Sensor",
+      color: "var(--glucose-in-range)",
+      bgColor: "hsl(var(--glucose-in-range) / 0.2)",
+    },
+    "Sensor Stop": {
+      label: "Sensor",
+      color: "var(--glucose-low)",
+      bgColor: "hsl(var(--glucose-low) / 0.2)",
+    },
+    "Site Change": {
+      label: "Site",
+      color: "var(--insulin-bolus)",
+      bgColor: "hsl(var(--insulin-bolus) / 0.2)",
+    },
+    "Insulin Change": {
+      label: "Reservoir",
+      color: "var(--insulin-basal)",
+      bgColor: "hsl(var(--insulin-basal) / 0.2)",
+    },
+    "Pump Battery Change": {
+      label: "Battery",
+      color: "var(--carbs)",
+      bgColor: "hsl(var(--carbs) / 0.2)",
+    },
+  };
+
+  // Device event markers for the chart
+  const deviceEventMarkers = $derived(
+    deviceEventTreatments.map((t) => ({
+      time: new Date(getTreatmentTime(t)),
+      eventType: t.eventType as DeviceEventType,
+      notes: t.notes,
+      config: deviceEventConfig[t.eventType as DeviceEventType],
+    }))
+  );
+
   function getTreatmentTime(t: Treatment): number {
     return t.mills ?? (t.created_at ? new Date(t.created_at).getTime() : 0);
+  }
+
+  // Find nearby device event for tooltip
+  function findNearbyDeviceEvent(time: Date) {
+    return deviceEventMarkers.find(
+      (d) =>
+        Math.abs(d.time.getTime() - time.getTime()) < TREATMENT_PROXIMITY_MS
+    );
   }
 
   // Thresholds (convert to display units)
@@ -375,11 +464,12 @@
     return series[i - 1];
   }
 
-  // Treatment marker data for IOB track
+  // Treatment marker data for IOB track (includes full treatment for click handling)
   const bolusMarkersForIob = $derived(
     bolusTreatments.map((t) => ({
       time: new Date(getTreatmentTime(t)),
       insulin: t.insulin ?? 0,
+      treatment: t,
     }))
   );
 
@@ -387,8 +477,34 @@
     carbTreatments.map((t) => ({
       time: new Date(getTreatmentTime(t)),
       carbs: t.carbs ?? 0,
+      treatment: t,
     }))
   );
+
+  // Treatment edit dialog state
+  let selectedTreatment = $state<Treatment | null>(null);
+  let isTreatmentDialogOpen = $state(false);
+  let isUpdatingTreatment = $state(false);
+
+  function handleMarkerClick(treatment: Treatment) {
+    selectedTreatment = treatment;
+    isTreatmentDialogOpen = true;
+  }
+
+  async function handleTreatmentSave(updatedTreatment: Treatment) {
+    isUpdatingTreatment = true;
+    try {
+      await updateTreatment({ ...updatedTreatment });
+      toast.success("Treatment updated");
+      isTreatmentDialogOpen = false;
+      selectedTreatment = null;
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update treatment");
+    } finally {
+      isUpdatingTreatment = false;
+    }
+  }
 
   // Find treatments near a given time (within 5 minute window)
   const TREATMENT_PROXIMITY_MS = 5 * 60 * 1000;
@@ -628,17 +744,22 @@
               curve={curveMonotoneX}
             />
 
-            <!-- Glucose points -->
-            {#each glucoseData as point}
-              <Points
-                data={[point]}
-                x={(d) => d.time}
-                y={(d) => glucoseScale(d.sgv)}
-                r={3}
-                fill={point.color}
-                class="opacity-90"
-              />
-            {/each}
+            <!-- Glucose points - only show when density is reasonable (less than 0.5 points per pixel) -->
+            <!-- This prevents points from smashing together on multi-day views -->
+            {@const pointDensity = glucoseData.length / context.width}
+            {@const showGlucosePoints = pointDensity < 0.5}
+            {#if showGlucosePoints}
+              {#each glucoseData as point}
+                <Points
+                  data={[point]}
+                  x={(d) => d.time}
+                  y={(d) => glucoseScale(d.sgv)}
+                  r={3}
+                  fill={point.color}
+                  class="opacity-90"
+                />
+              {/each}
+            {/if}
 
             <!-- Prediction visualizations -->
             <PredictionVisualizations
@@ -692,18 +813,23 @@
               tickLabelProps={{ class: "text-xs fill-muted-foreground" }}
             />
 
-            <!-- Bolus markers (on top layer) -->
+            <!-- Bolus markers (on top layer) - clickable to edit -->
             {#each bolusMarkersForIob as marker}
               {@const xPos = context.xScale(marker.time)}
               {@const yPos = context.yScale(iobScale(marker.insulin))}
-              <Group x={xPos} y={yPos + 0}>
+              <Group
+                x={xPos}
+                y={yPos + 0}
+                onclick={() => handleMarkerClick(marker.treatment)}
+                class="cursor-pointer"
+              >
                 <Polygon
                   points={[
                     { x: 0, y: 10 },
                     { x: -5, y: 0 },
                     { x: 5, y: 0 },
                   ]}
-                  class="opacity-90 fill-insulin-bolus"
+                  class="opacity-90 fill-insulin-bolus hover:opacity-100 transition-opacity"
                 />
                 <Text
                   y={-14}
@@ -715,11 +841,16 @@
               </Group>
             {/each}
 
-            <!-- Carb markers (on top layer) -->
+            <!-- Carb markers (on top layer) - clickable to edit -->
             {#each carbMarkersForIob as marker}
               {@const xPos = context.xScale(marker.time)}
               {@const yPos = context.yScale(iobScale(marker.carbs / carbRatio))}
-              <Group x={xPos} y={yPos}>
+              <Group
+                x={xPos}
+                y={yPos}
+                onclick={() => handleMarkerClick(marker.treatment)}
+                class="cursor-pointer"
+              >
                 <Polygon
                   points={[
                     { x: 0, y: -10 },
@@ -727,7 +858,7 @@
                     { x: 5, y: 0 },
                   ]}
                   fill="var(--carbs)"
-                  class="opacity-90"
+                  class="opacity-90 hover:opacity-100 transition-opacity"
                 />
                 <Text
                   y={18}
@@ -738,6 +869,77 @@
                 </Text>
               </Group>
             {/each}
+
+            <!-- Device event markers (positioned at median glucose in glucose track) -->
+            {#each deviceEventMarkers as marker}
+              {@const xPos = context.xScale(marker.time)}
+              {@const yPos = context.yScale(glucoseScale(medianGlucose))}
+              <Group x={xPos} y={yPos}>
+                <!-- Background circle -->
+                <circle
+                  r="12"
+                  fill="var(--background)"
+                  stroke={marker.config.color}
+                  stroke-width="2"
+                  class="opacity-95"
+                />
+                <!-- Icon based on event type -->
+                {#if marker.eventType === "Sensor Start" || marker.eventType === "Sensor Change"}
+                  <!-- Sensor icon: circle with wave/signal lines -->
+                  <g
+                    fill="none"
+                    stroke={marker.config.color}
+                    stroke-width="1.5"
+                  >
+                    <circle cx="0" cy="0" r="3" fill={marker.config.color} />
+                    <path d="M -5 -5 Q 0 -8 5 -5" />
+                    <path d="M -7 -8 Q 0 -12 7 -8" />
+                  </g>
+                {:else if marker.eventType === "Sensor Stop"}
+                  <!-- Sensor stop: X over sensor icon -->
+                  <g stroke={marker.config.color} stroke-width="1.5">
+                    <circle cx="0" cy="0" r="3" fill="none" />
+                    <line x1="-5" y1="-5" x2="5" y2="5" />
+                    <line x1="5" y1="-5" x2="-5" y2="5" />
+                  </g>
+                {:else if marker.eventType === "Site Change"}
+                  <!-- Site change: simplified infusion set icon (circle with needle) -->
+                  <g
+                    fill="none"
+                    stroke={marker.config.color}
+                    stroke-width="1.5"
+                  >
+                    <circle cx="0" cy="-2" r="4" />
+                    <line x1="0" y1="2" x2="0" y2="7" />
+                    <line x1="-2" y1="5" x2="2" y2="5" />
+                  </g>
+                {:else if marker.eventType === "Insulin Change"}
+                  <!-- Insulin/Reservoir change: syringe/vial icon -->
+                  <g
+                    fill="none"
+                    stroke={marker.config.color}
+                    stroke-width="1.5"
+                  >
+                    <rect x="-3" y="-6" width="6" height="10" rx="1" />
+                    <line x1="-2" y1="-3" x2="2" y2="-3" />
+                    <line x1="0" y1="4" x2="0" y2="7" />
+                  </g>
+                {:else if marker.eventType === "Pump Battery Change"}
+                  <!-- Battery icon -->
+                  <g
+                    fill="none"
+                    stroke={marker.config.color}
+                    stroke-width="1.5"
+                  >
+                    <rect x="-5" y="-4" width="10" height="8" rx="1" />
+                    <rect x="5" y="-2" width="2" height="4" rx="0.5" />
+                    <line x1="-2" y1="0" x2="2" y2="0" />
+                    <line x1="0" y1="-2" x2="0" y2="2" />
+                  </g>
+                {/if}
+              </Group>
+            {/each}
+
             <!-- Basal highlight with remapped scale -->
             <Highlight
               x={(d) => d.time}
@@ -776,6 +978,7 @@
               {@const activeIob = findSeriesValue(iobData, data.time)}
               {@const nearbyBolus = findNearbyBolus(data.time)}
               {@const nearbyCarbs = findNearbyCarbs(data.time)}
+              {@const nearbyDeviceEvent = findNearbyDeviceEvent(data.time)}
 
               <Tooltip.Header
                 value={data?.time}
@@ -805,6 +1008,14 @@
                     label="Carbs"
                     value={`${nearbyCarbs.carbs}g`}
                     color="var(--carbs)"
+                    class="font-medium"
+                  />
+                {/if}
+                {#if nearbyDeviceEvent}
+                  <Tooltip.Item
+                    label={nearbyDeviceEvent.eventType}
+                    value={nearbyDeviceEvent.notes || ""}
+                    color={nearbyDeviceEvent.config.color}
                     class="font-medium"
                   />
                 {/if}
@@ -924,6 +1135,166 @@
         </svg>
         <span>Carbs</span>
       </div>
+      <!-- Device event legend items (only show if present in current view) -->
+      {#if deviceEventMarkers.some((m) => m.eventType === "Sensor Start" || m.eventType === "Sensor Change")}
+        <div class="flex items-center gap-1">
+          <svg
+            width="18"
+            height="18"
+            viewBox="-10 -10 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              r="8"
+              fill="var(--background)"
+              stroke="var(--glucose-in-range)"
+              stroke-width="1.5"
+            />
+            <circle cx="0" cy="0" r="2" fill="var(--glucose-in-range)" />
+            <path
+              d="M -3.5 -3.5 Q 0 -5.5 3.5 -3.5"
+              fill="none"
+              stroke="var(--glucose-in-range)"
+              stroke-width="1"
+            />
+          </svg>
+          <span>Sensor</span>
+        </div>
+      {/if}
+      {#if deviceEventMarkers.some((m) => m.eventType === "Site Change")}
+        <div class="flex items-center gap-1">
+          <svg
+            width="18"
+            height="18"
+            viewBox="-10 -10 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              r="8"
+              fill="var(--background)"
+              stroke="var(--insulin-bolus)"
+              stroke-width="1.5"
+            />
+            <circle
+              cx="0"
+              cy="-1.5"
+              r="3"
+              fill="none"
+              stroke="var(--insulin-bolus)"
+              stroke-width="1"
+            />
+            <line
+              x1="0"
+              y1="1.5"
+              x2="0"
+              y2="5"
+              stroke="var(--insulin-bolus)"
+              stroke-width="1"
+            />
+          </svg>
+          <span>Site</span>
+        </div>
+      {/if}
+      {#if deviceEventMarkers.some((m) => m.eventType === "Insulin Change")}
+        <div class="flex items-center gap-1">
+          <svg
+            width="18"
+            height="18"
+            viewBox="-10 -10 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              r="8"
+              fill="var(--background)"
+              stroke="var(--insulin-basal)"
+              stroke-width="1.5"
+            />
+            <rect
+              x="-2"
+              y="-4"
+              width="4"
+              height="7"
+              rx="0.5"
+              fill="none"
+              stroke="var(--insulin-basal)"
+              stroke-width="1"
+            />
+            <line
+              x1="-1"
+              y1="-2"
+              x2="1"
+              y2="-2"
+              stroke="var(--insulin-basal)"
+              stroke-width="1"
+            />
+          </svg>
+          <span>Reservoir</span>
+        </div>
+      {/if}
+      {#if deviceEventMarkers.some((m) => m.eventType === "Pump Battery Change")}
+        <div class="flex items-center gap-1">
+          <svg
+            width="18"
+            height="18"
+            viewBox="-10 -10 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              r="8"
+              fill="var(--background)"
+              stroke="var(--carbs)"
+              stroke-width="1.5"
+            />
+            <rect
+              x="-3.5"
+              y="-2.5"
+              width="7"
+              height="5"
+              rx="0.5"
+              fill="none"
+              stroke="var(--carbs)"
+              stroke-width="1"
+            />
+            <rect
+              x="3.5"
+              y="-1"
+              width="1"
+              height="2"
+              rx="0.25"
+              fill="var(--carbs)"
+            />
+            <line
+              x1="-1"
+              y1="0"
+              x2="1"
+              y2="0"
+              stroke="var(--carbs)"
+              stroke-width="1"
+            />
+            <line
+              x1="0"
+              y1="-1"
+              x2="0"
+              y2="1"
+              stroke="var(--carbs)"
+              stroke-width="1"
+            />
+          </svg>
+          <span>Battery</span>
+        </div>
+      {/if}
     </div>
   </CardContent>
 </Card>
+
+<!-- Treatment Edit Dialog -->
+<TreatmentEditDialog
+  bind:open={isTreatmentDialogOpen}
+  treatment={selectedTreatment}
+  isLoading={isUpdatingTreatment}
+  onClose={() => {
+    isTreatmentDialogOpen = false;
+    selectedTreatment = null;
+  }}
+  onSave={handleTreatmentSave}
+/>
