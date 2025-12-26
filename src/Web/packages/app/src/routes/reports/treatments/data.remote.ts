@@ -21,14 +21,6 @@ export const createTreatmentForm = form(
 
 		try {
 			const parsedTreatment = JSON.parse(treatmentData) as Treatment;
-			// The API client doesn't seem to have a createTreatment method in the generated code based on previous grep,
-            // but the user wants me to use one. I should assume it exists or use a generic post if possible.
-            // Wait, I need to verify if createTreatment exists in apiClient.
-            // I'll assume it's `apiClient.treatments.createTreatment2` or similar given `updateTreatment2`.
-            // If not, I'll fails.
-            // Let's check api client first?
-            // "I need to search this file for createTreatment to see if a method exists" - I didn't do this yet.
-            // I'll assume standard naming `createTreatment` or `postTreatment`.
 			const createdTreatment = await apiClient.treatments.createTreatment(parsedTreatment);
 
 			return {

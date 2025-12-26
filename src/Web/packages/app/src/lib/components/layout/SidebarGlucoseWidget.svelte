@@ -56,13 +56,15 @@
   // Oref prediction data from backend
   let orefPredictions = $state<PredictionData | null>(null);
 
-  // Fetch oref predictions (re-fetch when new data arrives)
+  // Fetch oref predictions (re-fetch when glucose data meaningfully changes)
   $effect(() => {
-    // Explicit dependency to ensure reactivity
-    void lastUpdated;
+    // Depend on current BG - this changes when new data arrives
+    const currentBG = rawCurrentBG;
+    const stale = isStale;
+    const disconnected = isDisconnected;
 
     // Only fetch if we have valid glucose data
-    if (rawCurrentBG > 0 && !isStale && !isDisconnected) {
+    if (currentBG > 0 && !stale && !disconnected) {
       let active = true;
 
       getPredictions({})

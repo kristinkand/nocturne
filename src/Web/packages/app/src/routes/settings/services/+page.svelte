@@ -939,19 +939,20 @@
                 class="flex items-center gap-4 p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left group border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-950/20"
                 onclick={() => {
                   selectedConnector = connectorStatus;
-                  // Initialize granular sync dates
+                  // Initialize granular sync dates in local time
                   const now = new Date();
                   const thirtyDaysAgo = new Date(
                     now.getTime() - 30 * 24 * 60 * 60 * 1000
                   );
-                  // format for datetime-local: YYYY-MM-DDThh:mm
-                  const toIso = now.toISOString();
-                  const fromIso = thirtyDaysAgo.toISOString();
-                  granularSyncTo = toIso.substring(0, toIso.lastIndexOf(":"));
-                  granularSyncFrom = fromIso.substring(
-                    0,
-                    fromIso.lastIndexOf(":")
-                  );
+                  // format for datetime-local: YYYY-MM-DDThh:mm (local time)
+                  const formatLocal = (d: Date) => {
+                    const offset = d.getTimezoneOffset() * 60000;
+                    return new Date(d.getTime() - offset)
+                      .toISOString()
+                      .slice(0, 16);
+                  };
+                  granularSyncTo = formatLocal(now);
+                  granularSyncFrom = formatLocal(thirtyDaysAgo);
                   granularSyncResult = null;
 
                   showConnectorDialog = true;

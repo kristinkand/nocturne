@@ -16,7 +16,6 @@ import { toast } from "svelte-sonner";
 import { getContext, setContext } from "svelte";
 import { getApiClient } from "$lib/api/client";
 import { processPillsData, type ProcessedPillsData } from "$lib/data/pills-processor";
-import { glucoseUnits } from "./appearance-store.svelte";
 
 const REALTIME_STORE_KEY = Symbol("realtime-store");
 
@@ -31,13 +30,13 @@ export class RealtimeStore {
   now = $state(Date.now());
   private timeInterval: ReturnType<typeof setTimeout> | null = null;
 
-  /** Reactive state using Svelte 5 runes */
-  entries = $state<Entry[]>([]);
-  treatments = $state<Treatment[]>([]);
-  deviceStatuses = $state<DeviceStatus[]>([]);
+  /** Reactive state using Svelte 5 runes - using $state.raw for arrays to avoid deep proxy issues */
+  entries = $state.raw<Entry[]>([]);
+  treatments = $state.raw<Treatment[]>([]);
+  deviceStatuses = $state.raw<DeviceStatus[]>([]);
   profile = $state<Profile | null>(null);
-  trackerInstances = $state<TrackerInstanceDto[]>([]);
-  trackerDefinitions = $state<TrackerDefinitionDto[]>([]);
+  trackerInstances = $state.raw<TrackerInstanceDto[]>([]);
+  trackerDefinitions = $state.raw<TrackerDefinitionDto[]>([]);
 
   /** Connection state (with safe initialization) */
   connectionStatus = $derived(
@@ -113,12 +112,12 @@ export class RealtimeStore {
 
   /** Processed pills data (COB, IOB, CAGE, SAGE, Loop, Basal) */
   pillsData = $derived.by((): ProcessedPillsData => {
-    const units = glucoseUnits.current === "mmol" ? "mmol/L" : "mg/dL";
+    // Use hardcoded mg/dL - components handle display formatting themselves
     return processPillsData(
       this.deviceStatuses,
       this.treatments,
       this.profile,
-      { units }
+      { units: "mg/dL" }
     );
   });
 
@@ -130,7 +129,7 @@ export class RealtimeStore {
         if (!def || !instance.ageHours || !def.notificationThresholds) return null;
 
         // Determine level from notificationThresholds
-        let level: "info" | "warn" | "hazard" | "urgent" | null = null;
+        let level: Lowercase<NotificationUrgency> | null = null;
         const age = instance.ageHours;
 
         // Sort thresholds by hours descending to find the highest triggered level
@@ -192,35 +191,40 @@ export class RealtimeStore {
         apiClient.trackers.getActiveInstances().catch(() => []),
       ]);
 
-      if (historicalEntries && historicalEntries.length > 0) {
-        this.entries = historicalEntries.sort(
-          (a: Entry, b: Entry) => (b.mills || 0) - (a.mills || 0)
-        );
-      }
+      // Defer all state updates to a microtask to completely break out of the
+      // current reactive cycle. This prevents effect_update_depth_exceeded errors
+      // when components with PersistedState dependencies are also initializing.
+      queueMicrotask(() => {
+        if (historicalEntries && historicalEntries.length > 0) {
+          this.entries = historicalEntries.sort(
+            (a: Entry, b: Entry) => (b.mills || 0) - (a.mills || 0)
+          );
+        }
 
-      if (historicalTreatments && historicalTreatments.length > 0) {
-        this.treatments = historicalTreatments.sort(
-          (a: Treatment, b: Treatment) => (b.mills || 0) - (a.mills || 0)
-        );
-      }
+        if (historicalTreatments && historicalTreatments.length > 0) {
+          this.treatments = historicalTreatments.sort(
+            (a: Treatment, b: Treatment) => (b.mills || 0) - (a.mills || 0)
+          );
+        }
 
-      if (deviceStatusData && deviceStatusData.length > 0) {
-        this.deviceStatuses = deviceStatusData.sort(
-          (a: DeviceStatus, b: DeviceStatus) => (b.mills || 0) - (a.mills || 0)
-        );
-      }
+        if (deviceStatusData && deviceStatusData.length > 0) {
+          this.deviceStatuses = deviceStatusData.sort(
+            (a: DeviceStatus, b: DeviceStatus) => (b.mills || 0) - (a.mills || 0)
+          );
+        }
 
-      if (profileData && profileData.length > 0) {
-        this.profile = profileData[0];
-      }
+        if (profileData && profileData.length > 0) {
+          this.profile = profileData[0];
+        }
 
-      if (trackerDefs && trackerDefs.length > 0) {
-        this.trackerDefinitions = trackerDefs;
-      }
+        if (trackerDefs && trackerDefs.length > 0) {
+          this.trackerDefinitions = trackerDefs;
+        }
 
-      if (trackerActive && trackerActive.length > 0) {
-        this.trackerInstances = trackerActive;
-      }
+        if (trackerActive && trackerActive.length > 0) {
+          this.trackerInstances = trackerActive;
+        }
+      });
     } catch (error) {
       console.error("Failed to fetch historical data:", error);
       toast.error("Failed to load historical data");

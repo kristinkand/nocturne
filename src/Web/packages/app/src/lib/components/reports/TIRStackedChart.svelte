@@ -58,13 +58,17 @@
     // Extract percentages from the backend response
     if (!timeInRangePromise) return { percentages: {} };
 
+    // Access the resolved value via .current
+    const resolved = timeInRangePromise.current;
+    if (!resolved) return { percentages: {} };
+
     return {
       percentages: {
-        severeLow: timeInRangePromise.rangeStats?.severeLow?.percentage ?? 0,
-        low: timeInRangePromise.rangeStats?.low?.percentage ?? 0,
-        target: timeInRangePromise.rangeStats?.target?.percentage ?? 0,
-        high: timeInRangePromise.rangeStats?.high?.percentage ?? 0,
-        severeHigh: timeInRangePromise.rangeStats?.severeHigh?.percentage ?? 0,
+        severeLow: resolved.percentages?.severeLow ?? 0,
+        low: resolved.percentages?.low ?? 0,
+        target: resolved.percentages?.target ?? 0,
+        high: resolved.percentages?.high ?? 0,
+        severeHigh: resolved.percentages?.severeHigh ?? 0,
       },
     };
   });

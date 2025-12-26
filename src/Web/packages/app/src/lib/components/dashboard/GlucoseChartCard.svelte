@@ -74,8 +74,6 @@
     showPredictions?: boolean;
     /** Default focus hours for time range selector (from settings) */
     defaultFocusHours?: number;
-    /** Prediction model from algorithm settings (ar2, linear, iob, cob, uam) */
-    predictionModel?: string;
   }
 
   const realtimeStore = getRealtimeStore();
@@ -87,7 +85,6 @@
     defaultBasalRate = 1.0,
     carbRatio = 15,
     showPredictions = true,
-    predictionModel = "cone",
   }: ComponentProps = $props();
 
   // Prediction data state
@@ -97,15 +94,24 @@
   // Server-side chart data (IOB, COB, basal)
   let serverChartData = $state<DashboardChartData | null>(null);
 
-  // Fetch predictions when enabled
+  // Track if initial data has loaded to prevent effect loops during hydration
+  let hasMounted = $state(false);
   $effect(() => {
+    // Set mounted flag after first tick
+    hasMounted = true;
+  });
+
+  // Fetch predictions when enabled (debounced by mounted state)
+  $effect(() => {
+    // Don't run until after initial mount to prevent loops during hydration
+    if (!hasMounted) return;
+
     // Track dependencies - re-run when these change
     const enabled = predictionEnabled.current;
+    const entryCount = entries.length;
 
-    // Explicitly track the last updated timestamp from the store to know when new data arrives
-    void realtimeStore.lastUpdated;
-
-    if (showPredictions && enabled && entries.length > 0) {
+    // Only refetch if we have entries and predictions are enabled
+    if (showPredictions && enabled && entryCount > 0) {
       getPredictions({})
         .then((data) => {
           predictionData = data;
@@ -118,6 +124,10 @@
         });
     }
   });
+
+  // Round to minute boundaries to avoid triggering effects every second
+  // Defined early because staleBasalData needs it
+  const nowMinute = $derived(Math.floor(realtimeStore.now / 60000) * 60000);
 
   // Calculate most recent basal data source time
   // This is used to detect if the basal data is stale (e.g. from an external service like Glooko that hasn't synced recently)
@@ -137,12 +147,13 @@
     // If no data at all, nothing to mark
     if (lastBasalSourceTime === 0) return null;
 
-    const timeSinceLastUpdate = Date.now() - lastBasalSourceTime;
+    // Use nowMinute instead of Date.now() to prevent unstable re-computation
+    const timeSinceLastUpdate = nowMinute - lastBasalSourceTime;
 
     if (timeSinceLastUpdate > STALE_THRESHOLD_MS) {
       return {
         start: new Date(lastBasalSourceTime),
-        end: new Date(), // Up to now
+        end: new Date(nowMinute), // Use stable time reference
       };
     }
 
@@ -175,16 +186,18 @@
     from: dateRange
       ? normalizeDate(dateRange.from, new Date())
       : new Date(
-          realtimeStore.now -
-            parseInt(glucoseChartLookback.current) * 60 * 60 * 1000
+          nowMinute - parseInt(glucoseChartLookback.current) * 60 * 60 * 1000
         ),
     to: dateRange
       ? normalizeDate(dateRange.to, new Date())
-      : new Date(realtimeStore.now),
+      : new Date(nowMinute),
   });
 
-  // Fetch server-side chart data when date range changes
+  // Fetch server-side chart data when date range changes (guarded by hasMounted)
   $effect(() => {
+    // Don't run until after initial mount to prevent loops during hydration
+    if (!hasMounted) return;
+
     const startTime = displayDateRange.from.getTime();
     const endTime = displayDateRange.to.getTime();
 
@@ -412,11 +425,9 @@
 
       <div class="flex items-center gap-2">
         <!-- Prediction settings component with its own boundary -->
-        <!-- Prediction settings component with its own boundary -->
         <PredictionSettings
           {showPredictions}
           bind:predictionMode={predictionDisplayMode.current}
-          {predictionModel}
         />
         <!-- Time range selector -->
         <ToggleGroup.Root

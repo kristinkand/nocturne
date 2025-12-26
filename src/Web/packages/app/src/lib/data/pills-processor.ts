@@ -505,6 +505,74 @@ export function processSAGE(
 }
 
 /**
+ * Profile time-value entry structure
+ */
+interface TimeValueEntry {
+	time?: string;
+	value?: number;
+}
+
+/**
+ * Get the scheduled basal rate from a profile for a given time
+ * @param profile The profile containing basal schedule
+ * @param now Current timestamp in milliseconds
+ * @returns The scheduled basal rate in U/hr, or 0 if not found
+ */
+function getScheduledBasalRate(profile: Profile | null, now: number): { rate: number; profileName: string | null } {
+	if (!profile) {
+		return { rate: 0, profileName: null };
+	}
+
+	// Get the active profile name
+	const activeProfileName = profile.defaultProfile;
+	if (!activeProfileName || !profile.store) {
+		return { rate: 0, profileName: null };
+	}
+
+	// Get the profile data from the store
+	const profileData = profile.store[activeProfileName] as { basal?: TimeValueEntry[] } | undefined;
+	if (!profileData?.basal || profileData.basal.length === 0) {
+		return { rate: 0, profileName: activeProfileName };
+	}
+
+	// Get current time of day
+	const date = new Date(now);
+	const currentMinutes = date.getHours() * 60 + date.getMinutes();
+
+	// Convert time string (HH:MM) to minutes
+	function timeToMinutes(time: string): number {
+		const [hours, minutes] = time.split(':').map(Number);
+		return hours * 60 + (minutes || 0);
+	}
+
+	// Sort basal entries by time
+	const sortedBasal = [...profileData.basal]
+		.filter((entry): entry is { time: string; value: number } =>
+			entry.time !== undefined && entry.value !== undefined
+		)
+		.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+	if (sortedBasal.length === 0) {
+		return { rate: 0, profileName: activeProfileName };
+	}
+
+	// Find the basal entry that applies at the current time
+	// (the last entry with a start time <= current time)
+	let currentRate = sortedBasal[sortedBasal.length - 1].value; // Default to last entry (wraps around midnight)
+
+	for (const entry of sortedBasal) {
+		const entryMinutes = timeToMinutes(entry.time);
+		if (entryMinutes <= currentMinutes) {
+			currentRate = entry.value;
+		} else {
+			break;
+		}
+	}
+
+	return { rate: currentRate, profileName: activeProfileName };
+}
+
+/**
  * Process Basal data from device status and profile
  */
 export function processBasal(
@@ -514,9 +582,6 @@ export function processBasal(
 	_units: string,
 	_config: Partial<PillsProcessorConfig> = {}
 ): BasalPillData | null {
-	// This is a simplified version - full implementation would need profile parsing
-	// For now, return basic info from device status if available
-
 	if (!profile && deviceStatuses.length === 0) {
 		return null;
 	}
@@ -534,12 +599,13 @@ export function processBasal(
 		})[0];
 
 	// Extract basal info from device status
-	// Note: pump data would be used for additional info in a full implementation
 	const loopData = recentStatus?.loop;
 	const openaps = recentStatus?.openaps;
 
-	let totalBasal = 0;
-	let scheduledBasal = 0;
+	// Get scheduled basal from profile
+	const { rate: scheduledBasal, profileName } = getScheduledBasalRate(profile, now);
+
+	let totalBasal = scheduledBasal; // Start with scheduled, override if temp basal active
 	let isTempBasal = false;
 	let isComboActive = false;
 	let tempBasalInfo: BasalPillData['tempBasal'] | undefined;
@@ -548,31 +614,47 @@ export function processBasal(
 	if (openaps?.enacted) {
 		const enacted = openaps.enacted as OpenApsSuggestedEnacted;
 		if (enacted.rate !== undefined && enacted.duration !== undefined) {
-			totalBasal = enacted.rate;
-			isTempBasal = true;
+			// Check if the temp basal is still active
 			const enactedTimestamp = enacted.timestamp ? new Date(enacted.timestamp).getTime() : now;
-			tempBasalInfo = {
-				rate: enacted.rate,
-				duration: enacted.duration,
-				remaining: Math.max(0, enacted.duration - (now - enactedTimestamp) / 60000),
-				startTime: enactedTimestamp
-			};
+			const elapsedMinutes = (now - enactedTimestamp) / 60000;
+			const remaining = enacted.duration - elapsedMinutes;
+
+			if (remaining > 0) {
+				totalBasal = enacted.rate;
+				isTempBasal = true;
+				tempBasalInfo = {
+					rate: enacted.rate,
+					duration: enacted.duration,
+					remaining: Math.max(0, remaining),
+					startTime: enactedTimestamp
+				};
+			}
 		}
 	}
 
 	if (loopData?.enacted) {
 		const enacted = loopData.enacted as LoopEnactedData;
-		if (enacted.rate !== undefined) {
-			totalBasal = enacted.rate;
-			isTempBasal = true;
+		if (enacted.rate !== undefined && enacted.duration !== undefined) {
+			// Check if temp basal is still active
+			const enactedTimestamp = enacted.timestamp ? new Date(enacted.timestamp).getTime() : now;
+			const elapsedMinutes = (now - enactedTimestamp) / 60000;
+			const remaining = enacted.duration - elapsedMinutes;
+
+			if (remaining > 0) {
+				totalBasal = enacted.rate;
+				isTempBasal = true;
+				tempBasalInfo = {
+					rate: enacted.rate,
+					duration: enacted.duration,
+					remaining: Math.max(0, remaining),
+					startTime: enactedTimestamp
+				};
+			}
 		}
 	}
 
-	// If we have profile, get scheduled basal
-	// This would require profile parsing which is complex
-	// For now, use a placeholder
-
-	if (totalBasal === 0 && !profile) {
+	// If we have no basal data at all, return null
+	if (totalBasal === 0 && scheduledBasal === 0 && !profile) {
 		return null;
 	}
 
@@ -582,6 +664,7 @@ export function processBasal(
 		isTempBasal,
 		isComboActive,
 		tempBasal: tempBasalInfo,
+		activeProfile: profileName ?? undefined,
 		display: `${totalBasal.toFixed(3)}U`,
 		label: 'BASAL',
 		info: [],

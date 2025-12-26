@@ -589,7 +589,9 @@
       </div>
 
       <!-- AI Insights Section -->
-      <ClinicalInsights {analysis} showClinicalNotes={true} maxInsights={4} />
+      {#if analysis}
+        <ClinicalInsights {analysis} showClinicalNotes={true} maxInsights={4} />
+      {/if}
 
       <!-- Recent Glucose Preview -->
       <Card class="border">

@@ -72,6 +72,8 @@ export const createDefinition = command(
 			displayOrder: z.number().optional(),
 		})).optional(),
 		isFavorite: z.boolean().optional(),
+		startEventType: z.string().optional(),
+		completionEventType: z.string().optional(),
 	}),
 	async (request: CreateTrackerDefinitionRequest) => {
 		const { locals } = getRequestEvent();
@@ -106,6 +108,8 @@ export const updateDefinition = command(
 				displayOrder: z.number().optional(),
 			})).optional(),
 			isFavorite: z.boolean().optional(),
+			startEventType: z.string().optional(),
+			completionEventType: z.string().optional(),
 		}),
 	}),
 	async ({ id, request }) => {

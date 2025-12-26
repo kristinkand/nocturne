@@ -20,6 +20,7 @@
     User,
     Palette,
     Timer,
+    Shield,
   } from "lucide-svelte";
 
   type SettingsSection = {
@@ -96,6 +97,14 @@
       icon: Plug,
       href: "/settings/services",
       badge: "Connectors",
+    },
+    {
+      id: "admin",
+      title: "Administration",
+      description: "Manage subjects, roles, and access tokens",
+      icon: Shield,
+      href: "/settings/admin",
+      badge: "Admin",
     },
     {
       id: "support",

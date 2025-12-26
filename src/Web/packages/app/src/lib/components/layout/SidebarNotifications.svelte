@@ -15,7 +15,7 @@
   import { getAuthStore } from "$lib/stores/auth-store.svelte";
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import * as trackersRemote from "$lib/data/trackers.remote";
-  import type { TrackerInstanceDto } from "$lib/api/generated/nocturne-api-client";
+  import { type TrackerInstanceDto, CompletionReason } from "$lib/api/generated/nocturne-api-client";
 
   // Get the realtime store for reactive tracker data
   const realtimeStore = getRealtimeStore();
@@ -69,13 +69,20 @@
       (d) => d.id === instance.definitionId
     );
     if (!def) return "Tracker active";
+
+    // Find threshold hours for the level from notificationThresholds
+    const threshold = def.notificationThresholds?.find(
+      (t) => t.urgency?.toLowerCase() === instance.level
+    );
+    const thresholdHours = threshold?.hours ?? def.lifespanHours;
+
     switch (instance.level) {
       case "urgent":
-        return `Exceeded ${def.urgentHours}h - change urgently!`;
+        return `Exceeded ${thresholdHours ?? "?"}h - change urgently!`;
       case "hazard":
-        return `Exceeded ${def.hazardHours}h - change soon`;
+        return `Exceeded ${thresholdHours ?? "?"}h - change soon`;
       case "warn":
-        return `Approaching ${def.lifespanHours ?? def.warnHours}h limit`;
+        return `Approaching ${thresholdHours ?? def.lifespanHours ?? "?"}h limit`;
       default:
         return `Active for ${Math.floor(instance.ageHours ?? 0)}h`;
     }
@@ -122,7 +129,7 @@
     try {
       await trackersRemote.completeInstance({
         id,
-        request: { reason: 0 }, // Completed
+        request: { reason: CompletionReason.Completed },
       });
     } catch (err) {
       console.error("Failed to complete:", err);

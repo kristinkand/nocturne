@@ -258,21 +258,25 @@
       nightscoutObj &&
       typeof nightscoutObj === "object"
     ) {
-      const reordered: Record<string, any> = {};
-      const nsKeys = Object.keys(nightscoutObj);
-      const ncKeys = Object.keys(nocturneObj);
+      const reordered: Record<string, unknown> = {};
+      const nocturneRecord = nocturneObj as Record<string, unknown>;
+      const nightscoutRecord = nightscoutObj as Record<string, unknown>;
+      const nsKeys = Object.keys(nightscoutRecord);
+      const ncKeys = Object.keys(nocturneRecord);
 
       // First, add keys in Nightscout's order
-      for (const key of nsKeys) {
-        if (key in nocturneObj) {
-          reordered[key] = reorderToMatch(nocturneObj[key], nightscoutObj[key]);
+      for (let i = 0; i < nsKeys.length; i++) {
+        const key = nsKeys[i];
+        if (key in nocturneRecord) {
+          reordered[key] = reorderToMatch(nocturneRecord[key], nightscoutRecord[key]);
         }
       }
 
       // Then, add any remaining Nocturne-only keys
-      for (const key of ncKeys) {
+      for (let i = 0; i < ncKeys.length; i++) {
+        const key = ncKeys[i];
         if (!(key in reordered)) {
-          reordered[key] = nocturneObj[key];
+          reordered[key] = nocturneRecord[key];
         }
       }
 

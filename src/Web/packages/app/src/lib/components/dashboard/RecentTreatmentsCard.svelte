@@ -52,7 +52,7 @@
   async function handleSave(updatedTreatment: Treatment) {
     isUpdating = true;
     try {
-      await updateTreatment(updatedTreatment);
+      await updateTreatment({ ...updatedTreatment });
       toast.success("Treatment updated");
       isDialogOpen = false;
       selectedTreatment = null;

@@ -8,7 +8,7 @@
 import { z } from "zod";
 import { query, form, getRequestEvent } from "$app/server";
 
-import { redirect, invalid } from "@sveltejs/kit";
+import { invalid } from "@sveltejs/kit";
 import type { LoginResponse, OidcProviderInfo, RegisterResponse } from "$lib/api/generated/nocturne-api-client";
 import { AUTH_COOKIE_NAMES } from "$lib/config/auth-cookies";
 

@@ -1,10 +1,11 @@
 <script lang="ts">
   import * as Tooltip from "$lib/components/ui/tooltip";
   import { Skeleton } from "$lib/components/ui/skeleton";
+  import { Previous } from "runed";
 
   interface Props {
     /** Glucose value to display (already formatted for units) */
-    displayValue: string;
+    displayValue: string | number;
     /** Raw glucose value in mg/dL for color calculation */
     rawBgMgdl: number;
     /** Whether the data is still loading (no data received yet) */
@@ -35,26 +36,27 @@
     class: className = "",
   }: Props = $props();
 
-  // Track value changes to trigger pulse animation
-  let isPulsing = $state(false);
-  let previousValue = $state<string | null>(null);
+  // Track previous value using runed's Previous utility
+  const previousDisplayValue = new Previous(() => displayValue);
 
-  // Trigger pulse animation when displayValue changes
-  $effect(() => {
-    // Skip initial render and only pulse on actual value changes
-    if (
-      previousValue !== null &&
-      displayValue !== previousValue &&
+  // Track pulse animation state
+  let isPulsing = $state(false);
+
+  // Trigger pulse when value changes (skip initial load)
+  const shouldPulse = $derived(
+    previousDisplayValue.current !== null &&
+      previousDisplayValue.current !== displayValue &&
       !isLoading
-    ) {
+  );
+
+  $effect(() => {
+    if (shouldPulse) {
       isPulsing = true;
-      // Remove the class after animation completes
       const timeout = setTimeout(() => {
         isPulsing = false;
-      }, 600); // Match animation duration
+      }, 600);
       return () => clearTimeout(timeout);
     }
-    previousValue = displayValue;
   });
 
   // Get background color based on BG value (only when not stale)

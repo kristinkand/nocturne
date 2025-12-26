@@ -39,7 +39,7 @@
   const data = $derived(
     rawData.map((d) => ({
       ...d,
-      median: convertToDisplayUnits(d.median, units),
+      median: convertToDisplayUnits(d.median ?? 0, units),
       percentiles: d.percentiles
         ? {
             p10: convertToDisplayUnits(d.percentiles.p10 ?? 0, units),

@@ -6,7 +6,6 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import {
-    Battery,
     BatteryCharging,
     BatteryFull,
     BatteryLow,
@@ -52,18 +51,6 @@
     if (level >= 50) return BatteryMedium;
     if (level >= 25) return BatteryLow;
     return BatteryWarning;
-  }
-
-  // Get color class for battery status
-  function getBatteryColorClass(status: string | undefined): string {
-    switch (status) {
-      case "urgent":
-        return "text-red-500";
-      case "warn":
-        return "text-yellow-500";
-      default:
-        return "text-green-500";
-    }
   }
 
   // Extract device name from URI

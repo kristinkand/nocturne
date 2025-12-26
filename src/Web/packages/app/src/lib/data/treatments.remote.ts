@@ -1,7 +1,7 @@
 import { getRequestEvent, query, command } from "$app/server";
 import type { Treatment } from "$lib/api";
 import { z } from "zod";
-import { TREATMENT_CATEGORIES, type TreatmentCategoryId } from "$lib/constants/treatment-categories";
+import { TREATMENT_CATEGORIES } from "$lib/constants/treatment-categories";
 
 // Schema for creating/updating treatments
 // We use a loose schema here since strict validation is handled by the API/backend
@@ -27,7 +27,7 @@ const treatmentSchema = z.object({
   absorptionTime: z.number().optional(),
   targetTop: z.number().optional(),
   targetBottom: z.number().optional(),
-  additional_properties: z.record(z.any()).optional(),
+  additional_properties: z.record(z.string(), z.any()).optional(),
 }).passthrough(); // Allow other properties
 
 // Schema for fetching treatments with pagination and filtering

@@ -261,7 +261,7 @@ export class TitleFaviconService {
     const bgParts: string[] = [];
 
     if (settings.showBgValue) {
-      bgParts.push(formatBg(bg));
+      bgParts.push(String(formatBg(bg)));
     }
 
     if (settings.showDirection && !isDisconnected) {
@@ -313,7 +313,7 @@ export class TitleFaviconService {
       ctx.textBaseline = "middle";
 
       // Format BG with user's unit preference
-      const bgStr = formatBg(bg);
+      const bgStr = String(formatBg(bg));
 
       // Adjust font size based on value length
       if (bgStr.length <= 2) {

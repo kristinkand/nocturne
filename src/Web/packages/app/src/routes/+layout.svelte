@@ -1,6 +1,5 @@
 <script lang="ts">
   import "../app.css";
-  import { page } from "$app/state";
   import { createRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import { createSettingsStore } from "$lib/stores/settings-store.svelte";
   import { createAuthStore } from "$lib/stores/auth-store.svelte";
@@ -140,15 +139,16 @@
         bg,
         defaultSettings.thresholds
       );
-      if (status === "urgent-low" || status === "urgent-high") {
+      if (status === "very-low" || status === "very-high") {
         // Start flashing with default alarm visual settings if not already flashing
         if (!titleFaviconService.isFlashing) {
           const alarmVisual: AlarmVisualSettings = {
             screenFlash: true,
-            flashColor: status === "urgent-low" ? "#ef4444" : "#ef4444",
+            flashColor: status === "very-low" ? "#ef4444" : "#ef4444",
             flashIntervalMs: 500,
             persistentBanner: true,
             wakeScreen: true,
+            showEmergencyContacts: false,
           };
           titleFaviconService.startFlashing(alarmVisual);
         }

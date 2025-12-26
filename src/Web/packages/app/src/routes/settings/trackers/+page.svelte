@@ -10,6 +10,7 @@
   import { Badge } from "$lib/components/ui/badge";
   import * as Tabs from "$lib/components/ui/tabs";
   import * as Dialog from "$lib/components/ui/dialog";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import * as Select from "$lib/components/ui/select";
@@ -19,6 +20,7 @@
     TrackerNotificationEditor,
     type TrackerNotification,
   } from "$lib/components/trackers";
+  import EventTypeCombobox from "$lib/components/treatments/EventTypeCombobox.svelte";
   import {
     Timer,
     Plus,
@@ -38,7 +40,9 @@
     Beaker,
   } from "lucide-svelte";
   import { cn } from "$lib/utils";
+  import { tick } from "svelte";
   import * as trackersRemote from "$lib/data/trackers.remote";
+  import * as treatmentsRemote from "$lib/data/treatments.remote";
   import {
     NotificationUrgency,
     TrackerCategory,
@@ -64,6 +68,12 @@
   let editingDefinition = $state<TrackerDefinitionDto | null>(null);
   let isNewDefinition = $state(false);
 
+  // Delete confirmation dialog state
+  let isDeleteDefinitionDialogOpen = $state(false);
+  let deletingDefinitionId = $state<string | null>(null);
+  let isDeleteInstanceDialogOpen = $state(false);
+  let deletingInstanceId = $state<string | null>(null);
+
   // Form state for definition
   let formName = $state("");
   let formDescription = $state("");
@@ -75,42 +85,14 @@
   let formDashboardVisibility = $state<DashboardVisibility>(
     DashboardVisibility.Always
   );
+  let formStartEventType = $state<string | undefined>(undefined);
+  let formCompletionEventType = $state<string | undefined>(undefined);
 
   // Helper to convert API format to notifications array
   function definitionToNotifications(
     def: TrackerDefinitionDto
   ): TrackerNotification[] {
-    const notifications: TrackerNotification[] = [];
-    if (def.infoHours !== undefined && def.infoHours !== null) {
-      notifications.push({
-        urgency: NotificationUrgency.Info,
-        hours: def.infoHours,
-        description: "",
-      });
-    }
-    if (def.warnHours !== undefined && def.warnHours !== null) {
-      notifications.push({
-        urgency: NotificationUrgency.Warn,
-        hours: def.warnHours,
-        description: "",
-      });
-    }
-    if (def.hazardHours !== undefined && def.hazardHours !== null) {
-      notifications.push({
-        urgency: NotificationUrgency.Hazard,
-        hours: def.hazardHours,
-        description: "",
-      });
-    }
-    if (def.urgentHours !== undefined && def.urgentHours !== null) {
-      notifications.push({
-        urgency: NotificationUrgency.Urgent,
-        hours: def.urgentHours,
-        description: "",
-      });
-    }
-
-    // New format: use notificationThresholds array if available
+    // Use notificationThresholds array from API
     if (def.notificationThresholds && def.notificationThresholds.length > 0) {
       return def.notificationThresholds.map((t, i) => ({
         id: t.id,
@@ -121,7 +103,7 @@
       }));
     }
 
-    return notifications;
+    return [];
   }
 
   // Helper to convert notifications array to API format
@@ -169,8 +151,21 @@
         startNotes: startNotes || undefined,
         startedAt: startedAt,
       });
-      isStartDialogOpen = false;
+
+      // Create treatment event if configured on the definition
+      const def = definitions.find((d) => d.id === startDefinitionId);
+      if (def?.startEventType) {
+        await treatmentsRemote.createTreatment({
+          eventType: def.startEventType,
+          created_at: (startedAt ?? new Date()).toISOString(),
+          notes: startNotes || undefined,
+          enteredBy: "Nocturne Tracker",
+        });
+      }
+
       await loadData();
+      await tick();
+      isStartDialogOpen = false;
     } catch (err) {
       console.error("Failed to start instance:", err);
     }
@@ -316,16 +311,31 @@
     instance: TrackerInstanceDto
   ): NotificationUrgency | null {
     const def = definitions.find((d) => d.id === instance.definitionId);
-    if (!def || !instance.ageHours) return null;
-    if (def.urgentHours && instance.ageHours >= def.urgentHours)
-      return NotificationUrgency.Urgent;
-    if (def.hazardHours && instance.ageHours >= def.hazardHours)
-      return NotificationUrgency.Hazard;
-    if (def.warnHours && instance.ageHours >= def.warnHours)
-      return NotificationUrgency.Warn;
-    if (def.infoHours && instance.ageHours >= def.infoHours)
-      return NotificationUrgency.Info;
-    return null;
+    if (!def || !instance.ageHours || !def.notificationThresholds) return null;
+
+    // Find the highest urgency threshold that the age exceeds
+    let highestUrgency: NotificationUrgency | null = null;
+    let highestLevel = -1;
+
+    const urgencyOrder: Record<NotificationUrgency, number> = {
+      [NotificationUrgency.Info]: 0,
+      [NotificationUrgency.Warn]: 1,
+      [NotificationUrgency.Hazard]: 2,
+      [NotificationUrgency.Urgent]: 3,
+    };
+
+    for (const threshold of def.notificationThresholds) {
+      if (threshold.hours && instance.ageHours >= threshold.hours) {
+        const level =
+          urgencyOrder[threshold.urgency ?? NotificationUrgency.Info];
+        if (level > highestLevel) {
+          highestLevel = level;
+          highestUrgency = threshold.urgency ?? NotificationUrgency.Info;
+        }
+      }
+    }
+
+    return highestUrgency;
   }
 
   // Level styling
@@ -356,6 +366,8 @@
     formNotifications = [];
     formIsFavorite = false;
     formDashboardVisibility = DashboardVisibility.Always;
+    formStartEventType = undefined;
+    formCompletionEventType = undefined;
     isDefinitionDialogOpen = true;
   }
 
@@ -371,6 +383,8 @@
     formIsFavorite = def.isFavorite ?? false;
     formDashboardVisibility =
       def.dashboardVisibility ?? DashboardVisibility.Always;
+    formStartEventType = def.startEventType ?? undefined;
+    formCompletionEventType = def.completionEventType ?? undefined;
     isDefinitionDialogOpen = true;
   }
 
@@ -388,6 +402,8 @@
         notificationThresholds: notificationThresholds,
         isFavorite: formIsFavorite,
         dashboardVisibility: formDashboardVisibility,
+        startEventType: formStartEventType || undefined,
+        completionEventType: formCompletionEventType || undefined,
       };
 
       if (isNewDefinition) {
@@ -398,19 +414,28 @@
           request: data,
         });
       }
-      isDefinitionDialogOpen = false;
       await loadData();
+      await tick();
+      isDefinitionDialogOpen = false;
     } catch (err) {
       console.error("Failed to save definition:", err);
     }
   }
 
   // Delete definition
-  async function deleteDefinitionHandler(id: string) {
-    if (!confirm("Delete this tracker definition?")) return;
+  function openDeleteDefinitionDialog(id: string) {
+    deletingDefinitionId = id;
+    isDeleteDefinitionDialogOpen = true;
+  }
+
+  async function confirmDeleteDefinition() {
+    if (!deletingDefinitionId) return;
     try {
-      await trackersRemote.deleteDefinition(id);
+      await trackersRemote.deleteDefinition(deletingDefinitionId);
       await loadData();
+      await tick();
+      isDeleteDefinitionDialogOpen = false;
+      deletingDefinitionId = null;
     } catch (err) {
       console.error("Failed to delete definition:", err);
     }
@@ -429,6 +454,14 @@
   async function completeInstanceHandler() {
     if (!completingInstanceId) return;
     try {
+      // Find the instance to get the definition
+      const instance = activeInstances.find(
+        (i) => i.id === completingInstanceId
+      );
+      const def = instance
+        ? definitions.find((d) => d.id === instance.definitionId)
+        : null;
+
       await trackersRemote.completeInstance({
         id: completingInstanceId,
         request: {
@@ -436,19 +469,39 @@
           completionNotes: completionNotes || undefined,
         },
       });
-      isCompleteDialogOpen = false;
+
+      // Create treatment event if configured on the definition
+      if (def?.completionEventType) {
+        await treatmentsRemote.createTreatment({
+          eventType: def.completionEventType,
+          created_at: new Date().toISOString(),
+          notes: completionNotes || undefined,
+          enteredBy: "Nocturne Tracker",
+        });
+      }
+
       await loadData();
+      await tick();
+      isCompleteDialogOpen = false;
     } catch (err) {
       console.error("Failed to complete instance:", err);
     }
   }
 
   // Delete instance
-  async function deleteInstanceHandler(id: string) {
-    if (!confirm("Delete this tracker instance?")) return;
+  function openDeleteInstanceDialog(id: string) {
+    deletingInstanceId = id;
+    isDeleteInstanceDialogOpen = true;
+  }
+
+  async function confirmDeleteInstance() {
+    if (!deletingInstanceId) return;
     try {
-      await trackersRemote.deleteInstance(id);
+      await trackersRemote.deleteInstance(deletingInstanceId);
       await loadData();
+      await tick();
+      isDeleteInstanceDialogOpen = false;
+      deletingInstanceId = null;
     } catch (err) {
       console.error("Failed to delete instance:", err);
     }
@@ -459,6 +512,7 @@
     try {
       await trackersRemote.applyPreset({ id: presetId });
       await loadData();
+      await tick();
     } catch (err) {
       console.error("Failed to apply preset:", err);
     }
@@ -594,7 +648,7 @@
                       <Button
                         variant="ghost"
                         size="icon"
-                        onclick={() => deleteInstanceHandler(instance.id!)}
+                        onclick={() => openDeleteInstanceDialog(instance.id!)}
                       >
                         <Trash2 class="h-4 w-4" />
                       </Button>
@@ -708,8 +762,11 @@
                           {#if def.lifespanHours}
                             · {def.lifespanHours}h lifespan
                           {/if}
-                          {#if def.warnHours}
-                            · Warn at {def.warnHours}h
+                          {#if def.notificationThresholds && def.notificationThresholds.length > 0}
+                            · {def.notificationThresholds.length} threshold{def
+                              .notificationThresholds.length > 1
+                              ? "s"
+                              : ""}
                           {/if}
                         </div>
                       </div>
@@ -733,7 +790,7 @@
                       <Button
                         variant="ghost"
                         size="icon"
-                        onclick={() => deleteDefinitionHandler(def.id!)}
+                        onclick={() => openDeleteDefinitionDialog(def.id!)}
                       >
                         <Trash2 class="h-4 w-4" />
                       </Button>
@@ -903,6 +960,39 @@
           When to show this tracker as a pill on the dashboard
         </p>
       </div>
+
+      <!-- Event Integration (Nightscout compatibility) -->
+      <div class="space-y-3 pt-2 border-t">
+        <Label class="text-sm font-medium">
+          Event Integration (Nightscout)
+        </Label>
+        <p class="text-xs text-muted-foreground -mt-1">
+          Optionally create treatment events when this tracker starts or
+          completes. This maintains compatibility with existing CAGE/SAGE pills.
+        </p>
+
+        <div class="space-y-2">
+          <Label for="startEventType" class="text-xs">
+            Create event on start
+          </Label>
+          <EventTypeCombobox
+            bind:value={formStartEventType}
+            onSelect={(type) => (formStartEventType = type)}
+            placeholder="None - don't create event"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <Label for="completionEventType" class="text-xs">
+            Create event on completion
+          </Label>
+          <EventTypeCombobox
+            bind:value={formCompletionEventType}
+            onSelect={(type) => (formCompletionEventType = type)}
+            placeholder="None - don't create event"
+          />
+        </div>
+      </div>
     </div>
 
     <Dialog.Footer>
@@ -1061,3 +1151,62 @@
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Delete Definition Confirmation Dialog -->
+<AlertDialog.Root bind:open={isDeleteDefinitionDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Tracker Definition</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete this tracker definition? This action
+        cannot be undone. Any active instances using this definition will
+        remain, but you won't be able to start new ones.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel
+        onclick={() => {
+          isDeleteDefinitionDialogOpen = false;
+          deletingDefinitionId = null;
+        }}
+      >
+        Cancel
+      </AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmDeleteDefinition}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        Delete
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<!-- Delete Instance Confirmation Dialog -->
+<AlertDialog.Root bind:open={isDeleteInstanceDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete Tracker Instance</AlertDialog.Title>
+      <AlertDialog.Description>
+        Are you sure you want to delete this tracker instance? This action
+        cannot be undone.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel
+        onclick={() => {
+          isDeleteInstanceDialogOpen = false;
+          deletingInstanceId = null;
+        }}
+      >
+        Cancel
+      </AlertDialog.Cancel>
+      <AlertDialog.Action
+        onclick={confirmDeleteInstance}
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      >
+        Delete
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

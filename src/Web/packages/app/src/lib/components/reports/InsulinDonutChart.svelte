@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { Chart, Svg, Arc, Group, Text, PieChart } from "layerchart";
+  import { Text, PieChart } from "layerchart";
   import type { Treatment } from "$lib/api";
   import { TreatmentEditDialog } from "$lib/components/treatments";
-  import * as Tooltip from "$lib/components/ui/tooltip";
 
   interface Props {
     treatments: Treatment[];
@@ -10,7 +9,7 @@
     href?: string;
   }
 
-  let { treatments, basal, href }: Props = $props();
+  let { treatments, basal }: Props = $props();
 
   // Dialog state
   let selectedTreatment = $state<Treatment | null>(null);

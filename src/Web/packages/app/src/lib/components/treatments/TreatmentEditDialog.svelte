@@ -1,13 +1,12 @@
 <script lang="ts">
   import type { Treatment } from "$lib/api";
   import * as Dialog from "$lib/components/ui/dialog";
-  import * as Command from "$lib/components/ui/command";
-  import * as Popover from "$lib/components/ui/popover";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { Textarea } from "$lib/components/ui/textarea";
   import { Badge } from "$lib/components/ui/badge";
+  import EventTypeCombobox from "./EventTypeCombobox.svelte";
   import {
     Syringe,
     Apple,
@@ -15,16 +14,10 @@
     User,
     MessageSquare,
     Database,
-    Check,
-    ChevronsUpDown,
     Braces,
     Activity,
   } from "lucide-svelte";
-  import {
-    getEventTypeStyle,
-    TREATMENT_CATEGORIES,
-  } from "$lib/constants/treatment-categories";
-  import { cn } from "$lib/utils";
+  import { getEventTypeStyle } from "$lib/constants/treatment-categories";
   import { formatDateTime, formatDateForInput } from "$lib/utils/formatting";
 
   interface Props {
@@ -44,10 +37,6 @@
     onClose,
     onSave,
   }: Props = $props();
-
-  $inspect(treatment);
-  // Combobox state
-  let eventTypePopoverOpen = $state(false);
 
   // Editable form state
   let formState = $state<{
@@ -70,23 +59,6 @@
     notes: "",
     profile: "",
     additionalPropertiesJson: "",
-  });
-
-  // Get all known event types from categories + available from data
-  let allEventTypes = $derived.by(() => {
-    const categoryTypes = Object.values(TREATMENT_CATEGORIES).flatMap(
-      (cat) => cat.eventTypes as readonly string[]
-    );
-    const combined = new Set([...categoryTypes, ...availableEventTypes]);
-    return Array.from(combined).sort();
-  });
-
-  // Filter event types based on search
-  let eventTypeSearch = $state("");
-  let filteredEventTypes = $derived.by(() => {
-    if (!eventTypeSearch.trim()) return allEventTypes;
-    const search = eventTypeSearch.toLowerCase();
-    return allEventTypes.filter((type) => type.toLowerCase().includes(search));
   });
 
   // Reset form when treatment changes
@@ -161,11 +133,6 @@
     onSave(updated);
   }
 
-  function selectEventType(type: string) {
-    formState.eventType = type;
-    eventTypePopoverOpen = false;
-  }
-
   let style = $derived(getEventTypeStyle(formState.eventType));
   let hasAdditionalProperties = $derived(
     treatment?.additional_properties &&
@@ -233,71 +200,12 @@
         <!-- Event Type Combobox -->
         <div class="space-y-2">
           <Label>Event Type</Label>
-          <Popover.Root bind:open={eventTypePopoverOpen}>
-            <Popover.Trigger>
-              {#snippet child({ props })}
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={eventTypePopoverOpen}
-                  class="w-full justify-between font-normal"
-                  {...props}
-                >
-                  {#if formState.eventType}
-                    <span class={style.colorClass}>{formState.eventType}</span>
-                  {:else}
-                    <span class="text-muted-foreground">
-                      Select or enter event type...
-                    </span>
-                  {/if}
-                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              {/snippet}
-            </Popover.Trigger>
-            <Popover.Content class="w-[300px] p-0" align="start">
-              <Command.Root shouldFilter={false}>
-                <Command.Input
-                  placeholder="Search or enter custom type..."
-                  bind:value={eventTypeSearch}
-                />
-                <Command.List>
-                  <Command.Empty>
-                    {#if eventTypeSearch.trim()}
-                      <button
-                        type="button"
-                        class="w-full p-2 text-left text-sm hover:bg-accent"
-                        onclick={() => selectEventType(eventTypeSearch.trim())}
-                      >
-                        Use "{eventTypeSearch.trim()}" as custom type
-                      </button>
-                    {:else}
-                      No event types found.
-                    {/if}
-                  </Command.Empty>
-                  <Command.Group>
-                    {#each filteredEventTypes as type}
-                      {@const typeStyle = getEventTypeStyle(type)}
-                      <Command.Item
-                        value={type}
-                        onSelect={() => selectEventType(type)}
-                        class="cursor-pointer"
-                      >
-                        <Check
-                          class={cn(
-                            "mr-2 h-4 w-4",
-                            formState.eventType === type
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <span class={typeStyle.colorClass}>{type}</span>
-                      </Command.Item>
-                    {/each}
-                  </Command.Group>
-                </Command.List>
-              </Command.Root>
-            </Popover.Content>
-          </Popover.Root>
+          <EventTypeCombobox
+            bind:value={formState.eventType}
+            onSelect={(type) => (formState.eventType = type)}
+            additionalEventTypes={availableEventTypes}
+            placeholder="Select or enter event type..."
+          />
         </div>
 
         <!-- Date and Time -->

@@ -21,14 +21,11 @@
     showPredictions?: boolean;
     /** Current prediction display mode (bindable) */
     predictionMode?: PredictionDisplayMode;
-    /** Algorithm setting for prediction model */
-    predictionModel?: string;
   }
 
   let {
     showPredictions = true,
     predictionMode = $bindable("cone"),
-    predictionModel = "cone",
   }: Props = $props();
 
   // Sync prediction mode with algorithm settings model on mount
@@ -51,7 +48,7 @@
     </div>
   {/snippet}
 
-  {#snippet failed(error, reset)}
+  {#snippet failed(_error, reset)}
     <!-- Error state with retry -->
     <div class="flex items-center gap-2 text-xs">
       <AlertCircle class="h-4 w-4 text-destructive" />

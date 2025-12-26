@@ -183,7 +183,7 @@ export const getReportsData = query(
 				$lte: endDate.toISOString(),
 			},
 		});
-
+		console.log(treatmentsQuery)
 		// Fetch entries first
 		const entries = await apiClient.entries.getEntries2(entriesQuery);
 

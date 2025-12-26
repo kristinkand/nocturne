@@ -155,12 +155,12 @@
   });
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <div
   class="flex flex-col gap-3 p-4 rounded-lg border bg-card"
-  role="region"
-  aria-label="Time scrubber"
-  tabindex="0"
-  onkeydown={handleKeydown}
+  role="group"
+  aria-label="Time scrubber - use arrow keys to navigate, space to play/pause"
 >
   <!-- Time Display -->
   <div class="flex items-center justify-between">
