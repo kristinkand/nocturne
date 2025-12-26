@@ -111,6 +111,8 @@ public class TrackersController : ControllerBase
             LifespanHours = request.LifespanHours,
             IsFavorite = request.IsFavorite,
             DashboardVisibility = request.DashboardVisibility,
+            StartEventType = request.StartEventType,
+            CompletionEventType = request.CompletionEventType,
         };
 
         // Add notification thresholds if provided
@@ -179,6 +181,8 @@ public class TrackersController : ControllerBase
         existing.LifespanHours = request.LifespanHours ?? existing.LifespanHours;
         existing.IsFavorite = request.IsFavorite ?? existing.IsFavorite;
         existing.DashboardVisibility = request.DashboardVisibility ?? existing.DashboardVisibility;
+        existing.StartEventType = request.StartEventType ?? existing.StartEventType;
+        existing.CompletionEventType = request.CompletionEventType ?? existing.CompletionEventType;
 
         // Handle notification thresholds update (replaces all existing if provided)
         if (request.NotificationThresholds != null)
@@ -586,6 +590,16 @@ public class TrackerDefinitionDto
     /// </summary>
     public DashboardVisibility DashboardVisibility { get; set; } = DashboardVisibility.Always;
 
+    /// <summary>
+    /// Event type to create when tracker is started (for Nightscout compatibility)
+    /// </summary>
+    public string? StartEventType { get; set; }
+
+    /// <summary>
+    /// Event type to create when tracker is completed (for Nightscout compatibility)
+    /// </summary>
+    public string? CompletionEventType { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
@@ -607,6 +621,8 @@ public class TrackerDefinitionDto
                 .ToList() ?? [],
             IsFavorite = entity.IsFavorite,
             DashboardVisibility = entity.DashboardVisibility,
+            StartEventType = entity.StartEventType,
+            CompletionEventType = entity.CompletionEventType,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
         };
@@ -694,6 +710,14 @@ public class CreateTrackerDefinitionRequest
     /// Dashboard visibility: Off, Always, Info, Warn, Hazard, Urgent
     /// </summary>
     public DashboardVisibility DashboardVisibility { get; set; } = DashboardVisibility.Always;
+    /// <summary>
+    /// Event type to create when tracker is started (for Nightscout compatibility)
+    /// </summary>
+    public string? StartEventType { get; set; }
+    /// <summary>
+    /// Event type to create when tracker is completed (for Nightscout compatibility)
+    /// </summary>
+    public string? CompletionEventType { get; set; }
 }
 
 public class UpdateTrackerDefinitionRequest
@@ -712,6 +736,14 @@ public class UpdateTrackerDefinitionRequest
     /// Dashboard visibility: Off, Always, Info, Warn, Hazard, Urgent
     /// </summary>
     public DashboardVisibility? DashboardVisibility { get; set; }
+    /// <summary>
+    /// Event type to create when tracker is started (for Nightscout compatibility)
+    /// </summary>
+    public string? StartEventType { get; set; }
+    /// <summary>
+    /// Event type to create when tracker is completed (for Nightscout compatibility)
+    /// </summary>
+    public string? CompletionEventType { get; set; }
 }
 
 public class CreateNotificationThresholdRequest

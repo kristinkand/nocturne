@@ -78,6 +78,22 @@ public class TrackerDefinitionEntity
     public bool IsFavorite { get; set; } = false;
 
     /// <summary>
+    /// Event type to create when this tracker is started (for Nightscout compatibility)
+    /// e.g., "Site Change", "Sensor Start"
+    /// </summary>
+    [Column("start_event_type")]
+    [MaxLength(100)]
+    public string? StartEventType { get; set; }
+
+    /// <summary>
+    /// Event type to create when this tracker is completed (for Nightscout compatibility)
+    /// e.g., "Sensor Change", "Site Change"
+    /// </summary>
+    [Column("completion_event_type")]
+    [MaxLength(100)]
+    public string? CompletionEventType { get; set; }
+
+    /// <summary>
     /// Dashboard visibility: Off, Always, Info, Warn, Hazard, Urgent
     /// "Off" = never show, "Always" = always show, others = show when age reaches that notification level
     /// </summary>
