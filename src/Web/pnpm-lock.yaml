@@ -147,6 +147,9 @@ importers:
       '@tanstack/table-core':
         specifier: ^8.21.3
         version: 8.21.3
+      '@types/d3-shape':
+        specifier: ^3.1.7
+        version: 3.1.7
       '@types/eslint':
         specifier: ^9.6.1
         version: 9.6.1
