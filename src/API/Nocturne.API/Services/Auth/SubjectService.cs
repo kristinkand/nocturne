@@ -247,6 +247,12 @@ public class SubjectService : ISubjectService
             return false;
         }
 
+        if (entity.IsSystemSubject)
+        {
+            _logger.LogWarning("Attempted to delete system subject {SubjectId} ({Name})", subjectId, entity.Name);
+            return false;
+        }
+
         _dbContext.Subjects.Remove(entity);
         await _dbContext.SaveChangesAsync();
 
@@ -487,6 +493,53 @@ public class SubjectService : ISubjectService
     }
 
     /// <inheritdoc />
+    public async Task<Subject?> InitializePublicSubjectAsync()
+    {
+        const string publicSubjectName = "Public";
+
+        // Check if "Public" subject already exists
+        var existing = await _dbContext
+            .Subjects.Include(s => s.SubjectRoles)
+            .ThenInclude(sr => sr.Role)
+            .FirstOrDefaultAsync(s => s.Name == publicSubjectName && s.IsSystemSubject);
+
+        if (existing != null)
+        {
+            _logger.LogDebug("Public subject already exists");
+            return MapToModel(existing);
+        }
+
+        // Create the Public subject
+        var entity = new SubjectEntity
+        {
+            Id = Guid.CreateVersion7(),
+            Name = publicSubjectName,
+            Email = null,
+            Notes = "Represents unauthenticated access. Assign roles to control what the public can see.",
+            IsActive = true,
+            IsSystemSubject = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        _dbContext.Subjects.Add(entity);
+        await _dbContext.SaveChangesAsync();
+
+        // Assign the "public" role
+        await AssignRoleAsync(entity.Id, "public");
+
+        // Reload with roles
+        entity = await _dbContext
+            .Subjects.Include(s => s.SubjectRoles)
+            .ThenInclude(sr => sr.Role)
+            .FirstAsync(s => s.Id == entity.Id);
+
+        _logger.LogInformation("Created system Public subject for unauthenticated access");
+
+        return MapToModel(entity);
+    }
+
+    /// <inheritdoc />
     public async Task UpdateLastLoginAsync(Guid subjectId)
     {
         await _dbContext
@@ -529,6 +582,7 @@ public class SubjectService : ISubjectService
             OidcSubjectId = entity.OidcSubjectId,
             OidcIssuer = entity.OidcIssuer,
             IsActive = entity.IsActive,
+            IsSystemSubject = entity.IsSystemSubject,
             CreatedAt = entity.CreatedAt,
             LastLoginAt = entity.LastLoginAt,
             Notes = entity.Notes,

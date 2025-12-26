@@ -72,6 +72,12 @@ public class SubjectEntity
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Whether this is a system-generated subject (cannot be deleted)
+    /// </summary>
+    [Column("is_system_subject")]
+    public bool IsSystemSubject { get; set; }
+
+    /// <summary>
     /// System tracking: when record was created
     /// </summary>
     [Column("created_at")]

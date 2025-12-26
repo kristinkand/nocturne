@@ -31,6 +31,11 @@ public class Subject
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Whether this is a system-generated subject (cannot be deleted)
+    /// </summary>
+    public bool IsSystemSubject { get; set; }
+
+    /// <summary>
     /// OIDC subject identifier (sub claim)
     /// </summary>
     public string? OidcSubjectId { get; set; }

@@ -130,6 +130,12 @@ public interface ISubjectService
     /// </summary>
     /// <param name="subjectId">Subject identifier</param>
     Task UpdateLastLoginAsync(Guid subjectId);
+
+    /// <summary>
+    /// Initialize the Public system subject for unauthenticated access
+    /// </summary>
+    /// <returns>The Public subject</returns>
+    Task<Subject?> InitializePublicSubjectAsync();
 }
 
 /// <summary>

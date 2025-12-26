@@ -208,6 +208,7 @@ builder.Services.AddScoped<IOidcAuthService, OidcAuthService>();
 builder.Services.AddScoped<ILocalIdentityService, LocalIdentityService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHostedService<AdminSeedService>();
+builder.Services.AddHostedService<AuthorizationSeedService>();
 
 // Register authentication handlers for the middleware pipeline
 // Handlers are executed in priority order (lowest first)

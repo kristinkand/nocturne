@@ -35,6 +35,18 @@ public class RoleService : IRoleService
                 "api:activity:read",
             }
         ),
+        ["public"] = (
+            "Default permissions for unauthenticated access",
+            new[]
+            {
+                "api:entries:read",
+                "api:treatments:read",
+                "api:devicestatus:read",
+                "api:profile:read",
+                "api:food:read",
+                "api:activity:read",
+            }
+        ),
         ["api"] = (
             "API access for devices and services",
             new[] { "api:entries:*", "api:treatments:*", "api:devicestatus:*", "api:profile:read" }

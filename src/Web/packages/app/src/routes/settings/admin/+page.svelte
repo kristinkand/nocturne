@@ -29,6 +29,7 @@
     Lock,
     User,
     Cpu,
+    Globe,
     TriangleAlert,
   } from "lucide-svelte";
   import * as Alert from "$lib/components/ui/alert";
@@ -122,6 +123,10 @@
 
   // Get subject type icon
   function getSubjectIcon(subject: Subject) {
+    // Public system subject gets a globe icon
+    if (subject.isSystemSubject && subject.name === "Public") {
+      return Globe;
+    }
     // Infer type from access token presence
     if (subject.accessToken) {
       return Cpu; // Device or service with token
@@ -461,22 +466,44 @@
               <div class="space-y-3">
                 {#each subjects as subject}
                   {@const Icon = getSubjectIcon(subject)}
+                  {@const isPublicSubject =
+                    subject.isSystemSubject && subject.name === "Public"}
                   <div
-                    class="flex items-center justify-between p-4 rounded-lg border"
+                    class="flex items-center justify-between p-4 rounded-lg border {isPublicSubject
+                      ? 'bg-primary/5 border-primary/20'
+                      : ''}"
                   >
                     <div class="flex items-center gap-3">
-                      <div class="p-2 rounded-lg bg-muted">
-                        <Icon class="h-5 w-5" />
+                      <div
+                        class="p-2 rounded-lg {isPublicSubject
+                          ? 'bg-primary/10'
+                          : 'bg-muted'}"
+                      >
+                        <Icon
+                          class="h-5 w-5 {isPublicSubject
+                            ? 'text-primary'
+                            : ''}"
+                        />
                       </div>
                       <div>
                         <div class="font-medium flex items-center gap-2">
                           {subject.name}
-                          {#if subject.accessToken}
+                          {#if isPublicSubject}
+                            <Badge variant="secondary" class="text-xs">
+                              <Globe class="h-3 w-3 mr-1" />
+                              Unauthenticated Access
+                            </Badge>
+                          {:else if subject.accessToken}
                             <Badge variant="outline" class="text-xs">
                               Has Token
                             </Badge>
                           {/if}
                         </div>
+                        {#if isPublicSubject}
+                          <div class="text-sm text-muted-foreground">
+                            Shows what users without login can see
+                          </div>
+                        {/if}
                         <div class="text-sm text-muted-foreground">
                           {#if subject.roles && subject.roles.length > 0}
                             Roles: {subject.roles.join(", ")}
@@ -507,13 +534,15 @@
                       >
                         <Pencil class="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onclick={() => deleteSubjectHandler(subject.id!)}
-                      >
-                        <Trash2 class="h-4 w-4" />
-                      </Button>
+                      {#if !subject.isSystemSubject}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onclick={() => deleteSubjectHandler(subject.id!)}
+                        >
+                          <Trash2 class="h-4 w-4" />
+                        </Button>
+                      {/if}
                     </div>
                   </div>
                 {/each}
