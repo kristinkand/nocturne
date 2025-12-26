@@ -1175,12 +1175,14 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var bolus in series.AutomaticBolus)
                 {
-                    var timestamp = GetCorrectedGlookoTime(bolus.X);
+                    // Use raw timestamp for ID (matching v2 behavior) but corrected time for CreatedAt
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(bolus.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(bolus.X);
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Automatic Bolus", timestamp, $"insulin:{bolus.Y}"),
+                        Id = GenerateTreatmentId("Automatic Bolus", rawTimestamp, $"insulin:{bolus.Y}"),
                         EventType = "Automatic Bolus",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Insulin = bolus.Y,
                         DataSource = ConnectorSource,
                         Notes = "AID automatic bolus"
@@ -1193,14 +1195,16 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var bolus in series.DeliveredBolus)
                 {
-                    var timestamp = GetCorrectedGlookoTime(bolus.X);
+                    // Use raw timestamp for ID (matching v2 behavior) but corrected time for CreatedAt
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(bolus.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(bolus.X);
                     var carbsInput = bolus.Data?.CarbsInput;
 
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Meal Bolus", timestamp, $"insulin:{bolus.Y}_carbs:{carbsInput}"),
+                        Id = GenerateTreatmentId("Meal Bolus", rawTimestamp, $"insulin:{bolus.Y}_carbs:{carbsInput}"),
                         EventType = carbsInput > 0 ? "Meal Bolus" : "Correction Bolus",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Insulin = bolus.Y,
                         Carbs = carbsInput > 0 ? carbsInput : null,
                         DataSource = ConnectorSource
@@ -1213,12 +1217,13 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var alarm in series.PumpAlarm)
                 {
-                    var timestamp = GetCorrectedGlookoTime(alarm.X);
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(alarm.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(alarm.X);
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Pump Alarm", timestamp, $"type:{alarm.AlarmType}"),
+                        Id = GenerateTreatmentId("Pump Alarm", rawTimestamp, $"type:{alarm.AlarmType}"),
                         EventType = "Pump Alarm",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Notes = alarm.Data?.AlarmDescription ?? alarm.Label ?? alarm.AlarmType ?? "Unknown alarm",
                         DataSource = ConnectorSource
                     });
@@ -1230,12 +1235,13 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var change in series.ReservoirChange)
                 {
-                    var timestamp = GetCorrectedGlookoTime(change.X);
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(change.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(change.X);
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Reservoir Change", timestamp, null),
+                        Id = GenerateTreatmentId("Reservoir Change", rawTimestamp, null),
                         EventType = "Reservoir Change",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Notes = change.Label,
                         DataSource = ConnectorSource
                     });
@@ -1247,12 +1253,13 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var change in series.SetSiteChange)
                 {
-                    var timestamp = GetCorrectedGlookoTime(change.X);
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(change.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(change.X);
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Site Change", timestamp, null),
+                        Id = GenerateTreatmentId("Site Change", rawTimestamp, null),
                         EventType = "Site Change",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Notes = change.Label,
                         DataSource = ConnectorSource
                     });
@@ -1284,13 +1291,14 @@ namespace Nocturne.Connectors.Glooko.Services
                         continue;
                     }
 
-                    var timestamp = GetCorrectedGlookoTime(carb.X);
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(carb.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(carb.X);
                     var actualCarbs = carb.ActualCarbs!.Value;
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Carb Correction", timestamp, $"carbs:{actualCarbs}"),
+                        Id = GenerateTreatmentId("Carb Correction", rawTimestamp, $"carbs:{actualCarbs}"),
                         EventType = "Carb Correction",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Carbs = actualCarbs,
                         DataSource = ConnectorSource
                     });
@@ -1302,12 +1310,13 @@ namespace Nocturne.Connectors.Glooko.Services
             {
                 foreach (var change in series.ProfileChange)
                 {
-                    var timestamp = GetCorrectedGlookoTime(change.X);
+                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(change.X).UtcDateTime;
+                    var correctedTimestamp = GetCorrectedGlookoTime(change.X);
                     treatments.Add(new Treatment
                     {
-                        Id = GenerateTreatmentId("Profile Switch", timestamp, $"profile:{change.ProfileName}"),
+                        Id = GenerateTreatmentId("Profile Switch", rawTimestamp, $"profile:{change.ProfileName}"),
                         EventType = "Profile Switch",
-                        CreatedAt = timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         Notes = change.ProfileName ?? change.Label,
                         DataSource = ConnectorSource
                     });
