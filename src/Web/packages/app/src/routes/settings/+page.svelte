@@ -77,15 +77,16 @@
       href: "/settings/features",
     },
     {
-      id: "notifications",
-      title: "Notifications",
-      description: "Configure alarms, alerts, and notification preferences",
+      id: "alarms",
+      title: "Alarms",
+      description:
+        "Configure glucose alarms, alerts, and notification preferences",
       icon: Bell,
-      href: "/settings/notifications",
+      href: "/settings/alarms",
     },
     {
       id: "trackers",
-      title: "Trackers",
+      title: "Notifications & Trackers",
       description: "Track consumables, appointments, and custom reminders",
       icon: Timer,
       href: "/settings/trackers",

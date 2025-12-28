@@ -33,8 +33,10 @@ export { default as SensorIcon } from './SensorIcon.svelte';
 export { default as SiteChangeIcon } from './SiteChangeIcon.svelte';
 export { default as ReservoirIcon } from './ReservoirIcon.svelte';
 export { default as BatteryIcon } from './BatteryIcon.svelte';
+export { default as CannulaIcon } from './CannulaIcon.svelte';
 
 // Dynamic Icon Components (select icon based on state/type)
 export { default as SystemEventIcon } from './SystemEventIcon.svelte';
 export { default as PumpModeIcon } from './PumpModeIcon.svelte';
 export { default as DeviceEventIcon } from './DeviceEventIcon.svelte';
+export { default as TrackerCategoryIcon } from './TrackerCategoryIcon.svelte';

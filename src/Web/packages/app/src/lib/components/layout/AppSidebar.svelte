@@ -164,8 +164,12 @@
         { title: "Therapy", href: "/profile", icon: Syringe }, // Redirects to Profile page
         { title: "Algorithm", href: "/settings/algorithm", icon: Brain },
         { title: "Features", href: "/settings/features", icon: Sparkles },
-        { title: "Notifications", href: "/settings/notifications", icon: Bell },
-        { title: "Trackers", href: "/settings/trackers", icon: Timer },
+        { title: "Alarms", href: "/settings/alarms", icon: Bell },
+        {
+          title: "Notifications & Trackers",
+          href: "/settings/trackers",
+          icon: Timer,
+        },
         { title: "Services", href: "/settings/services", icon: Plug },
         {
           title: "Support & Community",

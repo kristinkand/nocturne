@@ -21,12 +21,12 @@
     type TrackerNotification,
   } from "$lib/components/trackers";
   import EventTypeCombobox from "$lib/components/treatments/EventTypeCombobox.svelte";
+  import { TrackerCategoryIcon } from "$lib/components/icons";
   import {
     Timer,
     Plus,
     Play,
     Check,
-    Clock,
     AlertTriangle,
     History,
     Settings2,
@@ -34,10 +34,7 @@
     Trash2,
     Pencil,
     Loader2,
-    Syringe,
     Activity,
-    Calendar,
-    Beaker,
   } from "lucide-svelte";
   import { cn } from "$lib/utils";
   import { tick } from "svelte";
@@ -239,6 +236,9 @@
     [TrackerCategory.Appointment]: "Appointment",
     [TrackerCategory.Reminder]: "Reminder",
     [TrackerCategory.Custom]: "Custom",
+    [TrackerCategory.Sensor]: "Sensor",
+    [TrackerCategory.Cannula]: "Cannula",
+    [TrackerCategory.Battery]: "Battery",
   };
 
   // Completion reason labels
@@ -257,16 +257,16 @@
     [CompletionReason.Missed]: "Missed",
   };
 
-  // Category icons and colors
-  const categoryConfig: Record<
-    TrackerCategory,
-    { icon: typeof Activity; color: string }
-  > = {
-    [TrackerCategory.Consumable]: { icon: Syringe, color: "text-blue-500" },
-    [TrackerCategory.Reservoir]: { icon: Beaker, color: "text-purple-500" },
-    [TrackerCategory.Appointment]: { icon: Calendar, color: "text-green-500" },
-    [TrackerCategory.Reminder]: { icon: Clock, color: "text-orange-500" },
-    [TrackerCategory.Custom]: { icon: Activity, color: "text-gray-500" },
+  // Category colors (icons handled by TrackerCategoryIcon component)
+  const categoryColors: Record<TrackerCategory, string> = {
+    [TrackerCategory.Consumable]: "text-blue-500",
+    [TrackerCategory.Reservoir]: "text-purple-500",
+    [TrackerCategory.Appointment]: "text-green-500",
+    [TrackerCategory.Reminder]: "text-orange-500",
+    [TrackerCategory.Custom]: "text-gray-500",
+    [TrackerCategory.Sensor]: "text-cyan-500",
+    [TrackerCategory.Cannula]: "text-pink-500",
+    [TrackerCategory.Battery]: "text-yellow-500",
   };
 
   // Load data
@@ -579,7 +579,7 @@
 </script>
 
 <svelte:head>
-  <title>Trackers - Settings - Nocturne</title>
+  <title>Notifications & Trackers - Settings - Nocturne</title>
 </svelte:head>
 
 <div class="container mx-auto p-6 max-w-4xl">
@@ -592,7 +592,9 @@
         <Timer class="h-5 w-5 text-primary" />
       </div>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight">Trackers</h1>
+        <h1 class="text-3xl font-bold tracking-tight">
+          Notifications & Trackers
+        </h1>
         <p class="text-muted-foreground">
           Track consumables, appointments, and reminders
         </p>
@@ -790,9 +792,7 @@
             {:else}
               <div class="space-y-3">
                 {#each definitions as def}
-                  {@const Cat =
-                    categoryConfig[def.category ?? TrackerCategory.Consumable]
-                      ?.icon || Activity}
+                  {@const category = def.category ?? TrackerCategory.Consumable}
                   <div
                     class="flex items-center justify-between p-4 rounded-lg border"
                   >
@@ -800,12 +800,10 @@
                       <div
                         class={cn(
                           "p-2 rounded-lg bg-muted",
-                          categoryConfig[
-                            def.category ?? TrackerCategory.Consumable
-                          ]?.color
+                          categoryColors[category]
                         )}
                       >
-                        <Cat class="h-5 w-5" />
+                        <TrackerCategoryIcon {category} class="h-5 w-5" />
                       </div>
                       <div>
                         <div class="font-medium flex items-center gap-2">
@@ -962,10 +960,9 @@
           <Select.Root type="single" bind:value={formCategory}>
             <Select.Trigger>{categoryLabels[formCategory]}</Select.Trigger>
             <Select.Content>
-              <Select.Item
-                value={TrackerCategory.Consumable}
-                label="Consumable"
-              />
+              <Select.Item value={TrackerCategory.Sensor} label="Sensor" />
+              <Select.Item value={TrackerCategory.Cannula} label="Cannula" />
+              <Select.Item value={TrackerCategory.Battery} label="Battery" />
               <Select.Item
                 value={TrackerCategory.Reservoir}
                 label="Reservoir"
@@ -975,6 +972,10 @@
                 label="Appointment"
               />
               <Select.Item value={TrackerCategory.Reminder} label="Reminder" />
+              <Select.Item
+                value={TrackerCategory.Consumable}
+                label="Consumable"
+              />
               <Select.Item value={TrackerCategory.Custom} label="Custom" />
             </Select.Content>
           </Select.Root>
