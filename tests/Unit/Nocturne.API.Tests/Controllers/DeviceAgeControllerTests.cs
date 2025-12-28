@@ -1,80 +1,59 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Nocturne.API.Controllers.V1;
 using Nocturne.API.Services;
-using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
-using Nocturne.Infrastructure.Data.Abstractions;
+using Nocturne.Core.Models.Authorization;
 using Xunit;
 
 namespace Nocturne.API.Tests.Controllers;
 
-public class DeviceAgeControllerTests
+public class LegacyDeviceAgeControllerTests
 {
-    private readonly Mock<ICannulaAgeService> _cannulaAgeServiceMock;
-    private readonly Mock<ISensorAgeService> _sensorAgeServiceMock;
-    private readonly Mock<IBatteryAgeService> _batteryAgeServiceMock;
-    private readonly Mock<ICalibrationAgeService> _calibrationAgeServiceMock;
-    private readonly Mock<IPostgreSqlService> _postgreSqlServiceMock;
-    private readonly DeviceAgeController _controller;
+    private readonly Guid _subjectId = Guid.NewGuid();
+    private readonly Mock<ILegacyDeviceAgeService> _deviceAgeServiceMock;
+    private readonly LegacyDeviceAgeController _controller;
 
-    public DeviceAgeControllerTests()
+    public LegacyDeviceAgeControllerTests()
     {
-        _cannulaAgeServiceMock = new Mock<ICannulaAgeService>();
-        _sensorAgeServiceMock = new Mock<ISensorAgeService>();
-        _batteryAgeServiceMock = new Mock<IBatteryAgeService>();
-        _calibrationAgeServiceMock = new Mock<ICalibrationAgeService>();
-        _postgreSqlServiceMock = new Mock<IPostgreSqlService>();
-
-        _controller = new DeviceAgeController(
-            _cannulaAgeServiceMock.Object,
-            _sensorAgeServiceMock.Object,
-            _batteryAgeServiceMock.Object,
-            _calibrationAgeServiceMock.Object,
-            _postgreSqlServiceMock.Object
+        _deviceAgeServiceMock = new Mock<ILegacyDeviceAgeService>();
+        _controller = new LegacyDeviceAgeController(
+            _deviceAgeServiceMock.Object,
+            Mock.Of<ILogger<LegacyDeviceAgeController>>()
         );
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items["AuthContext"] = new AuthContext
+        {
+            IsAuthenticated = true,
+            SubjectId = _subjectId
+        };
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
     }
 
     [Fact]
     public async Task GetCannulaAge_WithDefaultParameters_ReturnsOkResult()
     {
-        // Arrange
-        var treatments = new List<Treatment>
-        {
-            new()
-            {
-                EventType = "Site Change",
-                Mills = DateTimeOffset.UtcNow.AddHours(-10).ToUnixTimeMilliseconds(),
-            },
-        };
         var expectedResult = new DeviceAgeInfo { Found = true, Age = 10 };
 
-        _postgreSqlServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
+                x.GetCannulaAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(treatments);
+            .ReturnsAsync(expectedResult);
 
-        _cannulaAgeServiceMock
-            .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(expectedResult);
-
-        // Act
         var result = await _controller.GetCannulaAge();
 
-        // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var actualResult = Assert.IsType<DeviceAgeInfo>(okResult.Value);
         Assert.Equal(expectedResult.Found, actualResult.Found);
@@ -84,54 +63,36 @@ public class DeviceAgeControllerTests
     [Fact]
     public async Task GetSensorAge_WithCustomParameters_CallsServiceWithCorrectPreferences()
     {
-        // Arrange
-        var treatments = new List<Treatment>();
-        var expectedResult = new SensorAgeInfo();
-
-        _postgreSqlServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
+                x.GetSensorAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(treatments);
+            .ReturnsAsync(new SensorAgeInfo());
 
-        _sensorAgeServiceMock
-            .Setup(x =>
-                x.CalculateSensorAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(expectedResult);
-
-        // Act
-        var result = await _controller.GetSensorAge(
+        await _controller.GetSensorAge(
             info: 100,
             warn: 150,
             urgent: 170,
-            display: "hours",
+            display: "days",
             enableAlerts: true
         );
 
-        // Assert
-        _sensorAgeServiceMock.Verify(
+        _deviceAgeServiceMock.Verify(
             x =>
-                x.CalculateSensorAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
+                x.GetSensorAgeAsync(
+                    _subjectId.ToString(),
                     It.Is<DeviceAgePreferences>(p =>
                         p.Info == 100
                         && p.Warn == 150
                         && p.Urgent == 170
-                        && p.Display == "hours"
-                        && p.EnableAlerts == true
-                    )
+                        && p.Display == "days"
+                        && p.EnableAlerts
+                    ),
+                    It.IsAny<CancellationToken>()
                 ),
             Times.Once
         );
@@ -140,263 +101,84 @@ public class DeviceAgeControllerTests
     [Fact]
     public async Task GetBatteryAge_WithDefaultParameters_ReturnsOkResult()
     {
-        // Arrange
-        var treatments = new List<Treatment>
-        {
-            new()
-            {
-                EventType = "Pump Battery Change",
-                Mills = DateTimeOffset.UtcNow.AddHours(-300).ToUnixTimeMilliseconds(),
-            },
-        };
         var expectedResult = new DeviceAgeInfo { Found = true, Age = 300 };
 
-        _postgreSqlServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
+                x.GetBatteryAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(treatments);
+            .ReturnsAsync(expectedResult);
 
-        _batteryAgeServiceMock
-            .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(expectedResult);
-
-        // Act
         var result = await _controller.GetBatteryAge();
 
-        // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var actualResult = Assert.IsType<DeviceAgeInfo>(okResult.Value);
         Assert.Equal(expectedResult.Found, actualResult.Found);
         Assert.Equal(expectedResult.Age, actualResult.Age);
-    }
-
-    [Fact]
-    public async Task GetCalibrationAge_WithDefaultParameters_ReturnsOkResult()
-    {
-        // Arrange
-        var treatments = new List<Treatment>
-        {
-            new()
-            {
-                EventType = "BG Check",
-                Mills = DateTimeOffset.UtcNow.AddHours(-5).ToUnixTimeMilliseconds(),
-                Glucose = 120,
-                GlucoseType = "Finger",
-            },
-        };
-        var expectedResult = new DeviceAgeInfo { Found = true, Age = 5 };
-
-        _postgreSqlServiceMock
-            .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(treatments);
-
-        _calibrationAgeServiceMock
-            .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(expectedResult);
-
-        // Act
-        var result = await _controller.GetCalibrationAge();
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var actualResult = Assert.IsType<DeviceAgeInfo>(okResult.Value);
-        Assert.Equal(expectedResult.Found, actualResult.Found);
-        Assert.Equal(expectedResult.Age, actualResult.Age);
-    }
-
-    [Fact]
-    public async Task GetCalibrationAge_WithCustomParameters_CallsServiceWithCorrectPreferences()
-    {
-        // Arrange
-        var treatments = new List<Treatment>();
-        var expectedResult = new DeviceAgeInfo();
-
-        _postgreSqlServiceMock
-            .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(treatments);
-
-        _calibrationAgeServiceMock
-            .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(expectedResult);
-
-        // Act
-        var result = await _controller.GetCalibrationAge(
-            info: 12,
-            warn: 24,
-            urgent: 48,
-            display: "hours",
-            enableAlerts: true
-        );
-
-        // Assert
-        _calibrationAgeServiceMock.Verify(
-            x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.Is<DeviceAgePreferences>(p =>
-                        p.Info == 12
-                        && p.Warn == 24
-                        && p.Urgent == 48
-                        && p.Display == "hours"
-                        && p.EnableAlerts == true
-                    )
-                ),
-            Times.Once
-        );
     }
 
     [Fact]
     public async Task GetAllDeviceAges_ReturnsAllDeviceAgeInformation()
     {
-        // Arrange
-        var treatments = new List<Treatment>();
         var cannulaAge = new DeviceAgeInfo { Found = true, Age = 48 };
-        var sensorAge = new SensorAgeInfo
-        {
-            SensorStart = new DeviceAgeInfo { Found = true, Age = 144 },
-            Min = "Sensor Start",
-        };
+        var sensorAge = new SensorAgeInfo();
+        var insulinAge = new DeviceAgeInfo { Found = true, Age = 24 };
         var batteryAge = new DeviceAgeInfo { Found = true, Age = 312 };
-        var calibrationAge = new DeviceAgeInfo { Found = true, Age = 30 };
 
-        _postgreSqlServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.GetTreatmentsWithAdvancedFilterAsync(
-                    It.IsAny<int>(),
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
+                x.GetCannulaAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(treatments);
+            .ReturnsAsync(cannulaAge);
 
-        _cannulaAgeServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
+                x.GetSensorAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
+                    It.IsAny<CancellationToken>()
                 )
             )
-            .Returns(cannulaAge);
+            .ReturnsAsync(sensorAge);
 
-        _sensorAgeServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.CalculateSensorAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
+                x.GetInsulinAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
+                    It.IsAny<CancellationToken>()
                 )
             )
-            .Returns(sensorAge);
+            .ReturnsAsync(insulinAge);
 
-        _batteryAgeServiceMock
+        _deviceAgeServiceMock
             .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
+                x.GetBatteryAgeAsync(
+                    _subjectId.ToString(),
+                    It.IsAny<DeviceAgePreferences>(),
+                    It.IsAny<CancellationToken>()
                 )
             )
-            .Returns(batteryAge);
+            .ReturnsAsync(batteryAge);
 
-        _calibrationAgeServiceMock
-            .Setup(x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                )
-            )
-            .Returns(calibrationAge);
-
-        // Act
         var result = await _controller.GetAllDeviceAges();
 
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
         var value = okResult.Value;
         Assert.NotNull(value);
 
-        // Verify all services were called
-        _cannulaAgeServiceMock.Verify(
-            x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                ),
-            Times.Once
-        );
-        _sensorAgeServiceMock.Verify(
-            x =>
-                x.CalculateSensorAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                ),
-            Times.Once
-        );
-        _batteryAgeServiceMock.Verify(
-            x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                ),
-            Times.Once
-        );
-        _calibrationAgeServiceMock.Verify(
-            x =>
-                x.CalculateDeviceAge(
-                    It.IsAny<List<Treatment>>(),
-                    It.IsAny<long>(),
-                    It.IsAny<DeviceAgePreferences>()
-                ),
-            Times.Once
-        );
+        var valueType = value!.GetType();
+        Assert.Same(cannulaAge, valueType.GetProperty("cage")?.GetValue(value));
+        Assert.Same(sensorAge, valueType.GetProperty("sage")?.GetValue(value));
+        Assert.Same(insulinAge, valueType.GetProperty("iage")?.GetValue(value));
+        Assert.Same(batteryAge, valueType.GetProperty("bage")?.GetValue(value));
     }
 }
