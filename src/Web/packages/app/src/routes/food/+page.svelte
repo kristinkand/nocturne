@@ -7,6 +7,10 @@
   import FoodList from "./FoodList.svelte";
   import { getFoodData } from "./data.remote";
   import { onMount } from "svelte";
+  import { AddFoodDialog } from "$lib/components/food";
+  import { Button } from "$lib/components/ui/button";
+  import { Plus } from "lucide-svelte";
+  import type { Food } from "$lib/api";
 
   // Create store with empty initial data - setContext must be called synchronously
   const foodState = new FoodState({
@@ -15,6 +19,9 @@
     categories: {},
   });
   setFoodState(foodState);
+
+  // Dialog state
+  let showAddFoodDialog = $state(false);
 
   // Fetch food data asynchronously and update the store
   onMount(async () => {
@@ -52,6 +59,42 @@
     const target = event.target as HTMLElement;
     target.classList.remove("opacity-50");
   }
+
+  function handleFoodSaved(food: Food) {
+    // Add the new food to the list
+    const newFoodRecord = food as unknown as FoodRecord;
+    const existingIndex = foodState.foodList.findIndex(
+      (f) => f._id === food._id
+    );
+    if (existingIndex >= 0) {
+      foodState.foodList[existingIndex] = newFoodRecord;
+    } else {
+      foodState.foodList = [...foodState.foodList, newFoodRecord];
+    }
+
+    // Update categories if new
+    if (food.category) {
+      if (!foodState.categories[food.category]) {
+        foodState.categories[food.category] = {};
+      }
+      if (food.subcategory) {
+        foodState.categories[food.category][food.subcategory] = true;
+      }
+    }
+  }
+
+  function handleCategoryCreate(category: string) {
+    if (!foodState.categories[category]) {
+      foodState.categories[category] = {};
+    }
+  }
+
+  function handleSubcategoryCreate(category: string, subcategory: string) {
+    if (!foodState.categories[category]) {
+      foodState.categories[category] = {};
+    }
+    foodState.categories[category][subcategory] = true;
+  }
 </script>
 
 <svelte:head>
@@ -61,9 +104,15 @@
 <div class="container mx-auto p-4 space-y-6">
   <div class="flex items-center justify-between">
     <h1 class="text-3xl font-bold">Food Editor</h1>
-    {#if foodState.status}
-      <div class="text-sm text-muted-foreground">{foodState.status}</div>
-    {/if}
+    <div class="flex items-center gap-2">
+      {#if foodState.status}
+        <div class="text-sm text-muted-foreground">{foodState.status}</div>
+      {/if}
+      <Button onclick={() => (showAddFoodDialog = true)}>
+        <Plus class="mr-1 h-4 w-4" />
+        Add Food
+      </Button>
+    </div>
   </div>
 
   {#if foodState.loading}
@@ -79,3 +128,12 @@
     <QuickPicksList />
   {/if}
 </div>
+
+<AddFoodDialog
+  bind:open={showAddFoodDialog}
+  onOpenChange={(value) => (showAddFoodDialog = value)}
+  categories={foodState.categories}
+  onSave={handleFoodSaved}
+  onCategoryCreate={handleCategoryCreate}
+  onSubcategoryCreate={handleSubcategoryCreate}
+/>

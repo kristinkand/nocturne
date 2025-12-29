@@ -25,6 +25,20 @@ public class FoodEntity
     public string? OriginalId { get; set; }
 
     /// <summary>
+    /// External source identifier for connector imports (e.g., "myfitnesspal")
+    /// </summary>
+    [Column("external_source")]
+    [MaxLength(50)]
+    public string? ExternalSource { get; set; }
+
+    /// <summary>
+    /// External food ID for connector imports
+    /// </summary>
+    [Column("external_id")]
+    [MaxLength(255)]
+    public string? ExternalId { get; set; }
+
+    /// <summary>
     /// Type of record ("food" or "quickpick")
     /// </summary>
     [Column("type")]
@@ -89,10 +103,10 @@ public class FoodEntity
     public GlycemicIndex Gi { get; set; } = GlycemicIndex.Medium;
 
     /// <summary>
-    /// Unit of measurement (g, ml, pcs, oz)
+    /// Unit of measurement (g, ml, pcs, oz, or serving description)
     /// </summary>
     [Column("unit")]
-    [MaxLength(10)]
+    [MaxLength(30)]
     public string Unit { get; set; } = "g";
 
     /// <summary>

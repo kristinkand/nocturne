@@ -73,6 +73,19 @@ public interface IApiDataSubmitter
     );
 
     /// <summary>
+    /// Submit connector food entries to the API.
+    /// </summary>
+    /// <param name="entries">Connector food entries to submit</param>
+    /// <param name="source">Source connector identifier</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if submission was successful</returns>
+    Task<bool> SubmitConnectorFoodEntriesAsync(
+        IEnumerable<ConnectorFoodEntryImport> entries,
+        string source,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
     /// Submit activity events to the API
     /// </summary>
     /// <param name="activities">Activity events to submit</param>

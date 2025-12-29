@@ -1,30 +1,33 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.Connectors.Core.Models;
 
 namespace Nocturne.Connectors.Core.Services
 {
     /// <summary>
-    /// Thread-safe implementation of IConnectorMetricsTracker
+    /// Thread-safe implementation of IConnectorMetricsTracker with per-data-type tracking
     /// </summary>
     public class ConnectorMetricsTracker : IConnectorMetricsTracker
     {
-        private long _totalEntries;
         private long _lastEntryTicks = 0; // 0 indicates null/not set
         private long _lastSyncTicks = 0; // 0 indicates null/not set
 
-        // Use a lightweight sliding window mechanism for 24h count
-        // We'll store buckets of counts per hour to avoid storing individual timestamps for everything
-        // 24 buckets representing 24 hours
-        private readonly ConcurrentDictionary<long, int> _hourlyBuckets = new();
+        // Per-type total counts
+        private readonly ConcurrentDictionary<SyncDataType, long> _totalItemsByType = new();
+
+        // Per-type hourly buckets for 24h sliding window
+        // Key is (SyncDataType, hour key), Value is count for that hour
+        private readonly ConcurrentDictionary<(SyncDataType Type, long HourKey), int> _hourlyBucketsByType = new();
 
         // Store recent entry timestamps (limited to 50 most recent)
         private readonly ConcurrentQueue<DateTime> _recentTimestamps = new();
         private const int MaxRecentTimestamps = 50;
 
-        public long TotalEntries => _totalEntries;
+        public long TotalEntries => _totalItemsByType.Values.Sum();
 
         public DateTime? LastEntryTime
         {
@@ -40,7 +43,7 @@ namespace Nocturne.Connectors.Core.Services
             get
             {
                 CleanOldBuckets();
-                return _hourlyBuckets.Values.Sum();
+                return _hourlyBucketsByType.Values.Sum();
             }
         }
 
@@ -55,9 +58,16 @@ namespace Nocturne.Connectors.Core.Services
 
         public void TrackEntries(int count, DateTime? latestTimestamp = null)
         {
+            // Legacy method - track as Glucose for backward compatibility
+            TrackItems(SyncDataType.Glucose, count, latestTimestamp);
+        }
+
+        public void TrackItems(SyncDataType dataType, int count, DateTime? latestTimestamp = null)
+        {
             if (count <= 0) return;
 
-            Interlocked.Add(ref _totalEntries, count);
+            // Update per-type total
+            _totalItemsByType.AddOrUpdate(dataType, count, (_, existing) => existing + count);
 
             var timestampToUse = latestTimestamp?.ToUniversalTime() ?? DateTime.UtcNow;
 
@@ -72,12 +82,44 @@ namespace Nocturne.Connectors.Core.Services
                 _recentTimestamps.TryDequeue(out _);
             }
 
-            // Add to the bucket for the current hour
+            // Add to the bucket for the current hour and data type
             var currentHourKey = GetHourKey(DateTime.UtcNow);
-            _hourlyBuckets.AddOrUpdate(currentHourKey, count, (k, v) => v + count);
+            var bucketKey = (dataType, currentHourKey);
+            _hourlyBucketsByType.AddOrUpdate(bucketKey, count, (_, v) => v + count);
 
-            // Cleanup occasionally (could be done more smartly, but this is simple)
+            // Cleanup occasionally
             CleanOldBuckets();
+        }
+
+        public long GetTotalItems(SyncDataType dataType)
+        {
+            return _totalItemsByType.TryGetValue(dataType, out var count) ? count : 0;
+        }
+
+        public int GetItemsLast24Hours(SyncDataType dataType)
+        {
+            CleanOldBuckets();
+            var cutoffKey = GetHourKey(DateTime.UtcNow.AddHours(-24));
+
+            return _hourlyBucketsByType
+                .Where(kvp => kvp.Key.Type == dataType && kvp.Key.HourKey >= cutoffKey)
+                .Sum(kvp => kvp.Value);
+        }
+
+        public Dictionary<SyncDataType, long> GetTotalItemsBreakdown()
+        {
+            return new Dictionary<SyncDataType, long>(_totalItemsByType);
+        }
+
+        public Dictionary<SyncDataType, int> GetItemsLast24HoursBreakdown()
+        {
+            CleanOldBuckets();
+            var cutoffKey = GetHourKey(DateTime.UtcNow.AddHours(-24));
+
+            return _hourlyBucketsByType
+                .Where(kvp => kvp.Key.HourKey >= cutoffKey)
+                .GroupBy(kvp => kvp.Key.Type)
+                .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value));
         }
 
         public DateTime[] GetRecentEntryTimestamps(int count)
@@ -112,10 +154,10 @@ namespace Nocturne.Connectors.Core.Services
 
         public void Reset()
         {
-            _totalEntries = 0;
+            _totalItemsByType.Clear();
             Interlocked.Exchange(ref _lastEntryTicks, 0);
             Interlocked.Exchange(ref _lastSyncTicks, 0);
-            _hourlyBuckets.Clear();
+            _hourlyBucketsByType.Clear();
             _recentTimestamps.Clear();
         }
 
@@ -124,20 +166,18 @@ namespace Nocturne.Connectors.Core.Services
             var cutoffKey = GetHourKey(DateTime.UtcNow.AddHours(-24));
 
             // Remove keys older than cutoff
-            // Note: This iterate-and-remove is fine for ConcurrentDictionary
-            foreach (var key in _hourlyBuckets.Keys)
+            foreach (var key in _hourlyBucketsByType.Keys)
             {
-                if (key < cutoffKey)
+                if (key.HourKey < cutoffKey)
                 {
-                    _hourlyBuckets.TryRemove(key, out _);
+                    _hourlyBucketsByType.TryRemove(key, out _);
                 }
             }
         }
 
         private long GetHourKey(DateTime timestamp)
         {
-            // Simple integer key: YYYYMMDDHH
-            // Or simpler: Total hours since epoch
+            // Simple integer key: Total hours since epoch
             return (long)(timestamp - DateTime.UnixEpoch).TotalHours;
         }
     }

@@ -319,9 +319,11 @@ builder.Services.AddScoped<IDeviceStatusService, DeviceStatusService>();
 builder.Services.AddScoped<IBatteryService, BatteryService>();
 builder.Services.AddScoped<IProfileDataService, ProfileDataService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
+builder.Services.AddScoped<IConnectorFoodEntryService, ConnectorFoodEntryService>();
 builder.Services.AddScoped<ITreatmentFoodService, TreatmentFoodService>();
 builder.Services.AddScoped<IUserFoodFavoriteService, UserFoodFavoriteService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<IMyFitnessPalMatchingSettingsService, MyFitnessPalMatchingSettingsService>();
 
 // Note: Processing status service is registered by AddNocturneMemoryCache
 

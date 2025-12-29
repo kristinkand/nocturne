@@ -40,8 +40,8 @@ public class MyFitnessPalSyncService : BackgroundService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _config = config ?? throw new ArgumentNullException(nameof(config));
 
-        // Get configuration values
-        _username = _configuration[ServiceNames.ConfigKeys.MyFitnessPalUsername];
+        // Get username from bound configuration (populated from CONNECT_MFP_USERNAME env var)
+        _username = _config.MyFitnessPalUsername;
 
         // Default sync interval is 1 hour, configurable via MyFitnessPal:SyncIntervalMinutes
         var syncIntervalMinutes = _configuration.GetValue<int>(
@@ -62,7 +62,7 @@ public class MyFitnessPalSyncService : BackgroundService
         if (string.IsNullOrWhiteSpace(_username))
         {
             _logger.LogWarning(
-                "MyFitnessPal username not configured. Set MyFitnessPal:Username in configuration. Service will not sync data."
+                "MyFitnessPal username not configured. Set Parameters:Connectors:MyFitnessPal:Username in appsettings.json. Service will not sync data."
             );
             return;
         }

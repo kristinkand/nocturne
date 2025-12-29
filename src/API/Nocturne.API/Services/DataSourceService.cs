@@ -324,7 +324,30 @@ public class DataSourceService : IDataSourceService
                 },
                 DocumentationUrl = UrlConstants.External.DocsGlooko,
             },
+            new()
+            {
+                Id = "myfitnesspal",
+                Name = "MyFitnessPal",
+                Category = "food",
+                Description = "Import food diary data from MyFitnessPal for carb tracking.",
+                Icon = "myfitnesspal",
+                Available = true,
+                RequiresServerConfig = true,
+                ConfigFields = new List<ConnectorConfigField>
+                {
+                    new()
+                    {
+                        Id = "username",
+                        Label = "MyFitnessPal Username",
+                        Type = "text",
+                        Required = true,
+                        HelpText = "Your MyFitnessPal username (diary must be public)",
+                    },
+                },
+                DocumentationUrl = null,
+            },
         };
+
 
         foreach (var connector in connectors)
         {

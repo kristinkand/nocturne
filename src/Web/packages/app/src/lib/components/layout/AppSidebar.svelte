@@ -37,6 +37,7 @@
     TestTube,
     Palette,
     Timer,
+    Layers,
   } from "lucide-svelte";
   import type { AuthUser } from "$lib/stores/auth-store.svelte";
 
@@ -66,6 +67,11 @@
       title: "Calendar",
       href: "/calendar",
       icon: Calendar,
+    },
+    {
+      title: "Time Spans",
+      href: "/time-spans",
+      icon: Layers,
     },
     {
       title: "Reports",

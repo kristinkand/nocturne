@@ -129,11 +129,18 @@ export class RealtimeStore {
     return this.trackerInstances
       .map((instance) => {
         const def = this.trackerDefinitions.find((d) => d.id === instance.definitionId);
-        if (!def || !instance.ageHours || !def.notificationThresholds) return null;
+        if (!def || !def.notificationThresholds) return null;
+
+        // Compute age dynamically from startedAt and current time
+        // This ensures notifications update in real-time as time passes
+        const age = instance.startedAt
+          ? (this.now - new Date(instance.startedAt).getTime()) / (1000 * 60 * 60)
+          : instance.ageHours ?? 0;
+
+        if (!age || age <= 0) return null;
 
         // Determine level from notificationThresholds
         let level: Lowercase<NotificationUrgency> | null = null;
-        const age = instance.ageHours;
 
         // Sort thresholds by hours descending to find the highest triggered level
         const sortedThresholds = [...def.notificationThresholds].sort(
@@ -151,9 +158,9 @@ export class RealtimeStore {
         }
 
         if (!level || level === "info") return null;
-        return { ...instance, level };
+        return { ...instance, level, ageHours: age };
       })
-      .filter((n): n is TrackerInstanceDto & { level: "warn" | "hazard" | "urgent" } => n !== null);
+      .filter((n): n is TrackerInstanceDto & { level: "warn" | "hazard" | "urgent"; ageHours: number } => n !== null);
   });
 
   constructor(config: WebSocketConfig) {

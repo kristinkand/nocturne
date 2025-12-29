@@ -24,6 +24,7 @@
     createNewFood,
     updateExistingFood,
   } from "$lib/data/treatment-foods.remote";
+  import { CategorySubcategoryCombobox } from "$lib/components/food";
 
   interface Props {
     open: boolean;
@@ -130,6 +131,22 @@
     )
   );
 
+  // Derived: categories from all foods
+  const categories = $derived.by(() => {
+    const catMap: Record<string, Record<string, boolean>> = {};
+    for (const food of allFoods) {
+      if (food.category) {
+        if (!catMap[food.category]) {
+          catMap[food.category] = {};
+        }
+        if (food.subcategory) {
+          catMap[food.category][food.subcategory] = true;
+        }
+      }
+    }
+    return catMap;
+  });
+
   // Derived: display labels
   const selectedUnitLabel = $derived(foodUnit || "Select unit...");
   const selectedGiLabel = $derived(
@@ -147,14 +164,35 @@
   async function loadFoods() {
     isLoading = true;
     try {
-      const [favoriteList, recentList, allList] = await Promise.all([
-        getFavoriteFoods(),
-        getRecentFoods(),
-        getAllFoods(),
-      ]);
-      favorites = favoriteList;
-      recents = recentList;
-      allFoods = allList;
+      // Use Promise.allSettled to handle auth-required endpoints gracefully
+      // favorites and recents require authentication, but allFoods doesn't
+      const [favoriteResult, recentResult, allResult] =
+        await Promise.allSettled([
+          getFavoriteFoods(),
+          getRecentFoods(),
+          getAllFoods(),
+        ]);
+
+      // Extract successful results, defaulting to empty arrays on failure
+      favorites =
+        favoriteResult.status === "fulfilled" ? favoriteResult.value : [];
+      recents = recentResult.status === "fulfilled" ? recentResult.value : [];
+      allFoods = allResult.status === "fulfilled" ? allResult.value : [];
+
+      // Log any failures for debugging (but don't fail the whole operation)
+      if (favoriteResult.status === "rejected") {
+        console.debug(
+          "Could not load favorites (user may not be authenticated)"
+        );
+      }
+      if (recentResult.status === "rejected") {
+        console.debug(
+          "Could not load recent foods (user may not be authenticated)"
+        );
+      }
+      if (allResult.status === "rejected") {
+        console.error("Failed to load food list:", allResult.reason);
+      }
     } catch (err) {
       console.error("Failed to load foods:", err);
     } finally {
@@ -431,7 +469,7 @@
       <div class="space-y-2">
         <Label>Food</Label>
         <Popover.Root bind:open={comboboxOpen}>
-          <Popover.Trigger bind:ref={comboboxTriggerRef}>
+          <Popover.Trigger class="w-full" bind:ref={comboboxTriggerRef}>
             {#snippet child({ props })}
               <Button
                 variant="outline"
@@ -602,13 +640,21 @@
               <Label for="food-name">Name</Label>
               <Input id="food-name" bind:value={foodName} />
             </div>
-            <div class="space-y-2">
-              <Label for="food-category">Category</Label>
-              <Input id="food-category" bind:value={foodCategory} />
-            </div>
-            <div class="space-y-2">
-              <Label for="food-subcategory">Subcategory</Label>
-              <Input id="food-subcategory" bind:value={foodSubcategory} />
+            <div class="space-y-2 col-span-2">
+              <Label>Category & Subcategory</Label>
+              <CategorySubcategoryCombobox
+                bind:category={foodCategory}
+                bind:subcategory={foodSubcategory}
+                {categories}
+                onCategoryChange={(cat) => (foodCategory = cat)}
+                onSubcategoryChange={(sub) => (foodSubcategory = sub)}
+                onCategoryCreate={(cat) => {
+                  // Category will be created when food is saved
+                }}
+                onSubcategoryCreate={(cat, sub) => {
+                  // Subcategory will be created when food is saved
+                }}
+              />
             </div>
           </div>
 

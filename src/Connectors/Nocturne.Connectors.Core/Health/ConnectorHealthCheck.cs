@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.Connectors.Core.Models;
 
 namespace Nocturne.Connectors.Core.Health
 {
@@ -31,6 +33,14 @@ namespace Nocturne.Connectors.Core.Health
                 { "StateMessage", _stateService.StateMessage ?? string.Empty }
             };
 
+            // Add per-type breakdowns
+            var totalBreakdown = _metricsTracker.GetTotalItemsBreakdown();
+            var last24hBreakdown = _metricsTracker.GetItemsLast24HoursBreakdown();
+
+            // Convert enum keys to strings for JSON serialization
+            data.Add("TotalItemsBreakdown", totalBreakdown.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value));
+            data.Add("ItemsLast24HoursBreakdown", last24hBreakdown.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value));
+
             if (_metricsTracker.LastEntryTime.HasValue)
             {
                 data.Add("LastEntryTime", _metricsTracker.LastEntryTime.Value.ToString("O"));
@@ -53,3 +63,4 @@ namespace Nocturne.Connectors.Core.Health
         }
     }
 }
+

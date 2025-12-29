@@ -371,11 +371,11 @@
 
     <div class="border-t p-2">
       <a
-        href="/settings/trackers"
+        href="/notifications"
         class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted"
         onclick={() => (isOpen = false)}
       >
-        <span>View all trackers</span>
+        <span>View all notifications</span>
         <ChevronRight class="h-4 w-4" />
       </a>
     </div>

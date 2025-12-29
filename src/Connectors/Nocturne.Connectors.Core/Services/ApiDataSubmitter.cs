@@ -434,6 +434,81 @@ public class ApiDataSubmitter : IApiDataSubmitter
     }
 
     /// <inheritdoc />
+    public async Task<bool> SubmitConnectorFoodEntriesAsync(
+        IEnumerable<ConnectorFoodEntryImport> entries,
+        string source,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entriesArray = entries.ToArray();
+        if (entriesArray.Length == 0)
+        {
+            _logger?.LogDebug("No connector food entries to submit");
+            return true;
+        }
+
+        foreach (var entry in entriesArray)
+        {
+            if (string.IsNullOrWhiteSpace(entry.ConnectorSource))
+            {
+                entry.ConnectorSource = source;
+            }
+        }
+
+        return await _retryPipeline.ExecuteAsync(
+            async ct =>
+            {
+                var url = $"{_baseUrl}/api/v4/connector-food-entries/import";
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = JsonContent.Create(entriesArray),
+                };
+
+                AddAuthenticationHeader(request);
+
+                _logger?.LogInformation(
+                    "Submitting {Count} connector food entries from {Source} to {Url}",
+                    entriesArray.Length,
+                    source,
+                    url
+                );
+
+                var response = await _httpClient.SendAsync(request, ct);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation(
+                        "Successfully submitted {Count} connector food entries from {Source}",
+                        entriesArray.Length,
+                        source
+                    );
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync(ct);
+                _logger?.LogError(
+                    "Failed to submit connector food entries. Status: {StatusCode}, Response: {Response}",
+                    response.StatusCode,
+                    errorContent
+                );
+
+                if (
+                    (int)response.StatusCode >= 500
+                    || response.StatusCode == HttpStatusCode.RequestTimeout
+                )
+                {
+                    throw new HttpRequestException(
+                        $"Server error {response.StatusCode}: {errorContent}"
+                    );
+                }
+
+                return false;
+            },
+            cancellationToken
+        );
+    }
+
+    /// <inheritdoc />
     public async Task<bool> SubmitActivityAsync(
         IEnumerable<Activity> activities,
         string source,

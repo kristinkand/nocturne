@@ -40,6 +40,11 @@ public class NocturneDbContext : DbContext
     public DbSet<FoodEntity> Foods { get; set; }
 
     /// <summary>
+    /// Gets or sets the ConnectorFoodEntries table for connector-imported foods
+    /// </summary>
+    public DbSet<ConnectorFoodEntryEntity> ConnectorFoodEntries { get; set; }
+
+    /// <summary>
     /// Gets or sets the TreatmentFoods table for treatment food breakdowns
     /// </summary>
     public DbSet<TreatmentFoodEntity> TreatmentFoods { get; set; }
@@ -298,6 +303,45 @@ public class NocturneDbContext : DbContext
             .Entity<FoodEntity>()
             .HasIndex(f => f.SysCreatedAt)
             .HasDatabaseName("ix_foods_sys_created_at");
+
+        modelBuilder
+            .Entity<FoodEntity>()
+            .HasIndex(f => new { f.ExternalSource, f.ExternalId })
+            .HasDatabaseName("ix_foods_external_source_id")
+            .HasFilter("external_source IS NOT NULL AND external_id IS NOT NULL")
+            .IsUnique();
+
+        // Connector food entry indexes
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => e.ConnectorSource)
+            .HasDatabaseName("ix_connector_food_entries_source");
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => e.ExternalEntryId)
+            .HasDatabaseName("ix_connector_food_entries_external_entry_id");
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => new { e.ConnectorSource, e.ExternalEntryId })
+            .HasDatabaseName("ix_connector_food_entries_source_entry")
+            .IsUnique();
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => e.Status)
+            .HasDatabaseName("ix_connector_food_entries_status");
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => e.ConsumedAt)
+            .HasDatabaseName("ix_connector_food_entries_consumed_at");
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasIndex(e => e.SysCreatedAt)
+            .HasDatabaseName("ix_connector_food_entries_sys_created_at");
 
         // Treatment food breakdown indexes
         modelBuilder
@@ -874,6 +918,10 @@ public class NocturneDbContext : DbContext
             .Property(f => f.Id)
             .HasValueGenerator<GuidV7ValueGenerator>();
         modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .Property(e => e.Id)
+            .HasValueGenerator<GuidV7ValueGenerator>();
+        modelBuilder
             .Entity<TreatmentFoodEntity>()
             .Property(tf => tf.Id)
             .HasValueGenerator<GuidV7ValueGenerator>();
@@ -972,6 +1020,20 @@ public class NocturneDbContext : DbContext
             .Property(e => e.Id)
             .HasValueGenerator<GuidV7ValueGenerator>();
 
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasOne(e => e.Food)
+            .WithMany()
+            .HasForeignKey(e => e.FoodId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .HasOne(e => e.MatchedTreatment)
+            .WithMany()
+            .HasForeignKey(e => e.MatchedTreatmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
 
         // Configure automatic timestamp updates
         modelBuilder
@@ -997,6 +1059,22 @@ public class NocturneDbContext : DbContext
             .Property(f => f.SysUpdatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .Property(e => e.Status)
+            .HasConversion<string>();
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .Property(e => e.SysUpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAddOrUpdate();
+
+        modelBuilder
+            .Entity<ConnectorFoodEntryEntity>()
+            .Property(e => e.Status)
+            .HasDefaultValue(ConnectorFoodEntryStatus.Pending);
 
         modelBuilder
             .Entity<TreatmentFoodEntity>()
@@ -1480,6 +1558,14 @@ public class NocturneDbContext : DbContext
                     foodEntity.SysCreatedAt = utcNow;
                 }
                 foodEntity.SysUpdatedAt = utcNow;
+            }
+            else if (entry.Entity is ConnectorFoodEntryEntity connectorFoodEntryEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    connectorFoodEntryEntity.SysCreatedAt = utcNow;
+                }
+                connectorFoodEntryEntity.SysUpdatedAt = utcNow;
             }
             else if (entry.Entity is TreatmentFoodEntity treatmentFoodEntity)
             {

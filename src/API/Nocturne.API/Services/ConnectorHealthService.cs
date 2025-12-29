@@ -103,6 +103,8 @@ public class ConnectorHealthService : IConnectorHealthService
 
                 string state = "Idle";
                 string? stateMessage = null;
+                Dictionary<string, long>? totalItemsBreakdown = null;
+                Dictionary<string, int>? itemsLast24HoursBreakdown = null;
 
                 if (checkResult.TryGetProperty("data", out var data))
                 {
@@ -133,6 +135,31 @@ public class ConnectorHealthService : IConnectorHealthService
                     {
                         stateMessage = stateMsgEl.GetString();
                     }
+
+                    // Parse per-type breakdowns
+                    if (data.TryGetProperty("TotalItemsBreakdown", out var totalBreakdownEl) && totalBreakdownEl.ValueKind == JsonValueKind.Object)
+                    {
+                        totalItemsBreakdown = new Dictionary<string, long>();
+                        foreach (var prop in totalBreakdownEl.EnumerateObject())
+                        {
+                            if (prop.Value.ValueKind == JsonValueKind.Number)
+                            {
+                                totalItemsBreakdown[prop.Name] = prop.Value.GetInt64();
+                            }
+                        }
+                    }
+
+                    if (data.TryGetProperty("ItemsLast24HoursBreakdown", out var last24hBreakdownEl) && last24hBreakdownEl.ValueKind == JsonValueKind.Object)
+                    {
+                        itemsLast24HoursBreakdown = new Dictionary<string, int>();
+                        foreach (var prop in last24hBreakdownEl.EnumerateObject())
+                        {
+                            if (prop.Value.ValueKind == JsonValueKind.Number)
+                            {
+                                itemsLast24HoursBreakdown[prop.Name] = prop.Value.GetInt32();
+                            }
+                        }
+                    }
                 }
 
                 return new ConnectorStatusDto
@@ -146,9 +173,12 @@ public class ConnectorHealthService : IConnectorHealthService
                     EntriesLast24Hours = entriesLast24h,
                     State = state,
                     StateMessage = stateMessage,
-                    IsHealthy = status == "Healthy"
+                    IsHealthy = status == "Healthy",
+                    TotalItemsBreakdown = totalItemsBreakdown,
+                    ItemsLast24HoursBreakdown = itemsLast24HoursBreakdown
                 };
             }
+
 
             // If we have a healthy root status but missing specific check results
             var rootStatus = doc.RootElement.GetProperty("status").GetString();

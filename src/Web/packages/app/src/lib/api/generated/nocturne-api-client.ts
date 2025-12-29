@@ -4016,6 +4016,58 @@ export class CompatibilityClient {
     }
 }
 
+export class ConnectorFoodEntriesClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Import connector food entries.
+     */
+    importEntries(imports: ConnectorFoodEntryImport[], signal?: AbortSignal): Promise<ConnectorFoodEntry[]> {
+        let url_ = this.baseUrl + "/api/v4/connector-food-entries/import";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(imports);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processImportEntries(_response);
+        });
+    }
+
+    protected processImportEntries(response: Response): Promise<ConnectorFoodEntry[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectorFoodEntry[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConnectorFoodEntry[]>(null as any);
+    }
+}
+
 export class DebugClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -5570,6 +5622,95 @@ export class FoodsClient {
             });
         }
         return Promise.resolve<Food[]>(null as any);
+    }
+}
+
+export class MyFitnessPalSettingsClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get global MyFitnessPal matching settings.
+     */
+    getSettings(signal?: AbortSignal): Promise<MyFitnessPalMatchingSettings> {
+        let url_ = this.baseUrl + "/api/v4/connectors/myfitnesspal/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetSettings(_response);
+        });
+    }
+
+    protected processGetSettings(response: Response): Promise<MyFitnessPalMatchingSettings> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MyFitnessPalMatchingSettings;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MyFitnessPalMatchingSettings>(null as any);
+    }
+
+    /**
+     * Update global MyFitnessPal matching settings.
+     */
+    saveSettings(settings: MyFitnessPalMatchingSettings, signal?: AbortSignal): Promise<MyFitnessPalMatchingSettings> {
+        let url_ = this.baseUrl + "/api/v4/connectors/myfitnesspal/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(settings);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSaveSettings(_response);
+        });
+    }
+
+    protected processSaveSettings(response: Response): Promise<MyFitnessPalMatchingSettings> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MyFitnessPalMatchingSettings;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MyFitnessPalMatchingSettings>(null as any);
     }
 }
 
@@ -16712,6 +16853,89 @@ export interface ManualTestRequest {
     requestBody?: string | undefined;
 }
 
+export interface ConnectorFoodEntry {
+    id?: string;
+    connectorSource?: string;
+    externalEntryId?: string;
+    externalFoodId?: string;
+    foodId?: string | undefined;
+    food?: Food | undefined;
+    consumedAt?: Date;
+    loggedAt?: Date | undefined;
+    mealName?: string;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    energy?: number;
+    servings?: number;
+    servingDescription?: string | undefined;
+    status?: ConnectorFoodEntryStatus;
+    matchedTreatmentId?: string | undefined;
+    resolvedAt?: Date | undefined;
+}
+
+export interface Food {
+    _id?: string | undefined;
+    type?: string;
+    category?: string;
+    subcategory?: string;
+    name?: string;
+    portion?: number;
+    carbs?: number;
+    fat?: number;
+    protein?: number;
+    energy?: number;
+    gi?: number;
+    unit?: string;
+    foods?: QuickPickFood[] | undefined;
+    hideafteruse?: boolean;
+    hidden?: boolean;
+    position?: number;
+}
+
+export interface QuickPickFood {
+    name?: string;
+    portion?: number;
+    carbs?: number;
+    unit?: string;
+    portions?: number;
+}
+
+export enum ConnectorFoodEntryStatus {
+    Pending = "Pending",
+    Matched = "Matched",
+    Standalone = "Standalone",
+    Deleted = "Deleted",
+}
+
+export interface ConnectorFoodEntryImport {
+    connectorSource?: string;
+    externalEntryId?: string;
+    externalFoodId?: string;
+    consumedAt?: Date;
+    loggedAt?: Date | undefined;
+    mealName?: string;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    energy?: number;
+    servings?: number;
+    servingDescription?: string | undefined;
+    food?: ConnectorFoodImport | undefined;
+}
+
+export interface ConnectorFoodImport {
+    externalId?: string;
+    name?: string;
+    brandName?: string | undefined;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    energy?: number;
+    portion?: number;
+    unit?: string | undefined;
+}
+
 export interface DeviceAlert {
     id?: string;
     deviceId?: string;
@@ -16966,31 +17190,20 @@ export interface ForwardedDiscrepancyDto {
     analysis?: DiscrepancyAnalysisDto;
 }
 
-export interface Food {
-    _id?: string | undefined;
-    type?: string;
-    category?: string;
-    subcategory?: string;
-    name?: string;
-    portion?: number;
-    carbs?: number;
-    fat?: number;
-    protein?: number;
-    energy?: number;
-    gi?: number;
-    unit?: string;
-    foods?: QuickPickFood[] | undefined;
-    hideafteruse?: boolean;
-    hidden?: boolean;
-    position?: number;
+export interface MyFitnessPalMatchingSettings {
+    matchTimeWindowMinutes?: number;
+    matchCarbTolerancePercent?: number;
+    matchCarbToleranceGrams?: number;
+    unmatchedTimeoutHours?: number;
+    unmatchedBehavior?: UnmatchedBehavior;
+    enableMatchNotifications?: boolean;
+    enableUnmatchedNotifications?: boolean;
 }
 
-export interface QuickPickFood {
-    name?: string;
-    portion?: number;
-    carbs?: number;
-    unit?: string;
-    portions?: number;
+export enum UnmatchedBehavior {
+    Prompt = "Prompt",
+    AutoStandalone = "AutoStandalone",
+    AutoDelete = "AutoDelete",
 }
 
 /** Response containing glucose predictions. */
@@ -17446,6 +17659,9 @@ export enum TrackerCategory {
     Appointment = "Appointment",
     Reminder = "Reminder",
     Custom = "Custom",
+    Sensor = "Sensor",
+    Cannula = "Cannula",
+    Battery = "Battery",
 }
 
 export interface NotificationThresholdDto {

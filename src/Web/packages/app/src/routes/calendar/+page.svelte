@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import * as Select from "$lib/components/ui/select";
   import * as Card from "$lib/components/ui/card";
   import * as Tooltip from "$lib/components/ui/tooltip";
   import * as Popover from "$lib/components/ui/popover";
@@ -9,7 +8,6 @@
     Calendar,
     ChevronLeft,
     ChevronRight,
-    Timer,
     Play,
     CheckCircle,
     CalendarClock,
@@ -22,11 +20,16 @@
     getInstanceHistory,
   } from "$lib/data/trackers.remote";
   import type { TrackerInstanceDto, TrackerDefinitionDto } from "$api";
-  import { NotificationUrgency as NotificationUrgencyEnum } from "$api";
+  import {
+    NotificationUrgency as NotificationUrgencyEnum,
+    TrackerCategory,
+  } from "$api";
+  import { TrackerCategoryIcon } from "$lib/components/icons";
   import { cn } from "$lib/utils";
   import { glucoseUnits } from "$lib/stores/appearance-store.svelte";
   import { formatGlucoseValue, getUnitLabel } from "$lib/utils/formatting";
   import CalendarSkeleton from "$lib/components/calendar/CalendarSkeleton.svelte";
+  import DayStackedBar from "$lib/components/calendar/DayStackedBar.svelte";
 
   // Infer DayStats type from the query result
   type DayStats = NonNullable<
@@ -124,15 +127,6 @@
   const units = $derived(glucoseUnits.current);
   const unitLabel = $derived(getUnitLabel(units));
 
-  // Size mode options
-  type SizeMode = "difference" | "carbs" | "insulin";
-  const sizeModeOptions: { value: SizeMode; label: string }[] = [
-    { value: "difference", label: "Carb/Insulin Balance" },
-    { value: "carbs", label: "Carb Intake" },
-    { value: "insulin", label: "Insulin Delivery" },
-  ];
-  let selectedSizeMode = $state<SizeMode>("difference");
-
   // Colors for glucose distribution (using CSS variables for theme support)
   const GLUCOSE_COLORS = {
     low: "var(--glucose-low)",
@@ -156,10 +150,6 @@
     "November",
     "December",
   ];
-
-  // Pie chart size range (min and max radius)
-  const MIN_RADIUS = 14;
-  const MAX_RADIUS = 30;
 
   // Get days data from backend response
   const daysData = $derived.by(() => {
@@ -186,32 +176,6 @@
       maxDiff: monthData?.maxCarbInsulinDiff ?? 0,
     };
   });
-
-  // Calculate pie chart radius based on size mode
-  function getRadius(day: DayStats): number {
-    if (day.totalReadings === 0) return MIN_RADIUS;
-
-    let value = 0;
-    let max = 1;
-
-    switch (selectedSizeMode) {
-      case "carbs":
-        value = day.totalCarbs;
-        max = daysData.maxCarbs || 1;
-        break;
-      case "insulin":
-        value = day.totalInsulin;
-        max = daysData.maxInsulin || 1;
-        break;
-      case "difference":
-        value = Math.abs(day.carbToInsulinRatio);
-        max = daysData.maxDiff || 1;
-        break;
-    }
-
-    const normalized = Math.min(value / max, 1);
-    return MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * Math.sqrt(normalized);
-  }
 
   // Create calendar grid for the current month
   const calendarGrid = $derived.by(() => {
@@ -448,6 +412,16 @@
         return "text-muted-foreground";
     }
   }
+
+  function formatTrackerStartTime(startedAt: Date | undefined): string | null {
+    if (!startedAt) return null;
+    const date = new Date(startedAt);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 </script>
 
 {#await punchCardQuery}
@@ -482,46 +456,50 @@
             </Button>
           {/if}
         </div>
-
-        <!-- Size Mode Selector -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-muted-foreground">Pie Size:</span>
-          <Select.Root type="single" bind:value={selectedSizeMode}>
-            <Select.Trigger class="w-[180px]">
-              {sizeModeOptions.find((o) => o.value === selectedSizeMode)?.label}
-            </Select.Trigger>
-            <Select.Content>
-              {#each sizeModeOptions as option}
-                <Select.Item value={option.value}>{option.label}</Select.Item>
-              {/each}
-            </Select.Content>
-          </Select.Root>
-        </div>
       </div>
 
       <!-- Legend -->
       <div class="flex items-center justify-between px-4 pb-3">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2">
-            <div
-              class="h-3 w-3 rounded-full"
-              style="background-color: {GLUCOSE_COLORS.inRange}"
-            ></div>
-            <span class="text-sm">In Range</span>
+        <div class="flex items-center gap-6">
+          <!-- Glucose colors -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <div
+                class="h-3 w-3 rounded"
+                style="background-color: {GLUCOSE_COLORS.inRange}"
+              ></div>
+              <span class="text-sm">In Range</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div
+                class="h-3 w-3 rounded"
+                style="background-color: {GLUCOSE_COLORS.low}"
+              ></div>
+              <span class="text-sm">Low</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div
+                class="h-3 w-3 rounded"
+                style="background-color: {GLUCOSE_COLORS.high}"
+              ></div>
+              <span class="text-sm">High</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <div
-              class="h-3 w-3 rounded-full"
-              style="background-color: {GLUCOSE_COLORS.low}"
-            ></div>
-            <span class="text-sm">Low</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div
-              class="h-3 w-3 rounded-full"
-              style="background-color: {GLUCOSE_COLORS.high}"
-            ></div>
-            <span class="text-sm">High</span>
+          <!-- Size explanation -->
+          <div
+            class="flex items-center gap-3 text-xs text-muted-foreground border-l pl-4"
+          >
+            <span>Width = Carbs</span>
+            <span>·</span>
+            <span>Height = Insulin</span>
+            <span>·</span>
+            <span class="flex items-center gap-1">
+              <span
+                class="w-2 h-2 rounded-full"
+                style="background: oklch(0.75 0.15 85);"
+              ></span>
+              Optimal ratio
+            </span>
           </div>
         </div>
         <div class="text-sm text-muted-foreground">
@@ -576,24 +554,6 @@
                     <div class={getCellClasses(day)}>
                       {#if day && "date" in day && day.totalReadings > 0}
                         {@const complete = isDayComplete(day)}
-                        {@const radius = getRadius(day)}
-                        {@const pieData = [
-                          {
-                            name: "In Range",
-                            value: day.inRangePercent,
-                            color: GLUCOSE_COLORS.inRange,
-                          },
-                          {
-                            name: "Low",
-                            value: day.lowPercent,
-                            color: GLUCOSE_COLORS.low,
-                          },
-                          {
-                            name: "High",
-                            value: day.highPercent,
-                            color: GLUCOSE_COLORS.high,
-                          },
-                        ].filter((d) => d.value > 0)}
 
                         <!-- Day number in corner -->
                         <span
@@ -614,6 +574,11 @@
                                 event.eventType === "due"
                                   ? getTrackerLevel(event.instance, def)
                                   : "none"}
+                              {@const category =
+                                def?.category ?? TrackerCategory.Consumable}
+                              {@const startTime = formatTrackerStartTime(
+                                event.instance.startedAt
+                              )}
                               <Popover.Root>
                                 <Popover.Trigger>
                                   {#snippet child({ props })}
@@ -628,20 +593,18 @@
                                       )}
                                       title={event.instance.definitionName}
                                     >
-                                      {#if event.eventType === "start"}
-                                        <Play class="h-3 w-3" />
-                                      {:else if event.eventType === "completed"}
-                                        <CheckCircle class="h-3 w-3" />
-                                      {:else}
-                                        <CalendarClock class="h-3 w-3" />
-                                      {/if}
+                                      <TrackerCategoryIcon
+                                        {category}
+                                        class="h-3 w-3"
+                                      />
                                     </button>
                                   {/snippet}
                                 </Popover.Trigger>
                                 <Popover.Content class="w-64 p-3" side="top">
                                   <div class="space-y-2">
                                     <div class="flex items-center gap-2">
-                                      <Timer
+                                      <TrackerCategoryIcon
+                                        {category}
                                         class="h-4 w-4 text-muted-foreground"
                                       />
                                       <span class="font-medium text-sm">
@@ -654,7 +617,11 @@
                                           class="flex items-center gap-1 text-green-600 dark:text-green-400"
                                         >
                                           <Play class="h-3 w-3" />
-                                          <span>Started on this day</span>
+                                          <span>
+                                            {startTime
+                                              ? `Started at ${startTime}`
+                                              : "Started on this day"}
+                                          </span>
                                         </div>
                                         {#if event.instance.startNotes}
                                           <div class="text-muted-foreground">
@@ -705,54 +672,22 @@
                         {/if}
 
                         {#if complete}
-                          <!-- Show pie chart for complete days -->
+                          <!-- Show stacked bar chart for complete days -->
                           <Tooltip.Root>
                             <Tooltip.Trigger>
                               {#snippet child({ props })}
-                                <button
-                                  {...props}
-                                  class="relative cursor-pointer hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
-                                  onclick={() => handleDayClick(day)}
-                                >
-                                  <svg
-                                    width={radius * 2 + 4}
-                                    height={radius * 2 + 4}
-                                    viewBox="-{radius + 2} -{radius +
-                                      2} {radius * 2 + 4} {radius * 2 + 4}"
-                                  >
-                                    {#each pieData as slice, i}
-                                      {@const total = pieData.reduce(
-                                        (sum, d) => sum + d.value,
-                                        0
-                                      )}
-                                      {@const startAngle =
-                                        pieData
-                                          .slice(0, i)
-                                          .reduce(
-                                            (sum, d) =>
-                                              sum + (d.value / total) * 360,
-                                            0
-                                          ) - 90}
-                                      {@const endAngle =
-                                        startAngle +
-                                        (slice.value / total) * 360}
-                                      {@const startRad =
-                                        (startAngle * Math.PI) / 180}
-                                      {@const endRad =
-                                        (endAngle * Math.PI) / 180}
-                                      {@const largeArc =
-                                        endAngle - startAngle > 180 ? 1 : 0}
-                                      {@const x1 = radius * Math.cos(startRad)}
-                                      {@const y1 = radius * Math.sin(startRad)}
-                                      {@const x2 = radius * Math.cos(endRad)}
-                                      {@const y2 = radius * Math.sin(endRad)}
-                                      <path
-                                        d="M 0 0 L {x1} {y1} A {radius} {radius} 0 {largeArc} 1 {x2} {y2} Z"
-                                        fill={slice.color}
-                                      />
-                                    {/each}
-                                  </svg>
-                                </button>
+                                <div {...props}>
+                                  <DayStackedBar
+                                    lowPercent={day.lowPercent}
+                                    inRangePercent={day.inRangePercent}
+                                    highPercent={day.highPercent}
+                                    totalCarbs={day.totalCarbs}
+                                    totalInsulin={day.totalInsulin}
+                                    maxCarbs={daysData.maxCarbs}
+                                    maxInsulin={daysData.maxInsulin}
+                                    onclick={() => handleDayClick(day)}
+                                  />
+                                </div>
                               {/snippet}
                             </Tooltip.Trigger>
                             <Tooltip.Content
@@ -894,6 +829,11 @@
                                 event.eventType === "due"
                                   ? getTrackerLevel(event.instance, def)
                                   : "none"}
+                              {@const category =
+                                def?.category ?? TrackerCategory.Consumable}
+                              {@const startTime = formatTrackerStartTime(
+                                event.instance.startedAt
+                              )}
                               <Popover.Root>
                                 <Popover.Trigger>
                                   {#snippet child({ props })}
@@ -908,20 +848,18 @@
                                       )}
                                       title={event.instance.definitionName}
                                     >
-                                      {#if event.eventType === "start"}
-                                        <Play class="h-3 w-3" />
-                                      {:else if event.eventType === "completed"}
-                                        <CheckCircle class="h-3 w-3" />
-                                      {:else}
-                                        <CalendarClock class="h-3 w-3" />
-                                      {/if}
+                                      <TrackerCategoryIcon
+                                        {category}
+                                        class="h-3 w-3"
+                                      />
                                     </button>
                                   {/snippet}
                                 </Popover.Trigger>
                                 <Popover.Content class="w-64 p-3" side="top">
                                   <div class="space-y-2">
                                     <div class="flex items-center gap-2">
-                                      <Timer
+                                      <TrackerCategoryIcon
+                                        {category}
                                         class="h-4 w-4 text-muted-foreground"
                                       />
                                       <span class="font-medium text-sm">
@@ -933,7 +871,9 @@
                                         <span
                                           class="text-green-600 dark:text-green-400"
                                         >
-                                          Started on this day
+                                          {startTime
+                                            ? `Started at ${startTime}`
+                                            : "Started on this day"}
                                         </span>
                                       {:else if event.eventType === "completed"}
                                         <span class="text-muted-foreground">
@@ -979,6 +919,11 @@
                                 event.eventType === "due"
                                   ? getTrackerLevel(event.instance, def)
                                   : "none"}
+                              {@const category =
+                                def?.category ?? TrackerCategory.Consumable}
+                              {@const startTime = formatTrackerStartTime(
+                                event.instance.startedAt
+                              )}
                               <Popover.Root>
                                 <Popover.Trigger>
                                   {#snippet child({ props })}
@@ -993,20 +938,18 @@
                                       )}
                                       title={event.instance.definitionName}
                                     >
-                                      {#if event.eventType === "start"}
-                                        <Play class="h-3 w-3" />
-                                      {:else if event.eventType === "completed"}
-                                        <CheckCircle class="h-3 w-3" />
-                                      {:else}
-                                        <CalendarClock class="h-3 w-3" />
-                                      {/if}
+                                      <TrackerCategoryIcon
+                                        {category}
+                                        class="h-3 w-3"
+                                      />
                                     </button>
                                   {/snippet}
                                 </Popover.Trigger>
                                 <Popover.Content class="w-64 p-3" side="top">
                                   <div class="space-y-2">
                                     <div class="flex items-center gap-2">
-                                      <Timer
+                                      <TrackerCategoryIcon
+                                        {category}
                                         class="h-4 w-4 text-muted-foreground"
                                       />
                                       <span class="font-medium text-sm">
@@ -1018,7 +961,9 @@
                                         <span
                                           class="text-green-600 dark:text-green-400"
                                         >
-                                          Started on this day
+                                          {startTime
+                                            ? `Started at ${startTime}`
+                                            : "Started on this day"}
                                         </span>
                                       {:else if event.eventType === "completed"}
                                         <span class="text-muted-foreground">

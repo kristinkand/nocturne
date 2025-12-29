@@ -191,7 +191,8 @@ public static class HttpClientExtensions
     }
 
     /// <summary>
-    /// Configures standard headers for MyFitnessPal API
+    /// Configures standard headers for MyFitnessPal API.
+    /// Uses HttpClientHandler with modified TLS settings to bypass Cloudflare protection.
     /// </summary>
     public static IHttpClientBuilder ConfigureMyFitnessPalClient(this IHttpClientBuilder builder)
     {
@@ -200,22 +201,27 @@ public static class HttpClientExtensions
             {
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue("application/json")
+                    new MediaTypeWithQualityHeaderValue("*/*")
                 );
-                client.DefaultRequestHeaders.Add(
-                    "User-Agent",
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
-                );
+                // Spoof curl User-Agent
+                client.DefaultRequestHeaders.Add("User-Agent", "curl/8.4.0");
                 client.Timeout = TimeSpan.FromMinutes(2);
+                // Force HTTP/1.1 like curl
+                client.DefaultRequestVersion = new Version(1, 1);
+                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact;
             })
             .ConfigurePrimaryHttpMessageHandler(() =>
-                new SocketsHttpHandler
+            {
+                var handler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.All,
-                    ConnectTimeout = TimeSpan.FromSeconds(5),
-                    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-                }
-            );
+                    // Use TLS 1.2 like curl typically does
+                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                    // Accept all certificates (curl default behavior with -k)
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
+                };
+                return handler;
+            });
     }
 
     private static string HashApiSecret(string apiSecret)

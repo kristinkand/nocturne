@@ -30,6 +30,8 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import * as Tabs from "$lib/components/ui/tabs";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
+  import * as Tooltip from "$lib/components/ui/tooltip";
+
   import {
     Plug,
     RefreshCw,
@@ -114,6 +116,10 @@
   let granularSyncTo = $state("");
   let isGranularSyncing = $state(false);
   let granularSyncResult = $state<SyncResult | null>(null);
+
+  // Food-only sync state (for MyFitnessPal)
+  let isFoodOnlySyncing = $state(false);
+  let foodOnlySyncResult = $state<SyncResult | null>(null);
 
   // Connector heartbeat metrics state
   let connectorStatuses = $state<ConnectorStatusDto[]>([]);
@@ -412,6 +418,45 @@
           itemsSynced: {},
         };
       }
+    }
+  }
+
+  async function triggerFoodOnlySync() {
+    if (!selectedConnector?.id) return;
+
+    const connectorId = selectedConnector.id;
+    isFoodOnlySyncing = true;
+    foodOnlySyncResult = null;
+
+    try {
+      const apiClient = getApiClient();
+      // Use the same date range as manual sync
+      const request: SyncRequest = {
+        from: new Date(granularSyncFrom),
+        to: new Date(granularSyncTo),
+        dataTypes: ["Food" as any], // Food-only sync
+      };
+
+      const result = await apiClient.services.triggerConnectorSync(
+        connectorId,
+        request
+      );
+
+      foodOnlySyncResult = result;
+
+      if (result.success) {
+        // Refresh connector statuses to update the UI
+        await loadConnectorStatuses();
+      }
+    } catch (e) {
+      foodOnlySyncResult = {
+        success: false,
+        message: e instanceof Error ? e.message : "Failed to sync food data",
+        errors: [],
+        itemsSynced: {},
+      };
+    } finally {
+      isFoodOnlySyncing = false;
     }
   }
 
@@ -1745,24 +1790,87 @@
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-sm text-muted-foreground">
-                Total entries processed
+                Total items processed
               </span>
-              <span class="font-mono font-medium">
-                {selectedConnector.totalEntries?.toLocaleString() ?? 0}
-              </span>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  <span
+                    class="font-mono font-medium cursor-help underline decoration-dotted decoration-muted-foreground/50"
+                  >
+                    {selectedConnector.totalEntries?.toLocaleString() ?? 0}
+                  </span>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    class="z-50 overflow-hidden rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
+                  >
+                    {#if selectedConnector.totalItemsBreakdown && Object.keys(selectedConnector.totalItemsBreakdown).length > 0}
+                      <div class="space-y-1">
+                        <div
+                          class="font-medium text-xs text-muted-foreground mb-1"
+                        >
+                          Breakdown by type:
+                        </div>
+                        {#each Object.entries(selectedConnector.totalItemsBreakdown) as [type, count]}
+                          <div class="flex justify-between gap-4 text-xs">
+                            <span>{type}</span>
+                            <span class="font-mono">
+                              {count?.toLocaleString()}
+                            </span>
+                          </div>
+                        {/each}
+                      </div>
+                    {:else}
+                      <span class="text-xs">No breakdown available</span>
+                    {/if}
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-muted-foreground">
-                Entries in last 24 hours
+                Items processed in last 24 hours
               </span>
-              <span class="font-mono font-medium">
-                {selectedConnector.entriesLast24Hours?.toLocaleString() ?? 0}
-              </span>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  <span
+                    class="font-mono font-medium cursor-help underline decoration-dotted decoration-muted-foreground/50"
+                  >
+                    {selectedConnector.entriesLast24Hours?.toLocaleString() ??
+                      0}
+                  </span>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    class="z-50 overflow-hidden rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
+                  >
+                    {#if selectedConnector.itemsLast24HoursBreakdown && Object.keys(selectedConnector.itemsLast24HoursBreakdown).length > 0}
+                      <div class="space-y-1">
+                        <div
+                          class="font-medium text-xs text-muted-foreground mb-1"
+                        >
+                          Breakdown by type:
+                        </div>
+                        {#each Object.entries(selectedConnector.itemsLast24HoursBreakdown) as [type, count]}
+                          <div class="flex justify-between gap-4 text-xs">
+                            <span>{type}</span>
+                            <span class="font-mono">
+                              {count?.toLocaleString()}
+                            </span>
+                          </div>
+                        {/each}
+                      </div>
+                    {:else}
+                      <span class="text-xs">No breakdown available</span>
+                    {/if}
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             </div>
             {#if selectedConnector.lastEntryTime}
               <div class="flex items-center justify-between">
                 <span class="text-sm text-muted-foreground">
-                  Last entry received
+                  Last item received
                 </span>
                 <span class="font-medium">
                   {formatLastSeen(selectedConnector.lastEntryTime)}
@@ -1859,6 +1967,57 @@
               {/if}
             </Button>
           </div>
+
+          {#if selectedConnector?.id === "myfitnesspal"}
+            <Separator />
+
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <Database class="h-4 w-4" />
+                <h4 class="font-medium text-sm">Food Definitions</h4>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Download food data from MyFitnessPal for the date range above,
+                without creating treatments. Useful for populating your food
+                database.
+              </p>
+
+              {#if foodOnlySyncResult}
+                <div
+                  class="text-xs p-2 rounded {foodOnlySyncResult.success
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'}"
+                >
+                  {#if foodOnlySyncResult.success}
+                    <CheckCircle class="inline h-3 w-3 mr-1" />
+                    Food sync completed
+                    {#if foodOnlySyncResult.itemsSynced?.Food}
+                      ({foodOnlySyncResult.itemsSynced.Food} foods imported)
+                    {/if}
+                  {:else}
+                    <AlertCircle class="inline h-3 w-3 mr-1" />
+                    {foodOnlySyncResult.message || "Food sync failed"}
+                  {/if}
+                </div>
+              {/if}
+
+              <Button
+                size="sm"
+                variant="outline"
+                class="w-full gap-2"
+                onclick={triggerFoodOnlySync}
+                disabled={isFoodOnlySyncing}
+              >
+                {#if isFoodOnlySyncing}
+                  <Loader2 class="h-3 w-3 animate-spin" />
+                  Downloading...
+                {:else}
+                  <Download class="h-3 w-3" />
+                  Download Food Definitions
+                {/if}
+              </Button>
+            </div>
+          {/if}
 
           <Separator />
 

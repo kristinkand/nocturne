@@ -200,12 +200,6 @@ const apiClientHandle: Handle = async ({ event, resolve }) => {
   const accessToken = event.cookies.get(AUTH_COOKIE_NAMES.accessToken);
   const refreshToken = event.cookies.get(AUTH_COOKIE_NAMES.refreshToken);
 
-  // Debug: Log cookie status
-  const allCookies = event.request.headers.get("cookie");
-  console.log(`[API_CLIENT] Creating API client for ${event.url.pathname}`);
-  console.log(`[API_CLIENT] All cookies in request: ${allCookies || "(none)"}`);
-  console.log(`[API_CLIENT] Access token cookie: ${accessToken ? accessToken.substring(0, 20) + "..." : "(not found)"}`);
-  console.log(`[API_CLIENT] Refresh token cookie: ${refreshToken ? refreshToken.substring(0, 20) + "..." : "(not found)"}`);
 
   // Create API client with SvelteKit's fetch, auth headers, and both tokens
   event.locals.apiClient = createServerApiClient(apiBaseUrl, event.fetch, {

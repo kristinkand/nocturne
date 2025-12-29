@@ -24,9 +24,8 @@ public class MyFitnessPalConnectorBackgroundService
         : base(serviceProvider, config, logger)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _username =
-            config.MyFitnessPalUsername
-            ?? _configuration[ServiceNames.ConfigKeys.MyFitnessPalUsername];
+        // Get username from bound configuration (populated from CONNECT_MFP_USERNAME env var or appsettings)
+        _username = config.MyFitnessPalUsername;
     }
 
     protected override string ConnectorName => "MyFitnessPal";

@@ -3218,6 +3218,45 @@
         }
       }
     },
+    "/api/v4/connector-food-entries/import": {
+      "post": {
+        "tags": [
+          "V4 Connector Food Entries"
+        ],
+        "summary": "Import connector food entries.",
+        "operationId": "ConnectorFoodEntries_ImportEntries",
+        "requestBody": {
+          "x-name": "imports",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ConnectorFoodEntryImport"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorFoodEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v4/debug/echo/{echo}": {
       "get": {
         "tags": [
@@ -4422,6 +4461,58 @@
                   "items": {
                     "$ref": "#/components/schemas/Food"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/connectors/myfitnesspal/settings": {
+      "get": {
+        "tags": [
+          "V4 Connector Settings"
+        ],
+        "summary": "Get global MyFitnessPal matching settings.",
+        "operationId": "MyFitnessPalSettings_GetSettings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyFitnessPalMatchingSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "V4 Connector Settings"
+        ],
+        "summary": "Update global MyFitnessPal matching settings.",
+        "operationId": "MyFitnessPalSettings_SaveSettings",
+        "requestBody": {
+          "x-name": "settings",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MyFitnessPalMatchingSettings"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyFitnessPalMatchingSettings"
                 }
               }
             }
@@ -17839,6 +17930,292 @@
           }
         }
       },
+      "ConnectorFoodEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "connectorSource": {
+            "type": "string"
+          },
+          "externalEntryId": {
+            "type": "string"
+          },
+          "externalFoodId": {
+            "type": "string"
+          },
+          "foodId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "food": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Food"
+              }
+            ]
+          },
+          "consumedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "mealName": {
+            "type": "string"
+          },
+          "carbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "protein": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fat": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "energy": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "servings": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "servingDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConnectorFoodEntryStatus"
+          },
+          "matchedTreatmentId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "Food": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "subcategory": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "portion": {
+            "type": "number",
+            "format": "double"
+          },
+          "carbs": {
+            "type": "number",
+            "format": "double"
+          },
+          "fat": {
+            "type": "number",
+            "format": "double"
+          },
+          "protein": {
+            "type": "number",
+            "format": "double"
+          },
+          "energy": {
+            "type": "number",
+            "format": "double"
+          },
+          "gi": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "foods": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/QuickPickFood"
+            }
+          },
+          "hideafteruse": {
+            "type": "boolean"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "QuickPickFood": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "portion": {
+            "type": "number",
+            "format": "double"
+          },
+          "carbs": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "portions": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ConnectorFoodEntryStatus": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Pending",
+          "Matched",
+          "Standalone",
+          "Deleted"
+        ],
+        "enum": [
+          "Pending",
+          "Matched",
+          "Standalone",
+          "Deleted"
+        ]
+      },
+      "ConnectorFoodEntryImport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectorSource": {
+            "type": "string"
+          },
+          "externalEntryId": {
+            "type": "string"
+          },
+          "externalFoodId": {
+            "type": "string"
+          },
+          "consumedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "mealName": {
+            "type": "string"
+          },
+          "carbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "protein": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fat": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "energy": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "servings": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "servingDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "food": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConnectorFoodImport"
+              }
+            ]
+          }
+        }
+      },
+      "ConnectorFoodImport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "brandName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "protein": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "fat": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "energy": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "portion": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "DeviceAlert": {
         "type": "object",
         "additionalProperties": false,
@@ -18596,95 +18973,50 @@
           }
         }
       },
-      "Food": {
+      "MyFitnessPalMatchingSettings": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "_id": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "subcategory": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "portion": {
-            "type": "number",
-            "format": "double"
-          },
-          "carbs": {
-            "type": "number",
-            "format": "double"
-          },
-          "fat": {
-            "type": "number",
-            "format": "double"
-          },
-          "protein": {
-            "type": "number",
-            "format": "double"
-          },
-          "energy": {
-            "type": "number",
-            "format": "double"
-          },
-          "gi": {
+          "matchTimeWindowMinutes": {
             "type": "integer",
             "format": "int32"
           },
-          "unit": {
-            "type": "string"
-          },
-          "foods": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/QuickPickFood"
-            }
-          },
-          "hideafteruse": {
-            "type": "boolean"
-          },
-          "hidden": {
-            "type": "boolean"
-          },
-          "position": {
+          "matchCarbTolerancePercent": {
             "type": "integer",
             "format": "int32"
+          },
+          "matchCarbToleranceGrams": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatchedTimeoutHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unmatchedBehavior": {
+            "$ref": "#/components/schemas/UnmatchedBehavior"
+          },
+          "enableMatchNotifications": {
+            "type": "boolean"
+          },
+          "enableUnmatchedNotifications": {
+            "type": "boolean"
           }
         }
       },
-      "QuickPickFood": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "portion": {
-            "type": "number",
-            "format": "double"
-          },
-          "carbs": {
-            "type": "number",
-            "format": "double"
-          },
-          "unit": {
-            "type": "string"
-          },
-          "portions": {
-            "type": "number",
-            "format": "double"
-          }
-        }
+      "UnmatchedBehavior": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Prompt",
+          "AutoStandalone",
+          "AutoDelete"
+        ],
+        "enum": [
+          "Prompt",
+          "AutoStandalone",
+          "AutoDelete"
+        ]
       },
       "GlucosePredictionResponse": {
         "type": "object",
@@ -20085,14 +20417,20 @@
           "Reservoir",
           "Appointment",
           "Reminder",
-          "Custom"
+          "Custom",
+          "Sensor",
+          "Cannula",
+          "Battery"
         ],
         "enum": [
           "Consumable",
           "Reservoir",
           "Appointment",
           "Reminder",
-          "Custom"
+          "Custom",
+          "Sensor",
+          "Cannula",
+          "Battery"
         ]
       },
       "NotificationThresholdDto": {

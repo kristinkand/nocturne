@@ -497,56 +497,95 @@ namespace Nocturne.Connectors.Core.Services
                 return;
 
             DateTime? latestTime = null;
+            SyncDataType dataType = SyncDataType.Glucose; // Default
 
-            // Try to find the latest timestamp
+            // Determine data type and find latest timestamp
             if (typeof(T) == typeof(Entry))
             {
+                dataType = SyncDataType.Glucose;
                 // Entries are typically sorted by date, check last
                 var last = itemList.LastOrDefault() as Entry;
                 latestTime = last?.Date;
             }
+            else if (typeof(T) == typeof(Treatment))
+            {
+                dataType = SyncDataType.Treatments;
+                latestTime = FindLatestTimestamp(itemList);
+            }
+            else if (typeof(T) == typeof(Profile))
+            {
+                dataType = SyncDataType.Profiles;
+                latestTime = FindLatestTimestamp(itemList);
+            }
+            else if (typeof(T) == typeof(DeviceStatus))
+            {
+                dataType = SyncDataType.DeviceStatus;
+                latestTime = FindLatestTimestamp(itemList);
+            }
+            else if (typeof(T) == typeof(Activity))
+            {
+                dataType = SyncDataType.Activity;
+                latestTime = FindLatestTimestamp(itemList);
+            }
+            else if (typeof(T) == typeof(Food))
+            {
+                dataType = SyncDataType.Food;
+                // Food items generally don't have timestamps
+            }
             else
             {
-                // Generic timestamp lookup
-                var type = typeof(T);
-                var properties = type.GetProperties();
+                // Generic timestamp lookup for unknown types
+                latestTime = FindLatestTimestamp(itemList);
+            }
 
-                // Look for common timestamp properties
-                var timeProp = properties.FirstOrDefault(p =>
-                    p.Name.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase)
-                    || p.Name.Equals("EventTime", StringComparison.OrdinalIgnoreCase)
-                    || p.Name.Equals("Timestamp", StringComparison.OrdinalIgnoreCase)
-                    || p.Name.Equals("StartDate", StringComparison.OrdinalIgnoreCase)
-                    || // For Profile
-                    p.Name.Equals("Date", StringComparison.OrdinalIgnoreCase)
-                );
+            _metricsTracker.TrackItems(dataType, count, latestTime);
+        }
 
-                if (timeProp != null)
+        /// <summary>
+        /// Helper method to find the latest timestamp in a collection
+        /// </summary>
+        private DateTime? FindLatestTimestamp<T>(ICollection<T> items)
+        {
+            DateTime? latestTime = null;
+            var type = typeof(T);
+            var properties = type.GetProperties();
+
+            // Look for common timestamp properties
+            var timeProp = properties.FirstOrDefault(p =>
+                p.Name.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase)
+                || p.Name.Equals("EventTime", StringComparison.OrdinalIgnoreCase)
+                || p.Name.Equals("Timestamp", StringComparison.OrdinalIgnoreCase)
+                || p.Name.Equals("StartDate", StringComparison.OrdinalIgnoreCase)
+                || // For Profile
+                p.Name.Equals("Date", StringComparison.OrdinalIgnoreCase)
+            );
+
+            if (timeProp != null)
+            {
+                // Scan for latest time
+                foreach (var item in items)
                 {
-                    // Scan for latest time
-                    foreach (var item in itemList)
+                    var val = timeProp.GetValue(item);
+                    DateTime? dt = null;
+
+                    if (val is DateTime d)
+                        dt = d;
+                    else if (val is string s && DateTime.TryParse(s, out var parsed))
+                        dt = parsed.ToUniversalTime();
+                    else if (val is long l)
+                        dt = DateTimeOffset.FromUnixTimeMilliseconds(l).UtcDateTime;
+
+                    if (dt.HasValue)
                     {
-                        var val = timeProp.GetValue(item);
-                        DateTime? dt = null;
-
-                        if (val is DateTime d)
-                            dt = d;
-                        else if (val is string s && DateTime.TryParse(s, out var parsed))
-                            dt = parsed.ToUniversalTime();
-                        else if (val is long l)
-                            dt = DateTimeOffset.FromUnixTimeMilliseconds(l).UtcDateTime;
-
-                        if (dt.HasValue)
-                        {
-                            if (!latestTime.HasValue || dt.Value > latestTime.Value)
-                                latestTime = dt;
-                        }
+                        if (!latestTime.HasValue || dt.Value > latestTime.Value)
+                            latestTime = dt;
                     }
                 }
             }
 
-            _metricsTracker.TrackEntries(count, latestTime);
+            return latestTime;
         }
+
 
         /// <summary>
         /// Submits glucose data directly to the API via HTTP
