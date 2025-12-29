@@ -1220,33 +1220,9 @@ namespace Nocturne.Connectors.Glooko.Services
                 }
             }
 
-            // Process Delivered Boluses
-            if (series.DeliveredBolus != null)
-            {
-                foreach (var bolus in series.DeliveredBolus)
-                {
-                    // Use raw timestamp for ID (matching v2 behavior) but corrected time for CreatedAt
-                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(bolus.X).UtcDateTime;
-                    var correctedTimestamp = GetCorrectedGlookoTime(bolus.X);
-                    var carbsInput = bolus.Data?.CarbsInput;
-
-                    treatments.Add(new Treatment
-                    {
-                        Id = GenerateTreatmentId("Meal Bolus", rawTimestamp, $"insulin:{bolus.Y}_carbs:{carbsInput}"),
-                        EventType = carbsInput > 0 ? "Meal Bolus" : "Correction Bolus",
-                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                        Insulin = bolus.Y,
-                        Carbs = carbsInput > 0 ? carbsInput : null,
-                        InsulinDelivered = bolus.Data?.DeliveredUnits ?? bolus.Y,
-                        InsulinProgrammed = bolus.Data?.ProgrammedUnits,
-                        InsulinRecommendationForCorrection = bolus.Data?.CorrectionUnits,
-                        InsulinRecommendationForCarbs = bolus.Data?.FoodUnits,
-                        BloodGlucoseInput = bolus.Data?.BgInput,
-                        CalculationType = CalculationType.Suggested,
-                        DataSource = ConnectorSource
-                    });
-                }
-            }
+            // NOTE: DeliveredBolus processing is intentionally skipped.
+            // V2 API handles carb+insulin treatments (Meal Bolus, Correction Bolus) more capably.
+            // The V3 DeliveredBolus series overlaps with V2 data and causes duplication issues.
 
             // Process Pump Alarms
             if (series.PumpAlarm != null)
@@ -1302,44 +1278,9 @@ namespace Nocturne.Connectors.Glooko.Services
                 }
             }
 
-            // Process Carbs - but skip entries that are already included in deliveredBolus
-            // The carbAll series duplicates carbs from bolus entries, so we need to filter them
-            if (series.CarbAll != null)
-            {
-                // Build a set of timestamps that already have carbs from deliveredBolus
-                var bolusTimestamps = new HashSet<long>();
-                if (series.DeliveredBolus != null)
-                {
-                    foreach (var bolus in series.DeliveredBolus.Where(b => b.Data?.CarbsInput > 0))
-                    {
-                        bolusTimestamps.Add(bolus.X);
-                    }
-                }
-
-                // Only add carb entries that don't already exist in deliveredBolus
-                foreach (var carb in series.CarbAll.Where(c => c.ActualCarbs.HasValue && c.ActualCarbs > 0))
-                {
-                    // Skip if this carb entry is already covered by a bolus entry
-                    if (bolusTimestamps.Contains(carb.X))
-                    {
-                        _logger.LogDebug("[{ConnectorSource}] Skipping duplicate carbAll entry at {Timestamp} (already in deliveredBolus)",
-                            ConnectorSource, carb.Timestamp);
-                        continue;
-                    }
-
-                    var rawTimestamp = DateTimeOffset.FromUnixTimeSeconds(carb.X).UtcDateTime;
-                    var correctedTimestamp = GetCorrectedGlookoTime(carb.X);
-                    var actualCarbs = carb.ActualCarbs!.Value;
-                    treatments.Add(new Treatment
-                    {
-                        Id = GenerateTreatmentId("Carb Correction", rawTimestamp, $"carbs:{actualCarbs}"),
-                        EventType = "Carb Correction",
-                        CreatedAt = correctedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                        Carbs = actualCarbs,
-                        DataSource = ConnectorSource
-                    });
-                }
-            }
+            // NOTE: CarbAll processing is intentionally skipped.
+            // V2 API handles carb treatments (Carb Correction, Meal Bolus) more capably.
+            // The V3 CarbAll series overlaps with V2 data and causes duplication issues.
 
             // NOTE: Profile Changes are no longer created as treatments.
             // They are handled as StateSpans in TransformV3ToStateSpans().
