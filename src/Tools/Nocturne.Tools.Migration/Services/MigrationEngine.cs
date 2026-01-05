@@ -284,14 +284,15 @@ public class MigrationEngine(
             );
             errors.AddRange(postgresConnValidation.Errors);
 
-            // Test actual connectivity
-            if (errors.Count == 0)
-            {
-                await TestConnectivityAsync(config, cancellationToken);
-            }
-
             // Validate configuration parameters
             ValidateConfigurationParameters(config, errors);
+
+            // Test actual connectivity once validation passes
+            if (errors.Count == 0)
+            {
+                var connectivityErrors = await TestConnectivityAsync(config, cancellationToken);
+                errors.AddRange(connectivityErrors);
+            }
 
             return errors.Count == 0
                 ? (
@@ -1174,22 +1175,52 @@ public class MigrationEngine(
         }
     }
 
-    private async Task TestConnectivityAsync(
+    private async Task<List<ValidationError>> TestConnectivityAsync(
         MigrationEngineConfiguration config,
         CancellationToken cancellationToken
     )
     {
-        // Test MongoDB connection
-        var mongoClient = new MongoClient(config.MongoConnectionString);
-        await mongoClient.ListDatabaseNamesAsync(cancellationToken: cancellationToken);
+        var errors = new List<ValidationError>();
 
-        var database = mongoClient.GetDatabase(config.MongoDatabaseName);
-        await database.ListCollectionNamesAsync(cancellationToken: cancellationToken);
+        try
+        {
+            var mongoSettings = MongoClientSettings.FromConnectionString(config.MongoConnectionString);
+            mongoSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+            var mongoClient = new MongoClient(mongoSettings);
+            await mongoClient.ListDatabaseNamesAsync(cancellationToken: cancellationToken);
 
-        // Test PostgreSQL connection
-        using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<MigrationDbContext>();
-        await dbContext.Database.CanConnectAsync(cancellationToken);
+            var database = mongoClient.GetDatabase(config.MongoDatabaseName);
+            await database.ListCollectionNamesAsync(cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            errors.Add(
+                new ValidationError(
+                    "MongoConnectionString",
+                    $"MongoDB connection failed: {ex.Message}",
+                    config.MongoConnectionString
+                )
+            );
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<MigrationDbContext>();
+            await dbContext.Database.CanConnectAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            errors.Add(
+                new ValidationError(
+                    "PostgreSqlConnectionString",
+                    $"PostgreSQL connection failed: {ex.Message}",
+                    config.PostgreSqlConnectionString
+                )
+            );
+        }
+
+        return errors;
     }
 
     private void ValidateConfigurationParameters(

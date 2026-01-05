@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -5,9 +6,12 @@ using Moq;
 using Nocturne.API.Services;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Authorization;
 using Nocturne.Infrastructure.Cache.Abstractions;
 using Nocturne.Infrastructure.Cache.Configuration;
+using Nocturne.Infrastructure.Data;
 using Nocturne.Infrastructure.Data.Abstractions;
+using Nocturne.Tests.Shared.Infrastructure;
 using Xunit;
 
 namespace Nocturne.API.Tests.Services;
@@ -244,10 +248,23 @@ public class CacheIntegrationTests
             .AddInMemoryCollection(configurationData)
             .Build();
 
+        var dbContext = TestDbContextFactory.CreateInMemoryContext();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items["AuthContext"] = new AuthContext
+        {
+            IsAuthenticated = true,
+            Roles = new List<string> { "readable" },
+            Permissions = new List<string> { "api:*:read" },
+            Scopes = new List<string> { "api:*:read" },
+        };
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = httpContext };
+
         var statusService = new StatusService(
             mockConfiguration,
             _mockCacheService.Object,
             _mockDemoModeService.Object,
+            dbContext,
+            httpContextAccessor,
             _mockStatusLogger.Object
         );
 
@@ -308,10 +325,23 @@ public class CacheIntegrationTests
             .AddInMemoryCollection(configurationData)
             .Build();
 
+        var dbContext = TestDbContextFactory.CreateInMemoryContext();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items["AuthContext"] = new AuthContext
+        {
+            IsAuthenticated = true,
+            Roles = new List<string> { "readable" },
+            Permissions = new List<string> { "api:*:read" },
+            Scopes = new List<string> { "api:*:read" },
+        };
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = httpContext };
+
         var statusService = new StatusService(
             mockConfiguration,
             _mockCacheService.Object,
             _mockDemoModeService.Object,
+            dbContext,
+            httpContextAccessor,
             _mockStatusLogger.Object
         );
 

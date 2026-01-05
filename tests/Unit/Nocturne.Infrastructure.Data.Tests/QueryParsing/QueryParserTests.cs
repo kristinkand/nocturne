@@ -360,6 +360,11 @@ public static class QueryParser
             using var document = JsonDocument.Parse(mongoQuery);
             var root = document.RootElement;
 
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return result;
+            }
+
             foreach (var property in root.EnumerateObject())
             {
                 if (property.Value.ValueKind == JsonValueKind.String)
@@ -377,6 +382,10 @@ public static class QueryParser
             }
         }
         catch (JsonException)
+        {
+            // Return empty on parse error
+        }
+        catch (InvalidOperationException)
         {
             // Return empty on parse error
         }
@@ -599,12 +608,30 @@ public static class QueryParser
             return new ComplexQuery { IsEmpty = true };
         }
 
+        var trimmedQuery = mongoQuery.Trim();
+        if (string.Equals(trimmedQuery, "null", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ComplexQuery { IsEmpty = true };
+        }
+
+        if (string.Equals(trimmedQuery, "undefined", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ComplexQuery { IsEmpty = true };
+        }
+
         try
         {
             var complexQuery = new ComplexQuery();
 
             // Parse simple conditions
             complexQuery.SimpleConditions = ParseSimpleQuery(mongoQuery);
+
+            using var document = JsonDocument.Parse(mongoQuery);
+            var root = document.RootElement;
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                MergeLogicalSimpleConditions(root, complexQuery.SimpleConditions);
+            }
 
             // Parse date range
             complexQuery.DateRange = ParseDateRangeQuery(mongoQuery);
@@ -614,6 +641,13 @@ public static class QueryParser
 
             // Detect unsupported operators
             complexQuery.UnsupportedOperators = DetectUnsupportedOperators(mongoQuery);
+
+            complexQuery.HasRangeQueries =
+                complexQuery.DateRange != null || ContainsRangeOperators(mongoQuery);
+            complexQuery.IsEmpty =
+                (complexQuery.SimpleConditions.Count == 0
+                    && complexQuery.DateRange == null
+                    && complexQuery.LogicalQuery == null);
 
             return complexQuery;
         }
@@ -637,6 +671,42 @@ public static class QueryParser
         }
 
         return unsupported;
+    }
+
+    private static bool ContainsRangeOperators(string mongoQuery) =>
+        mongoQuery.Contains("$gt", StringComparison.OrdinalIgnoreCase)
+        || mongoQuery.Contains("$gte", StringComparison.OrdinalIgnoreCase)
+        || mongoQuery.Contains("$lt", StringComparison.OrdinalIgnoreCase)
+        || mongoQuery.Contains("$lte", StringComparison.OrdinalIgnoreCase);
+
+    private static void MergeLogicalSimpleConditions(
+        JsonElement root,
+        Dictionary<string, object> simpleConditions
+    )
+    {
+        foreach (var property in root.EnumerateObject())
+        {
+            if (
+                (property.NameEquals("$and") || property.NameEquals("$or"))
+                && property.Value.ValueKind == JsonValueKind.Array
+            )
+            {
+                foreach (var element in property.Value.EnumerateArray())
+                {
+                    if (element.ValueKind != JsonValueKind.Object)
+                        continue;
+
+                    var parsed = ParseSimpleQuery(element.GetRawText());
+                    foreach (var kvp in parsed)
+                    {
+                        if (!simpleConditions.ContainsKey(kvp.Key))
+                        {
+                            simpleConditions[kvp.Key] = kvp.Value;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -676,5 +746,5 @@ public class ComplexQuery
     public List<string> UnsupportedOperators { get; set; } = new();
     public bool IsEmpty { get; set; }
     public bool HasLogicalOperators => LogicalQuery != null;
-    public bool HasRangeQueries => DateRange != null;
+    public bool HasRangeQueries { get; set; }
 }

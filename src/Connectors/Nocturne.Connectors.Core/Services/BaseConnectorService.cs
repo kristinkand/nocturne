@@ -75,13 +75,17 @@ namespace Nocturne.Connectors.Core.Services
         {
             if (_apiDataSubmitter == null)
             {
-                _logger?.LogDebug("API data submitter not available, cannot fetch latest entry timestamp");
+                _logger?.LogDebug(
+                    "API data submitter not available, cannot fetch latest entry timestamp"
+                );
                 return null;
             }
 
             try
             {
-                var timestamp = await _apiDataSubmitter.GetLatestEntryTimestampAsync(ConnectorSource);
+                var timestamp = await _apiDataSubmitter.GetLatestEntryTimestampAsync(
+                    ConnectorSource
+                );
                 if (timestamp.HasValue)
                 {
                     _logger?.LogInformation(
@@ -92,13 +96,20 @@ namespace Nocturne.Connectors.Core.Services
                 }
                 else
                 {
-                    _logger?.LogDebug("No existing entries found for {ConnectorSource}", ConnectorSource);
+                    _logger?.LogDebug(
+                        "No existing entries found for {ConnectorSource}",
+                        ConnectorSource
+                    );
                 }
                 return timestamp;
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to fetch latest entry timestamp for {ConnectorSource}", ConnectorSource);
+                _logger?.LogWarning(
+                    ex,
+                    "Failed to fetch latest entry timestamp for {ConnectorSource}",
+                    ConnectorSource
+                );
                 return null;
             }
         }
@@ -111,13 +122,17 @@ namespace Nocturne.Connectors.Core.Services
         {
             if (_apiDataSubmitter == null)
             {
-                _logger?.LogDebug("API data submitter not available, cannot fetch latest treatment timestamp");
+                _logger?.LogDebug(
+                    "API data submitter not available, cannot fetch latest treatment timestamp"
+                );
                 return null;
             }
 
             try
             {
-                var timestamp = await _apiDataSubmitter.GetLatestTreatmentTimestampAsync(ConnectorSource);
+                var timestamp = await _apiDataSubmitter.GetLatestTreatmentTimestampAsync(
+                    ConnectorSource
+                );
                 if (timestamp.HasValue)
                 {
                     _logger?.LogInformation(
@@ -128,13 +143,20 @@ namespace Nocturne.Connectors.Core.Services
                 }
                 else
                 {
-                    _logger?.LogDebug("No existing treatments found for {ConnectorSource}", ConnectorSource);
+                    _logger?.LogDebug(
+                        "No existing treatments found for {ConnectorSource}",
+                        ConnectorSource
+                    );
                 }
                 return timestamp;
             }
             catch (Exception ex)
             {
-                _logger?.LogWarning(ex, "Failed to fetch latest treatment timestamp for {ConnectorSource}", ConnectorSource);
+                _logger?.LogWarning(
+                    ex,
+                    "Failed to fetch latest treatment timestamp for {ConnectorSource}",
+                    ConnectorSource
+                );
                 return null;
             }
         }
@@ -202,9 +224,10 @@ namespace Nocturne.Connectors.Core.Services
             DateTime? earliestTimestamp = null;
             if (latestEntryTimestamp.HasValue && latestTreatmentTimestamp.HasValue)
             {
-                earliestTimestamp = latestEntryTimestamp.Value < latestTreatmentTimestamp.Value
-                    ? latestEntryTimestamp.Value
-                    : latestTreatmentTimestamp.Value;
+                earliestTimestamp =
+                    latestEntryTimestamp.Value < latestTreatmentTimestamp.Value
+                        ? latestEntryTimestamp.Value
+                        : latestTreatmentTimestamp.Value;
 
                 _logger?.LogDebug(
                     "Using earlier timestamp for comprehensive sync: entries={EntryTimestamp}, treatments={TreatmentTimestamp}, using={Using}",
@@ -302,37 +325,37 @@ namespace Nocturne.Connectors.Core.Services
             CancellationToken cancellationToken
         )
         {
-            var result = new SyncResult
-            {
-                StartTime = DateTimeOffset.UtcNow,
-                Success = true
-            };
+            var result = new SyncResult { StartTime = DateTimeOffset.UtcNow, Success = true };
 
             if (request.DataTypes == null || !request.DataTypes.Any())
             {
                 request.DataTypes = SupportedDataTypes;
             }
 
-            var tasks = request.DataTypes
-                .Where(type => SupportedDataTypes.Contains(type))
+            var tasks = request
+                .DataTypes.Where(type => SupportedDataTypes.Contains(type))
                 .Select(async type =>
                 {
                     try
                     {
                         int count = 0;
                         DateTime? lastTime = null;
+                        var publishSuccess = true;
 
                         switch (type)
                         {
                             case SyncDataType.Glucose:
-                                var entries = await FetchGlucoseDataRangeAsync(request.From, request.To);
+                                var entries = await FetchGlucoseDataRangeAsync(
+                                    request.From,
+                                    request.To
+                                );
                                 var entryList = entries.ToList();
                                 count = entryList.Count;
                                 if (count > 0)
                                 {
                                     lastTime = entryList.Max(e => e.Date);
                                 }
-                                await PublishGlucoseDataInBatchesAsync(
+                                publishSuccess = await PublishGlucoseDataInBatchesAsync(
                                     entryList,
                                     config,
                                     cancellationToken
@@ -340,17 +363,24 @@ namespace Nocturne.Connectors.Core.Services
                                 break;
 
                             case SyncDataType.Treatments:
-                                var treatments = await FetchTreatmentsAsync(request.From, request.To);
+                                var treatments = await FetchTreatmentsAsync(
+                                    request.From,
+                                    request.To
+                                );
                                 var treatmentList = treatments.ToList();
                                 count = treatmentList.Count;
                                 if (count > 0)
                                 {
                                     lastTime = treatmentList
-                                        .Select(t => DateTime.TryParse(t.CreatedAt, out var dt) ? dt : (DateTime?)null)
+                                        .Select(t =>
+                                            DateTime.TryParse(t.CreatedAt, out var dt)
+                                                ? dt
+                                                : (DateTime?)null
+                                        )
                                         .Where(dt => dt.HasValue)
                                         .Max();
                                 }
-                                await PublishTreatmentDataInBatchesAsync(
+                                publishSuccess = await PublishTreatmentDataInBatchesAsync(
                                     treatmentList,
                                     config,
                                     cancellationToken
@@ -364,39 +394,69 @@ namespace Nocturne.Connectors.Core.Services
                                 if (count > 0)
                                 {
                                     lastTime = profileList
-                                        .Select(p => DateTime.TryParse(p.StartDate, out var dt) ? dt : (DateTime?)null)
+                                        .Select(p =>
+                                            DateTime.TryParse(p.StartDate, out var dt)
+                                                ? dt
+                                                : (DateTime?)null
+                                        )
                                         .Where(dt => dt.HasValue)
                                         .Max();
                                 }
-                                await PublishProfileDataAsync(profileList, config, cancellationToken);
+                                publishSuccess = await PublishProfileDataAsync(
+                                    profileList,
+                                    config,
+                                    cancellationToken
+                                );
                                 break;
 
                             case SyncDataType.DeviceStatus:
-                                var statuses = await FetchDeviceStatusAsync(request.From, request.To);
+                                var statuses = await FetchDeviceStatusAsync(
+                                    request.From,
+                                    request.To
+                                );
                                 var statusList = statuses.ToList();
                                 count = statusList.Count;
                                 if (count > 0)
                                 {
                                     lastTime = statusList
-                                        .Select(s => DateTime.TryParse(s.CreatedAt, out var dt) ? dt : (DateTime?)null)
+                                        .Select(s =>
+                                            DateTime.TryParse(s.CreatedAt, out var dt)
+                                                ? dt
+                                                : (DateTime?)null
+                                        )
                                         .Where(dt => dt.HasValue)
                                         .Max();
                                 }
-                                await PublishDeviceStatusAsync(statusList, config, cancellationToken);
+                                publishSuccess = await PublishDeviceStatusAsync(
+                                    statusList,
+                                    config,
+                                    cancellationToken
+                                );
                                 break;
 
                             case SyncDataType.Activity:
-                                var activities = await FetchActivitiesAsync(request.From, request.To);
+                                var activities = await FetchActivitiesAsync(
+                                    request.From,
+                                    request.To
+                                );
                                 var activityList = activities.ToList();
                                 count = activityList.Count;
                                 if (count > 0)
                                 {
                                     lastTime = activityList
-                                        .Select(a => DateTime.TryParse(a.CreatedAt, out var dt) ? dt : (DateTime?)null)
+                                        .Select(a =>
+                                            DateTime.TryParse(a.CreatedAt, out var dt)
+                                                ? dt
+                                                : (DateTime?)null
+                                        )
                                         .Where(dt => dt.HasValue)
                                         .Max();
                                 }
-                                await PublishActivityDataAsync(activityList, config, cancellationToken);
+                                publishSuccess = await PublishActivityDataAsync(
+                                    activityList,
+                                    config,
+                                    cancellationToken
+                                );
                                 break;
 
                             case SyncDataType.Food:
@@ -404,7 +464,11 @@ namespace Nocturne.Connectors.Core.Services
                                 var foodList = foods.ToList();
                                 count = foodList.Count;
                                 // Food items generally don't have a timestamp in the model, skipping lastTime update
-                                await PublishFoodDataAsync(foodList, config, cancellationToken);
+                                publishSuccess = await PublishFoodDataAsync(
+                                    foodList,
+                                    config,
+                                    cancellationToken
+                                );
                                 break;
                         }
 
@@ -412,6 +476,11 @@ namespace Nocturne.Connectors.Core.Services
                         {
                             result.ItemsSynced[type] = count;
                             result.LastEntryTimes[type] = lastTime;
+                            if (!publishSuccess)
+                            {
+                                result.Success = false;
+                                result.Errors.Add($"{type} publish failed");
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -585,7 +654,6 @@ namespace Nocturne.Connectors.Core.Services
 
             return latestTime;
         }
-
 
         /// <summary>
         /// Submits glucose data directly to the API via HTTP
@@ -892,9 +960,7 @@ namespace Nocturne.Connectors.Core.Services
         {
             if (_apiDataSubmitter == null)
             {
-                _logger?.LogWarning(
-                    "API data submitter not available for state span submission"
-                );
+                _logger?.LogWarning("API data submitter not available for state span submission");
                 return false;
             }
 
@@ -941,9 +1007,7 @@ namespace Nocturne.Connectors.Core.Services
         {
             if (_apiDataSubmitter == null)
             {
-                _logger?.LogWarning(
-                    "API data submitter not available for system event submission"
-                );
+                _logger?.LogWarning("API data submitter not available for system event submission");
                 return false;
             }
 
@@ -978,7 +1042,6 @@ namespace Nocturne.Connectors.Core.Services
                 return false;
             }
         }
-
 
         /// <summary>
         /// Publishes messages in batches to optimize throughput
@@ -1098,7 +1161,10 @@ namespace Nocturne.Connectors.Core.Services
             DateTime? since = null
         )
         {
-            _logger.LogInformation("Starting background data sync for {ConnectorSource}", ConnectorSource);
+            _logger.LogInformation(
+                "Starting background data sync for {ConnectorSource}",
+                ConnectorSource
+            );
             _stateService?.SetState(ConnectorState.Syncing, "Syncing data...");
 
             try
@@ -1106,7 +1172,10 @@ namespace Nocturne.Connectors.Core.Services
                 // Authenticate if needed
                 if (!await AuthenticateAsync())
                 {
-                    _logger.LogError("Authentication failed for {ConnectorSource}", ConnectorSource);
+                    _logger.LogError(
+                        "Authentication failed for {ConnectorSource}",
+                        ConnectorSource
+                    );
                     _stateService?.SetState(ConnectorState.Error, "Authentication failed");
                     return false;
                 }
@@ -1118,21 +1187,28 @@ namespace Nocturne.Connectors.Core.Services
                 {
                     From = sinceTimestamp,
                     To = null, // Open-ended for background sync
-                    DataTypes = SupportedDataTypes
+                    DataTypes = SupportedDataTypes,
                 };
 
                 var result = await PerformSyncInternalAsync(request, config, cancellationToken);
 
                 if (result.Success)
                 {
-                    _logger.LogInformation("Background sync completed successfully for {ConnectorSource}", ConnectorSource);
+                    _logger.LogInformation(
+                        "Background sync completed successfully for {ConnectorSource}",
+                        ConnectorSource
+                    );
 
                     // Log details of what was synced
                     foreach (var type in result.ItemsSynced.Keys)
                     {
                         if (result.ItemsSynced[type] > 0)
                         {
-                            _logger.LogInformation("Synced {Count} {Type} items", result.ItemsSynced[type], type);
+                            _logger.LogInformation(
+                                "Synced {Count} {Type} items",
+                                result.ItemsSynced[type],
+                                type
+                            );
                         }
                     }
 
@@ -1152,7 +1228,11 @@ namespace Nocturne.Connectors.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error in background SyncDataAsync for {ConnectorSource}", ConnectorSource);
+                _logger.LogError(
+                    ex,
+                    "Unexpected error in background SyncDataAsync for {ConnectorSource}",
+                    ConnectorSource
+                );
                 _stateService?.SetState(ConnectorState.Error, $"Unexpected error: {ex.Message}");
                 return false;
             }
@@ -1287,7 +1367,6 @@ namespace Nocturne.Connectors.Core.Services
 
             return results;
         }
-
 
         /// <summary>
         /// Optional method for connectors to implement file-based data loading/saving for debugging
@@ -1687,7 +1766,6 @@ namespace Nocturne.Connectors.Core.Services
                 logger.LogError("Error saving glucose entries to file: {Error}", ex.Message);
             }
         }
-
 
         protected virtual void Dispose(bool disposing)
         {

@@ -5,7 +5,12 @@ using Nocturne.API.Services;
 using Nocturne.API.Services.Auth;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Authorization;
 using Nocturne.Infrastructure.Data.Abstractions;
+using AuthSubjectModel = Nocturne.Core.Models.Authorization.Subject;
+using AuthRoleModel = Nocturne.Core.Models.Authorization.Role;
+using LegacySubject = Nocturne.Core.Models.Subject;
+using LegacyRole = Nocturne.Core.Models.Role;
 using Xunit;
 
 namespace Nocturne.API.Tests.Services;
@@ -36,6 +41,36 @@ public class AuthorizationServiceCrudTests
         _mockConfiguration
             .Setup(c => c["JwtSettings:SecretKey"])
             .Returns("TestSecretKeyForNightscout");
+
+        var subjectNotImplemented = new NotImplementedException(
+            "PostgreSQL adapter for Subject is not implemented"
+        );
+        _mockSubjectService
+            .Setup(s => s.GetSubjectsAsync())
+            .ThrowsAsync(subjectNotImplemented);
+        _mockSubjectService
+            .Setup(s => s.GetSubjectByIdAsync(It.IsAny<Guid>()))
+            .ThrowsAsync(subjectNotImplemented);
+        _mockSubjectService
+            .Setup(s => s.CreateSubjectAsync(It.IsAny<AuthSubjectModel>()))
+            .ThrowsAsync(subjectNotImplemented);
+        _mockSubjectService
+            .Setup(s => s.UpdateSubjectAsync(It.IsAny<AuthSubjectModel>()))
+            .ThrowsAsync(subjectNotImplemented);
+        _mockSubjectService
+            .Setup(s => s.DeleteSubjectAsync(It.IsAny<Guid>()))
+            .ThrowsAsync(subjectNotImplemented);
+
+        var roleNotImplemented = new NotImplementedException(
+            "PostgreSQL adapter for Role is not implemented"
+        );
+        _mockRoleService.Setup(r => r.GetAllRolesAsync()).ThrowsAsync(roleNotImplemented);
+        _mockRoleService.Setup(r => r.GetRoleByIdAsync(It.IsAny<Guid>())).ThrowsAsync(roleNotImplemented);
+        _mockRoleService.Setup(r => r.CreateRoleAsync(It.IsAny<AuthRoleModel>())).ThrowsAsync(roleNotImplemented);
+        _mockRoleService
+            .Setup(r => r.UpdateRoleAsync(It.IsAny<AuthRoleModel>()))
+            .ThrowsAsync(roleNotImplemented);
+        _mockRoleService.Setup(r => r.DeleteRoleAsync(It.IsAny<Guid>())).ThrowsAsync(roleNotImplemented);
 
         _authorizationService = new AuthorizationService(
             _mockPostgreSqlService.Object,
@@ -69,7 +104,7 @@ public class AuthorizationServiceCrudTests
     public async Task GetSubjectByIdAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var subjectId = "test-subject-id";
+        var subjectId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -85,7 +120,7 @@ public class AuthorizationServiceCrudTests
     public async Task GetSubjectByIdAsync_WithNonExistentId_ThrowsNotImplementedException()
     {
         // Arrange
-        var nonExistentId = "nonexistent-id";
+        var nonExistentId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -101,7 +136,7 @@ public class AuthorizationServiceCrudTests
     public async Task CreateSubjectAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var subjectToCreate = new Subject
+        var subjectToCreate = new LegacySubject
         {
             Name = "New Subject",
             Roles = new List<string> { "user" },
@@ -121,9 +156,9 @@ public class AuthorizationServiceCrudTests
     public async Task UpdateSubjectAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var subjectToUpdate = new Subject
+        var subjectToUpdate = new LegacySubject
         {
-            Id = "123",
+            Id = Guid.NewGuid().ToString(),
             Name = "Updated Subject",
             AccessToken = "token123",
             Roles = new List<string> { "admin" },
@@ -143,7 +178,7 @@ public class AuthorizationServiceCrudTests
     public async Task UpdateSubjectAsync_WithNonExistentSubject_ThrowsNotImplementedException()
     {
         // Arrange
-        var subjectToUpdate = new Subject { Id = "nonexistent", Name = "Test Subject" };
+        var subjectToUpdate = new LegacySubject { Id = Guid.NewGuid().ToString(), Name = "Test Subject" };
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -175,7 +210,7 @@ public class AuthorizationServiceCrudTests
     public async Task DeleteSubjectAsync_WithNonExistentId_ThrowsNotImplementedException()
     {
         // Arrange
-        var nonExistentId = "nonexistent-id";
+        var nonExistentId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -211,7 +246,7 @@ public class AuthorizationServiceCrudTests
     public async Task GetRoleByIdAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var roleId = "test-role-id";
+        var roleId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -227,7 +262,7 @@ public class AuthorizationServiceCrudTests
     public async Task CreateRoleAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var roleToCreate = new Role
+        var roleToCreate = new LegacyRole
         {
             Name = "editor",
             Permissions = new List<string> { "api:*:read", "api:treatments:update" },
@@ -247,9 +282,9 @@ public class AuthorizationServiceCrudTests
     public async Task UpdateRoleAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var roleToUpdate = new Role
+        var roleToUpdate = new LegacyRole
         {
-            Id = "456",
+            Id = Guid.NewGuid().ToString(),
             Name = "updated-moderator",
             Permissions = new List<string> { "api:*:read" },
         };
@@ -268,7 +303,7 @@ public class AuthorizationServiceCrudTests
     public async Task DeleteRoleAsync_ThrowsNotImplementedException()
     {
         // Arrange
-        var roleId = "test-role-id";
+        var roleId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
@@ -284,7 +319,7 @@ public class AuthorizationServiceCrudTests
     public async Task DeleteRoleAsync_WithNonExistentId_ThrowsNotImplementedException()
     {
         // Arrange
-        var nonExistentId = "nonexistent-id";
+        var nonExistentId = Guid.NewGuid().ToString();
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>

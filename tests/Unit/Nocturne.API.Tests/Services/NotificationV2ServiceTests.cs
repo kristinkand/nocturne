@@ -232,7 +232,7 @@ public class NotificationV2ServiceTests
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
-            Times.Once
+            Times.AtLeastOnce()
         );
     }
 

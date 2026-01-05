@@ -20,7 +20,7 @@ public static class TreatmentMapper
             Id = string.IsNullOrEmpty(treatment.Id)
                 ? Guid.CreateVersion7()
                 : ParseIdToGuid(treatment.Id),
-            OriginalId = MongoIdUtils.IsValidMongoId(treatment.Id) ? treatment.Id : null,
+            OriginalId = string.IsNullOrEmpty(treatment.Id) ? null : treatment.Id,
             EventType = treatment.EventType,
             Reason = treatment.Reason,
             Glucose = treatment.Glucose,
@@ -250,6 +250,11 @@ public static class TreatmentMapper
         // This ensures the same string ID always maps to the same GUID
         if (string.IsNullOrEmpty(id))
             return Guid.CreateVersion7();
+
+        if (Guid.TryParse(id, out var parsedGuid))
+        {
+            return parsedGuid;
+        }
 
         try
         {

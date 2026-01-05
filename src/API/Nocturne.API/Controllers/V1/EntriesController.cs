@@ -637,7 +637,11 @@ public class EntriesController : ControllerBase
                 // Set mills from date if not provided
                 if (entry.Mills == 0 && entry.Date.HasValue)
                 {
-                    entry.Mills = ((DateTimeOffset)entry.Date.Value).ToUnixTimeMilliseconds();
+                    var dateValue = entry.Date.Value;
+                    var dateOffset = dateValue.Kind == DateTimeKind.Unspecified
+                        ? new DateTimeOffset(dateValue, TimeSpan.Zero)
+                        : new DateTimeOffset(dateValue);
+                    entry.Mills = dateOffset.ToUnixTimeMilliseconds();
                 }
 
                 // Set dateString if not provided

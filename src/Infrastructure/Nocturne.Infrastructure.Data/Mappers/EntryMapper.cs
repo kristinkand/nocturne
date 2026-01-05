@@ -18,7 +18,7 @@ public static class EntryMapper
         return new EntryEntity
         {
             Id = string.IsNullOrEmpty(entry.Id) ? Guid.CreateVersion7() : ParseIdToGuid(entry.Id),
-            OriginalId = MongoIdUtils.IsValidMongoId(entry.Id) ? entry.Id : null,
+            OriginalId = string.IsNullOrEmpty(entry.Id) ? null : entry.Id,
             Mills = entry.Mills,
             DateString = entry.DateString,
             Mgdl = entry.Mgdl,
@@ -128,6 +128,11 @@ public static class EntryMapper
         // Hash the ID to get a deterministic GUID for consistent mapping
         if (string.IsNullOrEmpty(id))
             return Guid.CreateVersion7();
+
+        if (Guid.TryParse(id, out var parsedGuid))
+        {
+            return parsedGuid;
+        }
 
         try
         {

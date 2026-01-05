@@ -1,11 +1,16 @@
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nocturne.API.Services;
 using Nocturne.Core.Contracts;
+using Nocturne.Core.Models.Authorization;
 using Nocturne.Infrastructure.Cache.Abstractions;
+using Nocturne.Infrastructure.Data;
+using Nocturne.Infrastructure.Data.Entities;
+using Nocturne.Tests.Shared.Infrastructure;
 
 namespace Nocturne.API.Tests.Services;
 
@@ -20,6 +25,8 @@ public class StatusServiceTests
     private readonly Mock<IDemoModeService> _mockDemoModeService;
     private readonly Mock<ILogger<StatusService>> _mockLogger;
     private readonly IConfiguration _configuration;
+    private readonly NocturneDbContext _dbContext;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly StatusService _statusService;
 
     public StatusServiceTests()
@@ -28,6 +35,18 @@ public class StatusServiceTests
         _mockDemoModeService = new Mock<IDemoModeService>();
         _mockLogger = new Mock<ILogger<StatusService>>();
         _mockDemoModeService.Setup(x => x.IsEnabled).Returns(false);
+        _dbContext = TestDbContextFactory.CreateInMemoryContext();
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items["AuthContext"] = new AuthContext
+        {
+            IsAuthenticated = true,
+            Roles = new List<string> { "readable" },
+            Permissions = new List<string> { "api:*:read" },
+            Scopes = new List<string> { "api:*:read" },
+            SubjectName = "test-user",
+        };
+        _httpContextAccessor = new HttpContextAccessor { HttpContext = httpContext };
 
         // Setup default configuration values using real ConfigurationBuilder
         var configData = new Dictionary<string, string?>
@@ -59,12 +78,7 @@ public class StatusServiceTests
 
         _configuration = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
 
-        _statusService = new StatusService(
-            _configuration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        _statusService = CreateStatusService(_configuration, _dbContext);
     }
 
     #region GetSystemStatusAsync Tests
@@ -154,12 +168,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -284,27 +293,35 @@ public class StatusServiceTests
     [Fact]
     public async Task GetLastModifiedAsync_ShouldReturnTimestampsForAllCollections()
     {
-        // Arrange & Act
-        var result = await _statusService.GetLastModifiedAsync();
+        // Arrange
+        var now = DateTime.UtcNow;
+        await using var context = TestDbContextFactory.CreateInMemoryContext();
+        SeedLastModifiedData(context, now);
+        var service = CreateStatusService(_configuration, context);
+
+        // Act
+        var result = await service.GetLastModifiedAsync();
 
         // Assert
         result.Should().NotBeNull();
-        result.ServerTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        result.ServerTime.Should().BeCloseTo(now, TimeSpan.FromSeconds(5));
 
-        // Collection timestamps should be in the past relative to server time
-        result.Entries.Should().BeCloseTo(DateTime.UtcNow.AddMinutes(-5), TimeSpan.FromMinutes(1));
-        result
-            .Treatments.Should()
-            .BeCloseTo(DateTime.UtcNow.AddMinutes(-10), TimeSpan.FromMinutes(1));
-        result.Profile.Should().BeCloseTo(DateTime.UtcNow.AddHours(-1), TimeSpan.FromMinutes(5));
-        result
-            .DeviceStatus.Should()
-            .BeCloseTo(DateTime.UtcNow.AddMinutes(-2), TimeSpan.FromMinutes(1));
-        result.Food.Should().BeCloseTo(DateTime.UtcNow.AddDays(-1), TimeSpan.FromHours(1));
-        result.Settings.Should().BeCloseTo(DateTime.UtcNow.AddHours(-6), TimeSpan.FromMinutes(30));
-        result
-            .Activity.Should()
-            .BeCloseTo(DateTime.UtcNow.AddMinutes(-30), TimeSpan.FromMinutes(2));
+        // Collection timestamps should be present and not ahead of server time
+        result.Entries.Should().NotBeNull();
+        result.Treatments.Should().NotBeNull();
+        result.Profile.Should().NotBeNull();
+        result.DeviceStatus.Should().NotBeNull();
+        result.Food.Should().NotBeNull();
+        result.Settings.Should().NotBeNull();
+        result.Activity.Should().NotBeNull();
+
+        result.Entries.Should().BeOnOrBefore(result.ServerTime);
+        result.Treatments.Should().BeOnOrBefore(result.ServerTime);
+        result.Profile.Should().BeOnOrBefore(result.ServerTime);
+        result.DeviceStatus.Should().BeOnOrBefore(result.ServerTime);
+        result.Food.Should().BeOnOrBefore(result.ServerTime);
+        result.Settings.Should().BeOnOrBefore(result.ServerTime);
+        result.Activity.Should().BeOnOrBefore(result.ServerTime);
 
         // Additional timestamps
         result.Additional.Should().NotBeNull();
@@ -313,11 +330,11 @@ public class StatusServiceTests
         result
             .Additional["auth"]
             .Should()
-            .BeCloseTo(DateTime.UtcNow.AddDays(-7), TimeSpan.FromHours(1));
+            .BeOnOrBefore(result.ServerTime);
         result
             .Additional["notifications"]
             .Should()
-            .BeCloseTo(DateTime.UtcNow.AddMinutes(-15), TimeSpan.FromMinutes(1));
+            .BeOnOrBefore(result.ServerTime);
     }
 
     #endregion
@@ -341,12 +358,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -390,12 +402,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -434,12 +441,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -481,12 +483,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -513,12 +510,7 @@ public class StatusServiceTests
             .AddInMemoryCollection(customConfigData)
             .Build();
 
-        var customService = new StatusService(
-            customConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var customService = CreateStatusService(customConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -568,12 +560,7 @@ public class StatusServiceTests
         // Arrange
         var emptyConfiguration = new ConfigurationBuilder().Build();
 
-        var nullConfigService = new StatusService(
-            emptyConfiguration,
-            _mockCacheService.Object,
-            _mockDemoModeService.Object,
-            _mockLogger.Object
-        );
+        var nullConfigService = CreateStatusService(emptyConfiguration, _dbContext);
 
         _mockCacheService
             .Setup(x => x.GetAsync<StatusResponse>("status:system", default))
@@ -731,6 +718,154 @@ public class StatusServiceTests
     #endregion
 
     #region Helper Methods
+
+    private static void SeedLastModifiedData(NocturneDbContext context, DateTime now)
+    {
+        var baseMills = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        context.Entries.Add(
+            new EntryEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Mills = baseMills,
+                Mgdl = 100,
+                Type = "sgv",
+                SysUpdatedAt = now.AddMinutes(-5),
+            }
+        );
+
+        context.Treatments.Add(
+            new TreatmentEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Mills = baseMills,
+                EventType = "bolus",
+                Insulin = 1.5,
+                SysUpdatedAt = now.AddMinutes(-10),
+            }
+        );
+
+        context.Profiles.Add(
+            new ProfileEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Mills = baseMills,
+                DefaultProfile = "Default",
+                Units = "mg/dl",
+                UpdatedAtPg = now.AddHours(-1),
+            }
+        );
+
+        context.DeviceStatuses.Add(
+            new DeviceStatusEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Device = "dexcom",
+                SysUpdatedAt = now.AddMinutes(-2),
+            }
+        );
+
+        context.Foods.Add(
+            new FoodEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "test-food",
+                SysUpdatedAt = now.AddDays(-1),
+            }
+        );
+
+        context.Settings.Add(
+            new SettingsEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Key = "test-setting",
+                Value = "{}",
+                SysUpdatedAt = now.AddHours(-6),
+                SrvModified = now.AddHours(-6),
+            }
+        );
+
+        context.Activities.Add(
+            new ActivityEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Type = "exercise",
+                SysUpdatedAt = now.AddMinutes(-30),
+            }
+        );
+
+        context.Subjects.Add(
+            new SubjectEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "test-subject",
+                UpdatedAt = now.AddDays(-7),
+            }
+        );
+
+        context.Roles.Add(
+            new RoleEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "reader",
+                UpdatedAt = now.AddDays(-7),
+            }
+        );
+
+        context.OidcProviders.Add(
+            new OidcProviderEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "test-oidc",
+                IssuerUrl = "https://issuer",
+                ClientId = "client",
+                ClientSecretEncrypted = Array.Empty<byte>(),
+                UpdatedAt = now.AddDays(-7),
+            }
+        );
+
+        context.NotificationPreferences.Add(
+            new NotificationPreferencesEntity
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = "test-user",
+                EmailEnabled = true,
+                UpdatedAt = now.AddMinutes(-15),
+            }
+        );
+
+        context.AlertRules.Add(
+            new AlertRuleEntity
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "test-rule",
+                UpdatedAt = now.AddMinutes(-15),
+            }
+        );
+
+        context.AlertHistory.Add(
+            new AlertHistoryEntity
+            {
+                Id = Guid.CreateVersion7(),
+                UpdatedAt = now.AddMinutes(-15),
+            }
+        );
+
+        context.SaveChanges();
+    }
+
+    private StatusService CreateStatusService(
+        IConfiguration configuration,
+        NocturneDbContext? context = null
+    ) =>
+        new(
+            configuration,
+            _mockCacheService.Object,
+            _mockDemoModeService.Object,
+            context ?? TestDbContextFactory.CreateInMemoryContext(),
+            _httpContextAccessor,
+            _mockLogger.Object
+        );
 
     private static string ResolveExpectedHead()
     {

@@ -657,9 +657,10 @@ namespace Nocturne.Connectors.Glooko.Services
                                     matchingInsulin.PumpTimestamp
                                 );
                                 treatment.EventType = "Meal Bolus";
-                                treatment.EventType = "Meal Bolus";
-                                treatment.CreatedAt = GetCorrectedGlookoTime(insulinDate)
+                                var correctedInsulinTime = GetCorrectedGlookoTime(insulinDate)
                                     .ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                                treatment.CreatedAt = correctedInsulinTime;
+                                treatment.EventTime = correctedInsulinTime;
                                 treatment.Insulin = matchingInsulin.Value;
                                 treatment.PreBolus = (foodDate - insulinDate).TotalMinutes;
                                 treatment.Id = GenerateTreatmentId(
@@ -671,8 +672,10 @@ namespace Nocturne.Connectors.Glooko.Services
                             else
                             {
                                 treatment.EventType = "Carb Correction";
-                                treatment.CreatedAt = GetCorrectedGlookoTime(foodDate)
+                                var correctedFoodTime = GetCorrectedGlookoTime(foodDate)
                                     .ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                                treatment.CreatedAt = correctedFoodTime;
+                                treatment.EventTime = correctedFoodTime;
                                 treatment.Id = GenerateTreatmentId(
                                     "Carb Correction",
                                     foodDate,

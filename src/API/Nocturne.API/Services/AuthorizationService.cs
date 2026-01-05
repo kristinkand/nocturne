@@ -167,7 +167,10 @@ public class AuthorizationService : IAuthorizationService, IDisposable
                 }
             }
 
-            return new PermissionsResponse { Permissions = permissions.OrderBy(p => p.Name).ToList() };
+            return new PermissionsResponse
+            {
+                Permissions = permissions.OrderBy(p => p.Name).ToList(),
+            };
         }
         catch (Exception ex)
         {
@@ -186,7 +189,6 @@ public class AuthorizationService : IAuthorizationService, IDisposable
         {
             _logger.LogDebug("Building permission trie structure");
 
-            // TODO: Implement Role management in PostgreSQL service
             var roles = await _roleService.GetAllRolesAsync();
 
             var allPermissions = new HashSet<string>();

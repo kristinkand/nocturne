@@ -14,7 +14,11 @@ namespace Nocturne.API.Services;
 /// </summary>
 public class OpenApsService : IOpenApsService
 {
-    private readonly ILogger<OpenApsService> _logger; // Constants from legacy implementation
+    private readonly ILogger<OpenApsService> _logger;
+    private const int LevelNone = -3;
+    private const int LevelWarn = 1;
+    private const int LevelUrgent = 2;
+    // Constants from legacy implementation
     private const int RECENT_HOURS = 6; // CHECKME: Legacy uses dia*2, defaulting to 6 hours for compatibility
     private const string DEFAULT_PRED_IOB_COLOR = "#1e88e5";
     private const string DEFAULT_PRED_COB_COLOR = "#FB8C00";
@@ -192,18 +196,18 @@ public class OpenApsService : IOpenApsService
     )
     {
         if (!preferences.EnableAlerts)
-            return 0; // NONE
+            return LevelNone; // NONE
 
         if (analysisResult.LastLoopMoment == null)
         {
             _logger.LogInformation("OpenAPS hasn't reported a loop yet");
-            return 0; // NONE
+            return LevelNone; // NONE
         }
 
         if (offlineMarker != null)
         {
             _logger.LogInformation("OpenAPS known offline, not checking for alerts");
-            return 0; // NONE
+            return LevelNone; // NONE
         }
 
         var urgentTime = analysisResult.LastLoopMoment.Value.AddMinutes(preferences.Urgent);
@@ -211,14 +215,14 @@ public class OpenApsService : IOpenApsService
 
         if (urgentTime < currentTime)
         {
-            return 2; // URGENT
+            return LevelUrgent; // URGENT
         }
         else if (warningTime < currentTime)
         {
-            return 1; // WARN
+            return LevelWarn; // WARN
         }
 
-        return 0; // NONE
+        return LevelNone; // NONE
     }
 
     /// <summary>

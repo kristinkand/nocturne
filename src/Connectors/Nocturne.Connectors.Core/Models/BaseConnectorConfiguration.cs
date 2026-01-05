@@ -12,7 +12,7 @@ namespace Nocturne.Connectors.Core.Models
     /// </summary>
     public abstract class BaseConnectorConfiguration : IConnectorConfiguration
     {
-        private string _dataDirectory = "data";
+        private string _dataDirectory = "./data";
         private string? _contentRootPath;
 
         [Required]
@@ -55,7 +55,7 @@ namespace Nocturne.Connectors.Core.Models
 
         public int MaxRetryAttempts { get; set; } = 3;
 
-        public int BatchSize { get; set; } = 250;
+        public int BatchSize { get; set; } = 50;
 
         /// <summary>
         /// Timezone offset in hours (default 0).
@@ -127,8 +127,13 @@ namespace Nocturne.Connectors.Core.Models
                 return _dataDirectory;
             }
 
+            if (string.IsNullOrEmpty(_contentRootPath))
+            {
+                return _dataDirectory;
+            }
+
             // Determine the base path to resolve against
-            var basePath = _contentRootPath ?? AppContext.BaseDirectory;
+            var basePath = _contentRootPath;
 
             return Path.GetFullPath(Path.Combine(basePath, _dataDirectory));
         }
