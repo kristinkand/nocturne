@@ -584,17 +584,23 @@ public class OpenApsService : IOpenApsService
 
     /// <summary>
     /// Process device status IOB data (legacy array handling)
+    /// Normalizes array format to single object for consistent downstream processing
     /// </summary>
     private static DeviceStatus ProcessDeviceStatusIob(DeviceStatus status)
     {
         // Handle legacy array format for IOB - convert array to single object if needed
-        if (status.OpenAps?.Iob != null)
+        // Legacy JS: if (status.openaps && Array.isArray(status.openaps.iob) && status.openaps.iob.length > 0)
+        //            status.openaps.iob = status.openaps.iob[0];
+        if (status.OpenAps?.Iob is JsonElement element && element.ValueKind == JsonValueKind.Array)
         {
-            // Legacy JS: if (status.openaps && Array.isArray(status.openaps.iob) && status.openaps.iob.length > 0)
-            // In the legacy JS, IOB could be an array, and we'd take the first item
-            // Since we're dealing with object?, we need to handle this carefully
-            // For now, we'll assume the IOB is already in the correct format
-            // The actual conversion should happen during deserialization
+            if (element.GetArrayLength() > 0)
+            {
+                status.OpenAps.Iob = element[0];
+            }
+            else
+            {
+                status.OpenAps.Iob = null;
+            }
         }
         return status;
     }
