@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
@@ -85,16 +87,15 @@ public class FoodService : IFoodService
     {
         try
         {
-            var foodList = foods.ToList();
+            var foodList = foods.Where(f => f != null).ToList();
             _logger.LogDebug("Creating {Count} food records", foodList.Count);
 
-            // TODO: Process documents (sanitization, timestamp conversion, deduplication)
-            // Currently Food model doesn't implement IProcessableDocument
-            // var processedFoods = _documentProcessingService.ProcessDocuments(foodList, enableDeduplication: true);
+            var processedFoods = ProcessFoodDocuments(foodList);
+            var processedList = processedFoods.ToList();
 
             // Create in database
             var createdFoods = await _postgreSqlService.CreateFoodAsync(
-                foodList,
+                processedList,
                 cancellationToken
             );
             var resultList = createdFoods.ToList();
@@ -117,6 +118,132 @@ public class FoodService : IFoodService
         {
             _logger.LogError(ex, "Error creating food records");
             throw;
+        }
+
+        IEnumerable<Food> ProcessFoodDocuments(IEnumerable<Food> documents)
+        {
+            var processed = new List<Food>();
+            var seenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var food in documents)
+            {
+                SanitizeFood(food);
+
+                var dedupKey = BuildDedupKey(food);
+                if (!seenKeys.Add(dedupKey))
+                {
+                    _logger.LogDebug("Skipping duplicate food entry with key {Key}", dedupKey);
+                    continue;
+                }
+
+                processed.Add(food);
+            }
+
+            return processed;
+        }
+
+        void SanitizeFood(Food food)
+        {
+            food.Type = Sanitize(food.Type, "food");
+            food.Category = Sanitize(food.Category);
+            food.Subcategory = Sanitize(food.Subcategory);
+            food.Name = Sanitize(food.Name);
+            food.Unit = Sanitize(food.Unit, "g");
+
+            if (food.Gi < 1 || food.Gi > 3)
+            {
+                food.Gi = 2;
+            }
+
+            if (food.Foods == null || food.Foods.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var quickPick in food.Foods)
+            {
+                quickPick.Name = Sanitize(quickPick.Name);
+                quickPick.Unit = Sanitize(quickPick.Unit, quickPick.Unit ?? string.Empty);
+            }
+        }
+
+        string Sanitize(string? value, string defaultValue = "")
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return defaultValue;
+            }
+
+            var sanitized = _documentProcessingService.SanitizeHtml(value);
+            if (string.IsNullOrWhiteSpace(sanitized))
+            {
+                return value.Trim();
+            }
+
+            return sanitized.Trim();
+        }
+
+        string BuildDedupKey(Food food)
+        {
+            var builder = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(food.Id))
+            {
+                builder.Append(food.Id).Append('|');
+            }
+
+            builder
+                .Append(food.Type)
+                .Append('|')
+                .Append(food.Name)
+                .Append('|')
+                .Append(food.Category)
+                .Append('|')
+                .Append(food.Subcategory)
+                .Append('|')
+                .Append(food.Unit)
+                .Append('|')
+                .Append(food.Portion.ToString(CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(food.Carbs.ToString(CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(food.Fat.ToString(CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(food.Protein.ToString(CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(food.Energy.ToString(CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(food.Gi)
+                .Append('|')
+                .Append(food.Position)
+                .Append('|')
+                .Append(food.HideAfterUse)
+                .Append('|')
+                .Append(food.Hidden);
+
+            if (food.Foods?.Count > 0)
+            {
+                foreach (
+                    var quickPick in food.Foods.OrderBy(
+                        f => f.Name,
+                        StringComparer.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    builder
+                        .Append('|')
+                        .Append(quickPick.Name)
+                        .Append(':')
+                        .Append(quickPick.Unit)
+                        .Append(':')
+                        .Append(quickPick.Portion.ToString(CultureInfo.InvariantCulture))
+                        .Append(':')
+                        .Append(quickPick.Portions.ToString(CultureInfo.InvariantCulture))
+                        .Append(':')
+                        .Append(quickPick.Carbs.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            return builder.ToString();
         }
     }
 
