@@ -186,6 +186,7 @@ builder.Services.AddOrefService(options =>
 builder.Services.AddScoped<IDirectionService, DirectionService>();
 builder.Services.AddScoped<INotificationV2Service, NotificationV2Service>();
 builder.Services.AddScoped<INotificationV1Service, NotificationV1Service>();
+builder.Services.AddScoped<IApnsClientFactory, ApnsClientFactory>();
 builder.Services.AddScoped<ILoopService, LoopService>();
 builder.Services.AddScoped<IOpenApsService, OpenApsService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();

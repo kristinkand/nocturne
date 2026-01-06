@@ -15,50 +15,30 @@ public class LoopService : ILoopService, IDisposable
 {
     private readonly ILogger<LoopService> _logger;
     private readonly LoopConfiguration _configuration;
-    private readonly IApnsClient? _apnsClient;
-    private readonly HttpClient _httpClient;
+    private readonly IApnsClientFactory _apnsClientFactory;
     private bool disposedValue;
 
     public LoopService(
         ILogger<LoopService> logger,
         IOptions<LoopConfiguration> configuration,
-        IHttpClientFactory httpClientFactory
+        IApnsClientFactory apnsClientFactory
     )
     {
         _logger = logger;
         _configuration = configuration.Value;
-        _httpClient = httpClientFactory.CreateClient("dotAPNS");
+        _apnsClientFactory = apnsClientFactory;
 
-        // Initialize APNS client if configuration is valid
-        if (IsConfigurationValid())
+        if (_apnsClientFactory.IsConfigured)
         {
-            try
-            {
-                var apnsOptions = new ApnsJwtOptions
-                {
-                    KeyId = _configuration.ApnsKeyId!,
-                    TeamId = _configuration.DeveloperTeamId!,
-                    CertContent = _configuration.ApnsKey!,
-                    BundleId = string.Empty, // Will be set per notification from loopSettings
-                };
-
-                _apnsClient = ApnsClient.CreateUsingJwt(_httpClient, apnsOptions);
-
-                _logger.LogInformation(
-                    "Loop service initialized successfully with {Environment} APNS environment",
-                    _configuration.PushServerEnvironment ?? "development"
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to initialize APNS client for Loop notifications");
-                _apnsClient = null;
-            }
+            _logger.LogInformation(
+                "Loop service initialized successfully with {Environment} APNS environment",
+                _configuration.PushServerEnvironment ?? "development"
+            );
         }
         else
         {
             _logger.LogWarning(
-                "Loop service configuration is invalid, APNS client not initialized"
+                "Loop service configuration is invalid, APNS client not available"
             );
         }
     }
@@ -129,7 +109,7 @@ public class LoopService : ILoopService, IDisposable
     /// </summary>
     public bool IsConfigurationValid()
     {
-        return ValidateConfiguration().IsValid;
+        return _apnsClientFactory.IsConfigured;
     }
 
     /// <summary>
@@ -137,18 +117,16 @@ public class LoopService : ILoopService, IDisposable
     /// </summary>
     public object GetConfigurationStatus()
     {
-        var validation = ValidateConfiguration();
-
         return new
         {
-            IsValid = validation.IsValid,
-            Message = validation.ErrorMessage ?? "Configuration is valid",
+            IsValid = _apnsClientFactory.IsConfigured,
+            Message = _apnsClientFactory.IsConfigured ? "Configuration is valid" : "Configuration is invalid",
             HasApnsKey = !string.IsNullOrEmpty(_configuration.ApnsKey),
             HasApnsKeyId = !string.IsNullOrEmpty(_configuration.ApnsKeyId),
             HasDeveloperTeamId = !string.IsNullOrEmpty(_configuration.DeveloperTeamId)
                 && _configuration.DeveloperTeamId.Length == 10,
             PushServerEnvironment = _configuration.PushServerEnvironment ?? "development",
-            ApnsClientInitialized = _apnsClient != null,
+            ApnsClientFactoryConfigured = _apnsClientFactory.IsConfigured,
         };
     }
 
@@ -220,17 +198,19 @@ public class LoopService : ILoopService, IDisposable
         CancellationToken cancellationToken
     )
     {
-        if (_apnsClient == null)
-        {
-            return CreateErrorResponse("APNS client not initialized");
-        }
-
         // Build payload and alert message based on event type (matches legacy logic exactly)
         var (payload, alert, isValid, errorMessage) = BuildNotificationPayload(data, remoteAddress);
 
         if (!isValid)
         {
             return CreateErrorResponse(errorMessage!);
+        }
+
+        // Create APNS client for this bundle ID using the factory
+        var apnsClient = _apnsClientFactory.CreateClient(loopSettings.BundleIdentifier!);
+        if (apnsClient == null)
+        {
+            return CreateErrorResponse("APNS client not initialized");
         }
 
         // Create APNS push notification using the correct dotAPNS API
@@ -244,25 +224,14 @@ public class LoopService : ILoopService, IDisposable
         {
             push.AddCustomProperty(kvp.Key, kvp.Value);
         }
+
         try
         {
-            // Update bundle ID for this specific push
-            var pushOptions = new ApnsJwtOptions
-            {
-                KeyId = _configuration.ApnsKeyId!,
-                TeamId = _configuration.DeveloperTeamId!,
-                CertContent = _configuration.ApnsKey!,
-                BundleId = loopSettings.BundleIdentifier!,
-            };
-
-            // Create client specifically for this bundle ID
-            var bundleSpecificClient = ApnsClient.CreateUsingJwt(_httpClient, pushOptions);
-
             LoopNotificationResponse result;
             try
             {
                 // Send notification via APNS
-                var response = await bundleSpecificClient.SendAsync(push);
+                var response = await apnsClient.SendAsync(push);
 
                 if (response.IsSuccessful)
                 {
@@ -301,8 +270,8 @@ public class LoopService : ILoopService, IDisposable
             }
             finally
             {
-                // Dispose the bundle-specific client if it implements IDisposable
-                if (bundleSpecificClient is IDisposable disposableClient)
+                // Dispose the client if it implements IDisposable
+                if (apnsClient is IDisposable disposableClient)
                 {
                     disposableClient.Dispose();
                 }
@@ -497,11 +466,7 @@ public class LoopService : ILoopService, IDisposable
         {
             if (disposing)
             {
-                // Dispose of the APNS client if it implements IDisposable
-                if (_apnsClient is IDisposable disposableApnsClient)
-                {
-                    disposableApnsClient.Dispose();
-                }
+                // Factory manages its own resources
             }
 
             disposedValue = true;

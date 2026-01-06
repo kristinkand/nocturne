@@ -178,7 +178,7 @@ Legacy tests from the original Nocturne application are marked with the `[Parity
 [ ] - dateTools.test.js
 [ ] - dbsize.test.js
 [ ] - ddata.test.js
-[ ] - direction.test.js
+[x] - direction.test.js (DirectionServiceTests)
 [ ] - env.test.js
 [ ] - errorcodes.test.js
 [ ] - expressextensions.test.js
@@ -187,7 +187,7 @@ Legacy tests from the original Nocturne application are marked with the `[Parity
 [ ] - insulinage.test.js
 [ ] - iob.test.js
 [ ] - language.test.js
-[ ] - levels.test.js
+[x] - levels.test.js (LevelsTests)
 [ ] - loop.test.js
 [ ] - maker.test.js
 [ ] - mmconnect.test.js
@@ -213,11 +213,11 @@ Legacy tests from the original Nocturne application are marked with the `[Parity
 [ ] - sensorage.test.js
 [ ] - settings.test.js
 [ ] - simplealarms.test.js
-[ ] - timeago.test.js
-[ ] - times.test.js
+[x] - timeago.test.js (TimeAgoTests)
+[x] - times.test.js (TimesTests)
 [ ] - treatmentnotify.test.js
-[ ] - units.test.js
+[x] - units.test.js (UnitsTests)
 [ ] - upbat.test.js
-[ ] - utils.test.js
+[x] - utils.test.js (UtilsTests)
 [ ] - verifyauth.test.js
 [ ] - XX_clean.test.js

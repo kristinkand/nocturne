@@ -8,6 +8,7 @@ namespace Nocturne.API.Tests.Services;
 /// Tests for Direction service functionality with 1:1 legacy compatibility
 /// Based on legacy direction.test.js and bgnow.test.js
 /// </summary>
+[Parity("direction.test.js")]
 public class DirectionServiceTests
 {
     private readonly DirectionService _directionService;

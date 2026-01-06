@@ -6,6 +6,7 @@ namespace Nocturne.API.Tests.Services;
 /// Tests for notification levels constants with 1:1 legacy compatibility
 /// Based on legacy levels.test.js
 /// </summary>
+[Parity("levels.test.js")]
 public class LevelsTests
 {
     [Fact]

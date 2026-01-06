@@ -6,6 +6,7 @@ namespace Nocturne.API.Tests.Services;
 /// Tests for time conversion utilities with 1:1 legacy compatibility
 /// Based on legacy times.test.js
 /// </summary>
+[Parity("times.test.js")]
 public class TimesTests
 {
     [Fact]

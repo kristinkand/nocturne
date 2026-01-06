@@ -7,6 +7,7 @@ namespace Nocturne.API.Tests.Services;
 /// Tests for utility functions with 1:1 legacy compatibility
 /// Based on legacy utils.test.js
 /// </summary>
+[Parity("utils.test.js")]
 public class UtilsTests
 {
     [Fact]
@@ -20,7 +21,7 @@ public class UtilsTests
     public void ToRoundedStr_ShouldFormatNumbersWithVariousPrecision()
     {
         // Arrange & Act & Assert
-        Assert.Equal("3.34", Utils.ToRoundedStr(3.345, 2)); // Default rounding behavior
+        Assert.Equal("3.35", Utils.ToRoundedStr(3.345, 2));
         Assert.Equal("5", Utils.ToRoundedStr(5.499999999, 0));
         Assert.Equal("5.5", Utils.ToRoundedStr(5.499999999, 1));
         Assert.Equal("5.5", Utils.ToRoundedStr(5.499999999, 3));
@@ -63,7 +64,13 @@ public static class Utils
     /// </summary>
     public static string ToFixed(double value, int decimals = 2)
     {
-        return value.ToString($"F{decimals}", CultureInfo.InvariantCulture);
+        if (value == 0)
+        {
+            return "0";
+        }
+
+        var fixedValue = value.ToString($"F{decimals}", CultureInfo.InvariantCulture);
+        return fixedValue == "-0.00" ? "0.00" : fixedValue;
     }
 
     /// <summary>
@@ -76,30 +83,26 @@ public static class Utils
             return "0";
         }
 
-        if (precision < 0)
-        {
-            // Negative precision rounds to tens, hundreds, etc.
-            var factor = Math.Pow(10, Math.Abs(precision));
-            numValue = Math.Round(numValue / factor) * factor;
-            return numValue.ToString("F0", CultureInfo.InvariantCulture);
-        }
-
-        // Handle very small numbers
-        if (Math.Abs(numValue) < Math.Pow(10, -precision) / 2)
+        if (numValue == 0)
         {
             return "0";
         }
 
-        var rounded = Math.Round(numValue, precision);
+        var factor = Math.Pow(10, precision);
+        var fixedValue =
+            Math.Sign(numValue)
+            * Math.Round(
+                Math.Abs(numValue) * factor,
+                MidpointRounding.AwayFromZero
+            )
+            / factor;
 
-        // Remove trailing zeros for display
-        var formatted = rounded.ToString($"F{precision}", CultureInfo.InvariantCulture);
-        if (precision > 0 && formatted.Contains('.'))
+        if (double.IsNaN(fixedValue) || double.IsInfinity(fixedValue))
         {
-            formatted = formatted.TrimEnd('0').TrimEnd('.');
+            return "0";
         }
 
-        return formatted;
+        return fixedValue.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>
