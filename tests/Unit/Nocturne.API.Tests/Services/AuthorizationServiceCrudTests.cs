@@ -42,36 +42,6 @@ public class AuthorizationServiceCrudTests
             .Setup(c => c["JwtSettings:SecretKey"])
             .Returns("TestSecretKeyForNightscout");
 
-        var subjectNotImplemented = new NotImplementedException(
-            "PostgreSQL adapter for Subject is not implemented"
-        );
-        _mockSubjectService
-            .Setup(s => s.GetSubjectsAsync())
-            .ThrowsAsync(subjectNotImplemented);
-        _mockSubjectService
-            .Setup(s => s.GetSubjectByIdAsync(It.IsAny<Guid>()))
-            .ThrowsAsync(subjectNotImplemented);
-        _mockSubjectService
-            .Setup(s => s.CreateSubjectAsync(It.IsAny<AuthSubjectModel>()))
-            .ThrowsAsync(subjectNotImplemented);
-        _mockSubjectService
-            .Setup(s => s.UpdateSubjectAsync(It.IsAny<AuthSubjectModel>()))
-            .ThrowsAsync(subjectNotImplemented);
-        _mockSubjectService
-            .Setup(s => s.DeleteSubjectAsync(It.IsAny<Guid>()))
-            .ThrowsAsync(subjectNotImplemented);
-
-        var roleNotImplemented = new NotImplementedException(
-            "PostgreSQL adapter for Role is not implemented"
-        );
-        _mockRoleService.Setup(r => r.GetAllRolesAsync()).ThrowsAsync(roleNotImplemented);
-        _mockRoleService.Setup(r => r.GetRoleByIdAsync(It.IsAny<Guid>())).ThrowsAsync(roleNotImplemented);
-        _mockRoleService.Setup(r => r.CreateRoleAsync(It.IsAny<AuthRoleModel>())).ThrowsAsync(roleNotImplemented);
-        _mockRoleService
-            .Setup(r => r.UpdateRoleAsync(It.IsAny<AuthRoleModel>()))
-            .ThrowsAsync(roleNotImplemented);
-        _mockRoleService.Setup(r => r.DeleteRoleAsync(It.IsAny<Guid>())).ThrowsAsync(roleNotImplemented);
-
         _authorizationService = new AuthorizationService(
             _mockPostgreSqlService.Object,
             _mockConfiguration.Object,
@@ -85,141 +55,294 @@ public class AuthorizationServiceCrudTests
     #region Subject CRUD Tests
 
     [Fact]
-    public async Task GetAllSubjectsAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetAllSubjectsAsync_ReturnsSubjectsFromService()
     {
         // Arrange
-        // No setup needed since the method currently throws NotImplementedException
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.GetAllSubjectsAsync()
-        );
-
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
-    }
-
-    [Fact]
-    public async Task GetSubjectByIdAsync_ThrowsNotImplementedException()
-    {
-        // Arrange
-        var subjectId = Guid.NewGuid().ToString();
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.GetSubjectByIdAsync(subjectId)
-        );
-
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
-    }
-
-    [Fact]
-    public async Task GetSubjectByIdAsync_WithNonExistentId_ThrowsNotImplementedException()
-    {
-        // Arrange
-        var nonExistentId = Guid.NewGuid().ToString();
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.GetSubjectByIdAsync(nonExistentId)
-        );
-
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
-    }
-
-    [Fact]
-    public async Task CreateSubjectAsync_ThrowsNotImplementedException()
-    {
-        // Arrange
-        var subjectToCreate = new LegacySubject
+        var authSubjects = new List<AuthSubjectModel>
         {
-            Name = "New Subject",
-            Roles = new List<string> { "user" },
+            new AuthSubjectModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Subject 1",
+                Type = SubjectType.Device,
+                IsActive = true,
+                Roles = new List<AuthRoleModel>
+                {
+                    new AuthRoleModel { Name = "api", Permissions = new List<string> { "api:*" } }
+                }
+            },
+            new AuthSubjectModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Subject 2",
+                Type = SubjectType.User,
+                Email = "test@example.com",
+                IsActive = true,
+                Roles = new List<AuthRoleModel>()
+            }
         };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.CreateSubjectAsync(subjectToCreate)
-        );
+        _mockSubjectService
+            .Setup(s => s.GetSubjectsAsync(null))
+            .ReturnsAsync(authSubjects);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
+        // Act
+        var result = await _authorizationService.GetAllSubjectsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Test Subject 1", result[0].Name);
+        Assert.Equal("Test Subject 2", result[1].Name);
+        _mockSubjectService.Verify(s => s.GetSubjectsAsync(null), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateSubjectAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetSubjectByIdAsync_WithValidId_ReturnsSubject()
     {
         // Arrange
-        var subjectToUpdate = new LegacySubject
+        var subjectId = Guid.NewGuid();
+        var authSubject = new AuthSubjectModel
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = "Updated Subject",
-            AccessToken = "token123",
-            Roles = new List<string> { "admin" },
+            Id = subjectId,
+            Name = "Test Subject",
+            Type = SubjectType.Device,
+            IsActive = true,
+            Roles = new List<AuthRoleModel>()
         };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.UpdateSubjectAsync(subjectToUpdate)
-        );
+        _mockSubjectService
+            .Setup(s => s.GetSubjectByIdAsync(subjectId))
+            .ReturnsAsync(authSubject);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
+        // Act
+        var result = await _authorizationService.GetSubjectByIdAsync(subjectId.ToString());
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Test Subject", result.Name);
+        Assert.Equal(subjectId.ToString(), result.Id);
+        _mockSubjectService.Verify(s => s.GetSubjectByIdAsync(subjectId), Times.Once);
     }
 
     [Fact]
-    public async Task UpdateSubjectAsync_WithNonExistentSubject_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetSubjectByIdAsync_WithNonExistentId_ReturnsNull()
     {
         // Arrange
-        var subjectToUpdate = new LegacySubject { Id = Guid.NewGuid().ToString(), Name = "Test Subject" };
+        var subjectId = Guid.NewGuid();
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.UpdateSubjectAsync(subjectToUpdate)
-        );
+        _mockSubjectService
+            .Setup(s => s.GetSubjectByIdAsync(subjectId))
+            .ReturnsAsync((AuthSubjectModel?)null);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
+        // Act
+        var result = await _authorizationService.GetSubjectByIdAsync(subjectId.ToString());
+
+        // Assert
+        Assert.Null(result);
+        _mockSubjectService.Verify(s => s.GetSubjectByIdAsync(subjectId), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteSubjectAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetSubjectByIdAsync_WithInvalidGuidFormat_ReturnsNull()
     {
         // Arrange
-        var subjectId = "test-subject-id";
+        var invalidId = "not-a-valid-guid";
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.DeleteSubjectAsync(subjectId)
-        );
+        // Act
+        var result = await _authorizationService.GetSubjectByIdAsync(invalidId);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
+        // Assert
+        Assert.Null(result);
+        _mockSubjectService.Verify(s => s.GetSubjectByIdAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteSubjectAsync_WithNonExistentId_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task CreateSubjectAsync_CreatesAndReturnsSubjectWithAccessToken()
     {
         // Arrange
-        var nonExistentId = Guid.NewGuid().ToString();
+        var legacySubject = new LegacySubject
+        {
+            Name = "New Device Subject",
+            Roles = new List<string> { "api" }
+        };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.DeleteSubjectAsync(nonExistentId)
-        );
+        var createdSubject = new AuthSubjectModel
+        {
+            Id = Guid.NewGuid(),
+            Name = "New Device Subject",
+            Type = SubjectType.Service,
+            IsActive = true,
+            Roles = new List<AuthRoleModel>()
+        };
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Subject", exception.Message);
+        var creationResult = new SubjectCreationResult
+        {
+            Subject = createdSubject,
+            AccessToken = "generated-access-token-12345"
+        };
+
+        _mockSubjectService
+            .Setup(s => s.CreateSubjectAsync(It.IsAny<AuthSubjectModel>()))
+            .ReturnsAsync(creationResult);
+
+        _mockSubjectService
+            .Setup(s => s.AssignRoleAsync(createdSubject.Id, "api", null))
+            .ReturnsAsync(true);
+
+        _mockSubjectService
+            .Setup(s => s.GetSubjectRolesAsync(createdSubject.Id))
+            .ReturnsAsync(new List<string> { "api" });
+
+        // Act
+        var result = await _authorizationService.CreateSubjectAsync(legacySubject);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("New Device Subject", result.Name);
+        Assert.Equal("generated-access-token-12345", result.AccessToken);
+        Assert.Contains("api", result.Roles);
+        _mockSubjectService.Verify(s => s.CreateSubjectAsync(It.IsAny<AuthSubjectModel>()), Times.Once);
+        _mockSubjectService.Verify(s => s.AssignRoleAsync(createdSubject.Id, "api", null), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task UpdateSubjectAsync_WithExistingSubject_ReturnsUpdated()
+    {
+        // Arrange
+        var subjectId = Guid.NewGuid();
+        var legacySubject = new LegacySubject
+        {
+            Id = subjectId.ToString(),
+            Name = "Updated Subject Name",
+            Notes = "Updated notes",
+            Roles = new List<string> { "admin" }
+        };
+
+        var existingSubject = new AuthSubjectModel
+        {
+            Id = subjectId,
+            Name = "Original Subject Name",
+            Type = SubjectType.Device,
+            IsActive = true,
+            Roles = new List<AuthRoleModel>()
+        };
+
+        var updatedSubject = new AuthSubjectModel
+        {
+            Id = subjectId,
+            Name = "Updated Subject Name",
+            Notes = "Updated notes",
+            Type = SubjectType.Device,
+            IsActive = true,
+            Roles = new List<AuthRoleModel>()
+        };
+
+        _mockSubjectService
+            .Setup(s => s.GetSubjectByIdAsync(subjectId))
+            .ReturnsAsync(existingSubject);
+
+        _mockSubjectService
+            .Setup(s => s.UpdateSubjectAsync(It.IsAny<AuthSubjectModel>()))
+            .ReturnsAsync(updatedSubject);
+
+        _mockSubjectService
+            .Setup(s => s.GetSubjectRolesAsync(subjectId))
+            .ReturnsAsync(new List<string>());
+
+        _mockSubjectService
+            .Setup(s => s.AssignRoleAsync(subjectId, "admin", null))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _authorizationService.UpdateSubjectAsync(legacySubject);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Updated Subject Name", result.Name);
+        _mockSubjectService.Verify(s => s.UpdateSubjectAsync(It.IsAny<AuthSubjectModel>()), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task UpdateSubjectAsync_WithNonExistentSubject_ReturnsNull()
+    {
+        // Arrange
+        var subjectId = Guid.NewGuid();
+        var legacySubject = new LegacySubject
+        {
+            Id = subjectId.ToString(),
+            Name = "Non-existent Subject"
+        };
+
+        _mockSubjectService
+            .Setup(s => s.GetSubjectByIdAsync(subjectId))
+            .ReturnsAsync((AuthSubjectModel?)null);
+
+        // Act
+        var result = await _authorizationService.UpdateSubjectAsync(legacySubject);
+
+        // Assert
+        Assert.Null(result);
+        _mockSubjectService.Verify(s => s.UpdateSubjectAsync(It.IsAny<AuthSubjectModel>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteSubjectAsync_WithValidId_ReturnsTrue()
+    {
+        // Arrange
+        var subjectId = Guid.NewGuid();
+
+        _mockSubjectService
+            .Setup(s => s.DeleteSubjectAsync(subjectId))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _authorizationService.DeleteSubjectAsync(subjectId.ToString());
+
+        // Assert
+        Assert.True(result);
+        _mockSubjectService.Verify(s => s.DeleteSubjectAsync(subjectId), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteSubjectAsync_WithNonExistentId_ReturnsFalse()
+    {
+        // Arrange
+        var subjectId = Guid.NewGuid();
+
+        _mockSubjectService
+            .Setup(s => s.DeleteSubjectAsync(subjectId))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _authorizationService.DeleteSubjectAsync(subjectId.ToString());
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteSubjectAsync_WithInvalidGuidFormat_ReturnsFalse()
+    {
+        // Arrange
+        var invalidId = "not-a-valid-guid";
+
+        // Act
+        var result = await _authorizationService.DeleteSubjectAsync(invalidId);
+
+        // Assert
+        Assert.False(result);
+        _mockSubjectService.Verify(s => s.DeleteSubjectAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     #endregion
@@ -227,108 +350,271 @@ public class AuthorizationServiceCrudTests
     #region Role CRUD Tests
 
     [Fact]
-    public async Task GetAllRolesAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetAllRolesAsync_ReturnsRolesFromService()
     {
         // Arrange
-        // No setup needed since the method currently throws NotImplementedException
+        var authRoles = new List<AuthRoleModel>
+        {
+            new AuthRoleModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "admin",
+                Description = "Full administrative access",
+                Permissions = new List<string> { "*" },
+                IsSystemRole = true
+            },
+            new AuthRoleModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "readable",
+                Description = "Read-only access",
+                Permissions = new List<string> { "api:*:read" },
+                IsSystemRole = true
+            }
+        };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.GetAllRolesAsync()
-        );
+        _mockRoleService
+            .Setup(r => r.GetAllRolesAsync())
+            .ReturnsAsync(authRoles);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
+        // Act
+        var result = await _authorizationService.GetAllRolesAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("admin", result[0].Name);
+        Assert.Equal("readable", result[1].Name);
+        _mockRoleService.Verify(r => r.GetAllRolesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task GetRoleByIdAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetRoleByIdAsync_WithValidId_ReturnsRole()
     {
         // Arrange
-        var roleId = Guid.NewGuid().ToString();
+        var roleId = Guid.NewGuid();
+        var authRole = new AuthRoleModel
+        {
+            Id = roleId,
+            Name = "custom-role",
+            Description = "A custom role",
+            Permissions = new List<string> { "api:entries:read" },
+            IsSystemRole = false
+        };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.GetRoleByIdAsync(roleId)
-        );
+        _mockRoleService
+            .Setup(r => r.GetRoleByIdAsync(roleId))
+            .ReturnsAsync(authRole);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
+        // Act
+        var result = await _authorizationService.GetRoleByIdAsync(roleId.ToString());
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("custom-role", result.Name);
+        Assert.Equal(roleId.ToString(), result.Id);
+        _mockRoleService.Verify(r => r.GetRoleByIdAsync(roleId), Times.Once);
     }
 
     [Fact]
-    public async Task CreateRoleAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task GetRoleByIdAsync_WithNonExistentId_ReturnsNull()
     {
         // Arrange
-        var roleToCreate = new LegacyRole
+        var roleId = Guid.NewGuid();
+
+        _mockRoleService
+            .Setup(r => r.GetRoleByIdAsync(roleId))
+            .ReturnsAsync((AuthRoleModel?)null);
+
+        // Act
+        var result = await _authorizationService.GetRoleByIdAsync(roleId.ToString());
+
+        // Assert
+        Assert.Null(result);
+        _mockRoleService.Verify(r => r.GetRoleByIdAsync(roleId), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task GetRoleByIdAsync_WithInvalidGuidFormat_ReturnsNull()
+    {
+        // Arrange
+        var invalidId = "not-a-valid-guid";
+
+        // Act
+        var result = await _authorizationService.GetRoleByIdAsync(invalidId);
+
+        // Assert
+        Assert.Null(result);
+        _mockRoleService.Verify(r => r.GetRoleByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task CreateRoleAsync_CreatesAndReturnsRole()
+    {
+        // Arrange
+        var legacyRole = new LegacyRole
         {
             Name = "editor",
-            Permissions = new List<string> { "api:*:read", "api:treatments:update" },
+            Permissions = new List<string> { "api:treatments:*", "api:entries:read" },
+            Notes = "Editor role description"
         };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.CreateRoleAsync(roleToCreate)
-        );
-
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
-    }
-
-    [Fact]
-    public async Task UpdateRoleAsync_ThrowsNotImplementedException()
-    {
-        // Arrange
-        var roleToUpdate = new LegacyRole
+        var createdRole = new AuthRoleModel
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = "updated-moderator",
-            Permissions = new List<string> { "api:*:read" },
+            Id = Guid.NewGuid(),
+            Name = "editor",
+            Description = "Editor role description",
+            Permissions = new List<string> { "api:treatments:*", "api:entries:read" },
+            IsSystemRole = false
         };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.UpdateRoleAsync(roleToUpdate)
-        );
+        _mockRoleService
+            .Setup(r => r.CreateRoleAsync(It.IsAny<AuthRoleModel>()))
+            .ReturnsAsync(createdRole);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
+        // Act
+        var result = await _authorizationService.CreateRoleAsync(legacyRole);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("editor", result.Name);
+        Assert.NotNull(result.Id);
+        _mockRoleService.Verify(r => r.CreateRoleAsync(It.Is<AuthRoleModel>(role =>
+            role.Name == "editor" &&
+            role.Description == "Editor role description" &&
+            role.IsSystemRole == false
+        )), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteRoleAsync_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task UpdateRoleAsync_WithExistingRole_ReturnsUpdated()
     {
         // Arrange
-        var roleId = Guid.NewGuid().ToString();
+        var roleId = Guid.NewGuid();
+        var legacyRole = new LegacyRole
+        {
+            Id = roleId.ToString(),
+            Name = "updated-role",
+            Permissions = new List<string> { "api:*:read" },
+            Notes = "Updated description"
+        };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.DeleteRoleAsync(roleId)
-        );
+        var existingRole = new AuthRoleModel
+        {
+            Id = roleId,
+            Name = "original-role",
+            Description = "Original description",
+            Permissions = new List<string> { "api:entries:read" },
+            IsSystemRole = false
+        };
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
+        var updatedRole = new AuthRoleModel
+        {
+            Id = roleId,
+            Name = "updated-role",
+            Description = "Updated description",
+            Permissions = new List<string> { "api:*:read" },
+            IsSystemRole = false
+        };
+
+        _mockRoleService
+            .Setup(r => r.GetRoleByIdAsync(roleId))
+            .ReturnsAsync(existingRole);
+
+        _mockRoleService
+            .Setup(r => r.UpdateRoleAsync(It.IsAny<AuthRoleModel>()))
+            .ReturnsAsync(updatedRole);
+
+        // Act
+        var result = await _authorizationService.UpdateRoleAsync(legacyRole);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("updated-role", result.Name);
+        _mockRoleService.Verify(r => r.UpdateRoleAsync(It.IsAny<AuthRoleModel>()), Times.Once);
     }
 
     [Fact]
-    public async Task DeleteRoleAsync_WithNonExistentId_ThrowsNotImplementedException()
+    [Trait("Category", "Unit")]
+    public async Task UpdateRoleAsync_WithNonExistentRole_ReturnsNull()
     {
         // Arrange
-        var nonExistentId = Guid.NewGuid().ToString();
+        var roleId = Guid.NewGuid();
+        var legacyRole = new LegacyRole
+        {
+            Id = roleId.ToString(),
+            Name = "non-existent-role"
+        };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<NotImplementedException>(() =>
-            _authorizationService.DeleteRoleAsync(nonExistentId)
-        );
+        _mockRoleService
+            .Setup(r => r.GetRoleByIdAsync(roleId))
+            .ReturnsAsync((AuthRoleModel?)null);
 
-        // Verify the exception message indicates PostgreSQL implementation is missing
-        Assert.Contains("PostgreSQL adapter", exception.Message);
-        Assert.Contains("Role", exception.Message);
+        // Act
+        var result = await _authorizationService.UpdateRoleAsync(legacyRole);
+
+        // Assert
+        Assert.Null(result);
+        _mockRoleService.Verify(r => r.UpdateRoleAsync(It.IsAny<AuthRoleModel>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteRoleAsync_WithValidId_ReturnsTrue()
+    {
+        // Arrange
+        var roleId = Guid.NewGuid();
+
+        _mockRoleService
+            .Setup(r => r.DeleteRoleAsync(roleId))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _authorizationService.DeleteRoleAsync(roleId.ToString());
+
+        // Assert
+        Assert.True(result);
+        _mockRoleService.Verify(r => r.DeleteRoleAsync(roleId), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteRoleAsync_WithSystemRole_ReturnsFalse()
+    {
+        // Arrange
+        var roleId = Guid.NewGuid();
+
+        // The RoleService returns false for system roles
+        _mockRoleService
+            .Setup(r => r.DeleteRoleAsync(roleId))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _authorizationService.DeleteRoleAsync(roleId.ToString());
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DeleteRoleAsync_WithInvalidGuidFormat_ReturnsFalse()
+    {
+        // Arrange
+        var invalidId = "not-a-valid-guid";
+
+        // Act
+        var result = await _authorizationService.DeleteRoleAsync(invalidId);
+
+        // Assert
+        Assert.False(result);
+        _mockRoleService.Verify(r => r.DeleteRoleAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     #endregion
