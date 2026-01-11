@@ -85,7 +85,7 @@
   <Target Name="GenerateClient" AfterTargets="Build" Condition="'$(GenerateNSwagClient)' == 'true'">
     <Message Importance="high" Text="Generating TypeScript API client with NSwag..." />
     <Exec
-      Command="$(NSwagExe_Net100) run nswag.json"
+      Command="$(NSwagExe_Net100) run nswag.json /variables:Configuration=$(Configuration)"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       ContinueOnError="false"
     />
