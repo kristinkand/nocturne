@@ -365,7 +365,7 @@ namespace Nocturne.Aspire.SourceGenerators
 
             // Common configuration
             sb.AppendLine(
-                "                .WithEnvironment(\"NocturneApiUrl\", api.GetEndpoint(\"http\"))"
+                "                .WithEnvironment(\"NocturneApiUrl\", api.GetEndpoint(\"api\"))"
             );
             sb.AppendLine("                .WithEnvironment(\"ApiSecret\", apiSecret)");
             sb.AppendLine("                .WaitFor(api)");
