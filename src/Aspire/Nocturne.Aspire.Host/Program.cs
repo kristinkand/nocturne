@@ -1,11 +1,10 @@
 #pragma warning disable ASPIREPIPELINES003 // Experimental container image APIs
 
+using Aspire.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Aspire.Hosting;
 using Nocturne.Aspire.Host.Extensions;
 using Nocturne.Aspire.Hosting;
-
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
@@ -23,7 +22,10 @@ class Program
         // Add Docker Compose publishing support
         // This enables 'aspire publish' to generate docker-compose.yml files
         // Using GitHub Container Registry for nightscout/nocturne
-        var includeDashboard = builder.Configuration.GetValue<bool>("Parameters:IncludeDashboard", true);
+        var includeDashboard = builder.Configuration.GetValue<bool>(
+            "Parameters:IncludeDashboard",
+            true
+        );
         var compose = builder.AddDockerComposeEnvironment("compose");
         if (!includeDashboard)
         {
@@ -46,8 +48,6 @@ class Program
             optional: true,
             reloadOnChange: true
         );
-
-
 
         // Add PostgreSQL database - use remote database connection or local container
         var useRemoteDb = builder.Configuration.GetValue<bool>(
@@ -164,16 +164,17 @@ class Program
 
         // Add the Nocturne API service (without embedded connectors)
         // Aspire will auto-generate a Dockerfile during publish
-        #pragma warning disable ASPIRECERTIFICATES001
+        // Note: API runs on port 1613 internally, accessed via Vite proxy on port 1612
+#pragma warning disable ASPIRECERTIFICATES001
         var api = builder
             .AddProject<Projects.Nocturne_API>(ServiceNames.NocturneApi, launchProfileName: null)
             .WaitFor(oref)
-            .WithHttpsEndpoint( port: 1612, name: "api")
+            .WithHttpsEndpoint(port: 1613, name: "api")
             .WithHttpsDeveloperCertificate()
             .PublishAsDockerComposeService((_, _) => { })
             .WithRemoteImageName("ghcr.io/nightscout/nocturne/api")
             .WithRemoteImageTag("latest");
-        #pragma warning restore ASPIRECERTIFICATES001
+#pragma warning restore ASPIRECERTIFICATES001
 
         oref.WithParentRelationship(api);
         // Configure database connection based on mode
@@ -250,18 +251,24 @@ class Program
         }
 
         var bridgePackagePath = Path.Combine(solutionRoot, "src", "Web", "packages", "bridge");
-        var bridge = builder
-            .AddPnpmApp("nocturne-bridge-build", bridgePackagePath, scriptName: "build");
+        var bridge = builder.AddPnpmApp(
+            "nocturne-bridge-build",
+            bridgePackagePath,
+            scriptName: "build"
+        );
 
         // Add the SvelteKit web application (with integrated WebSocket bridge)
         var webPackagePath = Path.Combine(solutionRoot, "src", "Web", "packages", "app");
 
-        #pragma warning disable ASPIRECERTIFICATES001
-        var web = Aspire.Hosting.JavaScriptHostingExtensions.AddViteApp(builder, ServiceNames.NocturneWeb, webPackagePath)
+#pragma warning disable ASPIRECERTIFICATES001
+        var web = JavaScriptHostingExtensions.AddViteApp(
+                builder, ServiceNames.NocturneWeb, webPackagePath
+            )
             .WithPnpm()
-            .WithHttpsEndpoint(env: "PORT", port: 1613, name: "web")
-            .WithHttpsDeveloperCertificate()
             .WithDeveloperCertificateForVite()
+            .WithHttpsEndpoint(env: "PORT", port: 1612)
+            .WithHttpsDeveloperCertificate()
+            .WithDeveloperCertificateTrust(true)
             .WaitFor(api)
             .WaitFor(bridge)
             .WithReference(api)
@@ -302,9 +309,8 @@ class Program
             .WithRemoteImageName("ghcr.io/nightscout/nocturne/web")
             .WithRemoteImageTag("latest");
 
-        #pragma warning restore ASPIRECERTIFICATES001
+#pragma warning restore ASPIRECERTIFICATES001
         apiSecret.WithParentRelationship(web);
-
         bridge.WithParentRelationship(web);
         // Add Scalar API Reference for unified API documentation
         // This provides a single documentation interface for all services in the Aspire dashboard

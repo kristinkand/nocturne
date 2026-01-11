@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       {
         name: "websocket-bridge",
         configureServer(server) {
-          const API_URL = env.PUBLIC_API_URL || "http://localhost:1612";
+          const API_URL = env.PUBLIC_API_URL || "https://localhost:1613";
           const SIGNALR_HUB_URL = `${API_URL}/hubs/data`;
           const API_SECRET = env.API_SECRET || "";
 
@@ -66,13 +66,35 @@ export default defineConfig(({ mode }) => {
         key: fs.readFileSync(process.env.SSL_KEY_FILE),
       } : undefined,
       host: "0.0.0.0",
+      port: parseInt(process.env.PORT || "1612", 10),
+      strictPort: true, // Fail if port is already in use instead of trying another
       watch: {
         ignored: ["**/node_modules/**", "**/.git/**"],
         usePolling: false,
       },
       proxy: {
+        // Proxy API requests to backend
         "^/api/.*": {
-          target: env.PUBLIC_API_URL || "http://localhost:1612",
+          target: env.PUBLIC_API_URL || "https://localhost:1613",
+          changeOrigin: true,
+          secure: false,
+        },
+        // Proxy SignalR hubs to backend
+        "^/hubs/.*": {
+          target: env.PUBLIC_API_URL || "https://localhost:1613",
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
+        // Proxy OpenAPI docs to backend
+        "^/openapi/.*": {
+          target: env.PUBLIC_API_URL || "https://localhost:1613",
+          changeOrigin: true,
+          secure: false,
+        },
+        // Proxy Scalar API reference to backend
+        "^/scalar.*": {
+          target: env.PUBLIC_API_URL || "https://localhost:1613",
           changeOrigin: true,
           secure: false,
         },
