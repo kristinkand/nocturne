@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using System.Security.Cryptography;
+using System.Globalization;
 using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
@@ -263,14 +264,19 @@ namespace Nocturne.Connectors.FreeStyle.Services
                             JsonOptions
                         );
 
-                        if (graphResponse?.Data?.Connection?.GlucoseMeasurement == null)
+                        if (graphResponse?.Data?.GraphData == null
+                            || graphResponse.Data.GraphData.Length == 0)
                         {
                             _logger.LogDebug("No glucose data returned from LibreLinkUp");
                             return Enumerable.Empty<Entry>();
                         }
 
-                        var measurements =
-                            graphResponse.Data.Connection.GlucoseMeasurement.ToList();
+                        var measurements = graphResponse.Data.GraphData.ToList();
+                        var latestMeasurement = graphResponse.Data.Connection.GlucoseMeasurement;
+                        if (latestMeasurement != null)
+                        {
+                            measurements.Add(latestMeasurement);
+                        }
                         var glucoseEntries = measurements
                             .Where(measurement =>
                                 measurement != null && measurement.ValueInMgPerDl > 0
@@ -435,7 +441,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
         {
             try
             {
-                var timestamp = DateTime.Parse(measurement.FactoryTimestamp);
+                var timestamp = ParseLibreTimestamp(measurement.FactoryTimestamp);
 
                 // Adjust timezone offset
                 var offset = TimeSpan.FromMinutes(
@@ -468,6 +474,39 @@ namespace Nocturne.Connectors.FreeStyle.Services
         {
             var bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value));
             return Convert.ToHexString(bytes).ToLowerInvariant();
+        }
+
+
+        private static DateTime ParseLibreTimestamp(string value)
+        {
+            var formats = new[]
+            {
+                "M/d/yyyy h:mm:ss tt",
+                "M/d/yyyy h:mm tt",
+                "M/d/yyyy H:mm:ss",
+                "M/d/yyyy H:mm",
+            };
+
+            if (DateTime.TryParseExact(
+                    value,
+                    formats,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces,
+                    out var parsed))
+            {
+                return parsed;
+            }
+
+            if (DateTime.TryParse(
+                    value,
+                    CultureInfo.CurrentCulture,
+                    DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces,
+                    out parsed))
+            {
+                return parsed;
+            }
+
+            throw new FormatException($"Invalid LibreLinkUp timestamp: {value}");
         }
 
         private class LibreLoginResponse
@@ -505,11 +544,12 @@ namespace Nocturne.Connectors.FreeStyle.Services
         private class LibreConnectionData
         {
             public required LibreConnection Connection { get; set; }
+            public required LibreGlucoseMeasurement[] GraphData { get; set; }
         }
 
         private class LibreConnection
         {
-            public required LibreGlucoseMeasurement[] GlucoseMeasurement { get; set; }
+            public required LibreGlucoseMeasurement GlucoseMeasurement { get; set; }
         }
 
         private class LibreGlucoseMeasurement
@@ -518,5 +558,6 @@ namespace Nocturne.Connectors.FreeStyle.Services
             public int ValueInMgPerDl { get; set; }
             public int TrendArrow { get; set; }
         }
+
     }
 }
