@@ -8,12 +8,12 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Glooko.Models;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Models;
@@ -33,38 +33,17 @@ namespace Nocturne.Connectors.Glooko.Services
         private readonly IRetryDelayStrategy _retryDelayStrategy;
         private readonly IConnectorFileService<GlookoBatchData>? _fileService;
         private readonly GlookoAuthTokenProvider _tokenProvider;
-        private int _failedRequestCount = 0;
-
-        /// <summary>
-        /// Gets whether the connector is in a healthy state based on recent request failures
-        /// </summary>
-        public bool IsHealthy => _failedRequestCount < 5;
-
-        /// <summary>
-        /// Gets the number of consecutive failed requests
-        /// </summary>
-        public int FailedRequestCount => _failedRequestCount;
-
-        /// <summary>
-        /// Resets the failed request counter
-        /// </summary>
-        public void ResetFailedRequestCount()
-        {
-            _failedRequestCount = 0;
-            _logger.LogInformation("Glooko connector failed request count reset");
-        }
 
         public override string ServiceName => "Glooko";
         public override string ConnectorSource => DataSources.GlookoConnector;
 
         public override List<SyncDataType> SupportedDataTypes =>
-            new()
-            {
+            [
                 SyncDataType.Glucose,
                 SyncDataType.Treatments,
                 SyncDataType.Food,
                 SyncDataType.Activity,
-            };
+            ];
 
         public GlookoConnectorService(
             HttpClient httpClient,
@@ -96,11 +75,11 @@ namespace Nocturne.Connectors.Glooko.Services
             var token = await _tokenProvider.GetValidTokenAsync();
             if (token == null)
             {
-                _failedRequestCount++;
+                TrackFailedRequest("Failed to get valid token");
                 return false;
             }
 
-            _failedRequestCount = 0;
+            TrackSuccessfulRequest();
             return true;
         }
 

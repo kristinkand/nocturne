@@ -26,44 +26,18 @@ namespace Nocturne.Connectors.Nightscout.Services
         private readonly NightscoutConnectorConfiguration _config;
         private readonly IRetryDelayStrategy _retryDelayStrategy;
         private readonly IRateLimitingStrategy _rateLimitingStrategy;
-        private int _failedRequestCount = 0;
 
-        /// <summary>
-        /// Gets the connector source identifier
-        /// </summary>
         public override string ConnectorSource => DataSources.NightscoutConnector;
-
-        /// <summary>
-        /// Gets whether the connector is in a healthy state based on recent request failures
-        /// </summary>
-        public bool IsHealthy => _failedRequestCount < 5;
-
-        /// <summary>
-        /// Gets the number of consecutive failed requests
-        /// </summary>
-        public int FailedRequestCount => _failedRequestCount;
-
-        /// <summary>
-        /// Resets the failed request counter
-        /// </summary>
-        public void ResetFailedRequestCount()
-        {
-            _failedRequestCount = 0;
-            _logger.LogInformation("Nightscout connector failed request count reset");
-        }
-
         public override string ServiceName => "Nightscout";
-
         public override List<SyncDataType> SupportedDataTypes =>
-            new()
-            {
+            [
                 SyncDataType.Glucose,
                 SyncDataType.Treatments,
                 SyncDataType.Profiles,
                 SyncDataType.DeviceStatus,
                 SyncDataType.Activity,
                 SyncDataType.Food,
-            };
+            ];
 
         public NightscoutConnectorService(
             HttpClient httpClient,
@@ -335,7 +309,10 @@ namespace Nocturne.Connectors.Nightscout.Services
                     // Auth headers are automatically added by NightscoutAuthHandler
                     var response = await _httpClient.GetAsync(urlBuilder.ToString());
 
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (
+                        response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                        || response.StatusCode == System.Net.HttpStatusCode.NotFound
+                    )
                     {
                         // Handler already tried to refresh JWT (for 401); or endpoint doesn't exist (404);
                         // fall back to v1 API

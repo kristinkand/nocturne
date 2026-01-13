@@ -1,11 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Core.Models;
 using Polly;
 using Polly.Retry;
@@ -33,7 +32,7 @@ public class ApiDataSubmitter : IApiDataSubmitter
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _baseUrl = baseUrl?.TrimEnd('/') ?? throw new ArgumentNullException(nameof(baseUrl));
         // Pre-compute the SHA1 hash of the API secret (Nightscout expects hashed secrets)
-        _apiSecretHash = !string.IsNullOrEmpty(apiSecret) ? ComputeSha1Hash(apiSecret) : null;
+        _apiSecretHash = !string.IsNullOrEmpty(apiSecret) ? HashUtils.Sha1Hex(apiSecret) : null;
         _logger = logger;
 
         // Create retry pipeline with exponential backoff
@@ -359,9 +358,7 @@ public class ApiDataSubmitter : IApiDataSubmitter
     )
     {
         // Filter out food entries without a name as Nightscout requires it
-        var foodsArray = foods
-            .Where(f => !string.IsNullOrWhiteSpace(f.Name))
-            .ToArray();
+        var foodsArray = foods.Where(f => !string.IsNullOrWhiteSpace(f.Name)).ToArray();
 
         if (foodsArray.Length == 0)
         {
@@ -764,7 +761,7 @@ public class ApiDataSubmitter : IApiDataSubmitter
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter() }
+                Converters = { new JsonStringEnumConverter() },
             };
 
             var syncStatus = await response.Content.ReadFromJsonAsync<SyncStatusResponse>(
@@ -807,16 +804,6 @@ public class ApiDataSubmitter : IApiDataSubmitter
         {
             request.Headers.Add("api-secret", _apiSecretHash);
         }
-    }
-
-    /// <summary>
-    /// Compute SHA1 hash of a string (lowercase hex) - matches Nightscout's expected format
-    /// </summary>
-    private static string ComputeSha1Hash(string input)
-    {
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = SHA1.HashData(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     /// <summary>

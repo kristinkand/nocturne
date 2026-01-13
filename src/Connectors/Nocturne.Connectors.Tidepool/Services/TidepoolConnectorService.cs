@@ -13,6 +13,7 @@ using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Tidepool.Constants;
 using Nocturne.Connectors.Tidepool.Models;
 using Nocturne.Core.Constants;
@@ -32,45 +33,11 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
     private readonly IRetryDelayStrategy _retryDelayStrategy;
     private readonly IRateLimitingStrategy _rateLimitingStrategy;
     private readonly TidepoolAuthTokenProvider _tokenProvider;
-    private int _failedRequestCount = 0;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
-    /// <summary>
-    /// Gets whether the connector is in a healthy state based on recent request failures
-    /// </summary>
-    public bool IsHealthy => _failedRequestCount < 5;
-
-    /// <summary>
-    /// Gets the source identifier for this connector
-    /// </summary>
     public override string ConnectorSource => DataSources.TidepoolConnector;
-
-    /// <summary>
-    /// Gets the number of consecutive failed requests
-    /// </summary>
-    public int FailedRequestCount => _failedRequestCount;
-
-    /// <summary>
-    /// Resets the failed request counter
-    /// </summary>
-    public void ResetFailedRequestCount()
-    {
-        _failedRequestCount = 0;
-        _logger.LogInformation("Tidepool connector failed request count reset");
-    }
-
     public override string ServiceName => "Tidepool";
-
-    public override List<SyncDataType> SupportedDataTypes => new()
-    {
-        SyncDataType.Glucose,
-        SyncDataType.Treatments,
-        SyncDataType.Activity
-    };
+    public override List<SyncDataType> SupportedDataTypes =>
+        [SyncDataType.Glucose, SyncDataType.Treatments, SyncDataType.Activity];
 
     public TidepoolConnectorService(
         HttpClient httpClient,
@@ -106,7 +73,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         return true;
     }
 
-    protected override async Task<IEnumerable<Entry>> FetchGlucoseDataRangeAsync(DateTime? from, DateTime? to)
+    protected override async Task<IEnumerable<Entry>> FetchGlucoseDataRangeAsync(
+        DateTime? from,
+        DateTime? to
+    )
     {
         try
         {
@@ -155,7 +125,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         return FetchGlucoseDataRangeAsync(since, null);
     }
 
-    private async Task<List<TidepoolBgValue>> FetchBgValuesAsync(DateTime? start = null, DateTime? end = null)
+    private async Task<List<TidepoolBgValue>> FetchBgValuesAsync(
+        DateTime? start = null,
+        DateTime? end = null
+    )
     {
         var results = new List<TidepoolBgValue>();
         const int maxRetries = 3;
@@ -174,7 +147,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
                     $"{string.Format(TidepoolConstants.Endpoints.DataFormat, _tokenProvider.UserId)}?type={types}&startDate={startDate:o}&endDate={endDate:o}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add(TidepoolConstants.Headers.SessionToken, (await _tokenProvider.GetValidTokenAsync()));
+                request.Headers.Add(
+                    TidepoolConstants.Headers.SessionToken,
+                    (await _tokenProvider.GetValidTokenAsync())
+                );
 
                 var response = await _httpClient.SendAsync(request);
 
@@ -226,7 +202,7 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
                 var jsonContent = await response.Content.ReadAsStringAsync();
                 var bgValues = JsonSerializer.Deserialize<List<TidepoolBgValue>>(
                     jsonContent,
-                    JsonOptions
+                    JsonDefaults.CaseInsensitive
                 );
 
                 if (bgValues != null)
@@ -342,7 +318,11 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         );
     }
 
-    private async Task<List<T>> FetchDataAsync<T>(string dataType, DateTime? start = null, DateTime? end = null)
+    private async Task<List<T>> FetchDataAsync<T>(
+        string dataType,
+        DateTime? start = null,
+        DateTime? end = null
+    )
     {
         var results = new List<T>();
 
@@ -355,14 +335,20 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
                 $"{string.Format(TidepoolConstants.Endpoints.DataFormat, _tokenProvider.UserId)}?type={dataType}&startDate={startDate:o}&endDate={endDate:o}";
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add(TidepoolConstants.Headers.SessionToken, (await _tokenProvider.GetValidTokenAsync()));
+            request.Headers.Add(
+                TidepoolConstants.Headers.SessionToken,
+                (await _tokenProvider.GetValidTokenAsync())
+            );
 
             var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                var items = JsonSerializer.Deserialize<List<T>>(jsonContent, JsonOptions);
+                var items = JsonSerializer.Deserialize<List<T>>(
+                    jsonContent,
+                    JsonDefaults.CaseInsensitive
+                );
                 if (items != null)
                 {
                     results.AddRange(items);
@@ -385,7 +371,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         return results;
     }
 
-    protected override async Task<IEnumerable<Treatment>> FetchTreatmentsAsync(DateTime? from, DateTime? to)
+    protected override async Task<IEnumerable<Treatment>> FetchTreatmentsAsync(
+        DateTime? from,
+        DateTime? to
+    )
     {
         var treatments = new List<Treatment>();
 
@@ -427,7 +416,10 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
         return treatments.OrderBy(t => t.Created_at);
     }
 
-    protected override async Task<IEnumerable<Activity>> FetchActivitiesAsync(DateTime? from, DateTime? to)
+    protected override async Task<IEnumerable<Activity>> FetchActivitiesAsync(
+        DateTime? from,
+        DateTime? to
+    )
     {
         var physicalActivities = await FetchPhysicalActivityAsync(from, to);
         var activities = new List<Activity>();
@@ -469,6 +461,4 @@ public class TidepoolConnectorService : BaseConnectorService<TidepoolConnectorCo
 
         return activities.OrderBy(a => a.CreatedAt);
     }
-
 }
-

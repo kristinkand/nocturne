@@ -2,10 +2,9 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Nocturne.Connectors.Core.Utilities;
 using Polly;
 
 namespace Nocturne.Connectors.Core.Extensions;
@@ -75,7 +74,7 @@ public static class HttpClientExtensions
 
                 if (!string.IsNullOrEmpty(apiSecret))
                 {
-                    var hashedSecret = HashApiSecret(apiSecret);
+                    var hashedSecret = HashUtils.Sha1Hex(apiSecret);
                     client.DefaultRequestHeaders.Add("API-SECRET", hashedSecret);
                 }
 
@@ -230,13 +229,6 @@ public static class HttpClientExtensions
                 };
                 return handler;
             });
-    }
-
-    private static string HashApiSecret(string apiSecret)
-    {
-        using var sha1 = SHA1.Create();
-        var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(apiSecret));
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     /// <summary>

@@ -1,15 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
-using System.Security.Cryptography;
-using System.Globalization;
 using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.FreeStyle.Constants;
-using Nocturne.Core.Models;
 using Nocturne.Core.Constants;
+using Nocturne.Core.Models;
 
 #nullable enable
 
@@ -29,19 +28,33 @@ namespace Nocturne.Connectors.FreeStyle.Services
         IApiDataSubmitter? apiDataSubmitter = null,
         IConnectorMetricsTracker? metricsTracker = null,
         IConnectorStateService? stateService = null
-) : BaseConnectorService<LibreLinkUpConnectorConfiguration>(httpClient, logger, apiDataSubmitter, metricsTracker, stateService)
+    )
+        : BaseConnectorService<LibreLinkUpConnectorConfiguration>(
+            httpClient,
+            logger,
+            apiDataSubmitter,
+            metricsTracker,
+            stateService
+        )
     {
-        private readonly LibreLinkUpConnectorConfiguration _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
-        private readonly IRetryDelayStrategy _retryDelayStrategy = retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
-        private readonly IRateLimitingStrategy _rateLimitingStrategy = rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
-        private readonly IAuthTokenProvider _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
+        private readonly LibreLinkUpConnectorConfiguration _config =
+            config?.Value ?? throw new ArgumentNullException(nameof(config));
+        private readonly IRetryDelayStrategy _retryDelayStrategy =
+            retryDelayStrategy ?? throw new ArgumentNullException(nameof(retryDelayStrategy));
+        private readonly IRateLimitingStrategy _rateLimitingStrategy =
+            rateLimitingStrategy ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
+        private readonly IAuthTokenProvider _tokenProvider =
+            tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
         private LibreUserConnection? _selectedConnection;
-        private int _failedRequestCount;
         private string _accountIdHash = string.Empty;
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true,
-        };
+
+        /// <summary>
+        /// Custom headers to include in API requests (Account-Id for LibreLinkUp)
+        /// </summary>
+        private Dictionary<string, string>? RequestHeaders =>
+            string.IsNullOrWhiteSpace(_accountIdHash)
+                ? null
+                : new() { { "Account-Id", _accountIdHash } };
 
         private static readonly Dictionary<string, string> KnownEndpoints = new()
         {
@@ -81,7 +94,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
             if (token == null)
             {
                 _accountIdHash = string.Empty;
-                _failedRequestCount++;
+                TrackFailedRequest("Failed to get valid token");
                 return false;
             }
 
@@ -100,7 +113,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
                     var claim = jwt.Claims.FirstOrDefault(c => c.Type == "id");
                     if (claim?.Value is { Length: > 0 } value)
                     {
-                        _accountIdHash = ComputeSha256Hex(value);
+                        _accountIdHash = HashUtils.Sha256Hex(value);
                     }
                     if (_accountIdHash.Length == 0)
                     {
@@ -120,25 +133,18 @@ namespace Nocturne.Connectors.FreeStyle.Services
             // Get connections to find the patient data
             await LoadConnectionsAsync();
 
-            _failedRequestCount = 0;
+            TrackSuccessfulRequest();
             return true;
         }
-
 
         private async Task LoadConnectionsAsync()
         {
             try
             {
-                using var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    LibreLinkUpConstants.ApiPaths.Connections
+                var response = await GetWithHeadersAsync(
+                    LibreLinkUpConstants.ApiPaths.Connections,
+                    RequestHeaders
                 );
-                if (!string.IsNullOrWhiteSpace(_accountIdHash))
-                {
-                    request.Headers.TryAddWithoutValidation("Account-Id", _accountIdHash);
-                }
-
-                var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -149,10 +155,8 @@ namespace Nocturne.Connectors.FreeStyle.Services
                     return;
                 }
 
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var connectionsResponse = JsonSerializer.Deserialize<LibreConnectionsResponse>(
-                    responseContent,
-                    JsonOptions
+                var connectionsResponse = await DeserializeResponseAsync<LibreConnectionsResponse>(
+                    response
                 );
 
                 if (connectionsResponse?.Data == null || connectionsResponse.Data.Length == 0)
@@ -187,261 +191,107 @@ namespace Nocturne.Connectors.FreeStyle.Services
 
         public override async Task<IEnumerable<Entry>> FetchGlucoseDataAsync(DateTime? since = null)
         {
-            const int maxRetries = 3;
-
-            try
+            // Check if we need to authenticate or re-authenticate
+            if (_tokenProvider.IsTokenExpired || _selectedConnection == null)
             {
-                // Check if we need to authenticate or re-authenticate
-                if (_tokenProvider.IsTokenExpired || _selectedConnection == null)
-                {
-                    _logger.LogInformation(
-                        "Token expired or missing connection, attempting to re-authenticate"
-                    );
-                    if (!await AuthenticateAsync())
-                    {
-                        _logger.LogError("Failed to authenticate with LibreLinkUp");
-                        return Enumerable.Empty<Entry>();
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(_selectedConnection?.PatientId))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid LibreLinkUp patient id"
-                    );
-                }
-
-                var url = string.Format(
-                    LibreLinkUpConstants.ApiPaths.GraphData,
-                    _selectedConnection?.PatientId!
+                _logger.LogInformation(
+                    "Token expired or missing connection, attempting to re-authenticate"
                 );
-
-                return await FetchGlucoseDataWithRetryAsync(url, since, maxRetries);
+                if (!await AuthenticateAsync())
+                {
+                    _logger.LogError("Failed to authenticate with LibreLinkUp");
+                    return Enumerable.Empty<Entry>();
+                }
             }
-            catch (Exception ex)
+
+            if (string.IsNullOrWhiteSpace(_selectedConnection?.PatientId))
             {
-                _logger.LogError(ex, "Error fetching glucose data from LibreLinkUp");
-                _failedRequestCount++;
+                _logger.LogError("Invalid LibreLinkUp patient id");
+                TrackFailedRequest("Invalid patient id");
                 return Enumerable.Empty<Entry>();
             }
-        }
 
-        private async Task<IEnumerable<Entry>> FetchGlucoseDataWithRetryAsync(
-            string url,
-            DateTime? since,
-            int maxRetries
-        )
-        {
-            HttpRequestException? lastException = null;
-
-            for (int attempt = 0; attempt < maxRetries; attempt++)
-            {
-                try
-                {
-                    // Apply rate limiting
-                    await _rateLimitingStrategy.ApplyDelayAsync(attempt);
-
-                    _logger.LogDebug(
-                        "Fetching LibreLinkUp glucose data: {Url} (attempt {Attempt}/{MaxRetries})",
-                        url,
-                        attempt + 1,
-                        maxRetries
-                    );
-                    
-                    using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                    if (!string.IsNullOrWhiteSpace(_accountIdHash))
-                    {
-                        request.Headers.TryAddWithoutValidation("Account-Id", _accountIdHash);
-                    }
-
-                    var response = await _httpClient.SendAsync(request);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var jsonContent = await response.Content.ReadAsStringAsync();
-                        var graphResponse = JsonSerializer.Deserialize<LibreGraphResponse>(
-                            jsonContent,
-                            JsonOptions
-                        );
-
-                        if (graphResponse?.Data?.GraphData == null
-                            || graphResponse.Data.GraphData.Length == 0)
-                        {
-                            _logger.LogDebug("No glucose data returned from LibreLinkUp");
-                            return Enumerable.Empty<Entry>();
-                        }
-
-                        var measurements = graphResponse.Data.GraphData.ToList();
-                        var latestMeasurement = graphResponse.Data.Connection.GlucoseMeasurement;
-                        if (latestMeasurement != null)
-                        {
-                            measurements.Add(latestMeasurement);
-                        }
-                        var glucoseEntries = measurements
-                            .Where(measurement =>
-                                measurement != null && measurement.ValueInMgPerDl > 0
-                            )
-                            .Select(ConvertLibreEntry)
-                            .Where(entry =>
-                                entry != null && (!since.HasValue || entry.Date > since.Value)
-                            )
-                            .OrderBy(entry => entry.Date)
-                            .ToList();
-
-                        // Reset failed request count on successful data fetch
-                        _failedRequestCount = 0;
-
-                        _logger.LogInformation(
-                            "[{ConnectorSource}] Successfully fetched {Count} glucose entries from LibreLinkUp",
-                            ConnectorSource,
-                            glucoseEntries.Count
-                        );
-                        return glucoseEntries;
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-
-                        // Handle specific error cases
-                        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                        {
-                            _logger.LogWarning(
-                                "LibreLinkUp returned unauthorized, clearing token and attempting re-authentication"
-                            );
-                            _tokenProvider.InvalidateToken();
-                            _selectedConnection = null;
-
-                            // Try to re-authenticate once
-                            if (await AuthenticateAsync())
-                            {
-                                _logger.LogInformation(
-                                    "Re-authentication successful, retrying data fetch"
-                                );
-                                return await FetchGlucoseDataWithRetryAsync(
-                                    url,
-                                    since,
-                                    maxRetries - attempt
-                                );
-                            }
-                            else
-                            {
-                                _logger.LogError("Re-authentication failed");
-                                _failedRequestCount++;
-                                return Enumerable.Empty<Entry>();
-                            }
-                        }
-                        else if (
-                            response.StatusCode == System.Net.HttpStatusCode.TooManyRequests
-                            || response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
-                            || response.StatusCode == System.Net.HttpStatusCode.InternalServerError
-                        )
-                        {
-                            // Retryable errors
-                            lastException = new HttpRequestException(
-                                $"HTTP {(int)response.StatusCode} {response.StatusCode}: {errorContent}"
-                            );
-                            _logger.LogWarning(
-                                "LibreLinkUp data fetch failed with retryable error on attempt {Attempt}: {StatusCode} - {Error}",
-                                attempt + 1,
-                                response.StatusCode,
-                                errorContent
-                            );
-
-                            if (attempt < maxRetries - 1)
-                            {
-                                _logger.LogInformation(
-                                    "Applying retry backoff before attempt {NextAttempt}",
-                                    attempt + 2
-                                );
-                                await _retryDelayStrategy.ApplyRetryDelayAsync(attempt);
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            // Non-retryable error
-                            _logger.LogError(
-                                "LibreLinkUp data fetch failed with non-retryable error: {StatusCode} - {Error}",
-                                response.StatusCode,
-                                errorContent
-                            );
-                            _failedRequestCount++;
-                            return Enumerable.Empty<Entry>();
-                        }
-                    }
-                }
-                catch (HttpRequestException ex)
-                    when (ex.Message.Contains("timeout") || ex.Message.Contains("network"))
-                {
-                    lastException = ex;
-                    _logger.LogWarning(
-                        ex,
-                        "Network error during LibreLinkUp data fetch attempt {Attempt}: {Message}",
-                        attempt + 1,
-                        ex.Message
-                    );
-
-                    if (attempt < maxRetries - 1)
-                    {
-                        _logger.LogInformation(
-                            "Applying retry backoff before attempt {NextAttempt}",
-                            attempt + 2
-                        );
-                        await _retryDelayStrategy.ApplyRetryDelayAsync(attempt);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Unexpected error during LibreLinkUp data fetch attempt {Attempt}",
-                        attempt + 1
-                    );
-                    _failedRequestCount++;
-                    throw;
-                }
-            }
-
-            // All attempts failed
-            _failedRequestCount++;
-            _logger.LogError(
-                "LibreLinkUp data fetch failed after {MaxRetries} attempts",
-                maxRetries
+            var url = string.Format(
+                LibreLinkUpConstants.ApiPaths.GraphData,
+                _selectedConnection.PatientId
             );
 
-            if (lastException != null)
+            // Apply rate limiting before first attempt
+            await _rateLimitingStrategy.ApplyDelayAsync(0);
+
+            var result = await ExecuteWithRetryAsync(
+                async () => await FetchGlucoseDataCoreAsync(url, since),
+                _retryDelayStrategy,
+                reAuthenticateOnUnauthorized: async () =>
+                {
+                    _tokenProvider.InvalidateToken();
+                    _selectedConnection = null;
+                    return await AuthenticateAsync();
+                },
+                operationName: "FetchGlucoseData"
+            );
+
+            return result ?? Enumerable.Empty<Entry>();
+        }
+
+        /// <summary>
+        /// Core glucose data fetch logic without retry handling (called by ExecuteWithRetryAsync)
+        /// </summary>
+        private async Task<List<Entry>?> FetchGlucoseDataCoreAsync(string url, DateTime? since)
+        {
+            var response = await GetWithHeadersAsync(url, RequestHeaders);
+
+            if (!response.IsSuccessStatusCode)
             {
-                throw lastException;
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"HTTP {(int)response.StatusCode} {response.StatusCode}: {errorContent}",
+                    null,
+                    response.StatusCode
+                );
             }
 
-            return Enumerable.Empty<Entry>();
+            var graphResponse = await DeserializeResponseAsync<LibreGraphResponse>(response);
+
+            if (graphResponse?.Data?.GraphData == null || graphResponse.Data.GraphData.Length == 0)
+            {
+                _logger.LogDebug("No glucose data returned from LibreLinkUp");
+                return [];
+            }
+
+            var measurements = graphResponse.Data.GraphData.ToList();
+            var latestMeasurement = graphResponse.Data.Connection.GlucoseMeasurement;
+            if (latestMeasurement != null)
+            {
+                measurements.Add(latestMeasurement);
+            }
+
+            var glucoseEntries = measurements
+                .Where(measurement => measurement != null && measurement.ValueInMgPerDl > 0)
+                .Select(ConvertLibreEntry)
+                .Where(entry => entry != null && (!since.HasValue || entry.Date > since.Value))
+                .OrderBy(entry => entry.Date)
+                .ToList();
+
+            _logger.LogInformation(
+                "[{ConnectorSource}] Successfully fetched {Count} glucose entries from LibreLinkUp",
+                ConnectorSource,
+                glucoseEntries.Count
+            );
+
+            return glucoseEntries;
         }
 
         /// <summary>
-        /// Get the current health status of the connector
+        /// Override health check to also consider token expiry
         /// </summary>
-        public bool IsHealthy =>
-            _failedRequestCount < LibreLinkUpConstants.Configuration.MaxHealthFailures
-            && !_tokenProvider.IsTokenExpired;
-
-        /// <summary>
-        /// Get the current failed request count
-        /// </summary>
-        public int FailedRequestCount => _failedRequestCount;
-
-        /// <summary>
-        /// Reset the failed request counter (useful for health monitoring)
-        /// </summary>
-        public void ResetFailedRequestCount()
-        {
-            _failedRequestCount = 0;
-        }
+        public override bool IsHealthy => base.IsHealthy && !_tokenProvider.IsTokenExpired;
 
         private Entry ConvertLibreEntry(LibreGlucoseMeasurement measurement)
         {
             try
             {
-                var timestamp = ParseLibreTimestamp(measurement.FactoryTimestamp);
+                var timestamp = TimestampParser.ParseLibreFormat(measurement.FactoryTimestamp);
 
                 var direction = TrendArrowMap.GetValueOrDefault(
                     measurement.TrendArrow,
@@ -461,45 +311,6 @@ namespace Nocturne.Connectors.FreeStyle.Services
                 _logger.LogWarning(ex, "Error converting LibreLinkUp entry: {@Entry}", measurement);
                 return new Entry { Type = "sgv", Device = "nightscout-connect-libre-linkup" };
             }
-        }
-
-        private static string ComputeSha256Hex(string value)
-        {
-            var bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value));
-            return Convert.ToHexString(bytes).ToLowerInvariant();
-        }
-
-
-        private static DateTime ParseLibreTimestamp(string value)
-        {
-            var formats = new[]
-            {
-                "M/d/yyyy h:mm:ss tt",
-                "M/d/yyyy h:mm tt",
-                "M/d/yyyy H:mm:ss",
-                "M/d/yyyy H:mm",
-            };
-
-            if (DateTime.TryParseExact(
-                    value,
-                    formats,
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces,
-                    out var parsed))
-            {
-                return parsed;
-            }
-
-            if (DateTime.TryParse(
-                    value,
-                    CultureInfo.CurrentCulture,
-                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces,
-                    out parsed))
-            {
-                return parsed;
-            }
-
-            throw new FormatException($"Invalid LibreLinkUp timestamp: {value}");
         }
 
         private class LibreLoginResponse
@@ -551,6 +362,5 @@ namespace Nocturne.Connectors.FreeStyle.Services
             public int ValueInMgPerDl { get; set; }
             public int TrendArrow { get; set; }
         }
-
     }
 }

@@ -14,8 +14,8 @@ using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
-using Nocturne.Core.Models;
 using Nocturne.Core.Constants;
+using Nocturne.Core.Models;
 
 #nullable enable
 
@@ -31,7 +31,6 @@ namespace Nocturne.Connectors.MiniMed.Services
         private readonly IRetryDelayStrategy _retryDelayStrategy;
         private readonly IRateLimitingStrategy _rateLimitingStrategy;
         private readonly IAuthTokenProvider _tokenProvider;
-        private int _failedRequestCount = 0;
 
         private static readonly Dictionary<string, string> KnownServers = new()
         {
@@ -53,33 +52,9 @@ namespace Nocturne.Connectors.MiniMed.Services
                 { "TRIPLE_DOWN", Direction.TripleDown },
             };
 
-        /// <summary>
-        /// Gets whether the connector is in a healthy state based on recent request failures
-        /// </summary>
-        public bool IsHealthy => _failedRequestCount < 5;
-
-        /// <summary>
-        /// Gets the number of consecutive failed requests
-        /// </summary>
-        public int FailedRequestCount => _failedRequestCount;
-
-        /// <summary>
-        /// Resets the failed request counter
-        /// </summary>
-        public void ResetFailedRequestCount()
-        {
-            _failedRequestCount = 0;
-            _logger.LogInformation("CareLink connector failed request count reset");
-        }
-
         public override string ServiceName => "MiniMed CareLink";
-
-        /// <summary>
-        /// Gets the source identifier for this connector
-        /// </summary>
         public override string ConnectorSource => DataSources.MiniMedConnector;
-
-        public override List<SyncDataType> SupportedDataTypes => new() { SyncDataType.Glucose };
+        public override List<SyncDataType> SupportedDataTypes => [SyncDataType.Glucose];
 
         public CareLinkConnectorService(
             HttpClient httpClient,
@@ -100,7 +75,8 @@ namespace Nocturne.Connectors.MiniMed.Services
             _rateLimitingStrategy =
                 rateLimitingStrategy
                 ?? throw new ArgumentNullException(nameof(rateLimitingStrategy));
-            _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
+            _tokenProvider =
+                tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
         }
 
         public override async Task<bool> AuthenticateAsync()
@@ -328,7 +304,10 @@ namespace Nocturne.Connectors.MiniMed.Services
             try
             {
                 _httpClient.DefaultRequestHeaders.Remove("Authorization");
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {(await _tokenProvider.GetValidTokenAsync())}");
+                _httpClient.DefaultRequestHeaders.Add(
+                    "Authorization",
+                    $"Bearer {(await _tokenProvider.GetValidTokenAsync())}"
+                );
 
                 var response = await _httpClient.GetAsync("/patient/users/me/profile");
 
@@ -343,7 +322,10 @@ namespace Nocturne.Connectors.MiniMed.Services
 
                 var responseContent = await response.Content.ReadAsStringAsync();
                 // User profile loaded through token provider, no local storage needed
-                _logger.LogDebug("User profile response received: {Length} chars", responseContent.Length);
+                _logger.LogDebug(
+                    "User profile response received: {Length} chars",
+                    responseContent.Length
+                );
             }
             catch (Exception ex)
             {
@@ -631,8 +613,6 @@ namespace Nocturne.Connectors.MiniMed.Services
             return entries.OrderBy(e => e.Date);
         }
 
-
-
         private class CarelinkLoginFlow
         {
             public required string Endpoint { get; set; }
@@ -663,4 +643,3 @@ namespace Nocturne.Connectors.MiniMed.Services
         }
     }
 }
-

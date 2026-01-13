@@ -1,5 +1,4 @@
-using System.Security.Cryptography;
-using System.Text;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Models.Authorization;
 
@@ -40,7 +39,7 @@ public class ApiSecretHandler : IAuthHandler
             _configuration[$"Parameters:{ServiceNames.Parameters.ApiSecret}"]
             ?? _configuration[ServiceNames.ConfigKeys.ApiSecret]
             ?? "";
-        _apiSecretHash = !string.IsNullOrEmpty(apiSecret) ? ComputeSha1Hash(apiSecret) : "";
+        _apiSecretHash = !string.IsNullOrEmpty(apiSecret) ? HashUtils.Sha1Hex(apiSecret) : "";
     }
 
     /// <inheritdoc />
@@ -83,15 +82,5 @@ public class ApiSecretHandler : IAuthHandler
 
         _logger.LogDebug("API secret authentication successful");
         return Task.FromResult(AuthResult.Success(authContext));
-    }
-
-    /// <summary>
-    /// Compute SHA1 hash of a string (lowercase hex)
-    /// </summary>
-    private static string ComputeSha1Hash(string input)
-    {
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = SHA1.HashData(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

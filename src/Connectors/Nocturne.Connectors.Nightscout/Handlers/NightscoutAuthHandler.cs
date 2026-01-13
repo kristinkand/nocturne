@@ -2,14 +2,13 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Configurations;
+using Nocturne.Connectors.Core.Utilities;
 
 namespace Nocturne.Connectors.Nightscout.Handlers;
 
@@ -29,7 +28,8 @@ public class NightscoutAuthHandler : DelegatingHandler
 
     public NightscoutAuthHandler(
         IOptions<NightscoutConnectorConfiguration> config,
-        ILogger<NightscoutAuthHandler> logger)
+        ILogger<NightscoutAuthHandler> logger
+    )
     {
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -37,19 +37,27 @@ public class NightscoutAuthHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // Check if this is an internal auth request (token acquisition) - skip auth processing
-        if (request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("IsInternalAuthRequest"), out var isInternalAuth) && isInternalAuth)
+        if (
+            request.Options.TryGetValue(
+                new HttpRequestOptionsKey<bool>("IsInternalAuthRequest"),
+                out var isInternalAuth
+            ) && isInternalAuth
+        )
         {
             return await base.SendAsync(request, cancellationToken);
         }
 
-        var isV3Endpoint = request.RequestUri?.AbsolutePath.Contains("/api/v3") == true ||
-                           request.RequestUri?.AbsolutePath.Contains("/api/v2/authorization") == true;
+        var isV3Endpoint =
+            request.RequestUri?.AbsolutePath.Contains("/api/v3") == true
+            || request.RequestUri?.AbsolutePath.Contains("/api/v2/authorization") == true;
 
         // Skip auth for the JWT token request itself to avoid infinite loop
-        var isTokenRequest = request.RequestUri?.AbsolutePath.Contains("/api/v2/authorization/request") == true;
+        var isTokenRequest =
+            request.RequestUri?.AbsolutePath.Contains("/api/v2/authorization/request") == true;
 
         if (!isTokenRequest)
         {
@@ -68,10 +76,12 @@ public class NightscoutAuthHandler : DelegatingHandler
         var response = await base.SendAsync(request, cancellationToken);
 
         // Handle 401 by invalidating JWT and retrying once (only for v3 endpoints with JWT)
-        if (response.StatusCode == HttpStatusCode.Unauthorized &&
-            isV3Endpoint &&
-            !isTokenRequest &&
-            _jwtToken != null)
+        if (
+            response.StatusCode == HttpStatusCode.Unauthorized
+            && isV3Endpoint
+            && !isTokenRequest
+            && _jwtToken != null
+        )
         {
             _logger.LogWarning("Received 401 Unauthorized, invalidating JWT token and retrying");
 
@@ -100,7 +110,10 @@ public class NightscoutAuthHandler : DelegatingHandler
     /// <summary>
     /// Gets or refreshes the JWT token for v3 API authentication
     /// </summary>
-    private async Task<string?> GetJwtTokenAsync(HttpRequestMessage originalRequest, CancellationToken cancellationToken)
+    private async Task<string?> GetJwtTokenAsync(
+        HttpRequestMessage originalRequest,
+        CancellationToken cancellationToken
+    )
     {
         await _tokenLock.WaitAsync(cancellationToken);
         try
@@ -108,8 +121,10 @@ public class NightscoutAuthHandler : DelegatingHandler
             // Return cached token if still valid
             if (!string.IsNullOrEmpty(_jwtToken) && DateTime.UtcNow < _jwtTokenExpiry)
             {
-                _logger.LogDebug("Using cached JWT token (expires in {Minutes} minutes)",
-                    (_jwtTokenExpiry - DateTime.UtcNow).TotalMinutes);
+                _logger.LogDebug(
+                    "Using cached JWT token (expires in {Minutes} minutes)",
+                    (_jwtTokenExpiry - DateTime.UtcNow).TotalMinutes
+                );
                 return _jwtToken;
             }
 
@@ -134,7 +149,10 @@ public class NightscoutAuthHandler : DelegatingHandler
             // Create a new request for the token
             var tokenRequest = new HttpRequestMessage(HttpMethod.Get, tokenUrl);
             // Mark this as an internal auth request to skip auth processing
-            tokenRequest.Options.Set(new HttpRequestOptionsKey<bool>("IsInternalAuthRequest"), true);
+            tokenRequest.Options.Set(
+                new HttpRequestOptionsKey<bool>("IsInternalAuthRequest"),
+                true
+            );
 
             var response = await base.SendAsync(tokenRequest, cancellationToken);
             if (response.IsSuccessStatusCode)
@@ -147,8 +165,10 @@ public class NightscoutAuthHandler : DelegatingHandler
                     _jwtToken = tokenElement.GetString();
                     // JWT tokens typically expire in 1 hour, refresh at 50 minutes
                     _jwtTokenExpiry = DateTime.UtcNow.AddMinutes(50);
-                    _logger.LogInformation("Successfully obtained JWT token for v3 API (expires at {Expiry})",
-                        _jwtTokenExpiry);
+                    _logger.LogInformation(
+                        "Successfully obtained JWT token for v3 API (expires at {Expiry})",
+                        _jwtTokenExpiry
+                    );
                     return _jwtToken;
                 }
             }
@@ -158,7 +178,8 @@ public class NightscoutAuthHandler : DelegatingHandler
                 _logger.LogWarning(
                     "Failed to get JWT token: {StatusCode} - {Error}",
                     response.StatusCode,
-                    errorContent);
+                    errorContent
+                );
             }
 
             return null;
@@ -177,7 +198,10 @@ public class NightscoutAuthHandler : DelegatingHandler
     /// <summary>
     /// Adds JWT authentication header to request for v3 API calls
     /// </summary>
-    private async Task<bool> AddJwtAuthHeaderAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    private async Task<bool> AddJwtAuthHeaderAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         var token = await GetJwtTokenAsync(request, cancellationToken);
         if (string.IsNullOrEmpty(token))
@@ -204,7 +228,7 @@ public class NightscoutAuthHandler : DelegatingHandler
         var apiSecret = _config.SourceApiSecret;
         if (!string.IsNullOrEmpty(apiSecret))
         {
-            var hashedSecret = HashApiSecret(apiSecret);
+            var hashedSecret = HashUtils.Sha1Hex(apiSecret);
             // Remove any existing header to avoid duplicates
             request.Headers.Remove("api-secret");
             request.Headers.Remove("API-SECRET");
@@ -215,16 +239,6 @@ public class NightscoutAuthHandler : DelegatingHandler
         {
             _logger.LogWarning("No API secret configured for authentication");
         }
-    }
-
-    /// <summary>
-    /// Hash API secret using SHA1 to match Nightscout's expected format
-    /// </summary>
-    private static string HashApiSecret(string apiSecret)
-    {
-        using var sha1 = SHA1.Create();
-        var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(apiSecret));
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     /// <summary>

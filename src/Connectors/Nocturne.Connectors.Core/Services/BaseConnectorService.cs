@@ -4,14 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Core.Models;
 
 #nullable enable
@@ -29,6 +28,8 @@ namespace Nocturne.Connectors.Core.Services
         protected readonly IApiDataSubmitter? _apiDataSubmitter;
         protected readonly ILogger _logger;
         protected readonly IConnectorMetricsTracker? _metricsTracker;
+        protected readonly IConnectorStateService? _stateService;
+
         private const int MaxRetries = 3;
         private static readonly TimeSpan[] RetryDelays =
         {
@@ -37,12 +38,80 @@ namespace Nocturne.Connectors.Core.Services
             TimeSpan.FromSeconds(30),
         };
 
+        #region Health Tracking
+
+        /// <summary>
+        /// Tracks consecutive failed requests for health monitoring.
+        /// Automatically incremented on failures and reset on success.
+        /// </summary>
+        protected int _failedRequestCount;
+
+        /// <summary>
+        /// Maximum failed requests before connector is considered unhealthy.
+        /// Override in derived classes to customize threshold.
+        /// </summary>
+        protected virtual int MaxFailedRequestsBeforeUnhealthy => 5;
+
+        /// <summary>
+        /// Gets whether the connector is in a healthy state based on recent request failures.
+        /// Returns false if consecutive failures exceed MaxFailedRequestsBeforeUnhealthy.
+        /// </summary>
+        public virtual bool IsHealthy => _failedRequestCount < MaxFailedRequestsBeforeUnhealthy;
+
+        /// <summary>
+        /// Gets the number of consecutive failed requests.
+        /// </summary>
+        public int FailedRequestCount => _failedRequestCount;
+
+        /// <summary>
+        /// Resets the failed request counter. Call this after successful recovery.
+        /// </summary>
+        public virtual void ResetFailedRequestCount()
+        {
+            _failedRequestCount = 0;
+            _logger.LogInformation(
+                "[{ConnectorSource}] Failed request count reset",
+                ConnectorSource
+            );
+        }
+
+        /// <summary>
+        /// Increments the failed request count and logs the failure.
+        /// </summary>
+        protected void TrackFailedRequest(string? reason = null)
+        {
+            _failedRequestCount++;
+            _logger.LogWarning(
+                "[{ConnectorSource}] Request failed (count: {FailedCount}/{MaxAllowed}){Reason}",
+                ConnectorSource,
+                _failedRequestCount,
+                MaxFailedRequestsBeforeUnhealthy,
+                reason != null ? $": {reason}" : ""
+            );
+        }
+
+        /// <summary>
+        /// Resets the failed request count on success.
+        /// </summary>
+        protected void TrackSuccessfulRequest()
+        {
+            if (_failedRequestCount > 0)
+            {
+                _logger.LogInformation(
+                    "[{ConnectorSource}] Request succeeded, resetting failed count from {PreviousCount}",
+                    ConnectorSource,
+                    _failedRequestCount
+                );
+                _failedRequestCount = 0;
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Unique identifier for this connector service type
         /// </summary>
         public abstract string ConnectorSource { get; }
-
-        protected readonly IConnectorStateService? _stateService;
 
         /// <summary>
         /// Base constructor for connector services using IHttpClientFactory pattern
@@ -66,6 +135,246 @@ namespace Nocturne.Connectors.Core.Services
             _metricsTracker = metricsTracker;
             _stateService = stateService;
         }
+
+        #region Retry and HTTP Helpers
+
+        /// <summary>
+        /// Executes an async operation with retry logic and exponential backoff.
+        /// Automatically tracks success/failure for health monitoring.
+        /// </summary>
+        /// <typeparam name="T">The return type of the operation</typeparam>
+        /// <param name="operation">The async operation to execute</param>
+        /// <param name="retryStrategy">Strategy for calculating retry delays</param>
+        /// <param name="reAuthenticateOnUnauthorized">Optional callback to re-authenticate on 401 responses</param>
+        /// <param name="maxRetries">Maximum number of retry attempts (default: 3)</param>
+        /// <param name="operationName">Name of the operation for logging</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The result of the operation, or default(T) on failure</returns>
+        protected async Task<T?> ExecuteWithRetryAsync<T>(
+            Func<Task<T?>> operation,
+            IRetryDelayStrategy retryStrategy,
+            Func<Task<bool>>? reAuthenticateOnUnauthorized = null,
+            int maxRetries = 3,
+            string? operationName = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var opName = operationName ?? "operation";
+            HttpRequestException? lastException = null;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    _logger.LogDebug(
+                        "[{ConnectorSource}] Executing {Operation} (attempt {Attempt}/{MaxRetries})",
+                        ConnectorSource,
+                        opName,
+                        attempt + 1,
+                        maxRetries
+                    );
+
+                    var result = await operation();
+
+                    // Success - track it and return
+                    TrackSuccessfulRequest();
+                    return result;
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogWarning(
+                        "[{ConnectorSource}] Unauthorized response during {Operation}, attempting re-authentication",
+                        ConnectorSource,
+                        opName
+                    );
+
+                    if (reAuthenticateOnUnauthorized != null)
+                    {
+                        var reAuthSuccess = await reAuthenticateOnUnauthorized();
+                        if (reAuthSuccess)
+                        {
+                            _logger.LogInformation(
+                                "[{ConnectorSource}] Re-authentication successful, retrying {Operation}",
+                                ConnectorSource,
+                                opName
+                            );
+                            continue; // Retry with new credentials
+                        }
+                    }
+
+                    TrackFailedRequest("Unauthorized and re-authentication failed");
+                    return default;
+                }
+                catch (HttpRequestException ex) when (IsRetryableStatusCode(ex.StatusCode))
+                {
+                    lastException = ex;
+                    _logger.LogWarning(
+                        "[{ConnectorSource}] Retryable error during {Operation} (attempt {Attempt}): {StatusCode}",
+                        ConnectorSource,
+                        opName,
+                        attempt + 1,
+                        ex.StatusCode
+                    );
+
+                    if (attempt < maxRetries - 1)
+                    {
+                        await retryStrategy.ApplyRetryDelayAsync(attempt);
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    // Non-retryable HTTP error
+                    _logger.LogError(
+                        ex,
+                        "[{ConnectorSource}] Non-retryable HTTP error during {Operation}: {StatusCode}",
+                        ConnectorSource,
+                        opName,
+                        ex.StatusCode
+                    );
+                    TrackFailedRequest($"HTTP {ex.StatusCode}");
+                    return default;
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "[{ConnectorSource}] JSON parsing error during {Operation}",
+                        ConnectorSource,
+                        opName
+                    );
+                    TrackFailedRequest("JSON parsing error");
+                    return default;
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation(
+                        "[{ConnectorSource}] {Operation} was cancelled",
+                        ConnectorSource,
+                        opName
+                    );
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "[{ConnectorSource}] Unexpected error during {Operation}",
+                        ConnectorSource,
+                        opName
+                    );
+                    TrackFailedRequest($"Unexpected error: {ex.Message}");
+                    return default;
+                }
+            }
+
+            // All retries exhausted
+            TrackFailedRequest($"All {maxRetries} attempts failed");
+            _logger.LogError(
+                "[{ConnectorSource}] {Operation} failed after {MaxRetries} attempts",
+                ConnectorSource,
+                opName,
+                maxRetries
+            );
+
+            if (lastException != null)
+            {
+                throw lastException;
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Sends an HTTP request with optional custom headers.
+        /// Useful for APIs that require per-request headers like Account-Id.
+        /// </summary>
+        /// <param name="method">HTTP method</param>
+        /// <param name="url">Request URL</param>
+        /// <param name="additionalHeaders">Optional headers to add to the request</param>
+        /// <param name="content">Optional request content</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>HTTP response message</returns>
+        protected async Task<HttpResponseMessage> SendWithHeadersAsync(
+            HttpMethod method,
+            string url,
+            Dictionary<string, string>? additionalHeaders = null,
+            HttpContent? content = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            using var request = new HttpRequestMessage(method, url);
+
+            if (additionalHeaders != null)
+            {
+                foreach (var header in additionalHeaders)
+                {
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
+
+            if (content != null)
+            {
+                request.Content = content;
+            }
+
+            return await _httpClient.SendAsync(request, cancellationToken);
+        }
+
+        /// <summary>
+        /// Sends a GET request with optional custom headers.
+        /// </summary>
+        protected Task<HttpResponseMessage> GetWithHeadersAsync(
+            string url,
+            Dictionary<string, string>? additionalHeaders = null,
+            CancellationToken cancellationToken = default
+        ) => SendWithHeadersAsync(HttpMethod.Get, url, additionalHeaders, null, cancellationToken);
+
+        /// <summary>
+        /// Sends a POST request with optional custom headers and content.
+        /// </summary>
+        protected Task<HttpResponseMessage> PostWithHeadersAsync(
+            string url,
+            HttpContent? content = null,
+            Dictionary<string, string>? additionalHeaders = null,
+            CancellationToken cancellationToken = default
+        ) =>
+            SendWithHeadersAsync(
+                HttpMethod.Post,
+                url,
+                additionalHeaders,
+                content,
+                cancellationToken
+            );
+
+        /// <summary>
+        /// Determines if an HTTP status code is retryable.
+        /// </summary>
+        private static bool IsRetryableStatusCode(HttpStatusCode? statusCode)
+        {
+            return statusCode
+                is HttpStatusCode.TooManyRequests
+                    or HttpStatusCode.ServiceUnavailable
+                    or HttpStatusCode.InternalServerError
+                    or HttpStatusCode.BadGateway
+                    or HttpStatusCode.GatewayTimeout
+                    or HttpStatusCode.RequestTimeout;
+        }
+
+        /// <summary>
+        /// Deserializes JSON content from an HTTP response using case-insensitive options.
+        /// </summary>
+        protected async Task<T?> DeserializeResponseAsync<T>(
+            HttpResponseMessage response,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<T>(content, JsonDefaults.CaseInsensitive);
+        }
+
+        #endregion
 
         /// <summary>
         /// Get the timestamp of the most recent entry from the Nocturne API
@@ -285,16 +594,6 @@ namespace Nocturne.Connectors.Core.Services
                 fallbackSince
             );
             return fallbackSince;
-        }
-
-        /// <summary>
-        /// Hash API secret using SHA1 to match Nightscout's expected format
-        /// </summary>
-        private static string HashApiSecret(string apiSecret)
-        {
-            using var sha1 = SHA1.Create();
-            var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(apiSecret));
-            return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
 
         public abstract string ServiceName { get; }

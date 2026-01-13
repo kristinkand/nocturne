@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Nocturne.API.Extensions;
 using Nocturne.API.Middleware;
+using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Core.Contracts;
 
 namespace Nocturne.API.Hubs;
@@ -66,13 +67,7 @@ public class DataHub : Hub
                     if (!string.IsNullOrEmpty(configuredSecret))
                     {
                         // Calculate SHA1 hash of the configured secret
-                        using var sha1 = System.Security.Cryptography.SHA1.Create();
-                        var secretBytes = System.Text.Encoding.UTF8.GetBytes(configuredSecret);
-                        var hashBytes = sha1.ComputeHash(secretBytes);
-                        var expectedHash = BitConverter
-                            .ToString(hashBytes)
-                            .Replace("-", "")
-                            .ToLowerInvariant();
+                        var expectedHash = HashUtils.Sha1Hex(configuredSecret);
 
                         // Compare with provided secret (should be the hashed value)
                         isAuthorized = authData.Secret.ToLowerInvariant() == expectedHash;
