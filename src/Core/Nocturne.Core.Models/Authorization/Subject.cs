@@ -74,6 +74,11 @@ public class Subject
     /// Notes or description
     /// </summary>
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// User's preferred language code (e.g., "en", "fr", "de")
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
 }
 
 /// <summary>

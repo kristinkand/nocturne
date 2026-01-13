@@ -5,6 +5,7 @@
     import {
         DEMO_ENABLED,
     } from "$lib/config";
+    import LanguageSelector from "@nocturne/app/components/LanguageSelector.svelte";
 
     let mobileMenuOpen = $state(false);
 
@@ -56,6 +57,7 @@
 
             <!-- Desktop CTA -->
             <div class="hidden md:flex items-center gap-3">
+                <LanguageSelector compact />
                 <Button href="/setup" variant="default" size="sm">
                     Get Started
                 </Button>
@@ -91,7 +93,10 @@
                             {link.label}
                         </a>
                     {/each}
-                    <div class="pt-3 mt-2 border-t border-border/40">
+                    <div class="pt-3 mt-2 border-t border-border/40 space-y-3">
+                        <div class="px-4">
+                            <LanguageSelector />
+                        </div>
                         <Button href="/setup" variant="default" class="w-full">
                             Get Started
                         </Button>

@@ -433,6 +433,7 @@ public class OidcAuthService : IOidcAuthService
             Permissions = permissions,
             ProviderName = providerName,
             LastLoginAt = subject.LastLoginAt,
+            PreferredLanguage = subject.PreferredLanguage,
         };
     }
 

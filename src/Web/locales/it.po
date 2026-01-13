@@ -11796,3 +11796,23 @@ msgstr ""
 #: src/routes/settings/trackers/+page.svelte
 msgid "{0} old · Started {1} <0/>"
 msgstr ""
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "<0/> Language"
+msgstr ""
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Choose your preferred language for the interface"
+msgstr ""
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Display language"
+msgstr ""
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Your language preference will be saved to your account and synced across devices."
+msgstr ""
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Sign in to sync your language preference across devices."
+msgstr ""

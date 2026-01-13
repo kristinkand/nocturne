@@ -12,6 +12,8 @@ import { runWithLocale, loadLocales } from 'wuchale/load-utils/server';
 import * as main from '../../../locales/main.loader.server.svelte.js'
 import * as js from '../../../locales/js.loader.server.js'
 import { locales } from '../../../locales/data.js'
+import supportedLocales from '../../../supportedLocales.json';
+import { LANGUAGE_COOKIE_NAME } from "$lib/stores/appearance-store.svelte";
 
 // load at server startup
 loadLocales(main.key, main.loadIDs, main.loadCatalog, locales)
@@ -121,6 +123,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
         roles: session.roles ?? [],
         permissions: session.permissions ?? [],
         expiresAt: session.expiresAt,
+        preferredLanguage: session.preferredLanguage ?? undefined,
       };
 
       event.locals.user = user;
@@ -260,9 +263,84 @@ export const handleError: HandleServerError = async ({ error, event }) => {
   };
 };
 
+/**
+ * Parse Accept-Language header and find the best matching supported locale
+ */
+function parseAcceptLanguage(header: string | null, supported: Set<string>): string | null {
+  if (!header) return null;
+
+  // Parse Accept-Language header (e.g., "en-US,en;q=0.9,fr;q=0.8")
+  const languages = header.split(",").map((lang) => {
+    const [code, qValue] = lang.trim().split(";q=");
+    return {
+      code: code.split("-")[0].toLowerCase(), // Use primary language tag
+      quality: qValue ? parseFloat(qValue) : 1.0,
+    };
+  });
+
+  // Sort by quality descending
+  languages.sort((a, b) => b.quality - a.quality);
+
+  // Find the first supported language
+  for (const { code } of languages) {
+    if (supported.has(code)) {
+      return code;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Resolve locale using priority cascade:
+ * 1. Query param override (?locale=fr)
+ * 2. Cookie (nocturne-language) - synced from client localStorage
+ * 3. User's backend preference (if authenticated)
+ * 4. Environment default (PUBLIC_DEFAULT_LANGUAGE)
+ * 5. Browser Accept-Language header
+ * 6. Ultimate fallback: 'en'
+ */
+function resolveLocale(event: Parameters<Handle>[0]["event"]): string {
+  const supported = new Set(supportedLocales);
+
+  // 1. Query param override
+  const queryLocale = event.url.searchParams.get("locale");
+  if (queryLocale && supported.has(queryLocale)) {
+    return queryLocale;
+  }
+
+  // 2. Cookie (set by client from localStorage)
+  const cookieLocale = event.cookies.get(LANGUAGE_COOKIE_NAME);
+  if (cookieLocale && supported.has(cookieLocale)) {
+    return cookieLocale;
+  }
+
+  // 3. User's backend preference (if authenticated)
+  const userPreference = event.locals.user?.preferredLanguage;
+  if (userPreference && supported.has(userPreference)) {
+    return userPreference;
+  }
+
+  // 4. Environment default
+  const envDefault = publicEnv.PUBLIC_DEFAULT_LANGUAGE;
+  if (envDefault && supported.has(envDefault)) {
+    return envDefault;
+  }
+
+  // 5. Browser Accept-Language header
+  const acceptLang = event.request.headers.get("accept-language");
+  const browserLocale = parseAcceptLanguage(acceptLang, supported);
+  if (browserLocale) {
+    return browserLocale;
+  }
+
+  // 6. Ultimate fallback
+  return "en";
+}
+
 export const locale: Handle = async ({ event, resolve }) => {
-    const locale = event.url.searchParams.get('locale') ?? 'en'
-    return await runWithLocale(locale, () => resolve(event))
+  const locale = resolveLocale(event);
+  return await runWithLocale(locale, () => resolve(event));
 }
 
 // Chain the auth handler, proxy handler, and API client handler

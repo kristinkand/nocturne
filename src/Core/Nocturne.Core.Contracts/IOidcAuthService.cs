@@ -257,6 +257,11 @@ public class OidcUserInfo
     /// Last login time
     /// </summary>
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// User's preferred language code (e.g., "en", "fr", "de")
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
 }
 
 /// <summary>

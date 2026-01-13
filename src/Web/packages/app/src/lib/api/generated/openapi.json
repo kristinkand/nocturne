@@ -7233,6 +7233,89 @@
         }
       }
     },
+    "/api/v4/user/preferences": {
+      "get": {
+        "tags": [
+          "User Preferences"
+        ],
+        "summary": "Get the current user's preferences",
+        "operationId": "UserPreferences_GetPreferences",
+        "responses": {
+          "200": {
+            "description": "User preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "User Preferences"
+        ],
+        "summary": "Update the current user's preferences",
+        "operationId": "UserPreferences_UpdatePreferences",
+        "requestBody": {
+          "x-name": "request",
+          "description": "The preferences to update",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserPreferencesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "Updated preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v3/DeviceStatus": {
       "get": {
         "tags": [
@@ -14312,6 +14395,10 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -14360,6 +14447,11 @@
             "type": "string",
             "description": "Session expiration time",
             "format": "date-time",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "User's preferred language code (e.g., \"en\", \"fr\", \"de\")",
             "nullable": true
           }
         }
@@ -22210,6 +22302,30 @@
           },
           "backgroundRefresh": {
             "type": "boolean"
+          }
+        }
+      },
+      "UserPreferencesResponse": {
+        "type": "object",
+        "description": "User preferences response",
+        "additionalProperties": false,
+        "properties": {
+          "preferredLanguage": {
+            "type": "string",
+            "description": "User's preferred language code (e.g., \"en\", \"fr\", \"de\")",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateUserPreferencesRequest": {
+        "type": "object",
+        "description": "Request to update user preferences",
+        "additionalProperties": false,
+        "properties": {
+          "preferredLanguage": {
+            "type": "string",
+            "description": "User's preferred language code (e.g., \"en\", \"fr\", \"de\")",
+            "nullable": true
           }
         }
       },

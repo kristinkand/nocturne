@@ -295,6 +295,11 @@ class Program
                 "PUBLIC_WEBSOCKET_PING_INTERVAL",
                 builder.Configuration["WebSocket:PingInterval"] ?? "20000"
             )
+            // Default language for the application
+            .WithEnvironment(
+                "PUBLIC_DEFAULT_LANGUAGE",
+                builder.Configuration["Language:DefaultLanguage"] ?? "en"
+            )
             // Cookie names for authentication - must match API's Oidc:Cookie configuration
             .WithEnvironment(
                 "COOKIE_ACCESS_TOKEN_NAME",

@@ -102,6 +102,13 @@ public class SubjectEntity
     [Column("original_id")]
     public string? OriginalId { get; set; }
 
+    /// <summary>
+    /// User's preferred language code (e.g., "en", "fr", "de")
+    /// </summary>
+    [MaxLength(10)]
+    [Column("preferred_language")]
+    public string? PreferredLanguage { get; set; }
+
     // Navigation properties
 
     /// <summary>

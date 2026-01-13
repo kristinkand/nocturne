@@ -343,6 +343,7 @@ public class OidcController : ControllerBase
                 Roles = authContext.Roles,
                 Permissions = authContext.Permissions,
                 ExpiresAt = authContext.ExpiresAt,
+                PreferredLanguage = userInfo?.PreferredLanguage,
             }
         );
     }
@@ -630,6 +631,11 @@ public class SessionInfo
     /// Session expiration time
     /// </summary>
     public DateTimeOffset? ExpiresAt { get; set; }
+
+    /// <summary>
+    /// User's preferred language code (e.g., "en", "fr", "de")
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
 }
 
 #endregion

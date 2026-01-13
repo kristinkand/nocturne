@@ -7,7 +7,11 @@
     "./src/app.css": "./src/app.css",
     "./ui/*.svelte": "./src/lib/components/ui/*.svelte",
     "./ui/*": "./src/lib/components/ui/*/index.ts",
-    "./utils": "./src/lib/utils/index.ts"
+    "./utils": "./src/lib/utils/index.ts",
+    "./stores/*.svelte": "./src/lib/stores/*.svelte.ts",
+    "./stores/*": "./src/lib/stores/*",
+    "./components/*.svelte": "./src/lib/components/*.svelte",
+    "./components/*": "./src/lib/components/*"
   },
   "directories": {
     "lib": "lib"

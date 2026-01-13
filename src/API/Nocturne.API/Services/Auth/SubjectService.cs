@@ -594,6 +594,7 @@ public class SubjectService : ISubjectService
             CreatedAt = entity.CreatedAt,
             LastLoginAt = entity.LastLoginAt,
             Notes = entity.Notes,
+            PreferredLanguage = entity.PreferredLanguage,
             Roles = new List<Role>(),
             Permissions = new List<string>(),
         };

@@ -9085,6 +9085,116 @@ export class UISettingsClient {
     }
 }
 
+export class UserPreferencesClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Get the current user's preferences
+     * @return User preferences
+     */
+    getPreferences(signal?: AbortSignal): Promise<UserPreferencesResponse> {
+        let url_ = this.baseUrl + "/api/v4/user/preferences";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetPreferences(_response);
+        });
+    }
+
+    protected processGetPreferences(response: Response): Promise<UserPreferencesResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserPreferencesResponse;
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserPreferencesResponse>(null as any);
+    }
+
+    /**
+     * Update the current user's preferences
+     * @param request The preferences to update
+     * @return Updated preferences
+     */
+    updatePreferences(request: UpdateUserPreferencesRequest, signal?: AbortSignal): Promise<UserPreferencesResponse> {
+        let url_ = this.baseUrl + "/api/v4/user/preferences";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PATCH",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdatePreferences(_response);
+        });
+    }
+
+    protected processUpdatePreferences(response: Response): Promise<UserPreferencesResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserPreferencesResponse;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            result401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserPreferencesResponse>(null as any);
+    }
+}
+
 export class DeviceStatusClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -15802,6 +15912,7 @@ export interface OidcUserInfo {
     permissions?: string[];
     providerName?: string | undefined;
     lastLoginAt?: Date | undefined;
+    preferredLanguage?: string | undefined;
 }
 
 /** Current session information */
@@ -15820,6 +15931,8 @@ export interface SessionInfo {
     permissions?: string[] | undefined;
     /** Session expiration time */
     expiresAt?: Date | undefined;
+    /** User's preferred language code (e.g., "en", "fr", "de") */
+    preferredLanguage?: string | undefined;
 }
 
 /** Pebble response model for 1:1 Nightscout compatibility */
@@ -18307,6 +18420,18 @@ export interface SyncSettings {
     autoSync?: boolean;
     syncOnAppOpen?: boolean;
     backgroundRefresh?: boolean;
+}
+
+/** User preferences response */
+export interface UserPreferencesResponse {
+    /** User's preferred language code (e.g., "en", "fr", "de") */
+    preferredLanguage?: string | undefined;
+}
+
+/** Request to update user preferences */
+export interface UpdateUserPreferencesRequest {
+    /** User's preferred language code (e.g., "en", "fr", "de") */
+    preferredLanguage?: string | undefined;
 }
 
 export interface V3CollectionResponseOfObject {

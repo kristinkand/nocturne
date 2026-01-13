@@ -7,6 +7,9 @@
     SidebarNotifications,
     UserMenu,
   } from "./index";
+  import LanguageSelector from "$lib/components/LanguageSelector.svelte";
+  import { updateLanguagePreference } from "$lib/data/user-preferences.remote";
+  import { hasLanguagePreference } from "$lib/stores/appearance-store.svelte";
   import {
     Home,
     BarChart3,
@@ -311,6 +314,13 @@
 
   <Sidebar.Footer class="p-2">
     <Sidebar.Menu>
+      {#if !hasLanguagePreference()}
+        <Sidebar.MenuItem class="group-data-[collapsible=icon]:hidden">
+          <LanguageSelector
+            onLanguageChange={user ? updateLanguagePreference : undefined}
+          />
+        </Sidebar.MenuItem>
+      {/if}
       <Sidebar.MenuItem
         class="flex items-center gap-2 min-w-0 group-data-[collapsible=icon]:flex-col"
       >

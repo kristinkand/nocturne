@@ -16,6 +16,8 @@
   import { getRealtimeStore } from "$lib/stores/realtime-store.svelte";
   import TitleFaviconSettings from "$lib/components/settings/TitleFaviconSettings.svelte";
   import DashboardWidgetConfigurator from "$lib/components/settings/DashboardWidgetConfigurator.svelte";
+  import LanguageSelector from "$lib/components/LanguageSelector.svelte";
+  import { updateLanguagePreference } from "$lib/data/user-preferences.remote";
   import {
     Card,
     CardContent,
@@ -40,6 +42,7 @@
     Monitor,
     Clock,
     Globe,
+    Languages,
     AlertCircle,
     Timer,
   } from "lucide-svelte";
@@ -51,6 +54,7 @@
     type WidgetConfig,
   } from "$lib/api/generated/nocturne-api-client";
   import { getEnabledWidgetsByPlacement } from "$lib/types/dashboard-widgets";
+  import { page } from "$app/state";
 
   const store = getSettingsStore();
   const realtimeStore = getRealtimeStore();
@@ -351,6 +355,34 @@
             }}
           />
         </div>
+      </CardContent>
+    </Card>
+
+    <!-- Language Selection -->
+    <Card>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <Languages class="h-5 w-5" />
+          Language
+        </CardTitle>
+        <CardDescription>
+          Choose your preferred language for the interface
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <div class="space-y-2">
+          <Label>Display language</Label>
+          <LanguageSelector
+            onLanguageChange={page.data.isAuthenticated ? updateLanguagePreference : undefined}
+          />
+        </div>
+        <p class="text-xs text-muted-foreground">
+          {#if page.data.isAuthenticated}
+            Your language preference will be saved to your account and synced across devices.
+          {:else}
+            Sign in to sync your language preference across devices.
+          {/if}
+        </p>
       </CardContent>
     </Card>
 

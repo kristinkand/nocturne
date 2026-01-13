@@ -23,6 +23,8 @@ export interface AuthUser {
 	roles: string[];
 	permissions: string[];
 	expiresAt?: Date;
+	/** User's preferred language code (e.g., "en", "fr", "de") */
+	preferredLanguage?: string;
 }
 
 declare global {

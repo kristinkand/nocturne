@@ -12023,3 +12023,23 @@ msgstr "Build your own custom Nightscout clock display"
 #: src/routes/settings/trackers/+page.svelte
 msgid "{0} old · Started {1} <0/>"
 msgstr "{0} old · Started {1} <0/>"
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "<0/> Language"
+msgstr "<0/> Language"
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Choose your preferred language for the interface"
+msgstr "Choose your preferred language for the interface"
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Display language"
+msgstr "Display language"
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Your language preference will be saved to your account and synced across devices."
+msgstr "Your language preference will be saved to your account and synced across devices."
+
+#: src/routes/settings/appearance/+page.svelte
+msgid "Sign in to sync your language preference across devices."
+msgstr "Sign in to sync your language preference across devices."

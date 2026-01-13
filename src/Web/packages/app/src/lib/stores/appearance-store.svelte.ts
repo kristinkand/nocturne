@@ -8,11 +8,13 @@
  * - Glucose units (mg/dL vs mmol/L)
  * - Time format (12h vs 24h)
  * - Night mode schedule
+ * - Language preference
  */
 
 import { browser } from "$app/environment";
 import { PersistedState } from "runed";
 import { setMode, mode, userPrefersMode } from "mode-watcher";
+import supportedLocales from "../../../../../supportedLocales.json";
 
 // ==========================================
 // Type Definitions
@@ -29,6 +31,9 @@ export type GlucoseUnits = "mg/dl" | "mmol";
 
 /** Time format preference */
 export type TimeFormat = "12" | "24";
+
+/** Supported locale type - derived from supportedLocales.json */
+export type SupportedLocale = (typeof supportedLocales)[number];
 
 // ==========================================
 // Persisted State Instances
@@ -260,3 +265,121 @@ export const glucoseChartLookback = new PersistedState<TimeRangeOption>(
   "6"
 );
 
+// ==========================================
+// Language Preference
+// ==========================================
+
+/** Re-export supported locales for external use */
+export { supportedLocales };
+
+/**
+ * Language preference - stored in localStorage and synced to cookie for SSR
+ */
+export const preferredLanguage = new PersistedState<SupportedLocale>(
+  "nocturne-language",
+  "en"
+);
+
+/** Cookie name for language preference - used by SSR */
+export const LANGUAGE_COOKIE_NAME = "nocturne-language";
+
+/**
+ * Check if user has explicitly set a language preference
+ * Returns true if the localStorage key exists (user has chosen a language)
+ */
+export function hasLanguagePreference(): boolean {
+  if (!browser) return false;
+  return localStorage.getItem("nocturne-language") !== null;
+}
+
+/**
+ * Sync language preference to cookie for server-side access
+ */
+function syncLanguageCookie(locale: SupportedLocale): void {
+  if (!browser) return;
+  document.cookie = `${LANGUAGE_COOKIE_NAME}=${locale};path=/;max-age=31536000;SameSite=Lax`;
+}
+
+/**
+ * Get display name for a language code using Intl.DisplayNames
+ * @param code The language code (e.g., "en", "fr")
+ * @param displayIn The language to display the name in (defaults to "en")
+ * @returns The display name (e.g., "French" or "Français")
+ */
+export function getLanguageLabel(
+  code: SupportedLocale,
+  displayIn: SupportedLocale = "en"
+): string {
+  try {
+    const displayNames = new Intl.DisplayNames([displayIn], { type: "language" });
+    return displayNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/**
+ * Get native language label (language name in its own language)
+ * @param code The language code
+ * @returns The native label (e.g., "Français" for "fr")
+ */
+export function getNativeLanguageLabel(code: SupportedLocale): string {
+  return getLanguageLabel(code, code);
+}
+
+/**
+ * Check if a locale is supported
+ */
+export function isSupportedLocale(locale: string): locale is SupportedLocale {
+  return supportedLocales.includes(locale as SupportedLocale);
+}
+
+/**
+ * Set language preference and sync to cookie
+ * Optionally updates the backend user preference via remote function
+ * @param locale The locale to set
+ * @param updateBackend Optional callback to update backend preference
+ */
+export async function setLanguage(
+  locale: SupportedLocale,
+  updateBackend?: (locale: string) => Promise<unknown>
+): Promise<void> {
+  if (!isSupportedLocale(locale)) {
+    console.warn(`Unsupported locale: ${locale}`);
+    return;
+  }
+
+  preferredLanguage.current = locale;
+  syncLanguageCookie(locale);
+
+  // Dynamically load the locale for wuchale
+  if (browser) {
+    try {
+      const { loadLocale } = await import("wuchale/load-utils");
+      await loadLocale(locale);
+    } catch (error) {
+      console.error("Failed to load locale:", error);
+    }
+  }
+
+  // Update backend preference if callback provided
+  if (updateBackend) {
+    try {
+      await updateBackend(locale);
+    } catch (error) {
+      console.error("Failed to update backend language preference:", error);
+    }
+  }
+}
+
+/**
+ * Get current language preference
+ */
+export function getLanguage(): SupportedLocale {
+  return preferredLanguage.current;
+}
+
+// Sync cookie on initial load in browser
+if (browser) {
+  syncLanguageCookie(preferredLanguage.current);
+}

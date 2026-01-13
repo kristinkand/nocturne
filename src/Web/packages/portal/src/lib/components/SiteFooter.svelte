@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Github, Heart } from "@lucide/svelte";
+    import LanguageSelector from "@nocturne/app/components/LanguageSelector.svelte";
 </script>
 
 <footer class="border-t border-border/40 bg-muted/30">
@@ -110,10 +111,13 @@
                 &copy; {new Date().getFullYear()} Nocturne. Open source under MIT
                 license.
             </p>
-            <p class="text-sm text-muted-foreground flex items-center gap-1.5">
-                Made with <Heart class="w-4 h-4 text-red-500 fill-red-500" /> by the
-                diabetes community
-            </p>
+            <div class="flex items-center gap-4">
+                <LanguageSelector compact />
+                <p class="text-sm text-muted-foreground flex items-center gap-1.5">
+                    Made with <Heart class="w-4 h-4 text-red-500 fill-red-500" /> by the
+                    diabetes community
+                </p>
+            </div>
         </div>
     </div>
 </footer>
