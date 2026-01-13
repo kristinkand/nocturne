@@ -247,7 +247,10 @@
 
     // Only show stale marker if data is stale AND the last update is within the visible range
     const rangeStartTime = displayDateRange.from.getTime();
-    if (timeSinceLastUpdate > STALE_THRESHOLD_MS && lastBasalSourceTime >= rangeStartTime) {
+    if (
+      timeSinceLastUpdate > STALE_THRESHOLD_MS &&
+      lastBasalSourceTime >= rangeStartTime
+    ) {
       return {
         start: new Date(lastBasalSourceTime),
         end: new Date(rangeEndTime),
@@ -1645,11 +1648,14 @@
                   />
                 {/if}
                 {#if activeBasal}
+                  {@const isEffectiveTemp =
+                    activeBasal.isTemp &&
+                    activeBasal.rate !== activeBasal.scheduledRate}
                   <Tooltip.Item
-                    label={activeBasal.isTemp ? "Temp Basal" : "Basal"}
+                    label={isEffectiveTemp ? "Temp Basal" : "Basal"}
                     value={activeBasal.rate}
                     format={"decimal"}
-                    color={activeBasal.isTemp
+                    color={isEffectiveTemp
                       ? "var(--insulin-temp-basal)"
                       : "var(--insulin-basal)"}
                     class={cn(
@@ -1658,7 +1664,7 @@
                         : ""
                     )}
                   />
-                  {#if activeBasal.isTemp && activeBasal.scheduledRate !== undefined}
+                  {#if isEffectiveTemp && activeBasal.scheduledRate !== undefined}
                     <Tooltip.Item
                       label="Scheduled"
                       value={activeBasal.scheduledRate}
