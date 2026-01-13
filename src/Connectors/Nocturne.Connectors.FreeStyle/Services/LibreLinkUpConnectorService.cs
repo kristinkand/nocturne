@@ -443,13 +443,6 @@ namespace Nocturne.Connectors.FreeStyle.Services
             {
                 var timestamp = ParseLibreTimestamp(measurement.FactoryTimestamp);
 
-                // Adjust timezone offset
-                var offset = TimeSpan.FromMinutes(
-                    timestamp.Kind == DateTimeKind.Local
-                        ? TimeZoneInfo.Local.GetUtcOffset(timestamp).TotalMinutes
-                        : 0
-                );
-                timestamp = timestamp.Subtract(offset);
                 var direction = TrendArrowMap.GetValueOrDefault(
                     measurement.TrendArrow,
                     Direction.NotComputable
@@ -491,7 +484,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
                     value,
                     formats,
                     CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces,
                     out var parsed))
             {
                 return parsed;
@@ -500,7 +493,7 @@ namespace Nocturne.Connectors.FreeStyle.Services
             if (DateTime.TryParse(
                     value,
                     CultureInfo.CurrentCulture,
-                    DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces,
                     out parsed))
             {
                 return parsed;
