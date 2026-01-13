@@ -5169,6 +5169,7 @@ msgstr "<0/> Start"
 #: src/lib/components/status-pills/SAGEPill.svelte
 #: src/lib/components/status-pills/TrackerPill.svelte
 #: src/routes/settings/trackers/+page.svelte
+#: src/routes/settings/trackers/+page.svelte
 msgid "Overdue"
 msgstr "Overdue"
 
@@ -11534,10 +11535,8 @@ msgstr "No active trackers"
 msgid "Start a tracker from your definitions"
 msgstr "Start a tracker from your definitions"
 
-#. placeholder {0}: formatDate(instance.startedAt)
-#: src/routes/settings/trackers/+page.svelte
-msgid "Started {0} <0/> <1/>"
-msgstr "Started {0} <0/> <1/>"
+#~ msgid "Started {0} <0/> <1/>"
+#~ msgstr "Started {0} <0/> <1/>"
 
 #: src/routes/settings/trackers/+page.svelte
 msgid "History"
@@ -12018,3 +12017,9 @@ msgstr "Clock Builder - Nightscout"
 #: src/routes/clock/config/+page.ts
 msgid "Build your own custom Nightscout clock display"
 msgstr "Build your own custom Nightscout clock display"
+
+#. placeholder {0}: formatAge(instance.ageHours ?? 0)
+#. placeholder {1}: formatDate(instance.startedAt)
+#: src/routes/settings/trackers/+page.svelte
+msgid "{0} old · Started {1} <0/>"
+msgstr "{0} old · Started {1} <0/>"

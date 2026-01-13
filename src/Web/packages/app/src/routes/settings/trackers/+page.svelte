@@ -581,30 +581,28 @@
                     )}
                   >
                     <div class="flex items-center gap-3">
-                      <div class="text-2xl font-bold tabular-nums">
-                        {formatAge(instance.ageHours ?? 0)}
+                      <div
+                        class={cn(
+                          "text-2xl font-bold tabular-nums",
+                          remaining !== undefined && remaining <= 0
+                            ? "text-destructive"
+                            : remaining !== undefined && remaining < 6
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : ""
+                        )}
+                      >
+                        {#if remaining !== undefined}
+                          {remaining <= 0 ? "Overdue" : formatAge(remaining)}
+                        {:else}
+                          {formatAge(instance.ageHours ?? 0)}
+                        {/if}
                       </div>
                       <div>
                         <div class="font-medium">{instance.definitionName}</div>
                         <div
                           class="text-sm text-muted-foreground flex items-center gap-1.5"
                         >
-                          Started {formatDate(instance.startedAt)}
-                          {#if remaining !== undefined}
-                            ·
-                            <span
-                              class={cn(
-                                "font-medium",
-                                remaining <= 0
-                                  ? "text-destructive"
-                                  : remaining < 6
-                                    ? "text-yellow-600 dark:text-yellow-400"
-                                    : "text-primary"
-                              )}
-                            >
-                              {formatTimeRemaining(remaining)}
-                            </span>
-                          {/if}
+                          {formatAge(instance.ageHours ?? 0)} old · Started {formatDate(instance.startedAt)}
                           {#if instance.startNotes}
                             · {instance.startNotes}
                           {/if}

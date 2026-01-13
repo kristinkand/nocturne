@@ -13,8 +13,8 @@ msgstr ""
 "Source-Language: en\n"
 "MIME-Version: 1.0\n"
 
-#: src/routes/+error.svelte
 #. placeholder {0}: page.status
+#: src/routes/+error.svelte
 msgid "{0} Error"
 msgstr ""
 
@@ -26,8 +26,8 @@ msgstr ""
 msgid "Details:"
 msgstr ""
 
-#: src/routes/+error.svelte
 #. placeholder {0}: page.error.errorId
+#: src/routes/+error.svelte
 msgid "Error ID: {0}"
 msgstr ""
 
@@ -120,8 +120,8 @@ msgstr ""
 msgid "Edit Treatment"
 msgstr ""
 
-#: src/lib/components/TreatmentEditModal.svelte
 #. placeholder {0}: treatment.eventType
+#: src/lib/components/TreatmentEditModal.svelte
 msgid "Update the details of this {0} treatment"
 msgstr ""
 
@@ -411,12 +411,12 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: src/lib/components/TreatmentsTable.svelte
-#: src/lib/components/treatments/TreatmentsDataTable.svelte
 #. placeholder {0}: selectedTreatments.size
 #. placeholder {1}: selectedTreatments.size !== 1 ? "s" : ""
 #. placeholder {0}: selectedTreatments.length
 #. placeholder {1}: selectedTreatments.length !== 1 ? "s" : ""
+#: src/lib/components/TreatmentsTable.svelte
+#: src/lib/components/treatments/TreatmentsDataTable.svelte
 msgid "{0} treatment{1} selected"
 msgstr ""
 
@@ -429,9 +429,9 @@ msgstr ""
 msgid "<0/> Delete Selected"
 msgstr ""
 
-#: src/lib/components/TreatmentsTable.svelte
 #. placeholder {0}: treatments.length
 #. placeholder {1}: treatments.length !== 1 ? "s" : ""
+#: src/lib/components/TreatmentsTable.svelte
 msgid "{0} treatment{1} found"
 msgstr ""
 
@@ -439,8 +439,8 @@ msgstr ""
 msgid "Select all treatments"
 msgstr ""
 
-#: src/lib/components/TreatmentsTable.svelte
 #. placeholder {0}: treatment._id
+#: src/lib/components/TreatmentsTable.svelte
 msgid "Select treatment {0}"
 msgstr ""
 
@@ -506,18 +506,18 @@ msgstr ""
 msgid "Glucose alarm cleared"
 msgstr ""
 
-#: src/lib/stores/realtime-store.svelte.ts
 #. placeholder {0}: instance.definitionName
+#: src/lib/stores/realtime-store.svelte.ts
 msgid "Tracker started: {0}"
 msgstr ""
 
-#: src/lib/stores/realtime-store.svelte.ts
 #. placeholder {0}: instance.definitionName
+#: src/lib/stores/realtime-store.svelte.ts
 msgid "Tracker completed: {0}"
 msgstr ""
 
-#: src/lib/stores/realtime-store.svelte.ts
 #. placeholder {0}: backfilledCount
+#: src/lib/stores/realtime-store.svelte.ts
 msgid "Synced {0} missed data points"
 msgstr ""
 
@@ -620,8 +620,8 @@ msgstr ""
 msgid "Faces"
 msgstr ""
 
-#: src/routes/clock/+page.svelte
 #. placeholder {0}: face ? ` - ${face}` : " Faces"
+#: src/routes/clock/+page.svelte
 msgid "Nightscout Clock{0}"
 msgstr ""
 
@@ -860,12 +860,12 @@ msgstr ""
 msgid "Click any day to view detailed report"
 msgstr ""
 
-#: src/routes/calendar/+page.svelte
-#: src/routes/calendar/+page.svelte
-#: src/routes/calendar/+page.svelte
 #. placeholder {0}: startTime
 #. placeholder {0}: startTime
 #. placeholder {0}: startTime
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
 msgid "Started at {0}"
 msgstr ""
 
@@ -875,10 +875,10 @@ msgstr ""
 msgid "Started on this day"
 msgstr ""
 
-#: src/routes/calendar/+page.svelte
-#: src/routes/calendar/+page.svelte
 #. placeholder {0}: event.instance.startNotes
 #. placeholder {0}: event.instance .completionNotes
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
 msgid "Note: {0}"
 msgstr ""
 
@@ -894,8 +894,8 @@ msgstr ""
 msgid "Due on this day"
 msgstr ""
 
-#: src/routes/calendar/+page.svelte
 #. placeholder {0}: formatTrackerAge( event.instance.ageHours )
+#: src/routes/calendar/+page.svelte
 msgid "Age: {0}"
 msgstr ""
 
@@ -915,27 +915,6 @@ msgstr ""
 msgid "Carbs:"
 msgstr ""
 
-#: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/widgets/MealsWidget.svelte
-#: src/lib/components/dashboard/widgets/MealsWidget.svelte
-#: src/lib/components/reports/PeriodAverages.svelte
-#: src/lib/components/reports/PeriodAverages.svelte
-#: src/lib/components/reports/PeriodAverages.svelte
-#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
-#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
-#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
-#: src/routes/calendar/+page.svelte
-#: src/routes/calendar/+page.svelte
-#: src/routes/food/FoodList.svelte
-#: src/routes/food/QuickPickItem.svelte
-#: src/routes/meals/+page.svelte
-#: src/routes/meals/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: marker.carbs
 #. placeholder {0}: totalCarbs
 #. placeholder {0}: meal.carbs ?? 0
@@ -957,6 +936,27 @@ msgstr ""
 #. placeholder {0}: treatmentStats.totalCarbs.toFixed(0)
 #. placeholder {0}: treatment.carbs
 #. placeholder {0}: formatCarbDisplay(treatment.carbs)
+#: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/dashboard/widgets/MealsWidget.svelte
+#: src/lib/components/dashboard/widgets/MealsWidget.svelte
+#: src/lib/components/reports/PeriodAverages.svelte
+#: src/lib/components/reports/PeriodAverages.svelte
+#: src/lib/components/reports/PeriodAverages.svelte
+#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
+#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
+#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/food/FoodList.svelte
+#: src/routes/food/QuickPickItem.svelte
+#: src/routes/meals/+page.svelte
+#: src/routes/meals/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/treatments/+page.svelte
 msgid "{0}g"
 msgstr ""
 
@@ -964,27 +964,6 @@ msgstr ""
 msgid "Insulin:"
 msgstr ""
 
-#: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/reports/BasalBolusRatioChart.svelte
-#: src/lib/components/reports/DailyInsulinSummary.svelte
-#: src/lib/components/reports/DailyInsulinSummary.svelte
-#: src/lib/components/reports/DailyInsulinSummary.svelte
-#: src/lib/components/reports/DailySummaryTable.svelte
-#: src/lib/components/reports/InsulinDeliveryChart.svelte
-#: src/lib/components/reports/InsulinDeliveryChart.svelte
-#: src/lib/components/reports/InsulinDeliveryChart.svelte
-#: src/lib/components/reports/PeriodAverages.svelte
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
-#: src/routes/calendar/+page.svelte
-#: src/routes/calendar/+page.svelte
-#: src/routes/meals/+page.svelte
-#: src/routes/meals/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/day-in-review/+page.svelte
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: marker.insulin.toFixed(1)
 #. placeholder {0}: ( chartData.reduce((sum, d) => sum + d.total, 0) / chartData.length ).toFixed(1)
 #. placeholder {0}: formatInsulinDisplay(treatmentSummary?.totals?.insulin?.bolus)
@@ -1006,6 +985,27 @@ msgstr ""
 #. placeholder {0}: treatmentStats.totalDailyInsulin.toFixed(1)
 #. placeholder {0}: treatment.insulin.toFixed(2)
 #. placeholder {0}: formatInsulinDisplay(treatment.insulin)
+#: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/reports/BasalBolusRatioChart.svelte
+#: src/lib/components/reports/DailyInsulinSummary.svelte
+#: src/lib/components/reports/DailyInsulinSummary.svelte
+#: src/lib/components/reports/DailyInsulinSummary.svelte
+#: src/lib/components/reports/DailySummaryTable.svelte
+#: src/lib/components/reports/InsulinDeliveryChart.svelte
+#: src/lib/components/reports/InsulinDeliveryChart.svelte
+#: src/lib/components/reports/InsulinDeliveryChart.svelte
+#: src/lib/components/reports/PeriodAverages.svelte
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/meals/+page.svelte
+#: src/routes/meals/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/day-in-review/+page.svelte
+#: src/routes/reports/treatments/+page.svelte
 msgid "{0}U"
 msgstr ""
 
@@ -1021,8 +1021,8 @@ msgstr ""
 msgid "Partial Data"
 msgstr ""
 
-#: src/routes/calendar/+page.svelte
 #. placeholder {0}: day.totalReadings
+#: src/routes/calendar/+page.svelte
 msgid "{0} of ~288 readings"
 msgstr ""
 
@@ -1243,19 +1243,19 @@ msgstr ""
 msgid "Avg Response Time"
 msgstr ""
 
-#: src/routes/dashboard/+page.svelte
-#: src/routes/dashboard/analyses/[id]/+page.svelte
-#: src/routes/dashboard/analyses/[id]/+page.svelte
-#: src/routes/dashboard/analyses/[id]/+page.svelte
 #. placeholder {0}: Math.round(metrics.averageNocturneResponseTime ?? 0)
 #. placeholder {0}: analysis.totalProcessingTimeMs
 #. placeholder {0}: analysis.nightscoutResponseTimeMs || "N/A"
 #. placeholder {0}: analysis.nocturneResponseTimeMs || "N/A"
+#: src/routes/dashboard/+page.svelte
+#: src/routes/dashboard/analyses/[id]/+page.svelte
+#: src/routes/dashboard/analyses/[id]/+page.svelte
+#: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "{0}ms"
 msgstr ""
 
-#: src/routes/dashboard/+page.svelte
 #. placeholder {0}: Math.round(metrics.averageNightscoutResponseTime ?? 0)
+#: src/routes/dashboard/+page.svelte
 msgid ""
 "vs {0}ms\n"
 "Nightscout"
@@ -1281,9 +1281,9 @@ msgstr ""
 msgid "Endpoints with the most compatibility issues"
 msgstr ""
 
-#: src/routes/dashboard/+page.svelte
 #. placeholder {0}: endpoint.totalRequests
 #. placeholder {1}: ( endpoint.compatibilityScore ?? 0 ).toFixed(1)
+#: src/routes/dashboard/+page.svelte
 msgid "{0} requests • {1}% compatible"
 msgstr ""
 
@@ -1303,10 +1303,10 @@ msgstr ""
 msgid "Latest compatibility analysis results"
 msgstr ""
 
-#: src/routes/dashboard/+page.svelte
 #. placeholder {0}: analysis.analysisTimestamp ? new Date(analysis.analysisTimestamp).toLocaleString() : "N/A"
 #. placeholder {1}: analysis.totalProcessingTimeMs
 #. placeholder {2}: (analysis.criticalDiscrepancyCount ?? 0) + (analysis.majorDiscrepancyCount ?? 0) + (analysis.minorDiscrepancyCount ?? 0)
+#: src/routes/dashboard/+page.svelte
 msgid "{0} • {1}ms • {2} discrepancies"
 msgstr ""
 
@@ -1360,8 +1360,8 @@ msgstr ""
 msgid "Compatibility Testing"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatTime(lastUpdate.toISOString())
+#: src/routes/compatibility/+page.svelte
 msgid "Last update: {0}"
 msgstr ""
 
@@ -1461,9 +1461,9 @@ msgstr ""
 msgid "Show compatible requests (Perfect & Minor Differences)"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: filteredAnalyses.length
 #. placeholder {1}: showCompatible ? "" : " incompatible"
+#: src/routes/compatibility/+page.svelte
 msgid "Recent Requests ({0}{1})"
 msgstr ""
 
@@ -1492,20 +1492,20 @@ msgstr ""
 msgid "Response Time"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: analysis.criticalDiscrepancyCount
 #. placeholder {0}: stat?.urgentEventCount ?? 0
+#: src/routes/compatibility/+page.svelte
+#: src/routes/reports/battery/+page.svelte
 msgid "{0} critical"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: analysis.majorDiscrepancyCount
+#: src/routes/compatibility/+page.svelte
 msgid "{0} major"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: analysis.minorDiscrepancyCount
+#: src/routes/compatibility/+page.svelte
 msgid "{0} minor"
 msgstr ""
 
@@ -1522,8 +1522,8 @@ msgstr ""
 msgid "Nightscout"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatDuration(analysis.nightscoutResponseTimeMs || 0)
+#: src/routes/compatibility/+page.svelte
 msgid "NS: {0}"
 msgstr ""
 
@@ -1538,8 +1538,8 @@ msgstr ""
 msgid "Nocturne"
 msgstr ""
 
-#: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatDuration(analysis.nocturneResponseTimeMs || 0)
+#: src/routes/compatibility/+page.svelte
 msgid "NC: {0}"
 msgstr ""
 
@@ -1603,10 +1603,10 @@ msgstr ""
 msgid "New Food"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
-#: src/routes/food/FoodEditor.svelte
 #. placeholder {0}: analysis.correlationId
 #. placeholder {0}: foodStore.currentFood._id
+#: src/routes/dashboard/analyses/+page.svelte
+#: src/routes/food/FoodEditor.svelte
 msgid "ID: {0}"
 msgstr ""
 
@@ -1797,8 +1797,8 @@ msgstr ""
 msgid "Hide after use"
 msgstr ""
 
-#: src/routes/food/QuickPickItem.svelte
 #. placeholder {0}: formatMacro(quickPick.carbs)
+#: src/routes/food/QuickPickItem.svelte
 msgid "Total: {0}g carbs"
 msgstr ""
 
@@ -1818,10 +1818,10 @@ msgstr ""
 msgid "Remove food"
 msgstr ""
 
-#: src/routes/food/QuickPickItem.svelte
 #. placeholder {0}: food.portion
 #. placeholder {1}: food.unit
 #. placeholder {2}: formatMacro(food.carbs)
+#: src/routes/food/QuickPickItem.svelte
 msgid "({0} {1} = {2}g)"
 msgstr ""
 
@@ -1961,31 +1961,31 @@ msgstr ""
 msgid "Tracker active"
 msgstr ""
 
+#. placeholder {0}: thresholdHours ?? "?"
+#. placeholder {0}: thresholdHours ?? "?"
 #: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
-#. placeholder {0}: thresholdHours ?? "?"
-#. placeholder {0}: thresholdHours ?? "?"
 msgid "Exceeded {0}h - change urgently!"
 msgstr ""
 
+#. placeholder {0}: thresholdHours ?? "?"
+#. placeholder {0}: thresholdHours ?? "?"
 #: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
-#. placeholder {0}: thresholdHours ?? "?"
-#. placeholder {0}: thresholdHours ?? "?"
 msgid "Exceeded {0}h - change soon"
 msgstr ""
 
+#. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
+#. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
 #: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
-#. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
-#. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
 msgid "Approaching {0}h limit"
 msgstr ""
 
+#. placeholder {0}: Math.floor(instance.ageHours ?? 0)
+#. placeholder {0}: Math.floor(instance.ageHours ?? 0)
 #: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
-#. placeholder {0}: Math.floor(instance.ageHours ?? 0)
-#. placeholder {0}: Math.floor(instance.ageHours ?? 0)
 msgid "Active for {0}h"
 msgstr ""
 
@@ -2000,8 +2000,8 @@ msgstr ""
 msgid "Notifications"
 msgstr ""
 
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: totalActiveCount
+#: src/routes/notifications/+page.svelte
 msgid "{0} active"
 msgstr ""
 
@@ -2034,18 +2034,18 @@ msgstr ""
 msgid "Consumable and reminder notifications"
 msgstr ""
 
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: urgentCount
+#: src/routes/notifications/+page.svelte
 msgid "{0} urgent"
 msgstr ""
 
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: hazardCount
+#: src/routes/notifications/+page.svelte
 msgid "{0} hazard"
 msgstr ""
 
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: warnCount
+#: src/routes/notifications/+page.svelte
 msgid "{0} warning"
 msgstr ""
 
@@ -2057,10 +2057,10 @@ msgstr ""
 msgid "All caught up! No active tracker alerts."
 msgstr ""
 
-#: src/lib/components/status-pills/TrackerPill.svelte
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: new Date(instance.startedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", })
 #. placeholder {0}: formatDate(notification.startedAt)
+#: src/lib/components/status-pills/TrackerPill.svelte
+#: src/routes/notifications/+page.svelte
 msgid "Started {0}"
 msgstr ""
 
@@ -2081,9 +2081,9 @@ msgstr ""
 msgid "Completed trackers will appear here"
 msgstr ""
 
-#: src/routes/notifications/+page.svelte
 #. placeholder {0}: formatAge(instance.ageHours ?? 0)
 #. placeholder {1}: completionReasonLabels[ instance.completionReason ?? CompletionReason.Completed ]
+#: src/routes/notifications/+page.svelte
 msgid "Duration: {0} · {1} <0/>"
 msgstr ""
 
@@ -2185,12 +2185,12 @@ msgstr ""
 msgid "Showing:"
 msgstr ""
 
-#: src/routes/meals/+page.svelte
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: filteredAndSortedMeals.length
 #. placeholder {1}: meals.length
 #. placeholder {0}: filteredTreatments.length
 #. placeholder {1}: treatments.length
+#: src/routes/meals/+page.svelte
+#: src/routes/reports/treatments/+page.svelte
 msgid "{0} of {1}"
 msgstr ""
 
@@ -2221,12 +2221,12 @@ msgstr ""
 msgid "Insulin <0/>"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/MealsWidget.svelte
-#: src/routes/meals/+page.svelte
 #. placeholder {0}: recentMeals.length
 #. placeholder {1}: recentMeals.length !== 1 ? "s" : ""
 #. placeholder {0}: day.meals.length
 #. placeholder {1}: day.meals.length !== 1 ? "s" : ""
+#: src/lib/components/dashboard/widgets/MealsWidget.svelte
+#: src/routes/meals/+page.svelte
 msgid "{0} meal{1}"
 msgstr ""
 
@@ -2244,23 +2244,23 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: src/routes/meals/+page.svelte
 #. placeholder {0}: meal.foods?.length
+#: src/routes/meals/+page.svelte
 msgid "Foods ({0})"
 msgstr ""
 
-#: src/routes/meals/+page.svelte
 #. placeholder {0}: meal.attributedCarbs ?? 0
+#: src/routes/meals/+page.svelte
 msgid "Attributed: {0}g"
 msgstr ""
 
-#: src/routes/meals/+page.svelte
 #. placeholder {0}: meal.unspecifiedCarbs ?? 0
+#: src/routes/meals/+page.svelte
 msgid "Unspecified: {0}g"
 msgstr ""
 
-#: src/routes/meals/+page.svelte
 #. placeholder {0}: meal.treatment.notes
+#: src/routes/meals/+page.svelte
 msgid "Notes: {0}"
 msgstr ""
 
@@ -2273,8 +2273,8 @@ msgstr ""
 msgid "Report"
 msgstr ""
 
-#: src/routes/reports/+layout.svelte
 #. placeholder {0}: params.days
+#: src/routes/reports/+layout.svelte
 msgid "Last {0} days"
 msgstr ""
 
@@ -2282,13 +2282,13 @@ msgstr ""
 msgid "Last 7 days"
 msgstr ""
 
-#: src/routes/reports/+layout.svelte
 #. placeholder {0}: reportName
+#: src/routes/reports/+layout.svelte
 msgid "{0} - Nightscout"
 msgstr ""
 
-#: src/routes/reports/+layout.svelte
 #. placeholder {0}: reportName.toLowerCase()
+#: src/routes/reports/+layout.svelte
 msgid "Nightscout {0} with comprehensive data analysis and filtering capabilities"
 msgstr ""
 
@@ -2301,9 +2301,7 @@ msgid "How am I doing overall?"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Get a comprehensive snapshot of your diabetes management with key metrics "
-"that matter most."
+msgid "Get a comprehensive snapshot of your diabetes management with key metrics that matter most."
 msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
@@ -2312,15 +2310,11 @@ msgid "Executive Summary"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Your most important numbers at a glance — perfect for quick check-ins or "
-"sharing with your doctor."
+msgid "Your most important numbers at a glance — perfect for quick check-ins or sharing with your doctor."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"HbA1c estimate, TIR, CV, and glycemic variability indices with trend "
-"analysis."
+msgid "HbA1c estimate, TIR, CV, and glycemic variability indices with trend analysis."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2328,15 +2322,11 @@ msgid "Glucose Profile (AGP)"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"See your typical day's glucose pattern — when you tend to run high, low, or "
-"in range."
+msgid "See your typical day's glucose pattern — when you tend to run high, low, or in range."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Standardized AGP with 14-day overlay, percentile bands (10th-90th), and "
-"daily profiles."
+msgid "Standardized AGP with 14-day overlay, percentile bands (10th-90th), and daily profiles."
 msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
@@ -2351,9 +2341,7 @@ msgid "See how your glucose values are distributed between low, in-range, and hi
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Pie chart visualization with TIR breakdown, A1c estimation, GVI, PGS, and "
-"variability metrics."
+msgid "Pie chart visualization with TIR breakdown, A1c estimation, GVI, PGS, and variability metrics."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2365,21 +2353,15 @@ msgid "What's affecting my glucose?"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Discover what makes your glucose go up, down, or stay stable throughout the "
-"day."
+msgid "Discover what makes your glucose go up, down, or stay stable throughout the day."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Track how much time you spend in your target range and see your progress "
-"over time."
+msgid "Track how much time you spend in your target range and see your progress over time."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Detailed TIR breakdown by range with episode counts, durations, and trend "
-"analysis."
+msgid "Detailed TIR breakdown by range with episode counts, durations, and trend analysis."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2387,15 +2369,11 @@ msgid "Hourly Patterns"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Find out which hours of the day are your best — and which need more "
-"attention."
+msgid "Find out which hours of the day are your best — and which need more attention."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Hourly glucose percentiles with statistical analysis for circadian pattern "
-"identification."
+msgid "Hourly glucose percentiles with statistical analysis for circadian pattern identification."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2407,9 +2385,7 @@ msgid "Review each day individually to spot what worked and what didn't."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Daily glucose overlay with treatment markers, statistics, and pattern "
-"comparison."
+msgid "Daily glucose overlay with treatment markers, statistics, and pattern comparison."
 msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
@@ -2418,15 +2394,11 @@ msgid "Week to Week"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Compare glucose patterns across each day of the week, overlaid on a single "
-"chart."
+msgid "Compare glucose patterns across each day of the week, overlaid on a single chart."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Weekly glucose overlay showing day-of-week patterns for circadian and "
-"weekly rhythm analysis."
+msgid "Weekly glucose overlay showing day-of-week patterns for circadian and weekly rhythm analysis."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2450,9 +2422,7 @@ msgid "See how different meals affect your glucose — find what works best for 
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Pre/post meal glucose analysis with I:C ratio effectiveness and meal timing "
-"optimization."
+msgid "Pre/post meal glucose analysis with I:C ratio effectiveness and meal timing optimization."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2464,9 +2434,7 @@ msgid "Discover how physical activity affects your glucose control."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Exercise correlation analysis with glucose delta, timing impact, and "
-"recommendations."
+msgid "Exercise correlation analysis with glucose delta, timing impact, and recommendations."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2478,9 +2446,7 @@ msgid "Track your glucose patterns during sleep and wake up with better numbers.
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Overnight glucose analysis with dawn phenomenon detection and nocturnal "
-"hypo risk."
+msgid "Overnight glucose analysis with dawn phenomenon detection and nocturnal hypo risk."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2507,9 +2473,7 @@ msgid "Review your insulin doses, carbs, and corrections all in one place."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Comprehensive treatment log with bolus/basal breakdown, IOB tracking, and "
-"dosing patterns."
+msgid "Comprehensive treatment log with bolus/basal breakdown, IOB tracking, and dosing patterns."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2517,15 +2481,11 @@ msgid "Basal Rate Analysis"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"See how your basal insulin delivery varies throughout the day and across "
-"days."
+msgid "See how your basal insulin delivery varies throughout the day and across days."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Basal rate percentile chart (10th-90th), temp basal frequency, and hourly "
-"basal patterns."
+msgid "Basal rate percentile chart (10th-90th), temp basal frequency, and hourly basal patterns."
 msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
@@ -2534,15 +2494,11 @@ msgid "Insulin Delivery"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Understand how your insulin is split between background (basal) and "
-"mealtime (bolus) doses."
+msgid "Understand how your insulin is split between background (basal) and mealtime (bolus) doses."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Basal/bolus ratio analysis, TDD trends, insulin distribution by time of "
-"day, and dosing patterns."
+msgid "Basal/bolus ratio analysis, TDD trends, insulin distribution by time of day, and dosing patterns."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2567,9 +2523,7 @@ msgid "See how your glucose control changes before and after pump site changes."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Analyzes glucose patterns around infusion site changes to identify "
-"absorption degradation."
+msgid "Analyzes glucose patterns around infusion site changes to identify absorption degradation."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2594,16 +2548,16 @@ msgstr ""
 msgid "Try again"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
-#: src/routes/reports/+page.svelte
-#: src/routes/reports/agp/+page.svelte
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: dailyStats.readings
 #. placeholder {0}: tirData.total
 #. placeholder {0}: entries.length.toLocaleString()
 #. placeholder {0}: entries.length.toLocaleString()
 #. placeholder {0}: readings.length
+#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
+#: src/routes/reports/+page.svelte
+#: src/routes/reports/agp/+page.svelte
+#: src/routes/reports/battery/+page.svelte
 msgid "{0} readings"
 msgstr ""
 
@@ -2637,17 +2591,13 @@ msgstr ""
 msgid "<0/> Print"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
 #. placeholder {0}: glucoseFormatting.targetRangeDisplay
-msgid ""
-"This is how much time your glucose stays in your target zone ({0}). Higher "
-"is better!"
+#: src/routes/reports/+page.svelte
+msgid "This is how much time your glucose stays in your target zone ({0}). Higher is better!"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"ADA recommends >70% TIR for most adults with diabetes. Each 5% improvement "
-"is clinically meaningful."
+msgid "ADA recommends >70% TIR for most adults with diabetes. Each 5% improvement is clinically meaningful."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2656,9 +2606,7 @@ msgid "Estimated A1C"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"This estimates your 3-month average blood sugar. It's based on your CGM "
-"data from this period."
+msgid "This estimates your 3-month average blood sugar. It's based on your CGM data from this period."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2666,15 +2614,11 @@ msgid "Glucose Variability"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Lower variability means steadier glucose levels with fewer ups and downs. "
-"This affects how you feel day-to-day."
+msgid "Lower variability means steadier glucose levels with fewer ups and downs. This affects how you feel day-to-day."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"CV ≤33% indicates stable glucose. CV >36% associated with increased "
-"hypoglycemia risk."
+msgid "CV ≤33% indicates stable glucose. CV >36% associated with increased hypoglycemia risk."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2682,19 +2626,15 @@ msgid "Time Below Range"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"Time spent with low blood sugar. Less is better — lows can be dangerous and "
-"feel awful."
+msgid "Time spent with low blood sugar. Less is better — lows can be dangerous and feel awful."
 msgstr ""
 
-#: src/routes/reports/+page.svelte
 #. placeholder {0}: glucoseFormatting.lowThresholdDisplay
 #. placeholder {1}: glucoseFormatting.unitLabel
 #. placeholder {2}: glucoseFormatting.severeLowThresholdDisplay
 #. placeholder {3}: glucoseFormatting.unitLabel
-msgid ""
-"Target <4% time below {0} {1} and <1% below {2} {3}. Prioritize reducing "
-"lows, especially in elderly."
+#: src/routes/reports/+page.svelte
+msgid "Target <4% time below {0} {1} and <1% below {2} {3}. Prioritize reducing lows, especially in elderly."
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2818,9 +2758,7 @@ msgid "Quick guide to interpreting your diabetes data"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"The percentage of time your glucose is between 70-180 mg/dL. <0>Goal: "
-"70%+</0>"
+msgid "The percentage of time your glucose is between 70-180 mg/dL. <0>Goal: 70%+</0>"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
@@ -2842,20 +2780,18 @@ msgid "Data Quality"
 msgstr ""
 
 #: src/routes/reports/+page.svelte
-msgid ""
-"How much of the time your CGM was actively providing readings. <0>Goal: "
-"90%+</0>"
+msgid "How much of the time your CGM was actively providing readings. <0>Goal: 90%+</0>"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
 #. placeholder {0}: entries.length.toLocaleString()
 #. placeholder {1}: new Date(dateRange.from).toLocaleDateString()
 #. placeholder {2}: new Date( dateRange.to ).toLocaleDateString()
+#: src/routes/reports/+page.svelte
 msgid "Report generated from {0} glucose readings between {1} and {2}"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
 #. placeholder {0}: new Date(dateRange.lastUpdated).toLocaleString()
+#: src/routes/reports/+page.svelte
 msgid "Last updated: {0}"
 msgstr "Dernière mise à jour : {0}"
 
@@ -2887,9 +2823,9 @@ msgstr ""
 msgid "<0/> New Profile"
 msgstr ""
 
-#: src/routes/profile/+page.svelte
 #. placeholder {0}: data.totalProfiles
 #. placeholder {1}: data.totalProfiles !== 1 ? "s" : ""
+#: src/routes/profile/+page.svelte
 msgid "<0/> {0} profile{1}"
 msgstr ""
 
@@ -2938,8 +2874,8 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/routes/profile/+page.svelte
 #. placeholder {0}: formatDateDetailed(selectedProfile.created_at)
+#: src/routes/profile/+page.svelte
 msgid "Created {0}"
 msgstr ""
 
@@ -2975,14 +2911,14 @@ msgstr ""
 msgid "DIA"
 msgstr ""
 
-#: src/routes/profile/+page.svelte
-#: src/routes/profile/+page.svelte
-#: src/routes/settings/devices/+page.svelte
-#: src/routes/settings/features/+page.svelte
 #. placeholder {0}: defaultStore?.dia ?? "–"
 #. placeholder {0}: store.dia ?? "–"
 #. placeholder {0}: store.devices.cgmConfiguration?.sensorWarmupHours ?? 2
 #. placeholder {0}: store.features.display?.focusHours ?? 3
+#: src/routes/profile/+page.svelte
+#: src/routes/profile/+page.svelte
+#: src/routes/settings/devices/+page.svelte
+#: src/routes/settings/features/+page.svelte
 msgid "{0} hours"
 msgstr ""
 
@@ -2991,10 +2927,10 @@ msgstr ""
 msgid "Carbs/hr"
 msgstr ""
 
-#: src/routes/profile/+page.svelte
-#: src/routes/profile/+page.svelte
 #. placeholder {0}: defaultStore?.carbs_hr ?? "–"
 #. placeholder {0}: store.carbs_hr ?? "–"
+#: src/routes/profile/+page.svelte
+#: src/routes/profile/+page.svelte
 msgid "{0} g/hr"
 msgstr ""
 
@@ -3360,8 +3296,8 @@ msgstr ""
 msgid "<0/> Demo Mode"
 msgstr ""
 
-#: src/lib/components/dashboard/CurrentBGDisplay.svelte
 #. placeholder {0}: timeSince
+#: src/lib/components/dashboard/CurrentBGDisplay.svelte
 msgid "Last reading: {0}"
 msgstr ""
 
@@ -3455,8 +3391,8 @@ msgstr ""
 msgid "Loading predictions..."
 msgstr ""
 
-#: src/lib/components/dashboard/PredictionVisualizations.svelte
 #. placeholder {0}: error instanceof Error ? error.message : "Error"
+#: src/lib/components/dashboard/PredictionVisualizations.svelte
 msgid "Prediction unavailable: {0}"
 msgstr ""
 
@@ -3476,23 +3412,23 @@ msgstr ""
 msgid "Error loading recent treatments."
 msgstr ""
 
-#: src/lib/components/dashboard/RecentTreatmentsCard.svelte
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: treatment.carbs
 #. placeholder {0}: food.carbs
 #. placeholder {0}: food.carbs
 #. placeholder {0}: food.carbs
 #. placeholder {0}: foodCarbs
 #. placeholder {0}: insulinStats.totalCarbs.toFixed(0)
+#: src/lib/components/dashboard/RecentTreatmentsCard.svelte
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "{0}g carbs"
 msgstr ""
 
-#: src/lib/components/dashboard/RecentTreatmentsCard.svelte
 #. placeholder {0}: treatment.insulin
+#: src/lib/components/dashboard/RecentTreatmentsCard.svelte
 msgid "{0}u insulin"
 msgstr ""
 
@@ -3637,13 +3573,13 @@ msgstr ""
 msgid "COB"
 msgstr ""
 
-#: src/lib/components/dashboard/GlucoseChartCard.svelte
 #. placeholder {0}: systemEvents.length
+#: src/lib/components/dashboard/GlucoseChartCard.svelte
 msgid "Alarms ({0})"
 msgstr ""
 
-#: src/lib/components/dashboard/GlucoseChartCard.svelte
 #. placeholder {0}: scheduledTrackerMarkers.length
+#: src/lib/components/dashboard/GlucoseChartCard.svelte
 msgid "Scheduled ({0})"
 msgstr ""
 
@@ -3712,13 +3648,13 @@ msgstr ""
 msgid "<0/> (none)"
 msgstr ""
 
-#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 #. placeholder {0}: searchTerm
+#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 msgid "<0/> Create category \"{0}\""
 msgstr ""
 
-#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 #. placeholder {0}: searchTerm
+#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 msgid "<0/> Create subcategory \"{0}\""
 msgstr ""
 
@@ -3734,13 +3670,13 @@ msgstr ""
 msgid "Create new category"
 msgstr ""
 
-#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 #. placeholder {0}: pendingSubcategoryName
+#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 msgid "<0/> Create \"{0}\" as new category"
 msgstr ""
 
-#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 #. placeholder {0}: cat
+#: src/lib/components/food/CategorySubcategoryCombobox.svelte
 msgid "<0/> Add to {0}"
 msgstr ""
 
@@ -3769,13 +3705,13 @@ msgstr ""
 msgid "No unit found."
 msgstr ""
 
-#: src/lib/components/glucose-chart/GlucoseChart.svelte
 #. placeholder {0}: thresholds.high
+#: src/lib/components/glucose-chart/GlucoseChart.svelte
 msgid "High ({0})"
 msgstr ""
 
-#: src/lib/components/glucose-chart/GlucoseChart.svelte
 #. placeholder {0}: thresholds.low
+#: src/lib/components/glucose-chart/GlucoseChart.svelte
 msgid "Low ({0})"
 msgstr ""
 
@@ -3867,8 +3803,8 @@ msgstr ""
 msgid "Session Expiring"
 msgstr ""
 
-#: src/lib/components/layout/SessionExpiryWarning.svelte
 #. placeholder {0}: formatSessionExpiry(timeUntilExpiry)
+#: src/lib/components/layout/SessionExpiryWarning.svelte
 msgid ""
 "Your session will expire in {0}.\n"
 "Click refresh to extend your session."
@@ -3964,8 +3900,8 @@ msgstr ""
 msgid "Set up trackers →"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
 #. placeholder {0}: pendingResets.length
+#: src/lib/components/layout/SidebarNotifications.svelte
 msgid "<0/> Admin Actions Required ({0})"
 msgstr ""
 
@@ -3973,8 +3909,8 @@ msgstr ""
 msgid "<0/> Handle"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
 #. placeholder {0}: trackerNotifications.length
+#: src/lib/components/layout/SidebarNotifications.svelte
 msgid "<0/> Tracker Alerts ({0})"
 msgstr ""
 
@@ -4077,8 +4013,7 @@ msgstr ""
 
 #: src/lib/components/reports/BasalBolusRatioChart.svelte
 msgid ""
-"<0>Typical ratios:</0> Most people with Type 1 diabetes have around 50% "
-"basal and 50% bolus.\n"
+"<0>Typical ratios:</0> Most people with Type 1 diabetes have around 50% basal and 50% bolus.\n"
 "Ratios can vary based on diet, activity level, and individual needs. <1/>"
 msgstr ""
 
@@ -4095,66 +4030,52 @@ msgstr ""
 msgid "Excellent Time in Range"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: tirTarget.toFixed(0)
-msgid ""
-"You're spending {0}% of your time in range — that's above the recommended "
-"70% target!"
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "You're spending {0}% of your time in range — that's above the recommended 70% target!"
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"TIR >70% is associated with reduced risk of diabetes complications (ADA "
-"Standards of Care 2024)."
+msgid "TIR >70% is associated with reduced risk of diabetes complications (ADA Standards of Care 2024)."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Good Progress on Time in Range"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: tirTarget.toFixed(0)
+#: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Your TIR is {0}%. The goal is 70% or higher — you're making progress!"
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"Each 5% improvement in TIR is clinically meaningful for reducing "
-"complications risk."
+msgid "Each 5% improvement in TIR is clinically meaningful for reducing complications risk."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Time in Range Needs Attention"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: tirTarget.toFixed(0)
-msgid ""
-"Your TIR is {0}%. Let's work together to find patterns and improve this "
-"number."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "Your TIR is {0}%. Let's work together to find patterns and improve this number."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"Consider reviewing insulin:carb ratios, correction factors, and meal timing "
-"with your care team."
+msgid "Consider reviewing insulin:carb ratios, correction factors, and meal timing with your care team."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Frequent Low Blood Sugars"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: totalLows.toFixed(1)
-msgid ""
-"You're spending {0}% of time below range. The goal is less than 4%. Let's "
-"identify when these lows occur."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "You're spending {0}% of time below range. The goal is less than 4%. Let's identify when these lows occur."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"Time below range <54 mg/dL should be <1%. Review hypoglycemia patterns, "
-"especially overnight and post-exercise."
+msgid "Time below range <54 mg/dL should be <1%. Review hypoglycemia patterns, especially overnight and post-exercise."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
@@ -4169,76 +4090,60 @@ msgstr ""
 msgid "Stable Glucose Levels"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: cv.toFixed(0)
-msgid ""
-"Your glucose variability (CV) is {0}% — that's nicely stable! Lower "
-"variability means fewer unexpected swings."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "Your glucose variability (CV) is {0}% — that's nicely stable! Lower variability means fewer unexpected swings."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"CV ≤33% indicates stable glycemic control and is associated with reduced "
-"hypoglycemia risk."
+msgid "CV ≤33% indicates stable glycemic control and is associated with reduced hypoglycemia risk."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Moderate Glucose Variability"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: cv.toFixed(0)
-msgid ""
-"Your CV is {0}%. Some swings are normal, but there may be room to smooth "
-"things out."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "Your CV is {0}%. Some swings are normal, but there may be room to smooth things out."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"CV between 33-36% is acceptable. Consider evaluating meal composition and "
-"timing."
+msgid "CV between 33-36% is acceptable. Consider evaluating meal composition and timing."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "High Glucose Variability"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: cv.toFixed(0)
-msgid ""
-"Your glucose is swinging quite a bit (CV: {0}%). This can feel exhausting — "
-"let's find the causes."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "Your glucose is swinging quite a bit (CV: {0}%). This can feel exhausting — let's find the causes."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"High CV (>36%) increases hypoglycemia risk and may indicate need for "
-"treatment optimization."
+msgid "High CV (>36%) increases hypoglycemia risk and may indicate need for treatment optimization."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Excellent Estimated A1C"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: a1c.toFixed(1)
-msgid ""
-"Your estimated A1C of {0}% is below the typical target of 7%. Great "
-"management!"
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "Your estimated A1C of {0}% is below the typical target of 7%. Great management!"
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"A1C <7% reduces microvascular complication risk. Ensure this isn't at the "
-"expense of increased hypoglycemia."
+msgid "A1C <7% reduces microvascular complication risk. Ensure this isn't at the expense of increased hypoglycemia."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Good A1C Estimate"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: a1c.toFixed(1)
+#: src/lib/components/reports/ClinicalInsights.svelte
 msgid "Your estimated A1C is {0}%. You're near the common target range."
 msgstr ""
 
@@ -4246,17 +4151,13 @@ msgstr ""
 msgid "Time Above Range"
 msgstr ""
 
-#: src/lib/components/reports/ClinicalInsights.svelte
 #. placeholder {0}: totalHighs.toFixed(0)
-msgid ""
-"You're spending {0}% of time above 180 mg/dL. Let's look at when highs "
-"occur most often."
+#: src/lib/components/reports/ClinicalInsights.svelte
+msgid "You're spending {0}% of time above 180 mg/dL. Let's look at when highs occur most often."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
-msgid ""
-"Target is <25% time above range. Review post-meal patterns, correction "
-"dosing, and basal rates."
+msgid "Target is <25% time above range. Review post-meal patterns, correction dosing, and basal rates."
 msgstr ""
 
 #: src/lib/components/reports/ClinicalInsights.svelte
@@ -4271,19 +4172,19 @@ msgstr ""
 msgid "For healthcare providers"
 msgstr ""
 
-#: src/lib/components/reports/BasalRateChart.svelte
 #. placeholder {0}: defaultRate.toFixed(2)
+#: src/lib/components/reports/BasalRateChart.svelte
 msgid "{0} U/hr"
 msgstr ""
 
-#: src/lib/components/reports/DailyStatistics.svelte
-#: src/routes/reports/executive-summary/+page.svelte
-#: src/routes/reports/executive-summary/+page.svelte
-#: src/routes/reports/glucose-distribution/+page.svelte
 #. placeholder {0}: Math.round(dayData.analytics?.basicStats?.mean ?? 0)
 #. placeholder {0}: stats?.standardDeviation?.toFixed(0) ?? "–"
 #. placeholder {0}: variability?.meanAmplitudeGlycemicExcursions?.toFixed(0) ?? "–"
 #. placeholder {0}: overallStats.meanTotalDailyChange.toFixed(0)
+#: src/lib/components/reports/DailyStatistics.svelte
+#: src/routes/reports/executive-summary/+page.svelte
+#: src/routes/reports/executive-summary/+page.svelte
+#: src/routes/reports/glucose-distribution/+page.svelte
 msgid "{0} mg/dL"
 msgstr ""
 
@@ -4293,15 +4194,15 @@ msgstr ""
 msgid "Range"
 msgstr ""
 
-#: src/lib/components/reports/DailyStatistics.svelte
-#: src/lib/components/reports/DailyStatistics.svelte
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: thresholds.targetBottom
 #. placeholder {1}: thresholds.targetTop
 #. placeholder {0}: thresholds.targetBottom
 #. placeholder {1}: thresholds.tightTargetTop
 #. placeholder {0}: thresholds.targetBottom
 #. placeholder {1}: thresholds.tightTargetTop
+#: src/lib/components/reports/DailyStatistics.svelte
+#: src/lib/components/reports/DailyStatistics.svelte
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "({0}-{1} mg/dL)"
 msgstr ""
 
@@ -4343,29 +4244,29 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: entry.analytics?.timeInRange?.percentages?.target ?? 0
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "{0}% Target"
 msgstr ""
 
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: entry.analytics?.timeInRange?.percentages?.tightTarget ?? entry.analytics?.timeInRange?.percentages?.target ?? 0
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "{0}% TTIR"
 msgstr ""
 
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: (entry.analytics?.timeInRange?.percentages?.low ?? 0) + (entry.analytics?.timeInRange?.percentages?.severeLow ?? 0)
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "{0}% Low"
 msgstr ""
 
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: (entry.analytics?.timeInRange?.percentages?.high ?? 0) + (entry.analytics?.timeInRange?.percentages?.severeHigh ?? 0)
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "{0}% High"
 msgstr ""
 
-#: src/lib/components/reports/DailySummaryTable.svelte
 #. placeholder {0}: formatInsulinDisplay( entry.treatmentSummary?.totals?.insulin?.bolus )
 #. placeholder {1}: formatInsulinDisplay( entry.treatmentSummary?.totals?.insulin?.basal )
+#: src/lib/components/reports/DailySummaryTable.svelte
 msgid "B: {0}U | Ba: {1}U"
 msgstr ""
 
@@ -4385,12 +4286,12 @@ msgstr ""
 msgid "Total carbs:"
 msgstr ""
 
-#: src/lib/components/reports/DailyInsulinSummary.svelte
-#: src/lib/components/reports/DailyInsulinSummary.svelte
-#: src/lib/components/reports/DailyInsulinSummary.svelte
 #. placeholder {0}: formatCarbDisplay(treatmentSummary?.totals?.food?.carbs)
 #. placeholder {0}: formatCarbDisplay(treatmentSummary?.totals?.food?.protein)
 #. placeholder {0}: formatCarbDisplay(treatmentSummary?.totals?.food?.fat)
+#: src/lib/components/reports/DailyInsulinSummary.svelte
+#: src/lib/components/reports/DailyInsulinSummary.svelte
+#: src/lib/components/reports/DailyInsulinSummary.svelte
 msgid "{0} g"
 msgstr ""
 
@@ -4447,33 +4348,33 @@ msgstr ""
 msgid "Hour of Day"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.max.toFixed(0)
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Max: {0}"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.q3.toFixed(0)
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Q3: {0}"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.median.toFixed(0)
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Median: {0}"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.q1.toFixed(0)
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Q1: {0}"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.min.toFixed(0)
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Min: {0}"
 msgstr ""
 
-#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 #. placeholder {0}: data.outliers.length
+#: src/lib/components/reports/HourlyGlucoseBoxChart.svelte
 msgid "Outliers: {0}"
 msgstr ""
 
@@ -4560,8 +4461,8 @@ msgstr ""
 msgid "Clinical Note:"
 msgstr ""
 
-#: src/lib/components/reports/MetricExplainer.svelte
 #. placeholder {0}: source
+#: src/lib/components/reports/MetricExplainer.svelte
 msgid "Source: {0}"
 msgstr ""
 
@@ -4581,15 +4482,15 @@ msgstr ""
 msgid "Tight Time in Range average:"
 msgstr ""
 
-#: src/lib/components/reports/PeriodAverages.svelte
 #. placeholder {0}: thresholds.targetBottom
 #. placeholder {1}: thresholds.targetTop
+#: src/lib/components/reports/PeriodAverages.svelte
 msgid "TIR: {0}-{1} mg/dL"
 msgstr ""
 
-#: src/lib/components/reports/PeriodAverages.svelte
 #. placeholder {0}: thresholds.targetBottom
 #. placeholder {1}: thresholds.tightTargetTop
+#: src/lib/components/reports/PeriodAverages.svelte
 msgid "TTIR: {0}-{1} mg/dL"
 msgstr ""
 
@@ -4625,10 +4526,10 @@ msgstr ""
 msgid "Fat average:"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveStats.svelte
-#: src/lib/components/reports/RetrospectiveStats.svelte
 #. placeholder {0}: timeDisplay
 #. placeholder {0}: timeDisplay
+#: src/lib/components/reports/RetrospectiveStats.svelte
+#: src/lib/components/reports/RetrospectiveStats.svelte
 msgid "<0/> Status at {0}"
 msgstr ""
 
@@ -4646,13 +4547,13 @@ msgstr ""
 msgid "U"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveStats.svelte
 #. placeholder {0}: (data.iob.bolus ?? 0).toFixed(1)
+#: src/lib/components/reports/RetrospectiveStats.svelte
 msgid "Bolus: {0}U"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveStats.svelte
 #. placeholder {0}: (data.iob.basal ?? 0).toFixed(1)
+#: src/lib/components/reports/RetrospectiveStats.svelte
 msgid "Basal: {0}U"
 msgstr ""
 
@@ -4721,13 +4622,13 @@ msgstr ""
 msgid "Go to start (Home)"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 #. placeholder {0}: stepMinutes
+#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 msgid "Step back {0} minutes (←)"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 #. placeholder {0}: stepMinutes
+#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 msgid "-{0}m"
 msgstr ""
 
@@ -4739,13 +4640,13 @@ msgstr ""
 msgid "Play (Space)"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 #. placeholder {0}: stepMinutes
+#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 msgid "Step forward {0} minutes (→)"
 msgstr ""
 
-#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 #. placeholder {0}: stepMinutes
+#: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 msgid "+{0}m"
 msgstr ""
 
@@ -4789,8 +4690,8 @@ msgstr ""
 msgid "TIR After"
 msgstr ""
 
-#: src/lib/components/reports/SiteChangeImpactChart.svelte
 #. placeholder {0}: analysis.summary?.percentImprovement.toFixed(1)
+#: src/lib/components/reports/SiteChangeImpactChart.svelte
 msgid "↓ {0}% improvement"
 msgstr ""
 
@@ -4799,8 +4700,8 @@ msgstr ""
 msgid "after site change"
 msgstr ""
 
-#: src/lib/components/reports/SiteChangeImpactChart.svelte
 #. placeholder {0}: Math.abs(analysis.summary?.percentImprovement).toFixed(1)
+#: src/lib/components/reports/SiteChangeImpactChart.svelte
 msgid ""
 "↑ {0}%\n"
 "higher"
@@ -4810,8 +4711,8 @@ msgstr ""
 msgid "Insufficient Data"
 msgstr ""
 
-#: src/lib/components/reports/SiteChangeImpactChart.svelte
 #. placeholder {0}: analysis.siteChangeCount ?? 0
+#: src/lib/components/reports/SiteChangeImpactChart.svelte
 msgid ""
 "At least 2 site changes are required for meaningful analysis.\n"
 "Currently found: {0} site change(s)."
@@ -4835,28 +4736,28 @@ msgstr ""
 msgid "Overall Treatment Summary"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentSummary.svelte
 #. placeholder {0}: formatInsulinDisplay(totalInsulin)
+#: src/lib/components/reports/TreatmentSummary.svelte
 msgid "Insulin: {0}U"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentSummary.svelte
 #. placeholder {0}: formatCarbDisplay(totalCarbs)
+#: src/lib/components/reports/TreatmentSummary.svelte
 msgid "Carbs: {0}g"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentSummary.svelte
 #. placeholder {0}: formatCarbDisplay(totalProtein)
+#: src/lib/components/reports/TreatmentSummary.svelte
 msgid "Protein: {0}g"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentSummary.svelte
 #. placeholder {0}: formatCarbDisplay(totalFat)
+#: src/lib/components/reports/TreatmentSummary.svelte
 msgid "Fat: {0}g"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentSummary.svelte
 #. placeholder {0}: day.treatmentSummary.treatmentCount ?? 0
+#: src/lib/components/reports/TreatmentSummary.svelte
 msgid "{0} treatment events"
 msgstr ""
 
@@ -4864,13 +4765,13 @@ msgstr ""
 msgid "Treatment Events"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentEvents.svelte
 #. placeholder {0}: treatment.insulin
+#: src/lib/components/reports/TreatmentEvents.svelte
 msgid "• {0}U"
 msgstr ""
 
-#: src/lib/components/reports/TreatmentEvents.svelte
 #. placeholder {0}: treatment.carbs
+#: src/lib/components/reports/TreatmentEvents.svelte
 msgid "• {0}g carbs"
 msgstr ""
 
@@ -4880,15 +4781,15 @@ msgid ""
 "undone."
 msgstr ""
 
-#: src/lib/components/profile/ProfileDeleteDialog.svelte
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: formatDateDetailed(profile.created_at)
 #. placeholder {0}: formatDate(subject.created)
+#: src/lib/components/profile/ProfileDeleteDialog.svelte
+#: src/routes/settings/admin/+page.svelte
 msgid "Created: {0}"
 msgstr ""
 
-#: src/lib/components/profile/ProfileDeleteDialog.svelte
 #. placeholder {0}: Object.keys(profile.store).length
+#: src/lib/components/profile/ProfileDeleteDialog.svelte
 msgid "Contains {0} profile store(s)"
 msgstr ""
 
@@ -4955,8 +4856,8 @@ msgstr ""
 msgid "Create Profile"
 msgstr ""
 
-#: src/lib/components/profile/ProfileEditDialog.svelte
 #. placeholder {0}: editedStoreName ?? "Unknown"
+#: src/lib/components/profile/ProfileEditDialog.svelte
 msgid "<0/> Edit Profile: {0}"
 msgstr ""
 
@@ -5060,9 +4961,7 @@ msgstr ""
 
 #: src/lib/components/profile/ProfileEditDialog.svelte
 msgid ""
-"This profile is managed by an external source (e.g., Glooko). <0/> Any "
-"changes made here will <1>NOT</1> be reflected on your device (pump/CGM). "
-"They will only affect how data is\n"
+"This profile is managed by an external source (e.g., Glooko). <0/> Any changes made here will <1>NOT</1> be reflected on your device (pump/CGM). They will only affect how data is\n"
 "viewed in Nocturne."
 msgstr ""
 
@@ -5096,8 +4995,8 @@ msgstr ""
 msgid "Nocturne Tracker"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #. placeholder {0}: instanceName
+#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 msgid "Complete {0}"
 msgstr ""
 
@@ -5120,8 +5019,8 @@ msgstr ""
 msgid "Notes (optional)"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #. placeholder {0}: instanceName
+#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 msgid "Start another {0} after completion"
 msgstr ""
 
@@ -5183,18 +5082,18 @@ msgstr ""
 msgid "Notifications trigger when tracker age exceeds the specified hours."
 msgstr ""
 
-#: src/lib/components/trackers/TrackerStartDialog.svelte
 #. placeholder {0}: definition?.name ?? "Tracker"
+#: src/lib/components/trackers/TrackerStartDialog.svelte
 msgid "Start {0}"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerStartDialog.svelte
 #. placeholder {0}: formatLastCompletion( (lastCompletion.completedAt ?? lastCompletion.startedAt)! )
+#: src/lib/components/trackers/TrackerStartDialog.svelte
 msgid "Last completed {0} <0/>"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerStartDialog.svelte
 #. placeholder {0}: definition?.name ?? "tracker"
+#: src/lib/components/trackers/TrackerStartDialog.svelte
 msgid "Begin tracking {0}."
 msgstr ""
 
@@ -5206,8 +5105,8 @@ msgstr ""
 msgid "Notification Schedule (Adjusted)"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerStartDialog.svelte
 #. placeholder {0}: preview.hours
+#: src/lib/components/trackers/TrackerStartDialog.svelte
 msgid "{0}h"
 msgstr ""
 
@@ -5227,6 +5126,7 @@ msgstr ""
 #: src/lib/components/status-pills/CAGEPill.svelte
 #: src/lib/components/status-pills/SAGEPill.svelte
 #: src/lib/components/status-pills/TrackerPill.svelte
+#: src/routes/settings/trackers/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Overdue"
 msgstr ""
@@ -5249,9 +5149,9 @@ msgstr ""
 msgid "Recommended Change"
 msgstr ""
 
-#: src/lib/components/status-pills/CAGEPill.svelte
 #. placeholder {0}: maxLifeHours
 #. placeholder {1}: Math.floor(maxLifeHours / 24)
+#: src/lib/components/status-pills/CAGEPill.svelte
 msgid "Every {0}h ({1} days)"
 msgstr ""
 
@@ -5366,15 +5266,15 @@ msgstr ""
 msgid "Play Preview"
 msgstr ""
 
-#: src/lib/components/settings/AlarmPreview.svelte
 #. placeholder {0}: profile.audio.startVolume
 #. placeholder {1}: profile.audio.maxVolume
 #. placeholder {2}: profile .audio.ascendDurationSeconds
+#: src/lib/components/settings/AlarmPreview.svelte
 msgid "{0}% → {1}% over {2}s"
 msgstr ""
 
-#: src/lib/components/settings/AlarmPreview.svelte
 #. placeholder {0}: profile.audio.maxVolume
+#: src/lib/components/settings/AlarmPreview.svelte
 msgid "Volume: {0}%"
 msgstr ""
 
@@ -5499,9 +5399,7 @@ msgid "Alarm Type"
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
-msgid ""
-"Administer carbs ONLY if they are conscious and able to swallow by "
-"themselves."
+msgid "Administer carbs ONLY if they are conscious and able to swallow by themselves."
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
@@ -5540,9 +5438,7 @@ msgid "minutes"
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
-msgid ""
-"How far ahead to predict (5-60 min). Alarm triggers if glucose is forecast "
-"to drop below threshold within this time."
+msgid "How far ahead to predict (5-60 min). Alarm triggers if glucose is forecast to drop below threshold within this time."
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
@@ -5581,8 +5477,8 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: src/lib/components/settings/AlarmProfileDialog.svelte
 #. placeholder {0}: showCustomSoundUpload ? "Hide" : "Manage"
+#: src/lib/components/settings/AlarmProfileDialog.svelte
 msgid "<0/> {0} Custom Sounds"
 msgstr ""
 
@@ -5731,8 +5627,8 @@ msgstr ""
 msgid "Quick Snooze Options"
 msgstr ""
 
-#: src/lib/components/settings/AlarmProfileDialog.svelte
 #. placeholder {0}: minutes
+#: src/lib/components/settings/AlarmProfileDialog.svelte
 msgid "{0}m <0/>"
 msgstr ""
 
@@ -5740,8 +5636,8 @@ msgstr ""
 msgid "+ Add"
 msgstr ""
 
-#: src/lib/components/settings/AlarmProfileDialog.svelte
 #. placeholder {0}: min
+#: src/lib/components/settings/AlarmProfileDialog.svelte
 msgid "{0} min"
 msgstr ""
 
@@ -5775,9 +5671,7 @@ msgid "Auto-extend snooze if trending in correct direction"
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
-msgid ""
-"For high alarms: extend if glucose is falling. <0/> For low alarms: extend "
-"if glucose is rising."
+msgid "For high alarms: extend if glucose is falling. <0/> For low alarms: extend if glucose is rising."
 msgstr ""
 
 #: src/lib/components/settings/AlarmProfileDialog.svelte
@@ -6021,8 +5915,8 @@ msgstr ""
 msgid "<0/> Dashboard Widgets"
 msgstr ""
 
-#: src/lib/components/settings/DashboardWidgetConfigurator.svelte
 #. placeholder {0}: maxWidgets
+#: src/lib/components/settings/DashboardWidgetConfigurator.svelte
 msgid "Customize the {0} widgets shown above the glucose chart. Drag to reorder."
 msgstr ""
 
@@ -6038,8 +5932,8 @@ msgstr ""
 msgid "Add widgets from the list below"
 msgstr ""
 
-#: src/lib/components/settings/DashboardWidgetConfigurator.svelte
 #. placeholder {0}: maxWidgets
+#: src/lib/components/settings/DashboardWidgetConfigurator.svelte
 msgid "(max {0} reached)"
 msgstr ""
 
@@ -6107,8 +6001,8 @@ msgstr ""
 msgid "Failed to upload sound"
 msgstr ""
 
-#: src/lib/components/settings/CustomSoundUpload.svelte
 #. placeholder {0}: sound.name
+#: src/lib/components/settings/CustomSoundUpload.svelte
 msgid "Delete \"{0}\"? This cannot be undone."
 msgstr ""
 
@@ -6290,8 +6184,8 @@ msgstr ""
 msgid "Search or enter event type..."
 msgstr ""
 
-#: src/lib/components/treatments/EventTypeCombobox.svelte
 #. placeholder {0}: searchValue.trim()
+#: src/lib/components/treatments/EventTypeCombobox.svelte
 msgid "Use \"{0}\" as custom type"
 msgstr ""
 
@@ -6327,13 +6221,13 @@ msgstr ""
 msgid "Treatment Total"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
 #. placeholder {0}: breakdown.attributedCarbs
+#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
 msgid "Attributed {0}g"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
 #. placeholder {0}: breakdown.unspecifiedCarbs
+#: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
 msgid "Unspecified {0}g"
 msgstr ""
 
@@ -6357,8 +6251,8 @@ msgstr ""
 msgid "Enter details for the new treatment."
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentEditDialog.svelte
 #. placeholder {0}: treatment?._id ? "Edit the details of this treatment entry." : "Enter details for the new treatment."
+#: src/lib/components/treatments/TreatmentEditDialog.svelte
 msgid "{0} Changes will be saved to the database."
 msgstr ""
 
@@ -6438,8 +6332,8 @@ msgstr ""
 msgid "Type to search foods or create a new one."
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #. placeholder {0}: searchQuery.trim()
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 msgid "<0/> Create \"{0}\""
 msgstr ""
 
@@ -6457,9 +6351,9 @@ msgid ""
 "this entry."
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #. placeholder {0}: foodFat
 #. placeholder {1}: foodProtein
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 msgid "{0}g fat • {1}g protein"
 msgstr ""
 
@@ -6494,8 +6388,8 @@ msgstr ""
 msgid "Time offset (min)"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #. placeholder {0}: unspecifiedCarbs
+#: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 msgid "<0/> Scale to fill remaining {0}g"
 msgstr ""
 
@@ -6543,33 +6437,33 @@ msgstr ""
 msgid "Total Treatments"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: bolusCount
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0} boluses"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: dailyAvgBoluses.toFixed(1)
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0}/day"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: avgInsulinPerBolus.toFixed(1)
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0}U avg"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: carbEntriesCount
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0} meals"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: dailyAvgCarbs.toFixed(0)
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0}g/day"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentStatsCard.svelte
 #. placeholder {0}: avgCarbsPerEntry.toFixed(0)
+#: src/lib/components/treatments/TreatmentStatsCard.svelte
 msgid "{0}g avg/meal"
 msgstr ""
 
@@ -6622,9 +6516,9 @@ msgstr ""
 msgid "No treatments found."
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentsDataTable.svelte
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel() .rows.length
+#: src/lib/components/treatments/TreatmentsDataTable.svelte
 msgid "{0} of {1} row(s) selected"
 msgstr ""
 
@@ -6632,9 +6526,9 @@ msgstr ""
 msgid "Rows per page"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentsDataTable.svelte
 #. placeholder {0}: pagination.pageIndex + 1
 #. placeholder {1}: table.getPageCount()
+#: src/lib/components/treatments/TreatmentsDataTable.svelte
 msgid "Page {0} of {1}"
 msgstr ""
 
@@ -6695,9 +6589,7 @@ msgid "Your session may have expired. Please try logging in again."
 msgstr ""
 
 #: src/routes/auth/error/+page.svelte
-msgid ""
-"You may not have permission to access this resource. Contact your "
-"administrator if you believe this is an error."
+msgid "You may not have permission to access this resource. Contact your administrator if you believe this is an error."
 msgstr ""
 
 #: src/routes/auth/error/+page.svelte
@@ -6717,9 +6609,7 @@ msgid "Authentication is not currently enabled. Please contact your administrato
 msgstr ""
 
 #: src/routes/auth/error/+page.svelte
-msgid ""
-"Please try logging in again. If the problem persists, contact your "
-"administrator."
+msgid "Please try logging in again. If the problem persists, contact your administrator."
 msgstr ""
 
 #: src/routes/auth/error/+page.svelte
@@ -6784,8 +6674,8 @@ msgstr ""
 msgid "<0/> Redirecting..."
 msgstr ""
 
-#: src/routes/auth/login/+page.svelte
 #. placeholder {0}: provider.name
+#: src/routes/auth/login/+page.svelte
 msgid "<0/> Sign in with {0}"
 msgstr ""
 
@@ -6796,9 +6686,7 @@ msgid ""
 msgstr ""
 
 #: src/routes/auth/login/+page.svelte
-msgid ""
-"By signing in, you agree to our <0>Terms of Service</0> and <1>Privacy "
-"Policy</1>"
+msgid "By signing in, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>"
 msgstr ""
 
 #: src/routes/auth/login/+page.svelte
@@ -6854,10 +6742,10 @@ msgstr ""
 msgid "Loading password requirements..."
 msgstr ""
 
+#. placeholder {0}: config.current.passwordRequirements ?.minLength ?? 12
+#. placeholder {0}: config.current.passwordRequirements ?.minLength ?? 12
 #: src/routes/auth/change-password/+page.svelte
 #: src/routes/auth/reset-password/+page.svelte
-#. placeholder {0}: config.current.passwordRequirements ?.minLength ?? 12
-#. placeholder {0}: config.current.passwordRequirements ?.minLength ?? 12
 msgid "Must be at least {0} characters"
 msgstr ""
 
@@ -6913,8 +6801,8 @@ msgstr ""
 msgid "Treatment total"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
 #. placeholder {0}: carbsPerPortion
+#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
 msgid "{0}g carbs per portion"
 msgstr ""
 
@@ -6926,9 +6814,9 @@ msgstr ""
 msgid "Scale"
 msgstr ""
 
-#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
 #. placeholder {0}: editCarbs > remainingCarbs ? "Scale down" : "Scale"
 #. placeholder {1}: remainingCarbs
+#: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
 msgid "<0/> {0} to fill remaining {1}g"
 msgstr ""
 
@@ -7078,8 +6966,8 @@ msgstr ""
 msgid "Password <0/>"
 msgstr ""
 
-#: src/routes/auth/register/+page.svelte
 #. placeholder {0}: passwordRequirements.minLength
+#: src/routes/auth/register/+page.svelte
 msgid "Minimum {0} characters"
 msgstr ""
 
@@ -7100,9 +6988,7 @@ msgid "Already have an account? <0>Sign in</0>"
 msgstr ""
 
 #: src/routes/auth/register/+page.svelte
-msgid ""
-"By creating an account, you agree to our <0>Terms of Service</0> and "
-"<1>Privacy Policy</1>"
+msgid "By creating an account, you agree to our <0>Terms of Service</0> and <1>Privacy Policy</1>"
 msgstr ""
 
 #: src/routes/auth/verify-email/+page.svelte
@@ -7353,9 +7239,9 @@ msgstr ""
 msgid "Live Preview"
 msgstr ""
 
-#: src/routes/clock/config/+page.svelte
 #. placeholder {0}: bgDelta > 0 ? "+" : ""
 #. placeholder {1}: bgDelta
+#: src/routes/clock/config/+page.svelte
 msgid "{0}{1} mg/dL"
 msgstr ""
 
@@ -7433,8 +7319,8 @@ msgstr ""
 msgid "New row separator"
 msgstr ""
 
-#: src/routes/clock/config/+page.svelte
 #. placeholder {0}: element.size
+#: src/routes/clock/config/+page.svelte
 msgid "Size: {0}"
 msgstr ""
 
@@ -7508,24 +7394,24 @@ msgstr ""
 msgid "Analysis Results"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analyses.length
 #. placeholder {1}: filters.skip + 1
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "Showing {0} results (starting from {1})"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.totalProcessingTimeMs
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "<0/> {0}ms"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.analysisTimestamp ? new Date(analysis.analysisTimestamp).toLocaleString() : "N/A"
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "Time: {0}"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.selectedResponseTarget
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "Selected: {0}"
 msgstr ""
 
@@ -7541,18 +7427,18 @@ msgstr ""
 msgid "Nocturne:"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.criticalDiscrepancyCount
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "<0/> {0} Critical"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.majorDiscrepancyCount
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "<0/> {0} Major"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: analysis.minorDiscrepancyCount
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "{0} Minor"
 msgstr ""
 
@@ -7568,9 +7454,9 @@ msgstr ""
 msgid "<0/> Previous"
 msgstr ""
 
-#: src/routes/dashboard/analyses/+page.svelte
 #. placeholder {0}: filters.skip + 1
 #. placeholder {1}: filters.skip + analyses.length
+#: src/routes/dashboard/analyses/+page.svelte
 msgid "Showing {0}-{1}"
 msgstr ""
 
@@ -7578,8 +7464,8 @@ msgstr ""
 msgid "Next <0/>"
 msgstr ""
 
-#: src/routes/clock/[face]/+page.svelte
 #. placeholder {0}: face
+#: src/routes/clock/[face]/+page.svelte
 msgid "Clock - {0}"
 msgstr ""
 
@@ -7596,18 +7482,18 @@ msgstr ""
 msgid "<0/> Configure"
 msgstr ""
 
-#: src/routes/clock/[face]/+page.svelte
 #. placeholder {0}: timeSince
+#: src/routes/clock/[face]/+page.svelte
 msgid "{0} ago"
 msgstr ""
 
-#: src/routes/clock/[face]/+page.svelte
 #. placeholder {0}: profileTimeInfo.offset
+#: src/routes/clock/[face]/+page.svelte
 msgid "Your time ({0})"
 msgstr ""
 
-#: src/routes/clock/[face]/+page.svelte
 #. placeholder {0}: timeSince
+#: src/routes/clock/[face]/+page.svelte
 msgid "Data is {0} old"
 msgstr ""
 
@@ -7699,9 +7585,9 @@ msgstr ""
 msgid "Faster"
 msgstr ""
 
-#: src/routes/compatibility/[id]/+page.svelte
 #. placeholder {0}: faster
 #. placeholder {1}: formatDuration(Math.abs(diff))
+#: src/routes/compatibility/[id]/+page.svelte
 msgid "{0} by {1}"
 msgstr ""
 
@@ -7719,13 +7605,13 @@ msgstr ""
 msgid "Summary"
 msgstr ""
 
-#: src/routes/compatibility/[id]/+page.svelte
 #. placeholder {0}: analysis.discrepancies.length
+#: src/routes/compatibility/[id]/+page.svelte
 msgid "Discrepancies ({0})"
 msgstr ""
 
-#: src/routes/compatibility/[id]/+page.svelte
 #. placeholder {0}: discrepanciesBySeverity.critical.length
+#: src/routes/compatibility/[id]/+page.svelte
 msgid "Critical ({0})"
 msgstr ""
 
@@ -7749,8 +7635,8 @@ msgstr ""
 msgid "Nocturne Value"
 msgstr ""
 
-#: src/routes/compatibility/[id]/+page.svelte
 #. placeholder {0}: discrepanciesBySeverity.major.length
+#: src/routes/compatibility/[id]/+page.svelte
 msgid "Major ({0})"
 msgstr ""
 
@@ -7759,8 +7645,8 @@ msgstr ""
 msgid "Major"
 msgstr ""
 
-#: src/routes/compatibility/[id]/+page.svelte
 #. placeholder {0}: discrepanciesBySeverity.minor.length
+#: src/routes/compatibility/[id]/+page.svelte
 msgid "Minor ({0})"
 msgstr ""
 
@@ -7797,17 +7683,17 @@ msgstr ""
 msgid "Insulin Delivery <0/>"
 msgstr ""
 
+#. placeholder {0}: dayCount
+#. placeholder {0}: dayCount
+#. placeholder {0}: dayCount
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/basal-analysis/+page.svelte
 #: src/routes/reports/insulin-delivery/+page.svelte
-#. placeholder {0}: dayCount
-#. placeholder {0}: dayCount
-#. placeholder {0}: dayCount
 msgid "{0} days"
 msgstr ""
 
-#: src/routes/reports/basal-analysis/+page.svelte
 #. placeholder {0}: basalStats.count
+#: src/routes/reports/basal-analysis/+page.svelte
 msgid "{0} basal events"
 msgstr ""
 
@@ -7817,9 +7703,7 @@ msgid "<0/> Understanding This Report"
 msgstr ""
 
 #: src/routes/reports/basal-analysis/+page.svelte
-msgid ""
-"This report shows how your <0>basal (background) insulin delivery</0> "
-"varies throughout the day. The percentile chart shows your typical patterns:"
+msgid "This report shows how your <0>basal (background) insulin delivery</0> varies throughout the day. The percentile chart shows your typical patterns:"
 msgstr ""
 
 #: src/routes/reports/basal-analysis/+page.svelte
@@ -7912,11 +7796,9 @@ msgstr ""
 msgid "Temp Basal Activity"
 msgstr ""
 
-#: src/routes/reports/basal-analysis/+page.svelte
 #. placeholder {0}: tempBasalInfo.perDay.toFixed( 1 )
-msgid ""
-"High temp basal activity ({0}/day) suggests active automated or manual "
-"adjustments."
+#: src/routes/reports/basal-analysis/+page.svelte
+msgid "High temp basal activity ({0}/day) suggests active automated or manual adjustments."
 msgstr ""
 
 #: src/routes/reports/basal-analysis/+page.svelte
@@ -7949,11 +7831,10 @@ msgstr ""
 msgid "Daily Basal Insulin"
 msgstr ""
 
-#: src/routes/reports/basal-analysis/+page.svelte
 #. placeholder {0}: dayCount
+#: src/routes/reports/basal-analysis/+page.svelte
 msgid ""
-"Average of <0>{0} units</0> of basal insulin delivered per day over this "
-"{0}-day\n"
+"Average of <0>{0} units</0> of basal insulin delivered per day over this {0}-day\n"
 "period."
 msgstr ""
 
@@ -7966,9 +7847,6 @@ msgstr ""
 msgid "Insulin Delivery Report <0/>"
 msgstr ""
 
-#: src/routes/reports/basal-analysis/+page.svelte
-#: src/routes/reports/insulin-delivery/+page.svelte
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatments.length.toLocaleString()
 #. placeholder {1}: startDate.toLocaleDateString()
 #. placeholder {2}: endDate.toLocaleDateString()
@@ -7978,6 +7856,9 @@ msgstr ""
 #. placeholder {0}: treatments.length.toLocaleString()
 #. placeholder {1}: new Date(dateRange.from).toLocaleDateString()
 #. placeholder {2}: new Date( dateRange.to ).toLocaleDateString()
+#: src/routes/reports/basal-analysis/+page.svelte
+#: src/routes/reports/insulin-delivery/+page.svelte
+#: src/routes/reports/treatments/+page.svelte
 msgid "Report generated from {0} treatments between {1} and {2}"
 msgstr ""
 
@@ -7986,9 +7867,7 @@ msgid "Ambulatory Glucose Profile - Nocturne Reports"
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
-msgid ""
-"Standard AGP report with glucose pattern overlay, percentile bands, and "
-"time-in-range analysis"
+msgid "Standard AGP report with glucose pattern overlay, percentile bands, and time-in-range analysis"
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
@@ -8009,8 +7888,7 @@ msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
 msgid ""
-"The <0>Ambulatory Glucose Profile</0> shows what a \"typical\" day looks "
-"like for your glucose levels. It overlays\n"
+"The <0>Ambulatory Glucose Profile</0> shows what a \"typical\" day looks like for your glucose levels. It overlays\n"
 "all your daily readings to reveal consistent patterns."
 msgstr ""
 
@@ -8019,27 +7897,19 @@ msgid "How to read this chart"
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
-msgid ""
-"<0>The dark line</0> is your median (middle) glucose at each hour — what "
-"happens most often."
+msgid "<0>The dark line</0> is your median (middle) glucose at each hour — what happens most often."
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
-msgid ""
-"<0>The darker shaded area</0> (25th-75th percentile) shows where you are "
-"50% of the time."
+msgid "<0>The darker shaded area</0> (25th-75th percentile) shows where you are 50% of the time."
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
-msgid ""
-"<0>The lighter shaded area</0> (10th-90th percentile) shows where you are "
-"80% of the time."
+msgid "<0>The lighter shaded area</0> (10th-90th percentile) shows where you are 80% of the time."
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
-msgid ""
-"<0>Green zone</0> (70-180 mg/dL) is your target range. Time in this zone is "
-"your goal!"
+msgid "<0>Green zone</0> (70-180 mg/dL) is your target range. Time in this zone is your goal!"
 msgstr ""
 
 #: src/routes/reports/agp/+page.svelte
@@ -8105,8 +7975,8 @@ msgstr ""
 msgid "What your AGP reveals about your glucose patterns"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: (tir.target ?? 0).toFixed(0)
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "You're spending {0}% of time in\n"
 "target — above the 70% goal!"
@@ -8116,8 +7986,8 @@ msgstr ""
 msgid "Good Progress"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: (tir.target ?? 0).toFixed(0)
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "Your TIR of {0}% shows room for\n"
 "improvement. Each 5% gain matters!"
@@ -8127,8 +7997,8 @@ msgstr ""
 msgid "Let's Work on This"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: (tir.target ?? 0).toFixed(0)
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "Your TIR is {0}%. Looking at when\n"
 "highs/lows occur can help identify solutions."
@@ -8138,8 +8008,8 @@ msgstr ""
 msgid "Stable Glucose"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: (variability.coefficientOfVariation ?? 0).toFixed( 0 )
+#: src/routes/reports/agp/+page.svelte
 msgid "Your CV of {0}% indicates steady glucose with minimal swings."
 msgstr ""
 
@@ -8175,8 +8045,8 @@ msgstr ""
 msgid "Low Risk Acceptable"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: totalLows.toFixed(1)
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "{0}% time below range — within acceptable\n"
 "limits."
@@ -8186,8 +8056,8 @@ msgstr ""
 msgid "Address Lows"
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: totalLows.toFixed(1)
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "{0}% time below range. The daily view can\n"
 "help identify when lows occur."
@@ -8225,10 +8095,10 @@ msgid ""
 "day that need attention and to track progress over time."
 msgstr ""
 
-#: src/routes/reports/agp/+page.svelte
 #. placeholder {0}: startDate.toLocaleDateString()
 #. placeholder {1}: endDate.toLocaleDateString()
 #. placeholder {2}: new Date(dateRange.lastUpdated).toLocaleString()
+#: src/routes/reports/agp/+page.svelte
 msgid ""
 "Data from {0} – {1}.\n"
 "Last updated {2}."
@@ -8305,13 +8175,13 @@ msgstr ""
 msgid "Type <0/>"
 msgstr ""
 
-#: src/routes/reports/day-in-review/+page.svelte
 #. placeholder {0}: treatment.rate.toFixed(2)
+#: src/routes/reports/day-in-review/+page.svelte
 msgid "{0}U/hr"
 msgstr ""
 
-#: src/routes/reports/day-in-review/+page.svelte
 #. placeholder {0}: filterEventType
+#: src/routes/reports/day-in-review/+page.svelte
 msgid "No {0} treatments found for this day"
 msgstr ""
 
@@ -8402,8 +8272,8 @@ msgstr ""
 msgid "Below 30%"
 msgstr ""
 
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: stat?.warningEventCount ?? 0
+#: src/routes/reports/battery/+page.svelte
 msgid "{0} warnings"
 msgstr ""
 
@@ -8415,17 +8285,17 @@ msgstr ""
 msgid "History of battery charge and discharge periods"
 msgstr ""
 
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: formatDateShort(cycle.chargeStartMills)
 #. placeholder {1}: cycle.chargeStartLevel ?? "?"
 #. placeholder {2}: cycle.chargeEndLevel ?? "?"
+#: src/routes/reports/battery/+page.svelte
 msgid "Charged: {0} ({1}% → {2}%)"
 msgstr ""
 
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: formatDuration(cycle.dischargeDurationMinutes)
 #. placeholder {1}: cycle.dischargeStartLevel ?? "?"
 #. placeholder {2}: cycle.dischargeEndLevel ?? "?"
+#: src/routes/reports/battery/+page.svelte
 msgid "Lasted: {0} ({1}% → {2}%)"
 msgstr ""
 
@@ -8441,10 +8311,10 @@ msgstr ""
 msgid "In Progress"
 msgstr ""
 
-#: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: allDevices.length
 #. placeholder {1}: allDevices.length !== 1 ? "s" : ""
 #. placeholder {2}: Math.round( (dateRange.to - dateRange.from) / (24 * 60 * 60 * 1000) )
+#: src/routes/reports/battery/+page.svelte
 msgid "Data collected from {0} device{1} over {2} days"
 msgstr ""
 
@@ -8467,9 +8337,9 @@ msgstr ""
 msgid "<0/> Error Loading Data"
 msgstr ""
 
-#: src/routes/reports/glucose-distribution/+page.svelte
 #. placeholder {0}: dateRangeDisplay
 #. placeholder {1}: overallStats.totalReadings
+#: src/routes/reports/glucose-distribution/+page.svelte
 msgid "{0} • {1} readings"
 msgstr ""
 
@@ -8509,8 +8379,8 @@ msgstr ""
 msgid "A1c (IFCC)"
 msgstr ""
 
-#: src/routes/reports/glucose-distribution/+page.svelte
 #. placeholder {0}: overallStats.a1cIFCC.toFixed(0)
+#: src/routes/reports/glucose-distribution/+page.svelte
 msgid "{0} mmol/mol"
 msgstr ""
 
@@ -8643,14 +8513,12 @@ msgid "Room for improvement"
 msgstr ""
 
 #: src/routes/reports/executive-summary/+page.svelte
-msgid ""
-"<0>What is eA1C?</0> This estimates what your lab A1C would be based on "
-"your average glucose."
+msgid "<0>What is eA1C?</0> This estimates what your lab A1C would be based on your average glucose."
 msgstr ""
 
-#: src/routes/reports/executive-summary/+page.svelte
 #. placeholder {0}: stats?.mean?.toFixed(0)
 #. placeholder {1}: dayCount
+#: src/routes/reports/executive-summary/+page.svelte
 msgid ""
 "Calculated using the Nathan formula: eA1C = (GMI + 2.59) /\n"
 "1.59. Based on mean glucose of {0} mg/dL over {1} days."
@@ -8708,8 +8576,7 @@ msgstr ""
 
 #: src/routes/reports/executive-summary/+page.svelte
 msgid ""
-"<0>Action needed:</0> You're experiencing more lows than recommended. "
-"Discuss with your\n"
+"<0>Action needed:</0> You're experiencing more lows than recommended. Discuss with your\n"
 "care team about adjusting your treatment."
 msgstr ""
 
@@ -8731,8 +8598,7 @@ msgstr ""
 
 #: src/routes/reports/executive-summary/+page.svelte
 msgid ""
-"<0>Consider:</0> Look at post-meal patterns and correction doses. Your AGP "
-"report can\n"
+"<0>Consider:</0> Look at post-meal patterns and correction doses. Your AGP report can\n"
 "help identify when highs occur most."
 msgstr ""
 
@@ -8816,8 +8682,8 @@ msgstr ""
 msgid "All Reports"
 msgstr ""
 
-#: src/routes/reports/executive-summary/+page.svelte
 #. placeholder {0}: new Date(dateRange.lastUpdated).toLocaleString()
+#: src/routes/reports/executive-summary/+page.svelte
 msgid "Report generated: {0}"
 msgstr ""
 
@@ -8832,15 +8698,11 @@ msgid "Your basal/bolus ratio is well-balanced."
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
-msgid ""
-"Higher basal percentage — may indicate lower carb diet or need for basal "
-"rate review."
+msgid "Higher basal percentage — may indicate lower carb diet or need for basal rate review."
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
-msgid ""
-"Higher bolus percentage — may indicate higher carb diet or frequent "
-"corrections."
+msgid "Higher bolus percentage — may indicate higher carb diet or frequent corrections."
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
@@ -8852,9 +8714,7 @@ msgid "Insulin Delivery Report - Nocturne Reports"
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
-msgid ""
-"Analyze your insulin delivery patterns including basal/bolus ratios and TDD "
-"trends"
+msgid "Analyze your insulin delivery patterns including basal/bolus ratios and TDD trends"
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
@@ -8869,8 +8729,8 @@ msgstr ""
 msgid "Basal Analysis <0/>"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.bolusCount + insulinStats.basalCount
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "{0} insulin events"
 msgstr ""
 
@@ -8883,9 +8743,7 @@ msgid "Your <0>Total Daily Dose (TDD)</0> is split between two types of insulin:
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
-msgid ""
-"<0>Basal insulin:</0> Continuous background insulin that covers your body's "
-"baseline needs"
+msgid "<0>Basal insulin:</0> Continuous background insulin that covers your body's baseline needs"
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
@@ -8903,10 +8761,10 @@ msgstr ""
 msgid "units/day"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.totalBasal.toFixed(1)
 #. placeholder {0}: insulinStats.totalBolus.toFixed(1)
+#: src/routes/reports/insulin-delivery/+page.svelte
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "{0}U total"
 msgstr ""
 
@@ -8914,8 +8772,8 @@ msgstr ""
 msgid "Boluses/Day"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.avgBolus.toFixed(1)
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "avg {0}U each"
 msgstr ""
 
@@ -8923,9 +8781,9 @@ msgstr ""
 msgid "Avg I:C"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.basalPercent.toFixed(0)
 #. placeholder {1}: insulinStats.bolusPercent.toFixed( 0 )
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "Basal/Bolus Ratio: {0}% / {1}%"
 msgstr ""
 
@@ -8957,8 +8815,8 @@ msgstr ""
 msgid "Total Boluses"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: dayCount
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "Over {0} days"
 msgstr ""
 
@@ -8966,10 +8824,10 @@ msgstr ""
 msgid "Meal Boluses"
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.bolusCount > 0 ? ( (insulinStats.mealBoluses / insulinStats.bolusCount) * 100 ).toFixed(0) : 0
 #. placeholder {0}: insulinStats.bolusCount > 0 ? ( (insulinStats.correctionBoluses / insulinStats.bolusCount) * 100 ).toFixed(0) : 0
+#: src/routes/reports/insulin-delivery/+page.svelte
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "{0}% of boluses"
 msgstr ""
 
@@ -9014,8 +8872,8 @@ msgstr ""
 msgid "moderate bolus sizes."
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.avgBolus.toFixed(1)
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "Average bolus size of {0}U — <0/>"
 msgstr ""
 
@@ -9025,24 +8883,21 @@ msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
 msgid ""
-"<0>Total Daily Dose (TDD):</0> Typically ranges from 0.4-1.0 units/kg body "
-"weight for Type 1 diabetes. Your\n"
+"<0>Total Daily Dose (TDD):</0> Typically ranges from 0.4-1.0 units/kg body weight for Type 1 diabetes. Your\n"
 "TDD of <1>{0}U/day</1> can be compared to this reference."
 msgstr ""
 
 #: src/routes/reports/insulin-delivery/+page.svelte
-msgid ""
-"<0>Basal Rate Estimation:</0> If your TDD is accurate, your hourly basal "
-"rate should be approximately <1>{0} U/hr</1> (using 50% basal assumption)."
+msgid "<0>Basal Rate Estimation:</0> If your TDD is accurate, your hourly basal rate should be approximately <1>{0} U/hr</1> (using 50% basal assumption)."
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.icRatio.toFixed( 0 )
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "means you use about 1 unit of insulin for every {0} grams of carbs."
 msgstr ""
 
-#: src/routes/reports/insulin-delivery/+page.svelte
 #. placeholder {0}: insulinStats.icRatio.toFixed( 0 )
+#: src/routes/reports/insulin-delivery/+page.svelte
 msgid "<0>I:C Ratio Check:</0> Your average insulin-to-carb ratio of 1:{0} <1/>"
 msgstr ""
 
@@ -9074,8 +8929,8 @@ msgstr ""
 msgid "<0/> Error Loading Treatments"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatments.length.toLocaleString()
+#: src/routes/reports/treatments/+page.svelte
 msgid "{0} treatments"
 msgstr ""
 
@@ -9097,8 +8952,8 @@ msgstr ""
 msgid "Delete Treatment"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatmentToDelete.eventType
+#: src/routes/reports/treatments/+page.svelte
 msgid ""
 "Are you sure you want to delete this {0} treatment?\n"
 "This action cannot be undone."
@@ -9116,13 +8971,13 @@ msgstr ""
 msgid "Type:"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: formatInsulinDisplay(treatmentToDelete.insulin)
+#: src/routes/reports/treatments/+page.svelte
 msgid "<0>Insulin:</0> {0}U"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: formatCarbDisplay(treatmentToDelete.carbs)
+#: src/routes/reports/treatments/+page.svelte
 msgid "<0>Carbs:</0> {0}g"
 msgstr ""
 
@@ -9130,25 +8985,23 @@ msgstr ""
 msgid "Treatment deleted successfully"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatmentsToDelete.length
+#: src/routes/reports/treatments/+page.svelte
 msgid "Delete {0} Treatments"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatmentsToDelete.length
 #. placeholder {1}: treatmentsToDelete.length !== 1 ? "s" : ""
-msgid ""
-"Are you sure you want to delete {0} selected treatment{1}? This action "
-"cannot be undone."
+#: src/routes/reports/treatments/+page.svelte
+msgid "Are you sure you want to delete {0} selected treatment{1}? This action cannot be undone."
 msgstr ""
 
 #: src/routes/reports/treatments/+page.svelte
 msgid "Selected Treatments"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatmentsToDelete.length - 5
+#: src/routes/reports/treatments/+page.svelte
 msgid "... and {0} more treatments"
 msgstr ""
 
@@ -9156,9 +9009,9 @@ msgstr ""
 msgid "Failed to delete treatments"
 msgstr ""
 
-#: src/routes/reports/treatments/+page.svelte
 #. placeholder {0}: treatmentsToDelete.length
 #. placeholder {1}: treatmentsToDelete.length !== 1 ? "s" : ""
+#: src/routes/reports/treatments/+page.svelte
 msgid "Delete {0} Treatment{1}"
 msgstr ""
 
@@ -9186,10 +9039,10 @@ msgstr ""
 msgid "<0/> Back to Reports"
 msgstr ""
 
-#: src/lib/components/ui/duration-input/duration-input.svelte
-#: src/routes/reports/site-change-impact/+page.svelte
 #. placeholder {0}: (computedHours / 24).toFixed(1)
 #. placeholder {0}: dayCount
+#: src/lib/components/ui/duration-input/duration-input.svelte
+#: src/routes/reports/site-change-impact/+page.svelte
 msgid "({0} days)"
 msgstr ""
 
@@ -9211,8 +9064,7 @@ msgstr ""
 
 #: src/routes/reports/site-change-impact/+page.svelte
 msgid ""
-"<0>What this shows:</0> This report averages your glucose readings across "
-"all your site changes to\n"
+"<0>What this shows:</0> This report averages your glucose readings across all your site changes to\n"
 "reveal patterns in how your glucose control changes as your infusion site\n"
 "ages."
 msgstr ""
@@ -9257,8 +9109,8 @@ msgstr ""
 msgid "Significant Improvement"
 msgstr ""
 
-#: src/routes/reports/site-change-impact/+page.svelte
 #. placeholder {0}: percentImprovement.toFixed(1)
+#: src/routes/reports/site-change-impact/+page.svelte
 msgid ""
 "Your glucose improves by {0}%\n"
 "after site changes. Consider more frequent changes if site age\n"
@@ -9269,8 +9121,8 @@ msgstr ""
 msgid "Post-Change Rise"
 msgstr ""
 
-#: src/routes/reports/site-change-impact/+page.svelte
 #. placeholder {0}: Math.abs(percentImprovement).toFixed(1)
+#: src/routes/reports/site-change-impact/+page.svelte
 msgid ""
 "Your glucose is {0}%\n"
 "higher after site changes. This might indicate insertion\n"
@@ -9291,9 +9143,9 @@ msgstr ""
 msgid "TIR Improvement"
 msgstr ""
 
-#: src/routes/reports/site-change-impact/+page.svelte
 #. placeholder {0}: tirBefore.toFixed(0)
 #. placeholder {1}: tirAfter.toFixed( 0 )
+#: src/routes/reports/site-change-impact/+page.svelte
 msgid "Time in range improves from {0}% to {1}% after site changes."
 msgstr ""
 
@@ -9447,10 +9299,10 @@ msgstr ""
 msgid "Shows what users without login can see"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: subject.roles.join(", ")
 #. placeholder {0}: subject.roles?.join(", ") || "None"
+#: src/routes/settings/admin/+page.svelte
+#: src/routes/settings/admin/+page.svelte
 msgid "Roles: {0}"
 msgstr ""
 
@@ -9480,9 +9332,9 @@ msgstr ""
 msgid "<0/> System"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: role.permissions.length
 #. placeholder {1}: role .permissions.length === 1 ? "" : "s"
+#: src/routes/settings/admin/+page.svelte
 msgid "{0} permission{1}"
 msgstr ""
 
@@ -9490,8 +9342,8 @@ msgstr ""
 msgid "No permissions"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: role.permissions.length - 3
+#: src/routes/settings/admin/+page.svelte
 msgid "+{0} more"
 msgstr ""
 
@@ -9535,13 +9387,13 @@ msgstr ""
 msgid "No pending password reset requests"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: request.requestedFromIp
+#: src/routes/settings/admin/+page.svelte
 msgid "IP: {0}"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: formatDate(request.createdAt)
+#: src/routes/settings/admin/+page.svelte
 msgid "Requested: {0} <0/>"
 msgstr ""
 
@@ -9641,8 +9493,8 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: roleFormPermissions.length
+#: src/routes/settings/admin/+page.svelte
 msgid "Selected Permissions ({0})"
 msgstr ""
 
@@ -9667,9 +9519,7 @@ msgid "<0/> Copy to Clipboard"
 msgstr ""
 
 #: src/routes/settings/admin/+page.svelte
-msgid ""
-"<0>Important:</0> Store this token securely. Use it in the <1/> header or "
-"as an <2/> query parameter."
+msgid "<0>Important:</0> Store this token securely. Use it in the <1/> header or as an <2/> query parameter."
 msgstr ""
 
 #: src/routes/settings/admin/+page.svelte
@@ -9690,8 +9540,8 @@ msgstr ""
 msgid "Set Temporary Password"
 msgstr ""
 
-#: src/routes/settings/admin/+page.svelte
 #. placeholder {0}: selectedResetRequest?.email
+#: src/routes/settings/admin/+page.svelte
 msgid ""
 "Set a temporary password for {0}. They will be\n"
 "required to change it on next login."
@@ -9787,8 +9637,8 @@ msgstr ""
 msgid "<0/> Create Alarm"
 msgstr ""
 
-#: src/routes/settings/alarms/+page.svelte
 #. placeholder {0}: profile.persistenceMinutes
+#: src/routes/settings/alarms/+page.svelte
 msgid "<0/> {0}m delay"
 msgstr ""
 
@@ -9946,8 +9796,8 @@ msgstr ""
 msgid "Prediction horizon"
 msgstr ""
 
-#: src/routes/settings/algorithm/+page.svelte
 #. placeholder {0}: store.algorithm.prediction.minutes ?? 30
+#: src/routes/settings/algorithm/+page.svelte
 msgid "{0} minutes"
 msgstr ""
 
@@ -10149,8 +9999,8 @@ msgstr ""
 msgid "Connect a CGM or pump app to see it here"
 msgstr ""
 
-#: src/routes/settings/devices/+page.svelte
 #. placeholder {0}: formatLastSeen(device.lastSeen)
+#: src/routes/settings/devices/+page.svelte
 msgid "Last seen: {0}"
 msgstr ""
 
@@ -10320,9 +10170,7 @@ msgid "Display active tracker ages (sensor, pump site, etc.) on homepage"
 msgstr ""
 
 #: src/routes/settings/appearance/+page.svelte
-msgid ""
-"Each tracker's dashboard visibility is configured in <0>Settings → "
-"Trackers</0>"
+msgid "Each tracker's dashboard visibility is configured in <0>Settings → Trackers</0>"
 msgstr ""
 
 #: src/routes/settings/appearance/+page.svelte
@@ -10638,9 +10486,9 @@ msgstr ""
 msgid "Failed to load migration data"
 msgstr ""
 
-#: src/routes/settings/migration/+page.svelte
 #. placeholder {0}: result.entryCount ?? 0
 #. placeholder {1}: result.treatmentCount ?? 0
+#: src/routes/settings/migration/+page.svelte
 msgid "Connected successfully! Found {0} entries and {1} treatments."
 msgstr ""
 
@@ -10825,13 +10673,13 @@ msgstr ""
 msgid "Unknown Source"
 msgstr ""
 
-#: src/routes/settings/migration/+page.svelte
 #. placeholder {0}: formatDate(job.startedAt)
+#: src/routes/settings/migration/+page.svelte
 msgid "Started: {0}"
 msgstr ""
 
-#: src/routes/settings/migration/+page.svelte
 #. placeholder {0}: formatDate(job.completedAt)
+#: src/routes/settings/migration/+page.svelte
 msgid "Completed: {0}"
 msgstr ""
 
@@ -10845,8 +10693,8 @@ msgid ""
 "timestamps."
 msgstr ""
 
-#: src/routes/settings/migration/+page.svelte
 #. placeholder {0}: formatDate(source.lastMigrationAt)
+#: src/routes/settings/migration/+page.svelte
 msgid "Last migration: {0}"
 msgstr ""
 
@@ -10944,8 +10792,8 @@ msgstr ""
 msgid "<0/> Demo"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: source.entriesLast24h ?? 0
+#: src/routes/settings/services/+page.svelte
 msgid "{0} entries (24h)"
 msgstr ""
 
@@ -11009,8 +10857,8 @@ msgstr ""
 msgid "<0/> Error"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
+#: src/routes/settings/services/+page.svelte
 msgid ""
 "{0} entries\n"
 "(24h)"
@@ -11048,8 +10896,8 @@ msgid ""
 "for authentication via the <0/> header or embed it in the URL."
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: selectedUploader.name
+#: src/routes/settings/services/+page.svelte
 msgid "<0/> Set up {0}"
 msgstr ""
 
@@ -11073,8 +10921,8 @@ msgstr ""
 msgid "Setup Instructions"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: selectedUploader.name
+#: src/routes/settings/services/+page.svelte
 msgid "<0/> Visit {0} Website"
 msgstr ""
 
@@ -11090,19 +10938,17 @@ msgstr ""
 msgid "Demo data cleared successfully"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
-#: src/routes/settings/services/+page.svelte
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: demoDeleteResult.entriesDeleted?.toLocaleString() ?? 0
 #. placeholder {0}: deleteResult.entriesDeleted?.toLocaleString() ?? 0
 #. placeholder {0}: connectorDeleteResult.entriesDeleted?.toLocaleString() ?? 0
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "Deleted {0} entries"
 msgstr ""
 
 #: src/routes/settings/services/+page.svelte
-msgid ""
-"<0>This is demo data</0> — synthetic glucose readings generated for testing "
-"and demonstration purposes."
+msgid "<0>This is demo data</0> — synthetic glucose readings generated for testing and demonstration purposes."
 msgstr ""
 
 #: src/routes/settings/services/+page.svelte
@@ -11168,15 +11014,13 @@ msgid "⚠️ THIS ACTION CANNOT BE UNDONE"
 msgstr ""
 
 #: src/routes/settings/services/+page.svelte
-msgid ""
-"You are about to permanently delete <0>all data</0> from <1/> . This "
-"includes:"
+msgid "You are about to permanently delete <0>all data</0> from <1/> . This includes:"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: selectedDataSource.totalEntries?.toLocaleString() ?? 0
 #. placeholder {0}: selectedConnector.totalEntries?.toLocaleString() ?? 0
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "All glucose entries ({0} entries)"
 msgstr ""
 
@@ -11226,10 +11070,10 @@ msgstr ""
 msgid "Sync completed successfully"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: manualSyncResult.successfulConnectors
 #. placeholder {1}: manualSyncResult.totalConnectors
 #. placeholder {2}: Math.round( (new Date(manualSyncResult.endTime!).getTime() - new Date(manualSyncResult.startTime!).getTime()) / 1000 )
+#: src/routes/settings/services/+page.svelte
 msgid "{0} of {1} connectors synced in {2}s"
 msgstr ""
 
@@ -11302,8 +11146,8 @@ msgstr ""
 msgid "To"
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: Object.values( granularSyncResult.itemsSynced || {} ).reduce((a, b) => (a || 0) + (b || 0), 0)
+#: src/routes/settings/services/+page.svelte
 msgid "({0} items)"
 msgstr ""
 
@@ -11326,8 +11170,8 @@ msgid ""
 "database."
 msgstr ""
 
-#: src/routes/settings/services/+page.svelte
 #. placeholder {0}: foodOnlySyncResult.itemsSynced.Food
+#: src/routes/settings/services/+page.svelte
 msgid "({0} foods imported)"
 msgstr ""
 
@@ -11362,9 +11206,7 @@ msgid "<0/> Permanently Delete Connector Data"
 msgstr ""
 
 #: src/routes/settings/services/+page.svelte
-msgid ""
-"You are about to permanently delete <0>all data</0> synchronized by <1/> . "
-"This includes:"
+msgid "You are about to permanently delete <0>all data</0> synchronized by <1/> . This includes:"
 msgstr ""
 
 #: src/routes/settings/services/+page.svelte
@@ -11387,8 +11229,8 @@ msgstr ""
 msgid "Today's Summary"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
 #. placeholder {0}: unitLabel
+#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
 msgid "{0} avg"
 msgstr ""
 
@@ -11396,9 +11238,9 @@ msgstr ""
 msgid "Variability:"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
 #. placeholder {0}: cvStatus.text
 #. placeholder {1}: dailyStats.cv.toFixed(0)
+#: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
 msgid "<0/> {0} ({1}% CV)"
 msgstr ""
 
@@ -11475,10 +11317,8 @@ msgstr ""
 msgid "Start a tracker from your definitions"
 msgstr ""
 
-#: src/routes/settings/trackers/+page.svelte
-#. placeholder {0}: formatDate(instance.startedAt)
-msgid "Started {0} <0/> <1/>"
-msgstr ""
+#~ msgid "Started {0} <0/> <1/>"
+#~ msgstr ""
 
 #: src/routes/settings/trackers/+page.svelte
 msgid "History"
@@ -11512,14 +11352,14 @@ msgstr ""
 msgid "★ Favorite"
 msgstr ""
 
-#: src/routes/settings/trackers/+page.svelte
 #. placeholder {0}: def.lifespanHours
+#: src/routes/settings/trackers/+page.svelte
 msgid "· {0}h lifespan"
 msgstr ""
 
-#: src/routes/settings/trackers/+page.svelte
 #. placeholder {0}: def.notificationThresholds.length
 #. placeholder {1}: def .notificationThresholds.length > 1 ? "s" : ""
+#: src/routes/settings/trackers/+page.svelte
 msgid "· {0} threshold{1}"
 msgstr ""
 
@@ -11711,8 +11551,8 @@ msgstr ""
 msgid "Recent Meals"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/MealsWidget.svelte
 #. placeholder {0}: formatTime(lastMealTime)
+#: src/lib/components/dashboard/widgets/MealsWidget.svelte
 msgid "Last: {0}"
 msgstr ""
 
@@ -11724,33 +11564,33 @@ msgstr ""
 msgid "Last 24h"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #. placeholder {0}: tirData.severeLow.toFixed(1)
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 msgid "Severe Low: {0}%"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #. placeholder {0}: tirData.low.toFixed(1)
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 msgid "Low: {0}%"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #. placeholder {0}: tirData.inRange.toFixed(1)
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 msgid "In Range: {0}%"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #. placeholder {0}: tirData.high.toFixed(1)
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 msgid "High: {0}%"
 msgstr ""
 
-#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #. placeholder {0}: tirData.severeHigh.toFixed(1)
+#: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 msgid "Severe High: {0}%"
 msgstr ""
 
-#: src/lib/components/settings/alarm-preview/AlarmActiveView.svelte
 #. placeholder {0}: profile.name
+#: src/lib/components/settings/alarm-preview/AlarmActiveView.svelte
 msgid "Alarm: {0}"
 msgstr ""
 
@@ -11762,8 +11602,8 @@ msgstr ""
 msgid "Glucose Alert"
 msgstr ""
 
-#: src/lib/components/settings/alarm-preview/AlarmActiveView.svelte
 #. placeholder {0}: minutes
+#: src/lib/components/settings/alarm-preview/AlarmActiveView.svelte
 msgid "<0/> Snooze {0}m"
 msgstr ""
 
@@ -11865,8 +11705,8 @@ msgstr ""
 msgid "Displays the mobile sidebar."
 msgstr ""
 
-#: src/routes/dashboard/analyses/[id]/+page.svelte
 #. placeholder {0}: analysis.correlationId
+#: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Analysis {0} - Nocturne Dashboard"
 msgstr ""
 
@@ -11882,13 +11722,13 @@ msgstr ""
 msgid "Analysis Details"
 msgstr ""
 
-#: src/routes/dashboard/analyses/[id]/+page.svelte
 #. placeholder {0}: analysis.correlationId
+#: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Correlation ID: {0}"
 msgstr ""
 
-#: src/routes/dashboard/analyses/[id]/+page.svelte
 #. placeholder {0}: analysis.analysisTimestamp ? new Date(analysis.analysisTimestamp).toLocaleString() : "N/A"
+#: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Analyzed on {0}"
 msgstr ""
 
@@ -11926,8 +11766,8 @@ msgstr ""
 msgid "Selected Response:"
 msgstr ""
 
-#: src/routes/dashboard/analyses/[id]/+page.svelte
 #. placeholder {0}: analysis.discrepancies.length
+#: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "<0/> Discrepancies ({0})"
 msgstr ""
 
@@ -11949,4 +11789,10 @@ msgstr ""
 
 #: src/routes/clock/config/+page.ts
 msgid "Build your own custom Nightscout clock display"
+msgstr ""
+
+#. placeholder {0}: formatAge(instance.ageHours ?? 0)
+#. placeholder {1}: formatDate(instance.startedAt)
+#: src/routes/settings/trackers/+page.svelte
+msgid "{0} old · Started {1} <0/>"
 msgstr ""
