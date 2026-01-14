@@ -4,8 +4,10 @@ internal static class MyLifeJsonKeys
 {
     internal const string Key = "KEY";
     internal const string IndicationBatteryRemoved = "IndicationBatteryRemoved";
+    internal const string IndicationBasalProfileChanged = "IndicationBasalProfileChanged";
     internal const string IndicationBasalProfileXChanged = "IndicationBasalProfileXChanged";
     internal const string Parameter0 = "P0";
+    internal const string Parameter1 = "P1";
     internal const string BolusIsCalculated = "BolusIsCalculated";
     internal const string CalcCarbs = "CalcCarbs";
     internal const string SuggestedMealBolus = "SuggestedMealBolus";
