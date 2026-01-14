@@ -165,11 +165,19 @@ public class MyLifeSoapClient(HttpClient httpClient, ILogger<MyLifeSoapClient> l
         return string.Empty;
     }
 
-    private static string? ExtractSoapResult(string xml, string elementName)
+    private string? ExtractSoapResult(string xml, string elementName)
     {
-        var doc = XDocument.Parse(xml);
-        var element = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == elementName);
-        return element?.Value;
+        try
+        {
+            var doc = XDocument.Parse(xml);
+            var element = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == elementName);
+            return element?.Value;
+        }
+        catch (System.Xml.XmlException ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse SOAP XML response for element {ElementName}", elementName);
+            return null;
+        }
     }
 
     private static string CombineUrl(string serviceUrl, string path)
