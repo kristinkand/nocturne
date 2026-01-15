@@ -792,6 +792,7 @@ msgstr ""
 
 #: src/lib/components/calendar/DayStackedBar.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/reports/TIRStackedChart.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
@@ -1031,8 +1032,6 @@ msgstr ""
 #: src/lib/components/reports/DailySummaryTable.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/reports/+page.svelte
-#: src/routes/reports/+page.svelte
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Time in Range"
@@ -1074,7 +1073,6 @@ msgstr ""
 #: src/routes/calendar/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 #: src/routes/profile/+page.svelte
-#: src/routes/reports/+page.svelte
 msgid "An error occurred"
 msgstr ""
 
@@ -1346,6 +1344,7 @@ msgstr ""
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/alarms/+page.svelte
@@ -2296,38 +2295,32 @@ msgstr ""
 msgid "The Big Picture"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "How am I doing overall?"
-msgstr ""
+#~ msgid "How am I doing overall?"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Get a comprehensive snapshot of your diabetes management with key metrics that matter most."
-msgstr ""
+#~ msgid "Get a comprehensive snapshot of your diabetes management with key metrics that matter most."
+#~ msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/reports/+page.svelte
 msgid "Executive Summary"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Your most important numbers at a glance — perfect for quick check-ins or sharing with your doctor."
-msgstr ""
+#~ msgid "Your most important numbers at a glance — perfect for quick check-ins or sharing with your doctor."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "HbA1c estimate, TIR, CV, and glycemic variability indices with trend analysis."
-msgstr ""
+#~ msgid "HbA1c estimate, TIR, CV, and glycemic variability indices with trend analysis."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Glucose Profile (AGP)"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See your typical day's glucose pattern — when you tend to run high, low, or in range."
-msgstr ""
+#~ msgid "See your typical day's glucose pattern — when you tend to run high, low, or in range."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Standardized AGP with 14-day overlay, percentile bands (10th-90th), and daily profiles."
-msgstr ""
+#~ msgid "Standardized AGP with 14-day overlay, percentile bands (10th-90th), and daily profiles."
+#~ msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/reports/+page.svelte
@@ -2336,130 +2329,108 @@ msgstr ""
 msgid "Glucose Distribution"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See how your glucose values are distributed between low, in-range, and high."
-msgstr ""
+#~ msgid "See how your glucose values are distributed between low, in-range, and high."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Pie chart visualization with TIR breakdown, A1c estimation, GVI, PGS, and variability metrics."
-msgstr ""
+#~ msgid "Pie chart visualization with TIR breakdown, A1c estimation, GVI, PGS, and variability metrics."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Patterns & Trends"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "What's affecting my glucose?"
-msgstr ""
+#~ msgid "What's affecting my glucose?"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Discover what makes your glucose go up, down, or stay stable throughout the day."
-msgstr ""
+#~ msgid "Discover what makes your glucose go up, down, or stay stable throughout the day."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Track how much time you spend in your target range and see your progress over time."
-msgstr ""
+#~ msgid "Track how much time you spend in your target range and see your progress over time."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Detailed TIR breakdown by range with episode counts, durations, and trend analysis."
-msgstr ""
+#~ msgid "Detailed TIR breakdown by range with episode counts, durations, and trend analysis."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Hourly Patterns"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Find out which hours of the day are your best — and which need more attention."
-msgstr ""
+#~ msgid "Find out which hours of the day are your best — and which need more attention."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Hourly glucose percentiles with statistical analysis for circadian pattern identification."
-msgstr ""
+#~ msgid "Hourly glucose percentiles with statistical analysis for circadian pattern identification."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Day-by-Day View"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Review each day individually to spot what worked and what didn't."
-msgstr ""
+#~ msgid "Review each day individually to spot what worked and what didn't."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Daily glucose overlay with treatment markers, statistics, and pattern comparison."
-msgstr ""
+#~ msgid "Daily glucose overlay with treatment markers, statistics, and pattern comparison."
+#~ msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/reports/+page.svelte
 msgid "Week to Week"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Compare glucose patterns across each day of the week, overlaid on a single chart."
-msgstr ""
+#~ msgid "Compare glucose patterns across each day of the week, overlaid on a single chart."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Weekly glucose overlay showing day-of-week patterns for circadian and weekly rhythm analysis."
-msgstr ""
+#~ msgid "Weekly glucose overlay showing day-of-week patterns for circadian and weekly rhythm analysis."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Lifestyle Impact"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "How do food, exercise & sleep affect me?"
-msgstr ""
+#~ msgid "How do food, exercise & sleep affect me?"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Understand how your daily activities influence your glucose levels."
-msgstr ""
+#~ msgid "Understand how your daily activities influence your glucose levels."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Meal Analysis"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See how different meals affect your glucose — find what works best for you."
-msgstr ""
+#~ msgid "See how different meals affect your glucose — find what works best for you."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Pre/post meal glucose analysis with I:C ratio effectiveness and meal timing optimization."
-msgstr ""
+#~ msgid "Pre/post meal glucose analysis with I:C ratio effectiveness and meal timing optimization."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Exercise Impact"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Discover how physical activity affects your glucose control."
-msgstr ""
+#~ msgid "Discover how physical activity affects your glucose control."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Exercise correlation analysis with glucose delta, timing impact, and recommendations."
-msgstr ""
+#~ msgid "Exercise correlation analysis with glucose delta, timing impact, and recommendations."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Sleep & Overnight"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Track your glucose patterns during sleep and wake up with better numbers."
-msgstr ""
+#~ msgid "Track your glucose patterns during sleep and wake up with better numbers."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Overnight glucose analysis with dawn phenomenon detection and nocturnal hypo risk."
-msgstr ""
+#~ msgid "Overnight glucose analysis with dawn phenomenon detection and nocturnal hypo risk."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Treatment Insights"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Is my treatment working?"
-msgstr ""
+#~ msgid "Is my treatment working?"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Evaluate how well your medications and insulin are working for you."
-msgstr ""
+#~ msgid "Evaluate how well your medications and insulin are working for you."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 #: src/routes/reports/basal-analysis/+page.svelte
@@ -2468,63 +2439,52 @@ msgstr ""
 msgid "Treatment Log"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Review your insulin doses, carbs, and corrections all in one place."
-msgstr ""
+#~ msgid "Review your insulin doses, carbs, and corrections all in one place."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Comprehensive treatment log with bolus/basal breakdown, IOB tracking, and dosing patterns."
-msgstr ""
+#~ msgid "Comprehensive treatment log with bolus/basal breakdown, IOB tracking, and dosing patterns."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Basal Rate Analysis"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See how your basal insulin delivery varies throughout the day and across days."
-msgstr ""
+#~ msgid "See how your basal insulin delivery varies throughout the day and across days."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Basal rate percentile chart (10th-90th), temp basal frequency, and hourly basal patterns."
-msgstr ""
+#~ msgid "Basal rate percentile chart (10th-90th), temp basal frequency, and hourly basal patterns."
+#~ msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/reports/+page.svelte
 msgid "Insulin Delivery"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Understand how your insulin is split between background (basal) and mealtime (bolus) doses."
-msgstr ""
+#~ msgid "Understand how your insulin is split between background (basal) and mealtime (bolus) doses."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Basal/bolus ratio analysis, TDD trends, insulin distribution by time of day, and dosing patterns."
-msgstr ""
+#~ msgid "Basal/bolus ratio analysis, TDD trends, insulin distribution by time of day, and dosing patterns."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Correction Analysis"
-msgstr ""
+#~ msgid "Correction Analysis"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See if your correction doses are bringing you back to range effectively."
-msgstr ""
+#~ msgid "See if your correction doses are bringing you back to range effectively."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "ISF validation, correction factor analysis, and time-to-target metrics."
-msgstr ""
+#~ msgid "ISF validation, correction factor analysis, and time-to-target metrics."
+#~ msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/reports/+page.svelte
 msgid "Site Change Impact"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "See how your glucose control changes before and after pump site changes."
-msgstr ""
+#~ msgid "See how your glucose control changes before and after pump site changes."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Analyzes glucose patterns around infusion site changes to identify absorption degradation."
-msgstr ""
+#~ msgid "Analyzes glucose patterns around infusion site changes to identify absorption degradation."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Reports - Nocturne"
@@ -2534,9 +2494,8 @@ msgstr ""
 msgid "Comprehensive diabetes management analytics and insights"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Failed to load reports"
-msgstr ""
+#~ msgid "Failed to load reports"
+#~ msgstr ""
 
 #: src/routes/auth/reset-password/+page.svelte
 #: src/routes/auth/verify-email/+page.svelte
@@ -2550,11 +2509,9 @@ msgstr ""
 #. placeholder {0}: dailyStats.readings
 #. placeholder {0}: tirData.total
 #. placeholder {0}: entries.length.toLocaleString()
-#. placeholder {0}: entries.length.toLocaleString()
 #. placeholder {0}: readings.length
 #: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
 #: src/lib/components/dashboard/widgets/TirChartWidget.svelte
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/battery/+page.svelte
 msgid "{0} readings"
@@ -2564,11 +2521,10 @@ msgstr ""
 msgid "Your Glucose Report"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid ""
-"Everything you and your healthcare team need to understand your diabetes\n"
-"management."
-msgstr ""
+#~ msgid ""
+#~ "Everything you and your healthcare team need to understand your diabetes\n"
+#~ "management."
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "<0/> Executive Summary"
@@ -2582,7 +2538,6 @@ msgstr ""
 msgid "<0/> Day-by-Day"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/basal-analysis/+page.svelte
 #: src/routes/reports/insulin-delivery/+page.svelte
@@ -2590,84 +2545,62 @@ msgstr ""
 msgid "<0/> Print"
 msgstr ""
 
-#. placeholder {0}: glucoseFormatting.targetRangeDisplay
-#: src/routes/reports/+page.svelte
-msgid "This is how much time your glucose stays in your target zone ({0}). Higher is better!"
-msgstr ""
+#~ msgid "This is how much time your glucose stays in your target zone ({0}). Higher is better!"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "ADA recommends >70% TIR for most adults with diabetes. Each 5% improvement is clinically meaningful."
-msgstr ""
+#~ msgid "ADA recommends >70% TIR for most adults with diabetes. Each 5% improvement is clinically meaningful."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-#: src/routes/reports/+page.svelte
-msgid "Estimated A1C"
-msgstr ""
+#~ msgid "Estimated A1C"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "This estimates your 3-month average blood sugar. It's based on your CGM data from this period."
-msgstr ""
+#~ msgid "This estimates your 3-month average blood sugar. It's based on your CGM data from this period."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Glucose Variability"
-msgstr ""
+#~ msgid "Glucose Variability"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Lower variability means steadier glucose levels with fewer ups and downs. This affects how you feel day-to-day."
-msgstr ""
+#~ msgid "Lower variability means steadier glucose levels with fewer ups and downs. This affects how you feel day-to-day."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "CV ≤33% indicates stable glucose. CV >36% associated with increased hypoglycemia risk."
-msgstr ""
+#~ msgid "CV ≤33% indicates stable glucose. CV >36% associated with increased hypoglycemia risk."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Time Below Range"
-msgstr ""
+#~ msgid "Time Below Range"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Time spent with low blood sugar. Less is better — lows can be dangerous and feel awful."
-msgstr ""
+#~ msgid "Time spent with low blood sugar. Less is better — lows can be dangerous and feel awful."
+#~ msgstr ""
 
-#. placeholder {0}: glucoseFormatting.lowThresholdDisplay
-#. placeholder {1}: glucoseFormatting.unitLabel
-#. placeholder {2}: glucoseFormatting.severeLowThresholdDisplay
-#. placeholder {3}: glucoseFormatting.unitLabel
-#: src/routes/reports/+page.svelte
-msgid "Target <4% time below {0} {1} and <1% below {2} {3}. Prioritize reducing lows, especially in elderly."
-msgstr ""
+#~ msgid "Target <4% time below {0} {1} and <1% below {2} {3}. Prioritize reducing lows, especially in elderly."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "<0/> Time in Range"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Where you spend your time"
-msgstr ""
+#~ msgid "Where you spend your time"
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "<0/> Your Typical Day"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Glucose pattern over 24 hours (darker = more common)"
-msgstr ""
+#~ msgid "Glucose pattern over 24 hours (darker = more common)"
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Full Report <0/>"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "<0/> Recent Glucose"
-msgstr ""
+#~ msgid "<0/> Recent Glucose"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Your glucose levels over the selected period"
-msgstr ""
+#~ msgid "Your glucose levels over the selected period"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Day-by-Day View <0/>"
-msgstr ""
+#~ msgid "Day-by-Day View <0/>"
+#~ msgstr ""
 
 #: src/lib/components/reports/DailyStatistics.svelte
 #: src/routes/reports/+page.svelte
@@ -2679,122 +2612,92 @@ msgstr ""
 #: src/lib/components/reports/BasalRatePercentileChart.svelte
 #: src/lib/components/reports/HourlyGlucosePercentileChart.svelte
 #: src/lib/components/reports/SiteChangeImpactChart.svelte
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Median"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Lowest"
-msgstr ""
+#~ msgid "Lowest"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Highest"
-msgstr ""
+#~ msgid "Highest"
+#~ msgstr ""
 
 #: src/lib/components/reports/DailySummaryTable.svelte
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
 msgid "Std Dev"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "CGM Active"
-msgstr ""
+#~ msgid "CGM Active"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "data quality"
-msgstr ""
+#~ msgid "data quality"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "<0/> No Data Available"
-msgstr ""
+#~ msgid "<0/> No Data Available"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid ""
-"There is not enough data in the selected time range to generate\n"
-"analytics. Please select a larger date range or ensure you have\n"
-"sufficient glucose readings."
-msgstr ""
+#~ msgid ""
+#~ "There is not enough data in the selected time range to generate\n"
+#~ "analytics. Please select a larger date range or ensure you have\n"
+#~ "sufficient glucose readings."
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Explore Detailed Reports"
-msgstr ""
+#~ msgid "Explore Detailed Reports"
+#~ msgstr ""
 
 #: src/routes/reports/+page.svelte
 msgid "Dive deeper into specific aspects of your diabetes management"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "<0/> Clinical"
-msgstr ""
+#~ msgid "<0/> Clinical"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Available"
-msgstr ""
+#~ msgid "Available"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-#: src/routes/reports/+page.svelte
-msgid "Coming Soon"
-msgstr ""
+#~ msgid "Coming Soon"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Clinical details"
 msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "View Report <0/>"
-msgstr ""
+#~ msgid "View Report <0/>"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "<0/> Understanding Your Reports"
-msgstr ""
+#~ msgid "<0/> Understanding Your Reports"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Quick guide to interpreting your diabetes data"
-msgstr ""
+#~ msgid "Quick guide to interpreting your diabetes data"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "The percentage of time your glucose is between 70-180 mg/dL. <0>Goal: 70%+</0>"
-msgstr ""
+#~ msgid "The percentage of time your glucose is between 70-180 mg/dL. <0>Goal: 70%+</0>"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid ""
-"A calculation of your average glucose over time, similar to the\n"
-"lab test. <0>Goal: Below 7%</0>"
-msgstr ""
+#~ msgid ""
+#~ "A calculation of your average glucose over time, similar to the\n"
+#~ "lab test. <0>Goal: Below 7%</0>"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Variability (CV)"
-msgstr ""
+#~ msgid "Variability (CV)"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Measures how much your glucose swings up and down. <0>Goal: 33% or lower</0>"
-msgstr ""
+#~ msgid "Measures how much your glucose swings up and down. <0>Goal: 33% or lower</0>"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "Data Quality"
-msgstr ""
+#~ msgid "Data Quality"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
-msgid "How much of the time your CGM was actively providing readings. <0>Goal: 90%+</0>"
-msgstr ""
+#~ msgid "How much of the time your CGM was actively providing readings. <0>Goal: 90%+</0>"
+#~ msgstr ""
 
-#. placeholder {0}: entries.length.toLocaleString()
-#. placeholder {1}: new Date(dateRange.from).toLocaleDateString()
-#. placeholder {2}: new Date( dateRange.to ).toLocaleDateString()
-#: src/routes/reports/+page.svelte
-msgid "Report generated from {0} glucose readings between {1} and {2}"
-msgstr ""
+#~ msgid "Report generated from {0} glucose readings between {1} and {2}"
+#~ msgstr ""
 
-#. placeholder {0}: new Date(dateRange.lastUpdated).toLocaleString()
-#: src/routes/reports/+page.svelte
-msgid "Last updated: {0}"
-msgstr ""
+#~ msgid "Last updated: {0}"
+#~ msgstr ""
 
-#: src/routes/reports/+page.svelte
 #: src/routes/reports/basal-analysis/+page.svelte
 #: src/routes/reports/insulin-delivery/+page.svelte
 msgid ""
@@ -3555,12 +3458,14 @@ msgid "Scheduled"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/reports/TIRStackedChart.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
 msgid "Very High"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/reports/TIRStackedChart.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
@@ -4303,21 +4208,25 @@ msgid "Total fat:"
 msgstr ""
 
 #: src/lib/components/reports/GlucoseScoreCard.svelte
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Excellent"
 msgstr ""
 
 #: src/lib/components/reports/GlucoseScoreCard.svelte
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Good"
 msgstr ""
 
 #: src/lib/components/reports/GlucoseScoreCard.svelte
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Fair"
 msgstr ""
 
 #: src/lib/components/reports/GlucoseScoreCard.svelte
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Needs Attention"
 msgstr ""
@@ -4581,21 +4490,17 @@ msgstr ""
 msgid "<0/> Try Again"
 msgstr ""
 
-#: src/lib/components/reports/TIRStackedChart.svelte
-msgid "Severe Low"
-msgstr ""
+#~ msgid "Severe Low"
+#~ msgstr ""
 
-#: src/lib/components/reports/TIRStackedChart.svelte
-msgid "Target"
-msgstr ""
+#~ msgid "Target"
+#~ msgstr ""
 
-#: src/lib/components/reports/TIRStackedChart.svelte
-msgid "Severe High"
-msgstr ""
+#~ msgid "Severe High"
+#~ msgstr ""
 
-#: src/lib/components/reports/TIRStackedChart.svelte
-msgid "Label:"
-msgstr ""
+#~ msgid "Label:"
+#~ msgstr ""
 
 #: src/lib/components/reports/RetrospectiveTimeScrubber.svelte
 msgid "ArrowLeft"
@@ -6699,6 +6604,7 @@ msgstr ""
 #: src/routes/auth/change-password/+page.svelte
 #: src/routes/auth/reset-password/+page.svelte
 #: src/routes/auth/verify-email/+page.svelte
+#: src/routes/reports/+page.svelte
 msgid "Something went wrong"
 msgstr ""
 
@@ -7915,6 +7821,7 @@ msgstr ""
 msgid "Target: ≥70%"
 msgstr ""
 
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/agp/+page.svelte
 msgid "Est. A1C"
 msgstr ""
@@ -8107,6 +8014,7 @@ msgstr ""
 msgid "<0/> Back to Month View"
 msgstr ""
 
+#: src/routes/reports/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Time Low"
 msgstr ""
@@ -11887,4 +11795,120 @@ msgstr ""
 msgid ""
 "Review and manage your insulin doses, carb entries, and device events. Use\n"
 "filters to find specific treatments."
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Your key metrics at a glance"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "All your important numbers in one place"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Your typical day's glucose pattern"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Time spent in each glucose zone"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Discover what affects your glucose"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Review each day individually"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Compare patterns across days"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Find your best and worst hours"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "How food, exercise & sleep affect you"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "See how different meals affect you"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Track activity's effect on glucose"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Understand your overnight patterns"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Is your treatment working?"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Your insulin and carb history"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "How your basal rates vary"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Basal vs bolus breakdown"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "How site changes affect control"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Unable to load reports"
+msgstr ""
+
+#. placeholder {0}: entries.length.toLocaleString()
+#: src/routes/reports/+page.svelte
+msgid "{0} readings analyzed"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Variability"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Glucose pattern over 24 hours"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "No Data Available"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid ""
+"There aren't enough glucose readings in the selected date range to\n"
+"generate analytics. Try selecting a larger date range."
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Explore Your Data"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid "Coming soon"
+msgstr ""
+
+#. placeholder {0}: new Date(dateRange.from).toLocaleDateString()
+#. placeholder {1}: new Date( dateRange.to ).toLocaleDateString()
+#. placeholder {2}: new Date(dateRange.lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", })
+#: src/routes/reports/+page.svelte
+msgid "<0>{0} readings</0> from {0} to {1} <1/> Last updated {2}"
+msgstr ""
+
+#: src/routes/reports/+page.svelte
+msgid ""
+"This report is for informational purposes. Always consult your\n"
+"healthcare provider for medical advice."
 msgstr ""

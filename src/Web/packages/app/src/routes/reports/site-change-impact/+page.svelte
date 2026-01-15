@@ -23,17 +23,25 @@
   import SiteChangeImpactChart from "$lib/components/reports/SiteChangeImpactChart.svelte";
   import { getSiteChangeImpact } from "$lib/data/reports.remote";
   import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { resource } from "runed";
 
   // Build date range input from URL parameters - default to 90 days for site change analysis
   const reportsParams = useDateParams(90);
-  const dateRangeInput = $derived(reportsParams.getDateRangeInput());
 
-  // Query for site change impact data
-  const siteChangeQuery = $derived(getSiteChangeImpact(dateRangeInput));
+  // Use resource for controlled reactivity - prevents flickering by avoiding query recreation
+  const siteChangeResource = resource(
+    () => reportsParams.dateRangeInput,
+    async (dateRangeInput) => {
+      return await getSiteChangeImpact(dateRangeInput);
+    },
+    { debounce: 100 }
+  );
 
-  const analysis = $derived(siteChangeQuery.current?.analysis ?? null);
+  const isLoading = $derived(siteChangeResource.loading);
+  const queryData = $derived(siteChangeResource.current);
+  const analysis = $derived(queryData?.analysis ?? null);
   const dateRange = $derived(
-    siteChangeQuery.current?.dateRange ?? {
+    queryData?.dateRange ?? {
       from: new Date().toISOString(),
       to: new Date().toISOString(),
     }
@@ -135,7 +143,7 @@
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {#if siteChangeQuery.loading}
+      {#if isLoading && !siteChangeResource.current}
         <div class="flex h-[400px] items-center justify-center">
           <div class="text-center text-muted-foreground">
             <RefreshCw class="mx-auto h-8 w-8 animate-spin opacity-50" />
