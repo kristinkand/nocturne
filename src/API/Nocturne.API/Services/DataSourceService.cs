@@ -151,6 +151,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "dexcom",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.DexcomConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -193,6 +194,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "libre",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.LibreConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -238,6 +240,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "medtronic",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.MiniMedConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -275,6 +278,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "nightscout",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.NightscoutConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -305,6 +309,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "glooko",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.GlookoConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -333,6 +338,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "myfitnesspal",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.MyFitnessPalConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -355,6 +361,7 @@ public class DataSourceService : IDataSourceService
                 Icon = "mylife",
                 Available = true,
                 RequiresServerConfig = true,
+                DataSourceId = DataSources.MyLifeConnector,
                 ConfigFields = new List<ConnectorConfigField>
                 {
                     new()
@@ -888,15 +895,45 @@ public class DataSourceService : IDataSourceService
             }
 
             // Connector's DataSourceId is what we use in the database (e.g. "dexcom-connector")
-            var dataSourceId = metadata.DataSourceId;
+            // This is also what the connector uses as the Device field when writing entries
+            var deviceId = metadata.DataSourceId;
             _logger.LogInformation(
-                "Resolved connector {ConnectorId} to data source ID {DataSourceId}",
+                "Resolved connector {ConnectorId} to device ID {DeviceId}",
                 connectorId,
-                dataSourceId
+                deviceId
             );
 
-            // Delegate to the existing deletion logic
-            return await DeleteDataSourceDataAsync(dataSourceId, cancellationToken);
+            // Delete directly using the connector's device ID
+            // This avoids the 30-day lookback window limitation in GetActiveDataSourcesAsync
+            var entriesDeleted = await _context
+                .Entries.Where(e => e.Device == deviceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            var treatmentsDeleted = await _context
+                .Treatments.Where(t => t.EnteredBy == deviceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            var deviceStatusDeleted = await _context
+                .DeviceStatuses.Where(ds => ds.Device == deviceId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Deleted data for connector {ConnectorId} (device {DeviceId}): {EntriesDeleted} entries, {TreatmentsDeleted} treatments, {DeviceStatusDeleted} device status records",
+                connectorId,
+                deviceId,
+                entriesDeleted,
+                treatmentsDeleted,
+                deviceStatusDeleted
+            );
+
+            return new DataSourceDeleteResult
+            {
+                Success = true,
+                DataSource = deviceId,
+                EntriesDeleted = entriesDeleted,
+                TreatmentsDeleted = treatmentsDeleted,
+                DeviceStatusDeleted = deviceStatusDeleted,
+            };
         }
         catch (Exception ex)
         {

@@ -19960,6 +19960,10 @@
           "documentationUrl": {
             "type": "string",
             "nullable": true
+          },
+          "dataSourceId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

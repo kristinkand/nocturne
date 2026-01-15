@@ -10931,7 +10931,6 @@ msgstr "Failed to delete data"
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
-#: src/routes/settings/services/+page.svelte
 msgid "Unreachable"
 msgstr "Unreachable"
 
@@ -11306,12 +11305,12 @@ msgid "<0/> Healthy"
 msgstr "<0/> Healthy"
 
 #: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "<0/> Offline"
 msgstr "<0/> Offline"
 
-#: src/routes/settings/services/+page.svelte
-msgid "Total items processed"
-msgstr "Total items processed"
+#~ msgid "Total items processed"
+#~ msgstr "Total items processed"
 
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -11323,13 +11322,11 @@ msgstr "Breakdown by type:"
 msgid "No breakdown available"
 msgstr "No breakdown available"
 
-#: src/routes/settings/services/+page.svelte
-msgid "Items processed in last 24 hours"
-msgstr "Items processed in last 24 hours"
+#~ msgid "Items processed in last 24 hours"
+#~ msgstr "Items processed in last 24 hours"
 
-#: src/routes/settings/services/+page.svelte
-msgid "Last item received"
-msgstr "Last item received"
+#~ msgid "Last item received"
+#~ msgstr "Last item received"
 
 #: src/routes/settings/services/+page.svelte
 msgid "Connector Offline"
@@ -12043,3 +12040,86 @@ msgstr "Your language preference will be saved to your account and synced across
 #: src/routes/settings/appearance/+page.svelte
 msgid "Sign in to sync your language preference across devices."
 msgstr "Sign in to sync your language preference across devices."
+
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+msgid "Offline"
+msgstr "Offline"
+
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Has Data"
+msgstr "<0/> Has Data"
+
+#~ msgid ""
+#~ "{0} entries\n"
+#~ "• Last seen {1}"
+#~ msgstr ""
+#~ "{0} entries\n"
+#~ "• Last seen {1}"
+
+#: src/routes/settings/services/+page.svelte
+msgid "Connector Not Running"
+msgstr "Connector Not Running"
+
+#: src/routes/settings/services/+page.svelte
+msgid ""
+"This connector is not currently running, but data from previous\n"
+"syncs is still stored. You can delete this data below."
+msgstr ""
+"This connector is not currently running, but data from previous\n"
+"syncs is still stored. You can delete this data below."
+
+#: src/routes/settings/services/+page.svelte
+msgid "Total entries"
+msgstr "Total entries"
+
+#: src/routes/settings/services/+page.svelte
+msgid "Entries in last 24 hours"
+msgstr "Entries in last 24 hours"
+
+#: src/routes/settings/services/+page.svelte
+msgid "Last entry received"
+msgstr "Last entry received"
+
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+msgid "Disabled"
+msgstr "Disabled"
+
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Disabled"
+msgstr "<0/> Disabled"
+
+#. placeholder {0}: entries24h.toLocaleString()
+#: src/routes/settings/services/+page.svelte
+msgid "({0} in 24h)"
+msgstr "({0} in 24h)"
+
+#. placeholder {0}: entryCount?.toLocaleString() ?? 0
+#. placeholder {1}: formatLastSeen(lastSeen)
+#: src/routes/settings/services/+page.svelte
+msgid "{0} entries <0/> • Last seen {1}"
+msgstr "{0} entries <0/> • Last seen {1}"
+
+#: src/routes/settings/services/+page.svelte
+msgid "Connector Disabled"
+msgstr "Connector Disabled"
+
+#: src/routes/settings/services/+page.svelte
+msgid ""
+"This connector is not currently enabled, but historical data from\n"
+"previous syncs is still stored. Enable the connector in your\n"
+"server configuration to resume syncing, or delete the data below."
+msgstr ""
+"This connector is not currently enabled, but historical data from\n"
+"previous syncs is still stored. Enable the connector in your\n"
+"server configuration to resume syncing, or delete the data below."

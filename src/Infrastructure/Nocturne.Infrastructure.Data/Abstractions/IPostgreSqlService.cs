@@ -3,6 +3,37 @@ using Nocturne.Core.Models;
 namespace Nocturne.Infrastructure.Data.Abstractions;
 
 /// <summary>
+/// Statistics for a data source's data in the database (entries + treatments)
+/// </summary>
+public record DataSourceStats(
+    string DataSource,
+    long TotalEntries,
+    int EntriesLast24Hours,
+    DateTime? LastEntryTime,
+    DateTime? FirstEntryTime,
+    long TotalTreatments,
+    int TreatmentsLast24Hours,
+    DateTime? LastTreatmentTime,
+    DateTime? FirstTreatmentTime
+)
+{
+    /// <summary>
+    /// Total items (entries + treatments) from this data source
+    /// </summary>
+    public long TotalItems => TotalEntries + TotalTreatments;
+
+    /// <summary>
+    /// Total items in the last 24 hours
+    /// </summary>
+    public int ItemsLast24Hours => EntriesLast24Hours + TreatmentsLast24Hours;
+
+    /// <summary>
+    /// Most recent item time (entry or treatment)
+    /// </summary>
+    public DateTime? LastItemTime => LastEntryTime > LastTreatmentTime ? LastEntryTime : LastTreatmentTime ?? LastEntryTime;
+};
+
+/// <summary>
 /// Interface for database operations - PostgreSQL implementation
 /// Compatible with IDataService for drop-in replacement
 /// </summary>
@@ -37,6 +68,17 @@ public interface IPostgreSqlService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The oldest timestamp, or null if no entries exist</returns>
     Task<DateTime?> GetOldestEntryTimestampBySourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    );
+
+    /// <summary>
+    /// Get statistics for entries from a specific data source
+    /// </summary>
+    /// <param name="dataSource">The data source name (e.g., "glooko-connector")</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Statistics including total count, last 24h count, and timestamps</returns>
+    Task<DataSourceStats> GetEntryStatsBySourceAsync(
         string dataSource,
         CancellationToken cancellationToken = default
     );

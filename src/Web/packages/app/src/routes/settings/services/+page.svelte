@@ -16,6 +16,7 @@
     ConnectorStatusDto,
     SyncRequest,
     SyncResult,
+    AvailableConnector,
   } from "$lib/api/generated/nocturne-api-client";
   import {
     Card,
@@ -458,6 +459,36 @@
     } finally {
       isFoodOnlySyncing = false;
     }
+  }
+
+  // Check if a connector has data in the database (from activeDataSources)
+  function getConnectorDataSource(
+    connector: AvailableConnector
+  ): DataSourceInfo | null {
+    if (!servicesOverview?.activeDataSources) return null;
+    // Need either dataSourceId or id to match against
+    if (!connector.dataSourceId && !connector.id) return null;
+    return (
+      servicesOverview.activeDataSources.find((source) => {
+        // Match by dataSourceId (e.g., "dexcom-connector")
+        if (connector.dataSourceId) {
+          if (
+            source.deviceId === connector.dataSourceId ||
+            source.sourceType === connector.dataSourceId
+          ) {
+            return true;
+          }
+        }
+        // Also match by connector id as fallback (e.g., "dexcom")
+        // This handles cases where sourceType was set by device name detection
+        if (connector.id) {
+          if (source.sourceType === connector.id) {
+            return true;
+          }
+        }
+        return false;
+      }) ?? null
+    );
   }
 
   // Check if a data source matches an uploader or connector
@@ -998,6 +1029,12 @@
               (cs) => cs.id === connector.id
             )}
             {@const isConnected = connectorStatus?.isHealthy === true}
+            {@const isDisabledWithData =
+              connectorStatus?.state === "Disabled" &&
+              (connectorStatus?.totalEntries ?? 0) > 0}
+            {@const connectorDataSource = getConnectorDataSource(connector)}
+            {@const hasData =
+              connectorDataSource !== null || isDisabledWithData}
 
             {#if isConnected && connectorStatus}
               <!-- Connected connector - clickable button with dialog -->
@@ -1070,8 +1107,85 @@
                   class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors"
                 />
               </button>
+            {:else if hasData}
+              <!-- Has data but not connected/disabled - clickable to view data and delete -->
+              {@const entryCount = isDisabledWithData
+                ? (connectorStatus?.totalEntries ?? 0)
+                : (connectorDataSource?.totalEntries ?? 0)}
+              {@const entries24h = isDisabledWithData
+                ? (connectorStatus?.entriesLast24Hours ?? 0)
+                : (connectorDataSource?.entriesLast24h ?? 0)}
+              {@const lastSeen = isDisabledWithData
+                ? connectorStatus?.lastEntryTime
+                : connectorDataSource?.lastSeen}
+              <button
+                class="flex items-center gap-4 p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left group border-gray-300 dark:border-gray-700"
+                onclick={() => {
+                  // Use connectorStatus if available (disabled connector), otherwise create synthetic
+                  if (isDisabledWithData && connectorStatus) {
+                    selectedConnector = connectorStatus;
+                  } else {
+                    const dataSource = getConnectorDataSource(connector);
+                    selectedConnector = {
+                      id: connector.id!,
+                      name: connector.name ?? connector.id!,
+                      status: "Offline",
+                      description: connector.description,
+                      totalEntries: dataSource?.totalEntries ?? 0,
+                      lastEntryTime: dataSource?.lastSeen,
+                      entriesLast24Hours: dataSource?.entriesLast24h ?? 0,
+                      state: "Offline",
+                      isHealthy: false,
+                    };
+                  }
+                  granularSyncResult = null;
+                  showConnectorDialog = true;
+                }}
+              >
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900/30"
+                >
+                  <Icon class="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-medium">{connector.name}</span>
+                    {#if isDisabledWithData}
+                      <Badge
+                        variant="secondary"
+                        class="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 text-xs"
+                      >
+                        <WifiOff class="h-3 w-3 mr-1" />
+                        Disabled
+                      </Badge>
+                    {:else}
+                      <Badge variant="outline" class="text-xs">
+                        <WifiOff class="h-3 w-3 mr-1" />
+                        Offline
+                      </Badge>
+                    {/if}
+                    <Badge
+                      variant="secondary"
+                      class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs"
+                    >
+                      <Database class="h-3 w-3 mr-1" />
+                      Has Data
+                    </Badge>
+                  </div>
+                  <p class="text-sm text-muted-foreground">
+                    {entryCount?.toLocaleString() ?? 0} entries
+                    {#if entries24h > 0}
+                      ({entries24h.toLocaleString()} in 24h)
+                    {/if}
+                    • Last seen {formatLastSeen(lastSeen)}
+                  </p>
+                </div>
+                <ChevronRight
+                  class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                />
+              </button>
             {:else}
-              <!-- Not connected - show with help link -->
+              <!-- Not connected and no data - show with help link -->
               <div
                 class="flex items-center gap-4 p-4 rounded-lg border bg-muted/30"
               >
@@ -1764,7 +1878,15 @@
               <CheckCircle class="h-3 w-3 mr-1" />
               Healthy
             </Badge>
-          {:else if selectedConnector.status === "Unreachable"}
+          {:else if selectedConnector.state === "Disabled"}
+            <Badge
+              variant="secondary"
+              class="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <WifiOff class="h-3 w-3 mr-1" />
+              Disabled
+            </Badge>
+          {:else if selectedConnector.status === "Unreachable" || selectedConnector.state === "Offline"}
             <Badge variant="outline">
               <WifiOff class="h-3 w-3 mr-1" />
               Offline
@@ -1783,15 +1905,44 @@
           </div>
         {/if}
 
-        {#if selectedConnector.status !== "Unreachable"}
+        <!-- Notice for disabled or offline connectors -->
+        {#if selectedConnector.state === "Disabled"}
+          <div
+            class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/20 p-4"
+          >
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <WifiOff class="h-5 w-5" />
+              <span class="font-medium">Connector Disabled</span>
+            </div>
+            <p class="text-sm text-muted-foreground mt-1">
+              This connector is not currently enabled, but historical data from
+              previous syncs is still stored. Enable the connector in your
+              server configuration to resume syncing, or delete the data below.
+            </p>
+          </div>
+        {:else if selectedConnector.state === "Offline"}
+          <div
+            class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/20 p-4"
+          >
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <WifiOff class="h-5 w-5" />
+              <span class="font-medium">Connector Not Running</span>
+            </div>
+            <p class="text-sm text-muted-foreground mt-1">
+              This connector is not currently running, but data from previous
+              syncs is still stored. You can delete this data below.
+            </p>
+          </div>
+        {/if}
+
+        <!-- Always show metrics if there's data (totalEntries > 0 or we have entry count info) -->
+        {#if selectedConnector.status !== "Unreachable" || selectedConnector.totalEntries}
           <Separator />
 
           <!-- Metrics -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-muted-foreground">
-                Total items processed
-              </span>
+              <span class="text-sm text-muted-foreground">Total entries</span>
               <Tooltip.Root>
                 <Tooltip.Trigger>
                   <span
@@ -1829,7 +1980,7 @@
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-muted-foreground">
-                Items processed in last 24 hours
+                Entries in last 24 hours
               </span>
               <Tooltip.Root>
                 <Tooltip.Trigger>
@@ -1870,7 +2021,7 @@
             {#if selectedConnector.lastEntryTime}
               <div class="flex items-center justify-between">
                 <span class="text-sm text-muted-foreground">
-                  Last item received
+                  Last entry received
                 </span>
                 <span class="font-medium">
                   {formatLastSeen(selectedConnector.lastEntryTime)}
@@ -1878,7 +2029,7 @@
               </div>
             {/if}
           </div>
-        {:else}
+        {:else if selectedConnector.status === "Unreachable"}
           <div
             class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/20 p-4"
           >
@@ -1893,7 +2044,8 @@
           </div>
         {/if}
 
-        {#if selectedConnector.status !== "Unreachable"}
+        <!-- Only show sync controls for healthy/online connectors -->
+        {#if selectedConnector.isHealthy && selectedConnector.state !== "Offline"}
           <Separator />
 
           <div class="space-y-3">
@@ -2018,7 +2170,10 @@
               </Button>
             </div>
           {/if}
+        {/if}
 
+        <!-- Delete warning - show for any connector with data -->
+        {#if selectedConnector.totalEntries || selectedConnector.state === "Offline" || selectedConnector.state === "Disabled" || selectedConnector.isHealthy}
           <Separator />
 
           <div
@@ -2048,7 +2203,7 @@
         <Button variant="outline" onclick={() => (showConnectorDialog = false)}>
           Close
         </Button>
-        {#if selectedConnector.status !== "Unreachable"}
+        {#if selectedConnector.totalEntries || selectedConnector.state === "Offline" || selectedConnector.state === "Disabled" || selectedConnector.isHealthy}
           <Button
             variant="outline"
             class="gap-2"

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nocturne.API.Models;
 using Nocturne.Core.Constants;
+using Nocturne.Infrastructure.Data.Abstractions;
 
 namespace Nocturne.API.Services;
 
@@ -10,51 +11,157 @@ public class ConnectorHealthService : IConnectorHealthService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    private readonly IPostgreSqlService _postgreSqlService;
     private readonly ILogger<ConnectorHealthService> _logger;
 
     public const string HttpClientName = "ConnectorHealth";
 
     private record ConnectorDefinition(
-        string Id,           // Matches AvailableConnector.Id and health check name
+        string Id, // Matches AvailableConnector.Id and health check name
         string ServiceName,
-        string ConfigKey);
+        string ConfigKey,
+        string DataSourceId
+    ); // Maps to DataSources constant (e.g., "glooko-connector")
 
     private static readonly ConnectorDefinition[] AllConnectors = new[]
     {
-        new ConnectorDefinition("nightscout", ServiceNames.NightscoutConnector, "Nightscout"),
-        new ConnectorDefinition("dexcom", ServiceNames.DexcomConnector, "Dexcom"),
-        new ConnectorDefinition("libre", ServiceNames.LibreConnector, "LibreLinkUp"),
-        new ConnectorDefinition("glooko", ServiceNames.GlookoConnector, "Glooko"),
-        new ConnectorDefinition("carelink", ServiceNames.MiniMedConnector, "CareLink"),
-        new ConnectorDefinition("myfitnesspal", ServiceNames.MyFitnessPalConnector, "MyFitnessPal"),
-        new ConnectorDefinition("mylife", ServiceNames.MyLifeConnector, "MyLife")
+        new ConnectorDefinition(
+            "nightscout",
+            ServiceNames.NightscoutConnector,
+            "Nightscout",
+            DataSources.NightscoutConnector
+        ),
+        new ConnectorDefinition(
+            "dexcom",
+            ServiceNames.DexcomConnector,
+            "Dexcom",
+            DataSources.DexcomConnector
+        ),
+        new ConnectorDefinition(
+            "libre",
+            ServiceNames.LibreConnector,
+            "LibreLinkUp",
+            DataSources.LibreConnector
+        ),
+        new ConnectorDefinition(
+            "glooko",
+            ServiceNames.GlookoConnector,
+            "Glooko",
+            DataSources.GlookoConnector
+        ),
+        new ConnectorDefinition(
+            "carelink",
+            ServiceNames.MiniMedConnector,
+            "CareLink",
+            DataSources.MiniMedConnector
+        ),
+        new ConnectorDefinition(
+            "myfitnesspal",
+            ServiceNames.MyFitnessPalConnector,
+            "MyFitnessPal",
+            DataSources.MyFitnessPalConnector
+        ),
+        new ConnectorDefinition(
+            "mylife",
+            ServiceNames.MyLifeConnector,
+            "MyLife",
+            DataSources.MyLifeConnector
+        ),
     };
 
     public ConnectorHealthService(
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ILogger<ConnectorHealthService> logger)
+        IPostgreSqlService postgreSqlService,
+        ILogger<ConnectorHealthService> logger
+    )
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _postgreSqlService = postgreSqlService;
         _logger = logger;
     }
 
-    public async Task<IEnumerable<ConnectorStatusDto>> GetConnectorStatusesAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConnectorStatusDto>> GetConnectorStatusesAsync(
+        CancellationToken cancellationToken = default
+    )
     {
-        // Filter to only enabled connectors
-        var enabledConnectors = AllConnectors.Where(c => IsConnectorEnabled(c.ConfigKey)).ToList();
+        _logger.LogDebug("Getting status for all {Count} connectors", AllConnectors.Length);
 
-        _logger.LogDebug("Checking {Count} enabled connectors out of {Total} total",
-            enabledConnectors.Count, AllConnectors.Length);
-
-        if (enabledConnectors.Count == 0)
+        var results = new List<ConnectorStatusDto>();
+        foreach (var connector in AllConnectors)
         {
-            return Enumerable.Empty<ConnectorStatusDto>();
+            var status = await GetConnectorStatusWithDbStatsAsync(connector, cancellationToken);
+            results.Add(status);
         }
 
-        var tasks = enabledConnectors.Select(c => CheckConnectorStatusAsync(c, cancellationToken));
-        return await Task.WhenAll(tasks);
+        // Filter out connectors that have no data and are not enabled (truly unused)
+        return results
+            .Where(r =>
+                r.IsHealthy
+                || // Running and healthy
+                r.Status == "Disabled" && r.TotalEntries > 0
+                || // Disabled but has historical data
+                r.Status != "Disabled" // Any other status (unhealthy, unreachable, etc.)
+            )
+            .ToList();
+    }
+
+    private async Task<ConnectorStatusDto> GetConnectorStatusWithDbStatsAsync(
+        ConnectorDefinition connector,
+        CancellationToken cancellationToken
+    )
+    {
+        var isEnabled = IsConnectorEnabled(connector.ConfigKey);
+
+        // Always get database stats for historical data (entries + treatments)
+        var dbStats = await _postgreSqlService.GetEntryStatsBySourceAsync(
+            connector.DataSourceId,
+            cancellationToken
+        );
+
+        _logger.LogInformation(
+            "Connector {Id}: Enabled={Enabled}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}",
+            connector.Id,
+            isEnabled,
+            connector.DataSourceId,
+            dbStats.TotalEntries,
+            dbStats.TotalTreatments
+        );
+
+        if (!isEnabled)
+        {
+            // Connector is disabled - return database-only stats
+            // Use TotalItems which combines entries + treatments
+            return new ConnectorStatusDto
+            {
+                Id = connector.Id,
+                Name = connector.Id,
+                Status = "Disabled",
+                TotalEntries = dbStats.TotalItems,
+                LastEntryTime = dbStats.LastItemTime,
+                EntriesLast24Hours = dbStats.ItemsLast24Hours,
+                State = "Disabled",
+                IsHealthy = false,
+            };
+        }
+
+        // Connector is enabled - get live health status and merge with DB stats
+        var liveStatus = await CheckConnectorStatusAsync(connector, cancellationToken);
+
+        // Prefer live stats if available, fall back to DB stats
+        // (live stats should be accurate, but DB stats provide backup)
+        if (liveStatus.TotalEntries == 0 && dbStats.TotalItems > 0)
+        {
+            liveStatus.TotalEntries = dbStats.TotalItems;
+            liveStatus.LastEntryTime ??= dbStats.LastItemTime;
+            liveStatus.EntriesLast24Hours = Math.Max(
+                liveStatus.EntriesLast24Hours,
+                dbStats.ItemsLast24Hours
+            );
+        }
+
+        return liveStatus;
     }
 
     private bool IsConnectorEnabled(string configKey)
@@ -64,7 +171,10 @@ public class ConnectorHealthService : IConnectorHealthService
         return enabled;
     }
 
-    private async Task<ConnectorStatusDto> CheckConnectorStatusAsync(ConnectorDefinition connector, CancellationToken cancellationToken)
+    private async Task<ConnectorStatusDto> CheckConnectorStatusAsync(
+        ConnectorDefinition connector,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -84,7 +194,7 @@ public class ConnectorHealthService : IConnectorHealthService
                     Name = connector.Id,
                     Status = "Unhealthy",
                     Description = $"HTTP {response.StatusCode}",
-                    IsHealthy = false
+                    IsHealthy = false,
                 };
             }
 
@@ -92,11 +202,15 @@ public class ConnectorHealthService : IConnectorHealthService
             using var doc = JsonDocument.Parse(json);
 
             // Navigate to results -> {checkName}
-            if (doc.RootElement.TryGetProperty("results", out var results) &&
-                results.TryGetProperty(connector.Id, out var checkResult))
+            if (
+                doc.RootElement.TryGetProperty("results", out var results)
+                && results.TryGetProperty(connector.Id, out var checkResult)
+            )
             {
                 var status = checkResult.GetProperty("status").GetString() ?? "Unknown";
-                var description = checkResult.TryGetProperty("description", out var desc) ? desc.GetString() : null;
+                var description = checkResult.TryGetProperty("description", out var desc)
+                    ? desc.GetString()
+                    : null;
 
                 long totalEntries = 0;
                 DateTime? lastEntryTime = null;
@@ -109,36 +223,54 @@ public class ConnectorHealthService : IConnectorHealthService
 
                 if (checkResult.TryGetProperty("data", out var data))
                 {
-                    if (data.TryGetProperty("TotalEntries", out var msgEl) && msgEl.ValueKind == JsonValueKind.Number)
+                    if (
+                        data.TryGetProperty("TotalEntries", out var msgEl)
+                        && msgEl.ValueKind == JsonValueKind.Number
+                    )
                     {
-                         totalEntries = msgEl.GetInt64();
+                        totalEntries = msgEl.GetInt64();
                     }
 
                     if (data.TryGetProperty("LastEntryTime", out var timeEl))
                     {
-                         if(timeEl.ValueKind == JsonValueKind.String && DateTime.TryParse(timeEl.GetString(), out var dt))
-                         {
-                             lastEntryTime = dt;
-                         }
+                        if (
+                            timeEl.ValueKind == JsonValueKind.String
+                            && DateTime.TryParse(timeEl.GetString(), out var dt)
+                        )
+                        {
+                            lastEntryTime = dt;
+                        }
                     }
 
-                    if (data.TryGetProperty("EntriesLast24Hours", out var countEl) && countEl.ValueKind == JsonValueKind.Number)
+                    if (
+                        data.TryGetProperty("EntriesLast24Hours", out var countEl)
+                        && countEl.ValueKind == JsonValueKind.Number
+                    )
                     {
                         entriesLast24h = countEl.GetInt32();
                     }
 
-                    if (data.TryGetProperty("State", out var stateEl) && stateEl.ValueKind == JsonValueKind.String)
+                    if (
+                        data.TryGetProperty("State", out var stateEl)
+                        && stateEl.ValueKind == JsonValueKind.String
+                    )
                     {
                         state = stateEl.GetString() ?? "Idle";
                     }
 
-                    if (data.TryGetProperty("StateMessage", out var stateMsgEl) && stateMsgEl.ValueKind == JsonValueKind.String)
+                    if (
+                        data.TryGetProperty("StateMessage", out var stateMsgEl)
+                        && stateMsgEl.ValueKind == JsonValueKind.String
+                    )
                     {
                         stateMessage = stateMsgEl.GetString();
                     }
 
                     // Parse per-type breakdowns
-                    if (data.TryGetProperty("TotalItemsBreakdown", out var totalBreakdownEl) && totalBreakdownEl.ValueKind == JsonValueKind.Object)
+                    if (
+                        data.TryGetProperty("TotalItemsBreakdown", out var totalBreakdownEl)
+                        && totalBreakdownEl.ValueKind == JsonValueKind.Object
+                    )
                     {
                         totalItemsBreakdown = new Dictionary<string, long>();
                         foreach (var prop in totalBreakdownEl.EnumerateObject())
@@ -150,7 +282,10 @@ public class ConnectorHealthService : IConnectorHealthService
                         }
                     }
 
-                    if (data.TryGetProperty("ItemsLast24HoursBreakdown", out var last24hBreakdownEl) && last24hBreakdownEl.ValueKind == JsonValueKind.Object)
+                    if (
+                        data.TryGetProperty("ItemsLast24HoursBreakdown", out var last24hBreakdownEl)
+                        && last24hBreakdownEl.ValueKind == JsonValueKind.Object
+                    )
                     {
                         itemsLast24HoursBreakdown = new Dictionary<string, int>();
                         foreach (var prop in last24hBreakdownEl.EnumerateObject())
@@ -176,10 +311,9 @@ public class ConnectorHealthService : IConnectorHealthService
                     StateMessage = stateMessage,
                     IsHealthy = status == "Healthy",
                     TotalItemsBreakdown = totalItemsBreakdown,
-                    ItemsLast24HoursBreakdown = itemsLast24HoursBreakdown
+                    ItemsLast24HoursBreakdown = itemsLast24HoursBreakdown,
                 };
             }
-
 
             // If we have a healthy root status but missing specific check results
             var rootStatus = doc.RootElement.GetProperty("status").GetString();
@@ -189,9 +323,8 @@ public class ConnectorHealthService : IConnectorHealthService
                 Name = connector.Id,
                 Status = rootStatus ?? "Unknown",
                 Description = "Detailed metrics unavailable",
-                IsHealthy = rootStatus == "Healthy"
+                IsHealthy = rootStatus == "Healthy",
             };
-
         }
         catch (Exception ex)
         {
@@ -202,7 +335,7 @@ public class ConnectorHealthService : IConnectorHealthService
                 Name = connector.Id,
                 Status = "Unreachable",
                 Description = ex.Message,
-                IsHealthy = false
+                IsHealthy = false,
             };
         }
     }

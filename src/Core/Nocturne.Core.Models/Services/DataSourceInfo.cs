@@ -158,6 +158,13 @@ public class AvailableConnector
     /// </summary>
     [JsonPropertyName("documentationUrl")]
     public string? DocumentationUrl { get; set; }
+
+    /// <summary>
+    /// The data source ID used in the database Device field when this connector writes entries.
+    /// Used to match connector data in activeDataSources.
+    /// </summary>
+    [JsonPropertyName("dataSourceId")]
+    public string? DataSourceId { get; set; }
 }
 
 /// <summary>

@@ -1247,6 +1247,73 @@ public class PostgreSqlService : IPostgreSqlService
     }
 
     /// <inheritdoc />
+    public async Task<DataSourceStats> GetEntryStatsBySourceAsync(
+        string dataSource,
+        CancellationToken cancellationToken = default
+    )
+    {
+        _logger.LogDebug("Getting stats for data source: {DataSource}", dataSource);
+
+        var now = DateTimeOffset.UtcNow;
+        var oneDayAgo = now.AddHours(-24).ToUnixTimeMilliseconds();
+
+        // Query entry stats
+        var entryStats = await _context
+            .Entries.Where(e => e.DataSource == dataSource)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalEntries = g.LongCount(),
+                EntriesLast24Hours = g.Count(e => e.Mills >= oneDayAgo),
+                LastEntryMills = g.Max(e => (long?)e.Mills),
+                FirstEntryMills = g.Min(e => (long?)e.Mills)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Query treatment stats
+        var treatmentStats = await _context
+            .Treatments.Where(t => t.DataSource == dataSource)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalTreatments = g.LongCount(),
+                TreatmentsLast24Hours = g.Count(t => t.Mills >= oneDayAgo),
+                LastTreatmentMills = g.Max(t => (long?)t.Mills),
+                FirstTreatmentMills = g.Min(t => (long?)t.Mills)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Convert timestamps
+        var lastEntryTime = entryStats?.LastEntryMills.HasValue == true
+            ? DateTimeOffset.FromUnixTimeMilliseconds(entryStats.LastEntryMills.Value).UtcDateTime
+            : (DateTime?)null;
+
+        var firstEntryTime = entryStats?.FirstEntryMills.HasValue == true
+            ? DateTimeOffset.FromUnixTimeMilliseconds(entryStats.FirstEntryMills.Value).UtcDateTime
+            : (DateTime?)null;
+
+        var lastTreatmentTime = treatmentStats?.LastTreatmentMills.HasValue == true
+            ? DateTimeOffset.FromUnixTimeMilliseconds(treatmentStats.LastTreatmentMills.Value).UtcDateTime
+            : (DateTime?)null;
+
+        var firstTreatmentTime = treatmentStats?.FirstTreatmentMills.HasValue == true
+            ? DateTimeOffset.FromUnixTimeMilliseconds(treatmentStats.FirstTreatmentMills.Value).UtcDateTime
+            : (DateTime?)null;
+
+        return new DataSourceStats(
+            dataSource,
+            entryStats?.TotalEntries ?? 0,
+            entryStats?.EntriesLast24Hours ?? 0,
+            lastEntryTime,
+            firstEntryTime,
+            treatmentStats?.TotalTreatments ?? 0,
+            treatmentStats?.TreatmentsLast24Hours ?? 0,
+            lastTreatmentTime,
+            firstTreatmentTime
+        );
+    }
+
+    /// <inheritdoc />
     public async Task<DateTime?> GetLatestTreatmentTimestampBySourceAsync(
         string dataSource,
         CancellationToken cancellationToken = default

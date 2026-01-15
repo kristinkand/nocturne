@@ -17657,6 +17657,7 @@ export interface AvailableConnector {
     isConfigured?: boolean;
     configFields?: ConnectorConfigField[] | undefined;
     documentationUrl?: string | undefined;
+    dataSourceId?: string | undefined;
 }
 
 export interface ConnectorConfigField {
