@@ -106,6 +106,79 @@ public class StateSpansController : ControllerBase
     }
 
     /// <summary>
+    /// Get sleep state spans (user-annotated sleep periods)
+    /// </summary>
+    [HttpGet("sleep")]
+    public async Task<ActionResult<IEnumerable<StateSpan>>> GetSleep(
+        [FromQuery] long? from = null,
+        [FromQuery] long? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var spans = await _stateSpanService.GetStateSpansAsync(StateSpanCategory.Sleep, from: from, to: to, cancellationToken: cancellationToken);
+        return Ok(spans);
+    }
+
+    /// <summary>
+    /// Get exercise state spans (user-annotated activity periods)
+    /// </summary>
+    [HttpGet("exercise")]
+    public async Task<ActionResult<IEnumerable<StateSpan>>> GetExercise(
+        [FromQuery] long? from = null,
+        [FromQuery] long? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var spans = await _stateSpanService.GetStateSpansAsync(StateSpanCategory.Exercise, from: from, to: to, cancellationToken: cancellationToken);
+        return Ok(spans);
+    }
+
+    /// <summary>
+    /// Get illness state spans (user-annotated illness periods)
+    /// </summary>
+    [HttpGet("illness")]
+    public async Task<ActionResult<IEnumerable<StateSpan>>> GetIllness(
+        [FromQuery] long? from = null,
+        [FromQuery] long? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var spans = await _stateSpanService.GetStateSpansAsync(StateSpanCategory.Illness, from: from, to: to, cancellationToken: cancellationToken);
+        return Ok(spans);
+    }
+
+    /// <summary>
+    /// Get travel state spans (user-annotated travel/timezone change periods)
+    /// </summary>
+    [HttpGet("travel")]
+    public async Task<ActionResult<IEnumerable<StateSpan>>> GetTravel(
+        [FromQuery] long? from = null,
+        [FromQuery] long? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var spans = await _stateSpanService.GetStateSpansAsync(StateSpanCategory.Travel, from: from, to: to, cancellationToken: cancellationToken);
+        return Ok(spans);
+    }
+
+    /// <summary>
+    /// Get all activity state spans (sleep, exercise, illness, travel)
+    /// </summary>
+    [HttpGet("activities")]
+    public async Task<ActionResult<IEnumerable<StateSpan>>> GetActivities(
+        [FromQuery] long? from = null,
+        [FromQuery] long? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var activityCategories = new[] { StateSpanCategory.Sleep, StateSpanCategory.Exercise, StateSpanCategory.Illness, StateSpanCategory.Travel };
+        var allSpans = new List<StateSpan>();
+
+        foreach (var category in activityCategories)
+        {
+            var spans = await _stateSpanService.GetStateSpansAsync(category, from: from, to: to, cancellationToken: cancellationToken);
+            allSpans.AddRange(spans);
+        }
+
+        return Ok(allSpans.OrderBy(s => s.StartMills));
+    }
+
+    /// <summary>
     /// Get a specific state span by ID
     /// </summary>
     [HttpGet("{id}")]

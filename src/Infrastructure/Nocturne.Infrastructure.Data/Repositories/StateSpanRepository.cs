@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Entities;
 using Nocturne.Infrastructure.Data.Mappers;
@@ -11,13 +13,23 @@ namespace Nocturne.Infrastructure.Data.Repositories;
 public class StateSpanRepository
 {
     private readonly NocturneDbContext _context;
+    private readonly IDeduplicationService _deduplicationService;
+    private readonly ILogger<StateSpanRepository> _logger;
 
     /// <summary>
     /// Initializes a new instance of the StateSpanRepository class
     /// </summary>
-    public StateSpanRepository(NocturneDbContext context)
+    /// <param name="context">The database context</param>
+    /// <param name="deduplicationService">Service for deduplicating records</param>
+    /// <param name="logger">Logger instance</param>
+    public StateSpanRepository(
+        NocturneDbContext context,
+        IDeduplicationService deduplicationService,
+        ILogger<StateSpanRepository> logger)
     {
         _context = context;
+        _deduplicationService = deduplicationService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -90,13 +102,14 @@ public class StateSpanRepository
     }
 
     /// <summary>
-    /// Create or update a state span (upsert by originalId)
+    /// Create or update a state span (upsert by originalId) and link to canonical groups
     /// </summary>
     public async Task<StateSpan> UpsertStateSpanAsync(
         StateSpan stateSpan,
         CancellationToken cancellationToken = default)
     {
         StateSpanEntity? entity = null;
+        var isNew = false;
 
         // Check for existing by originalId
         if (!string.IsNullOrEmpty(stateSpan.OriginalId))
@@ -114,9 +127,43 @@ public class StateSpanRepository
         {
             entity = StateSpanMapper.ToEntity(stateSpan);
             _context.StateSpans.Add(entity);
+            isNew = true;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Link new state spans to canonical groups for deduplication
+        if (isNew)
+        {
+            try
+            {
+                var criteria = new MatchCriteria
+                {
+                    Category = Enum.TryParse<StateSpanCategory>(entity.Category, true, out var cat) ? cat : null,
+                    State = entity.State
+                };
+
+                var canonicalId = await _deduplicationService.GetOrCreateCanonicalIdAsync(
+                    RecordType.StateSpan,
+                    entity.StartMills,
+                    criteria,
+                    cancellationToken);
+
+                await _deduplicationService.LinkRecordAsync(
+                    canonicalId,
+                    RecordType.StateSpan,
+                    entity.Id,
+                    entity.StartMills,
+                    entity.Source ?? "unknown",
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Don't fail the insert if deduplication fails
+                _logger.LogWarning(ex, "Failed to deduplicate state span {StateSpanId}", entity.Id);
+            }
+        }
+
         return StateSpanMapper.ToDomainModel(entity);
     }
 

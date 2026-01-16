@@ -29,6 +29,7 @@ using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Cache.Extensions;
 using Nocturne.Infrastructure.Data.Abstractions;
 using Nocturne.Infrastructure.Data.Extensions;
+using Nocturne.Infrastructure.Data.Services;
 using NSwag;
 using OpenTelemetry.Logs;
 using Polly;
@@ -238,6 +239,9 @@ builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 // Data source service for services/connectors management
 builder.Services.AddScoped<IDataSourceService, DataSourceService>();
+
+// Deduplication service for linking records from multiple data sources
+builder.Services.AddScoped<IDeduplicationService, DeduplicationService>();
 
 // Connector sync service for triggering granular syncs
 builder.Services.AddScoped<IConnectorSyncService, ConnectorSyncService>();

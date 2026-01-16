@@ -254,6 +254,7 @@ msgstr ""
 #: src/routes/food/food-state.svelte.ts
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "Error"
 msgstr ""
 
@@ -1859,6 +1860,9 @@ msgstr ""
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/migration/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Completed"
 msgstr ""
@@ -1882,6 +1886,9 @@ msgstr ""
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/migration/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Failed"
 msgstr ""
@@ -1939,6 +1946,9 @@ msgstr ""
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/migration/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Cancelled"
 msgstr ""
@@ -9434,6 +9444,7 @@ msgstr ""
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "Close"
 msgstr ""
 
@@ -10531,6 +10542,7 @@ msgid "Monitor the progress of your current migration."
 msgstr ""
 
 #: src/routes/settings/migration/+page.svelte
+#: src/routes/settings/services/+page.svelte
 msgid "Progress"
 msgstr ""
 
@@ -11911,4 +11923,119 @@ msgstr ""
 msgid ""
 "This report is for informational purposes. Always consult your\n"
 "healthcare provider for medical advice."
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Failed to start deduplication job"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Failed to start deduplication"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Job failed"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Data Maintenance"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Administrative tools for managing your data"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Deduplicate Records"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid ""
+"Link records from multiple data sources that represent the same underlying event.\n"
+"This improves data quality when the same glucose readings or treatments are uploaded from different apps."
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Run Deduplication"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Deduplicate Records"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Link records from multiple data sources that represent the same underlying event"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Deduplication Complete"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Records processed:"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Groups created:"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Duplicates found:"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Job Cancelled"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Running deduplication..."
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Initializing"
+msgstr ""
+
+#. placeholder {0}: deduplicationStatus.progress.processedRecords?.toLocaleString() ?? 0
+#. placeholder {1}: deduplicationStatus.progress.totalRecords?.toLocaleString() ?? 0
+#: src/routes/settings/services/+page.svelte
+msgid "Processed: {0} / {1}"
+msgstr ""
+
+#. placeholder {0}: deduplicationStatus.progress.groupsFound?.toLocaleString() ?? 0
+#: src/routes/settings/services/+page.svelte
+msgid "Groups: {0}"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid ""
+"This process will scan all your glucose entries, treatments, and state spans\n"
+"to identify and link records that represent the same event from different data sources."
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Records within 30 seconds are considered potential matches"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Matching criteria include timestamps and values"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Original data is preserved; only links are created"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Safe to run multiple times"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Done"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "Cancel Job"
+msgstr ""
+
+#: src/routes/settings/services/+page.svelte
+msgid "<0/> Start Deduplication"
 msgstr ""
