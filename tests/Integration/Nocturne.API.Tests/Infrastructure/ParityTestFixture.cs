@@ -1,0 +1,212 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Nocturne.Infrastructure.Data;
+using Nocturne.Infrastructure.Data.Extensions;
+using Testcontainers.PostgreSql;
+using Xunit;
+
+namespace Nocturne.API.Tests.Integration.Infrastructure;
+
+/// <summary>
+/// Shared fixture for parity tests that manages both:
+/// - Nightscout 15.0.3 (via NightscoutContainer with MongoDB)
+/// - Nocturne (via WebApplicationFactory with PostgreSQL)
+///
+/// Follows the same shared container pattern as TestDatabaseFixture.
+/// </summary>
+public class ParityTestFixture : IAsyncLifetime
+{
+    private static readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
+    private static SharedParityState? _sharedState;
+    private static int _instanceCount;
+
+    public HttpClient NightscoutClient => _sharedState?.NightscoutClient
+        ?? throw new InvalidOperationException("Fixture not initialized");
+
+    public HttpClient NocturneClient => _sharedState?.NocturneClient
+        ?? throw new InvalidOperationException("Fixture not initialized");
+
+    public NocturneDbContext DbContext => _sharedState?.DbContext
+        ?? throw new InvalidOperationException("Fixture not initialized");
+
+    public async Task InitializeAsync()
+    {
+        await _initializationSemaphore.WaitAsync();
+        try
+        {
+            if (_sharedState == null)
+            {
+                using var measurement = TestPerformanceTracker.MeasureTest("ParityTestFixture.Initialize");
+                _sharedState = new SharedParityState();
+                await _sharedState.InitializeAsync();
+            }
+
+            Interlocked.Increment(ref _instanceCount);
+        }
+        finally
+        {
+            _initializationSemaphore.Release();
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _initializationSemaphore.WaitAsync();
+        try
+        {
+            var remainingInstances = Interlocked.Decrement(ref _instanceCount);
+
+            if (remainingInstances == 0 && _sharedState != null)
+            {
+                await _sharedState.DisposeAsync();
+                _sharedState = null;
+            }
+        }
+        finally
+        {
+            _initializationSemaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Cleans up test data from both Nightscout and Nocturne
+    /// </summary>
+    public async Task CleanupDataAsync(CancellationToken cancellationToken = default)
+    {
+        if (_sharedState == null) return;
+
+        // Clean Nightscout
+        await _sharedState.NightscoutContainer.CleanupDataAsync(cancellationToken);
+
+        // Clean Nocturne (PostgreSQL)
+        var db = _sharedState.DbContext;
+        db.Entries.RemoveRange(db.Entries);
+        db.Treatments.RemoveRange(db.Treatments);
+        db.DeviceStatuses.RemoveRange(db.DeviceStatuses);
+        db.Foods.RemoveRange(db.Foods);
+        db.Profiles.RemoveRange(db.Profiles);
+        db.Settings.RemoveRange(db.Settings);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Shared state across all parity tests in the collection
+    /// </summary>
+    private class SharedParityState : IAsyncDisposable
+    {
+        private PostgreSqlContainer? _postgresContainer;
+        private WebApplicationFactory<Program>? _nocturneFactory;
+
+        public NightscoutContainer NightscoutContainer { get; } = new();
+        public HttpClient NightscoutClient { get; private set; } = null!;
+        public HttpClient NocturneClient { get; private set; } = null!;
+        public NocturneDbContext DbContext { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            // Start Nightscout (includes MongoDB)
+            await NightscoutContainer.StartAsync();
+            NightscoutClient = NightscoutContainer.Client;
+
+            // Start PostgreSQL for Nocturne
+            _postgresContainer = new PostgreSqlBuilder()
+                .WithImage("postgres:16")
+                .WithDatabase("nocturne_parity")
+                .WithUsername("test")
+                .WithPassword("test")
+                .Build();
+
+            await _postgresContainer.StartAsync();
+            var connectionString = _postgresContainer.GetConnectionString();
+
+            // Create Nocturne WebApplicationFactory
+            _nocturneFactory = new WebApplicationFactory<Program>()
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureAppConfiguration((_, config) =>
+                    {
+                        config.Sources.Clear();
+                        config.AddInMemoryCollection(new Dictionary<string, string?>
+                        {
+                            ["ConnectionStrings:DefaultConnection"] = connectionString,
+                            ["PostgreSql:ConnectionString"] = connectionString,
+                            ["PostgreSql:DatabaseName"] = "nocturne_parity",
+                            ["API_SECRET"] = "test-api-secret-12chars",
+                            ["NIGHTSCOUT_API_SECRET"] = "test-api-secret-12chars",
+                            ["DISPLAY_UNITS"] = "mg/dl",
+                            ["Features:EnableExternalConnectors"] = "false",
+                            ["Features:EnableRealTimeNotifications"] = "false",
+                            ["Environment"] = "Testing",
+                            ["Authentication:RequireApiSecret"] = "false"
+                        });
+                    });
+
+                    builder.ConfigureServices(services =>
+                    {
+                        // Remove existing DbContext registrations
+                        var descriptorsToRemove = services
+                            .Where(d =>
+                                d.ServiceType == typeof(DbContextOptions<NocturneDbContext>) ||
+                                d.ServiceType == typeof(NocturneDbContext))
+                            .ToList();
+
+                        foreach (var descriptor in descriptorsToRemove)
+                        {
+                            services.Remove(descriptor);
+                        }
+
+                        // Add PostgreSQL infrastructure
+                        services.AddPostgreSqlInfrastructure(connectionString, config =>
+                        {
+                            config.EnableDetailedErrors = true;
+                            config.EnableSensitiveDataLogging = true;
+                        });
+                    });
+
+                    builder.UseEnvironment("Testing");
+                });
+
+            NocturneClient = _nocturneFactory.CreateClient();
+
+            // Create DbContext for direct database operations
+            var options = new DbContextOptionsBuilder<NocturneDbContext>()
+                .UseNpgsql(connectionString)
+                .Options;
+
+            DbContext = new NocturneDbContext(options);
+            await DbContext.Database.EnsureCreatedAsync();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            NocturneClient.Dispose();
+
+            if (DbContext != null)
+            {
+                await DbContext.Database.EnsureDeletedAsync();
+                await DbContext.DisposeAsync();
+            }
+
+            _nocturneFactory?.Dispose();
+
+            await NightscoutContainer.DisposeAsync();
+
+            if (_postgresContainer != null)
+            {
+                await _postgresContainer.StopAsync();
+                await _postgresContainer.DisposeAsync();
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Collection definition for parity tests to share the fixture
+/// </summary>
+[CollectionDefinition("Parity")]
+public class ParityTestCollection : ICollectionFixture<ParityTestFixture>
+{
+}
