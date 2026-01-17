@@ -348,7 +348,6 @@ msgstr "Sélectionner"
 #: src/routes/compatibility/+page.svelte
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
-#, fuzzy
 msgid "Time"
 msgstr "Heure"
 
@@ -457,7 +456,7 @@ msgstr "Supprimer le traitement"
 
 #: src/lib/stores/auth-store.svelte.ts
 msgid "IsAuthenticated="
-msgstr ""
+msgstr "Est authentifié="
 
 #: src/lib/components/profile/ProfileIconPicker.svelte
 #: src/lib/stores/auth-store.svelte.ts
@@ -653,8 +652,9 @@ msgid ""
 "Build your own custom clock face with a visual editor. Add\n"
 "elements, adjust sizes, and see a live preview as you design."
 msgstr ""
-"Créez votre propre cadran personnalisé avec un éditeur visuel. "
-"Ajoutez des éléments, ajustez les tailles et visualisez un aperçu en direct pendant la conception."
+"Créez votre propre cadran personnalisé avec un éditeur visuel. Ajoutez des "
+"éléments, ajustez les tailles et visualisez un aperçu en direct pendant la "
+"conception."
 
 #: src/routes/clock/+page.svelte
 msgid "<0/> Open Builder"
@@ -878,47 +878,47 @@ msgstr "Démarré à {0}"
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 msgid "Started on this day"
-msgstr ""
+msgstr "Démarré ce jour"
 
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 #. placeholder {0}: event.instance.startNotes
 #. placeholder {0}: event.instance .completionNotes
 msgid "Note: {0}"
-msgstr ""
+msgstr "Note : {0}"
 
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 msgid "Completed on this day"
-msgstr ""
+msgstr "Terminé ce jour"
 
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/calendar/+page.svelte
 msgid "Due on this day"
-msgstr ""
+msgstr "Prévu ce jour"
 
 #: src/routes/calendar/+page.svelte
 #. placeholder {0}: formatTrackerAge( event.instance.ageHours )
 msgid "Age: {0}"
-msgstr ""
+msgstr "Âge : {0}"
 
 #: src/routes/calendar/+page.svelte
 msgid "In Range:"
-msgstr ""
+msgstr "Dans la plage :"
 
 #: src/routes/calendar/+page.svelte
 msgid "Low:"
-msgstr ""
+msgstr "Bas :"
 
 #: src/routes/calendar/+page.svelte
 msgid "High:"
-msgstr ""
+msgstr "Haut :"
 
 #: src/routes/calendar/+page.svelte
 msgid "Carbs:"
-msgstr ""
+msgstr "Glucides :"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/widgets/MealsWidget.svelte
@@ -963,11 +963,11 @@ msgstr ""
 #. placeholder {0}: treatment.carbs
 #. placeholder {0}: formatCarbDisplay(treatment.carbs)
 msgid "{0}g"
-msgstr ""
+msgstr "{0}g"
 
 #: src/routes/calendar/+page.svelte
 msgid "Insulin:"
-msgstr ""
+msgstr "Insuline :"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/reports/BasalBolusRatioChart.svelte
@@ -1012,24 +1012,24 @@ msgstr ""
 #. placeholder {0}: treatment.insulin.toFixed(2)
 #. placeholder {0}: formatInsulinDisplay(treatment.insulin)
 msgid "{0}U"
-msgstr ""
+msgstr "{0} U"
 
 #: src/routes/calendar/+page.svelte
 msgid "Avg Glucose:"
-msgstr ""
+msgstr "Glycémie moyenne :"
 
 #: src/routes/calendar/+page.svelte
 msgid "Click to view full day report"
-msgstr ""
+msgstr "Cliquez pour voir le rapport complet de la journée"
 
 #: src/routes/calendar/+page.svelte
 msgid "Partial Data"
-msgstr ""
+msgstr "Données partielles"
 
 #: src/routes/calendar/+page.svelte
 #. placeholder {0}: day.totalReadings
 msgid "{0} of ~288 readings"
-msgstr ""
+msgstr "{0} lectures sur ~288"
 
 #: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #: src/lib/components/reports/DailyStatistics.svelte
@@ -1039,38 +1039,38 @@ msgstr ""
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Time in Range"
-msgstr ""
+msgstr "Temps dans la plage"
 
 #: src/routes/calendar/+page.svelte
 msgid "Total Readings"
-msgstr ""
+msgstr "Lectures totales"
 
 #: src/routes/calendar/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Total Carbs"
-msgstr ""
+msgstr "Glucides totaux"
 
 #: src/lib/components/reports/InsulinDeliveryChart.svelte
 #: src/routes/calendar/+page.svelte
 msgid "Total Insulin"
-msgstr ""
+msgstr "Insuline totale"
 
 #: src/routes/calendar/+page.svelte
 msgid "Loading tracker data..."
-msgstr ""
+msgstr "Chargement des données du tracker..."
 
 #: src/routes/calendar/+page.svelte
 msgid "Could not load tracker data"
-msgstr ""
+msgstr "Impossible de charger les données du tracker"
 
 #: src/routes/calendar/+page.svelte
 msgid "Calendar view is still available"
-msgstr ""
+msgstr "La vue calendrier est toujours disponible"
 
 #: src/routes/calendar/+page.svelte
 msgid "Failed to load calendar data"
-msgstr ""
+msgstr "Échec du chargement des données du calendrier"
 
 #: src/routes/auth/forgot-password/+page.svelte
 #: src/routes/auth/register/+page.svelte
@@ -1078,7 +1078,7 @@ msgstr ""
 #: src/routes/compatibility/test/+page.svelte
 #: src/routes/profile/+page.svelte
 msgid "An error occurred"
-msgstr ""
+msgstr "Une erreur s'est produite"
 
 #: src/routes/auth/change-password/+page.svelte
 #: src/routes/auth/forgot-password/+page.svelte
@@ -1088,7 +1088,7 @@ msgstr ""
 #: src/routes/dashboard/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Try Again"
-msgstr ""
+msgstr "Réessayer"
 
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/+page.svelte
@@ -1096,7 +1096,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Perfect Match"
-msgstr ""
+msgstr "Correspondance parfaite"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
@@ -1106,7 +1106,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Minor Differences"
-msgstr ""
+msgstr "Légères différences"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
@@ -1116,7 +1116,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Major Differences"
-msgstr ""
+msgstr "Différences majeures"
 
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/+page.svelte
@@ -1125,7 +1125,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Critical Differences"
-msgstr ""
+msgstr "Différences critiques"
 
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/+page.svelte
@@ -1133,7 +1133,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Nightscout Missing"
-msgstr ""
+msgstr "Nightscout manquant"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
@@ -1142,7 +1142,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Nocturne Missing"
-msgstr ""
+msgstr "Nocturne manquant"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
@@ -1151,7 +1151,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Both Missing"
-msgstr ""
+msgstr "Les deux manquent"
 
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/+page.svelte
@@ -1159,7 +1159,7 @@ msgstr ""
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 msgid "Comparison Error"
-msgstr ""
+msgstr "Erreur de comparaison"
 
 #: src/lib/components/dashboard/BGStatisticsCards.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
@@ -1187,63 +1187,63 @@ msgstr ""
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Unknown"
-msgstr ""
+msgstr "Inconnu"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Compatibility Dashboard - Nocturne"
-msgstr ""
+msgstr "Tableau de compatibilité - Nocturne"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Monitor Nightscout/Nocturne compatibility in real-time"
-msgstr ""
+msgstr "Surveillez la compatibilité Nightscout/Nocturne en temps réel"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Compatibility Dashboard"
-msgstr ""
+msgstr "Tableau de compatibilité"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Monitor Nightscout/Nocturne API compatibility in real-time"
-msgstr ""
+msgstr "Surveillez la compatibilité API Nightscout/Nocturne en temps réel"
 
 #: src/routes/dashboard/+page.svelte
 #: src/routes/reports/battery/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Refresh"
-msgstr ""
+msgstr "<0/> Actualiser"
 
 #: src/routes/dashboard/+page.svelte
 #: src/routes/settings/+layout.svelte
 msgid "<0/> Settings"
-msgstr ""
+msgstr "<0/> Paramètres"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/dashboard/+page.svelte
 msgid "Compatibility Score"
-msgstr ""
+msgstr "Score de compatibilité"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/dashboard/+page.svelte
 msgid "Total Requests"
-msgstr ""
+msgstr "Requêtes totales"
 
 #: src/routes/dashboard/+page.svelte
 msgid "In selected period"
-msgstr ""
+msgstr "Dans la période sélectionnée"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/dashboard/+page.svelte
 msgid "Critical Issues"
-msgstr ""
+msgstr "Problèmes critiques"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Require immediate attention"
-msgstr ""
+msgstr "Nécessitent une attention immédiate"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/dashboard/+page.svelte
 msgid "Avg Response Time"
-msgstr ""
+msgstr "Temps de réponse moyen"
 
 #: src/routes/dashboard/+page.svelte
 #: src/routes/dashboard/analyses/[id]/+page.svelte
@@ -1254,93 +1254,93 @@ msgstr ""
 #. placeholder {0}: analysis.nightscoutResponseTimeMs || "N/A"
 #. placeholder {0}: analysis.nocturneResponseTimeMs || "N/A"
 msgid "{0}ms"
-msgstr ""
+msgstr "{0}ms"
 
 #: src/routes/dashboard/+page.svelte
 #. placeholder {0}: Math.round(metrics.averageNightscoutResponseTime ?? 0)
 msgid ""
 "vs {0}ms\n"
 "Nightscout"
-msgstr ""
+msgstr "vs {0}ms\nNightscout"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Response Match Breakdown"
-msgstr ""
+msgstr "Répartition des correspondances"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Distribution of response comparison results"
-msgstr ""
+msgstr "Répartition des résultats de comparaison"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Perfect Matches"
-msgstr ""
+msgstr "Correspondances parfaites"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Top Problematic Endpoints"
-msgstr ""
+msgstr "Principaux points de terminaison problématiques"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Endpoints with the most compatibility issues"
-msgstr ""
+msgstr "Points de terminaison avec le plus de problèmes de compatibilité"
 
 #: src/routes/dashboard/+page.svelte
 #. placeholder {0}: endpoint.totalRequests
 #. placeholder {1}: ( endpoint.compatibilityScore ?? 0 ).toFixed(1)
 msgid "{0} requests • {1}% compatible"
-msgstr ""
+msgstr "{0} requêtes • {1}% compatibles"
 
 #: src/routes/dashboard/+page.svelte
 msgid "No endpoints with issues found"
-msgstr ""
+msgstr "Aucun point de terminaison avec des problèmes détectés"
 
 #: src/routes/dashboard/+page.svelte
 msgid "<0/> View All Endpoints"
-msgstr ""
+msgstr "<0/> Voir tous les points de terminaison"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Recent Discrepancy Analyses"
-msgstr ""
+msgstr "Analyses de discordances récentes"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Latest compatibility analysis results"
-msgstr ""
+msgstr "Derniers résultats d'analyse de compatibilité"
 
 #: src/routes/dashboard/+page.svelte
 #. placeholder {0}: analysis.analysisTimestamp ? new Date(analysis.analysisTimestamp).toLocaleString() : "N/A"
 #. placeholder {1}: analysis.totalProcessingTimeMs
 #. placeholder {2}: (analysis.criticalDiscrepancyCount ?? 0) + (analysis.majorDiscrepancyCount ?? 0) + (analysis.minorDiscrepancyCount ?? 0)
 msgid "{0} • {1}ms • {2} discrepancies"
-msgstr ""
+msgstr "{0} • {1}ms • {2} discordances"
 
 #: src/routes/dashboard/+page.svelte
 msgid "No recent analyses found"
-msgstr ""
+msgstr "Aucune analyse récente trouvée"
 
 #: src/routes/dashboard/+page.svelte
 msgid "View All Analyses"
-msgstr ""
+msgstr "Voir toutes les analyses"
 
 #: src/routes/dashboard/+page.svelte
 msgid "Failed to load dashboard data"
-msgstr ""
+msgstr "Échec du chargement des données du tableau de bord"
 
 #: src/routes/dashboard/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Unknown error"
-msgstr ""
+msgstr "Erreur inconnue"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/+page.svelte
 msgid "Perfect"
-msgstr ""
+msgstr "Parfait"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Minor Diff"
-msgstr ""
+msgstr "Différence mineure"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Major Diff"
-msgstr ""
+msgstr "Différence majeure"
 
 #: src/lib/components/reports/GlucoseScoreCard.svelte
 #: src/lib/components/settings/AlarmProfileDialog.svelte
@@ -1353,126 +1353,126 @@ msgstr ""
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/alarms/+page.svelte
 msgid "Critical"
-msgstr ""
+msgstr "Critique"
 
 #: src/routes/compatibility/+page.svelte
 msgid "NS Missing"
-msgstr ""
+msgstr "Nightscout manquant"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Compatibility Testing"
-msgstr ""
+msgstr "Tests de compatibilité"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatTime(lastUpdate.toISOString())
 msgid "Last update: {0}"
-msgstr ""
+msgstr "Dernière mise à jour : {0}"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Polling Active"
-msgstr ""
+msgstr "Sondage actif"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Polling Paused"
-msgstr ""
+msgstr "Sondage en pause"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Configuration"
-msgstr ""
+msgstr "Configuration"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Nightscout URL"
-msgstr ""
+msgstr "URL Nightscout"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Not configured"
-msgstr ""
+msgstr "Non configuré"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Nocturne URL"
-msgstr ""
+msgstr "URL Nocturne"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Auto-detecting..."
-msgstr ""
+msgstr "Détection automatique..."
 
 #: src/routes/compatibility/+page.svelte
 msgid "Strategy"
-msgstr ""
+msgstr "Stratégie"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/reports/+layout.svelte
 msgid "Filters"
-msgstr ""
+msgstr "Filtres"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/dashboard/analyses/+page.svelte
 msgid "Request Path"
-msgstr ""
+msgstr "Chemin de requête"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/+page.svelte
 msgid "Method"
-msgstr ""
+msgstr "Méthode"
 
 #: src/lib/components/treatments/TreatmentCategoryTabs.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/meals/+page.svelte
 msgid "All"
-msgstr ""
+msgstr "Tout"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 msgid "POST"
-msgstr ""
+msgstr "POST"
 
 #: src/routes/compatibility/+page.svelte
 msgid "PUT"
-msgstr ""
+msgstr "PUT"
 
 #: src/routes/compatibility/+page.svelte
 msgid "DELETE"
-msgstr ""
+msgstr "DELETE"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/dashboard/analyses/+page.svelte
 msgid "Match Type"
-msgstr ""
+msgstr "Type de correspondance"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Apply"
-msgstr ""
+msgstr "Appliquer"
 
 #: src/lib/components/treatments/TreatmentsDataTable.svelte
 #: src/lib/components/treatments/TreatmentsDataTable.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Clear"
-msgstr ""
+msgstr "Effacer"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Show compatible requests (Perfect & Minor Differences)"
-msgstr ""
+msgstr "Afficher les requêtes compatibles (Parfaites & Différences mineures)"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: filteredAnalyses.length
 #. placeholder {1}: showCompatible ? "" : " incompatible"
 msgid "Recent Requests ({0}{1})"
-msgstr ""
+msgstr "Requêtes récentes ({0}{1})"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Path"
-msgstr ""
+msgstr "Chemin"
 
 #: src/lib/components/status-pills/COBPill.svelte
 #: src/routes/compatibility/+page.svelte
@@ -1480,42 +1480,42 @@ msgstr ""
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Status"
-msgstr ""
+msgstr "Statut"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
 msgid "Match"
-msgstr ""
+msgstr "Correspondance"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Issues"
-msgstr ""
+msgstr "Problèmes"
 
 #: src/routes/compatibility/+page.svelte
 msgid "Response Time"
-msgstr ""
+msgstr "Temps de réponse"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/reports/battery/+page.svelte
 #. placeholder {0}: analysis.criticalDiscrepancyCount
 #. placeholder {0}: stat?.urgentEventCount ?? 0
 msgid "{0} critical"
-msgstr ""
+msgstr "{0} critique"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: analysis.majorDiscrepancyCount
 msgid "{0} major"
-msgstr ""
+msgstr "{0} majeur"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: analysis.minorDiscrepancyCount
 msgid "{0} minor"
-msgstr ""
+msgstr "{0} mineur"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/settings/admin/+page.svelte
 msgid "None"
-msgstr ""
+msgstr "Aucun"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/[id]/+page.svelte
@@ -1523,12 +1523,12 @@ msgstr ""
 #: src/routes/compatibility/[id]/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 msgid "Nightscout"
-msgstr ""
+msgstr "Nightscout"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatDuration(analysis.nightscoutResponseTimeMs || 0)
 msgid "NS: {0}"
-msgstr ""
+msgstr "NS : {0}"
 
 #: src/lib/components/dashboard/CurrentBGDisplay.svelte
 #: src/lib/components/layout/AppSidebar.svelte
@@ -1539,79 +1539,79 @@ msgstr ""
 #: src/routes/compatibility/test/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
 msgid "Nocturne"
-msgstr ""
+msgstr "Nocturne"
 
 #: src/routes/compatibility/+page.svelte
 #. placeholder {0}: formatDuration(analysis.nocturneResponseTimeMs || 0)
 msgid "NC: {0}"
-msgstr ""
+msgstr "NC : {0}"
 
 #: src/routes/compatibility/+page.svelte
 msgid ""
 "No analyses found. Make sure the compatibility proxy service is\n"
 "running and receiving traffic."
-msgstr ""
+msgstr "Aucune analyse trouvée. Assurez-vous que le service proxy de compatibilité fonctionne et reçoit du trafic."
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Database loaded"
-msgstr ""
+msgstr "Base de données chargée"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/food-state.svelte.ts
 msgid "Food created successfully"
-msgstr ""
+msgstr "Aliment créé avec succès"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/food-state.svelte.ts
 msgid "Food updated successfully"
-msgstr ""
+msgstr "Aliment mis à jour avec succès"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/food-state.svelte.ts
 msgid "Failed to save food"
-msgstr ""
+msgstr "Impossible d'enregistrer l'aliment"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Food deleted successfully"
-msgstr ""
+msgstr "Aliment supprimé avec succès"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Failed to delete food"
-msgstr ""
+msgstr "Impossible de supprimer l'aliment"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Quick pick created"
-msgstr ""
+msgstr "Sélection rapide créée"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Failed to create quick pick"
-msgstr ""
+msgstr "Impossible de créer une sélection rapide"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Quick picks saved successfully"
-msgstr ""
+msgstr "Sélections rapides enregistrées avec succès"
 
 #: src/routes/food/food-state.svelte.ts
 msgid "Failed to save quick picks"
-msgstr ""
+msgstr "Impossible d'enregistrer les sélections rapides"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Edit Food"
-msgstr ""
+msgstr "Modifier l'aliment"
 
 #: src/routes/food/FoodEditor.svelte
 msgid "New Food"
-msgstr ""
+msgstr "Nouvel aliment"
 
 #: src/routes/dashboard/analyses/+page.svelte
 #: src/routes/food/FoodEditor.svelte
 #. placeholder {0}: analysis.correlationId
 #. placeholder {0}: foodStore.currentFood._id
 msgid "ID: {0}"
-msgstr ""
+msgstr "ID : {0}"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
@@ -1623,16 +1623,16 @@ msgstr ""
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: src/routes/food/FoodEditor.svelte
 msgid "Enter food name"
-msgstr ""
+msgstr "Entrez le nom de l'aliment"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Key Nutritional Info"
-msgstr ""
+msgstr "Informations nutritionnelles clés"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
@@ -1640,78 +1640,78 @@ msgstr ""
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Carbs (g)"
-msgstr ""
+msgstr "Glucides (g)"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Glycemic Index"
-msgstr ""
+msgstr "Index glycémique"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 #: src/routes/food/FoodList.svelte
 msgid "Portion"
-msgstr ""
+msgstr "Portion"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Unit"
-msgstr ""
+msgstr "Unité"
 
 #: src/routes/food/FoodEditor.svelte
 #: src/routes/food/FoodList.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Category"
-msgstr ""
+msgstr "Catégorie"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Additional Macros"
-msgstr ""
+msgstr "Macros supplémentaires"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Fat (g)"
-msgstr ""
+msgstr "Lipides (g)"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Protein (g)"
-msgstr ""
+msgstr "Protéines (g)"
 
 #: src/lib/components/food/AddFoodDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodEditor.svelte
 msgid "Energy (kJ)"
-msgstr ""
+msgstr "Énergie (kJ)"
 
 #: src/routes/food/FoodEditor.svelte
 msgid "Create Food"
-msgstr ""
+msgstr "Créer un aliment"
 
 #: src/routes/food/+page.svelte
 msgid "Food Editor - Nightscout"
-msgstr ""
+msgstr "Éditeur d'aliments - Nightscout"
 
 #: src/routes/food/+page.svelte
 msgid "Food Editor"
-msgstr ""
+msgstr "Éditeur d'aliments"
 
 #: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
 #: src/routes/food/+page.svelte
 msgid "<0/> Add Food"
-msgstr ""
+msgstr "<0/> Ajouter un aliment"
 
 #: src/routes/food/+page.svelte
 msgid "Loading food database..."
-msgstr ""
+msgstr "Chargement de la base de données d'aliments..."
 
 #: src/routes/food/FoodList.svelte
 msgid "Your database"
-msgstr ""
+msgstr "Votre base de données"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
@@ -1722,38 +1722,38 @@ msgstr ""
 #: src/routes/settings/appearance/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
 msgid "Carbs"
-msgstr ""
+msgstr "Glucides"
 
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/FoodList.svelte
 #: src/routes/food/QuickPickItem.svelte
 msgid "GI"
-msgstr ""
+msgstr "IG"
 
 #: src/lib/components/treatments/TreatmentFoodEntryEditDialog.svelte
 #: src/routes/food/FoodList.svelte
 msgid "Edit food"
-msgstr ""
+msgstr "Modifier l'aliment"
 
 #: src/routes/food/FoodList.svelte
 msgid "Delete food"
-msgstr ""
+msgstr "Supprimer l'aliment"
 
 #: src/routes/food/FoodFilters.svelte
 msgid "Select categories/subcategories..."
-msgstr ""
+msgstr "Sélectionnez les catégories/sous-catégories..."
 
 #: src/routes/food/FoodFilters.svelte
 msgid "Clear all"
-msgstr ""
+msgstr "Tout effacer"
 
 #: src/routes/food/FoodFilters.svelte
 msgid "Filter"
-msgstr ""
+msgstr "Filtrer"
 
 #: src/routes/food/FoodFilters.svelte
 msgid "Categories & Subcategories"
-msgstr ""
+msgstr "Catégories et sous-catégories"
 
 #: src/lib/components/food/CategorySubcategoryCombobox.svelte
 #: src/routes/food/FoodFilters.svelte
