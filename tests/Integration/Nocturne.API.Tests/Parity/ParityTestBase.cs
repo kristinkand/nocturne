@@ -28,7 +28,16 @@ public abstract class ParityTestBase : IAsyncLifetime
     protected readonly ITestOutputHelper Output;
     protected readonly ResponseComparer Comparer;
 
+    /// <summary>
+    /// Nightscout client for V1/V2 API (uses api-secret header)
+    /// </summary>
     protected HttpClient NightscoutClient => Fixture.NightscoutClient;
+
+    /// <summary>
+    /// Nightscout client for V3 API (uses JWT Bearer token)
+    /// </summary>
+    protected HttpClient NightscoutV3Client => Fixture.NightscoutV3Client;
+
     protected HttpClient NocturneClient => Fixture.NocturneClient;
 
     protected ParityTestBase(ParityTestFixture fixture, ITestOutputHelper output)
@@ -43,7 +52,23 @@ public abstract class ParityTestBase : IAsyncLifetime
     /// </summary>
     protected virtual ComparisonOptions GetComparisonOptions() => ComparisonOptions.Default;
 
-    public virtual Task InitializeAsync() => Task.CompletedTask;
+    /// <summary>
+    /// Gets the appropriate Nightscout client based on the API path.
+    /// V3 paths use JWT Bearer authentication, V1/V2 use api-secret header.
+    /// </summary>
+    protected HttpClient GetNightscoutClientForPath(string path)
+    {
+        return path.StartsWith("/api/v3", StringComparison.OrdinalIgnoreCase)
+            ? NightscoutV3Client
+            : NightscoutClient;
+    }
+
+    public virtual async Task InitializeAsync()
+    {
+        // Clean up at the start of each test to ensure a clean slate
+        // This handles leftover data from previous test runs or parallel test execution
+        await Fixture.CleanupDataAsync();
+    }
 
     public virtual async Task DisposeAsync()
     {
@@ -123,7 +148,7 @@ public abstract class ParityTestBase : IAsyncLifetime
             {
                 device = status.Device,
                 created_at = status.CreatedAt,
-                uploaderBattery = status.UploaderBattery
+                uploaderBattery = status.Uploader?.Battery
             };
 
             var nsResponse = await NightscoutClient.PostAsJsonAsync("/api/v1/devicestatus", nsStatus);
@@ -148,7 +173,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     #region Parity Assertion Helpers
 
     /// <summary>
-    /// Asserts that GET requests to both systems return equivalent responses
+    /// Asserts that GET requests to both systems return equivalent responses.
+    /// Automatically uses V3 JWT client for /api/v3/* paths.
     /// </summary>
     protected async Task AssertGetParityAsync(
         string path,
@@ -157,7 +183,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         Output.WriteLine($"Testing GET {path}");
 
-        var nsTask = NightscoutClient.GetAsync(path, cancellationToken);
+        var nsClient = GetNightscoutClientForPath(path);
+        var nsTask = nsClient.GetAsync(path, cancellationToken);
         var nocTask = NocturneClient.GetAsync(path, cancellationToken);
 
         await Task.WhenAll(nsTask, nocTask);
@@ -169,7 +196,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Asserts that POST requests to both systems return equivalent responses
+    /// Asserts that POST requests to both systems return equivalent responses.
+    /// Automatically uses V3 JWT client for /api/v3/* paths.
     /// </summary>
     protected async Task AssertPostParityAsync<T>(
         string path,
@@ -179,7 +207,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         Output.WriteLine($"Testing POST {path}");
 
-        var nsTask = NightscoutClient.PostAsJsonAsync(path, body, cancellationToken);
+        var nsClient = GetNightscoutClientForPath(path);
+        var nsTask = nsClient.PostAsJsonAsync(path, body, cancellationToken);
         var nocTask = NocturneClient.PostAsJsonAsync(path, body, cancellationToken);
 
         await Task.WhenAll(nsTask, nocTask);
@@ -191,7 +220,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Asserts that PUT requests to both systems return equivalent responses
+    /// Asserts that PUT requests to both systems return equivalent responses.
+    /// Automatically uses V3 JWT client for /api/v3/* paths.
     /// </summary>
     protected async Task AssertPutParityAsync<T>(
         string path,
@@ -201,7 +231,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         Output.WriteLine($"Testing PUT {path}");
 
-        var nsTask = NightscoutClient.PutAsJsonAsync(path, body, cancellationToken);
+        var nsClient = GetNightscoutClientForPath(path);
+        var nsTask = nsClient.PutAsJsonAsync(path, body, cancellationToken);
         var nocTask = NocturneClient.PutAsJsonAsync(path, body, cancellationToken);
 
         await Task.WhenAll(nsTask, nocTask);
@@ -213,7 +244,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Asserts that DELETE requests to both systems return equivalent responses
+    /// Asserts that DELETE requests to both systems return equivalent responses.
+    /// Automatically uses V3 JWT client for /api/v3/* paths.
     /// </summary>
     protected async Task AssertDeleteParityAsync(
         string path,
@@ -222,7 +254,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         Output.WriteLine($"Testing DELETE {path}");
 
-        var nsTask = NightscoutClient.DeleteAsync(path, cancellationToken);
+        var nsClient = GetNightscoutClientForPath(path);
+        var nsTask = nsClient.DeleteAsync(path, cancellationToken);
         var nocTask = NocturneClient.DeleteAsync(path, cancellationToken);
 
         await Task.WhenAll(nsTask, nocTask);
@@ -234,7 +267,8 @@ public abstract class ParityTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Asserts parity for arbitrary HTTP requests with headers
+    /// Asserts parity for arbitrary HTTP requests with headers.
+    /// Automatically uses V3 JWT client for /api/v3/* paths.
     /// </summary>
     protected async Task AssertParityAsync(
         HttpMethod method,
@@ -246,10 +280,11 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         Output.WriteLine($"Testing {method} {path}");
 
+        var nsClient = GetNightscoutClientForPath(path);
         var nsRequest = CreateRequest(method, path, content, headers);
         var nocRequest = CreateRequest(method, path, content, headers);
 
-        var nsTask = NightscoutClient.SendAsync(nsRequest, cancellationToken);
+        var nsTask = nsClient.SendAsync(nsRequest, cancellationToken);
         var nocTask = NocturneClient.SendAsync(nocRequest, cancellationToken);
 
         await Task.WhenAll(nsTask, nocTask);

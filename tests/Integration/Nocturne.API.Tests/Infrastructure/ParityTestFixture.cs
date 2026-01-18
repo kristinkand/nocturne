@@ -23,7 +23,16 @@ public class ParityTestFixture : IAsyncLifetime
     private static SharedParityState? _sharedState;
     private static int _instanceCount;
 
+    /// <summary>
+    /// HttpClient for Nightscout V1/V2 API (uses api-secret header)
+    /// </summary>
     public HttpClient NightscoutClient => _sharedState?.NightscoutClient
+        ?? throw new InvalidOperationException("Fixture not initialized");
+
+    /// <summary>
+    /// HttpClient for Nightscout V3 API (uses JWT Bearer token)
+    /// </summary>
+    public HttpClient NightscoutV3Client => _sharedState?.NightscoutV3Client
         ?? throw new InvalidOperationException("Fixture not initialized");
 
     public HttpClient NocturneClient => _sharedState?.NocturneClient
@@ -31,6 +40,11 @@ public class ParityTestFixture : IAsyncLifetime
 
     public NocturneDbContext DbContext => _sharedState?.DbContext
         ?? throw new InvalidOperationException("Fixture not initialized");
+
+    /// <summary>
+    /// The JWT token used for V3 API authentication (for debugging)
+    /// </summary>
+    public string? JwtToken => _sharedState?.NightscoutContainer.JwtToken;
 
     public async Task InitializeAsync()
     {
@@ -89,6 +103,7 @@ public class ParityTestFixture : IAsyncLifetime
         db.Foods.RemoveRange(db.Foods);
         db.Profiles.RemoveRange(db.Profiles);
         db.Settings.RemoveRange(db.Settings);
+        db.StateSpans.RemoveRange(db.StateSpans); // Temp basals are stored as StateSpans
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -99,17 +114,32 @@ public class ParityTestFixture : IAsyncLifetime
     {
         private PostgreSqlContainer? _postgresContainer;
         private WebApplicationFactory<Program>? _nocturneFactory;
+        private HttpClient? _nightscoutV3Client;
 
         public NightscoutContainer NightscoutContainer { get; } = new();
         public HttpClient NightscoutClient { get; private set; } = null!;
+        public HttpClient NightscoutV3Client => _nightscoutV3Client
+            ?? throw new InvalidOperationException("V3 client not initialized - JWT token may have failed to fetch");
         public HttpClient NocturneClient { get; private set; } = null!;
         public NocturneDbContext DbContext { get; private set; } = null!;
 
         public async Task InitializeAsync()
         {
-            // Start Nightscout (includes MongoDB)
+            // Start Nightscout (includes MongoDB and fetches JWT token)
             await NightscoutContainer.StartAsync();
             NightscoutClient = NightscoutContainer.Client;
+
+            // Create V3 client with JWT Bearer authentication
+            if (!string.IsNullOrEmpty(NightscoutContainer.JwtToken))
+            {
+                _nightscoutV3Client = new HttpClient
+                {
+                    BaseAddress = new Uri(NightscoutContainer.BaseUrl),
+                    Timeout = TimeSpan.FromSeconds(30)
+                };
+                _nightscoutV3Client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", NightscoutContainer.JwtToken);
+            }
 
             // Start PostgreSQL for Nocturne
             _postgresContainer = new PostgreSqlBuilder()
@@ -183,6 +213,7 @@ public class ParityTestFixture : IAsyncLifetime
         public async ValueTask DisposeAsync()
         {
             NocturneClient.Dispose();
+            _nightscoutV3Client?.Dispose();
 
             if (DbContext != null)
             {

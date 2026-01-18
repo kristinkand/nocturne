@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using Nocturne.API.Tests.Integration.Infrastructure;
 using Nocturne.Core.Models;
 using Xunit;

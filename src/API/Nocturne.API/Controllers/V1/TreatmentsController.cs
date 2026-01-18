@@ -185,7 +185,7 @@ public class TreatmentsController : ControllerBase
     /// <returns>Created treatments with assigned IDs</returns>
     [HttpPost]
     [NightscoutEndpoint("/api/v1/treatments")]
-    [ProducesResponseType(typeof(Treatment[]), 201)]
+    [ProducesResponseType(typeof(Treatment[]), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<Treatment[]>> CreateTreatments(
@@ -267,10 +267,8 @@ public class TreatmentsController : ControllerBase
 
             _logger.LogDebug("Successfully created {Count} treatments", resultArray.Length);
 
-            // Set response headers
-            Response.Headers["Location"] = $"/api/v1/treatments";
-
-            return CreatedAtAction(nameof(GetTreatments), new { }, resultArray);
+            // Return 200 OK to match Nightscout behavior (not 201 Created)
+            return Ok(resultArray);
         }
         catch (JsonException ex)
         {

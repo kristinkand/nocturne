@@ -67,14 +67,20 @@ public static class TreatmentStateSpanMapper
         if (stateSpan == null || stateSpan.Category != StateSpanCategory.TempBasal)
             return null;
 
+        // Compute Created_at from Mills
+        var createdAt = DateTimeOffset.FromUnixTimeMilliseconds(stateSpan.StartMills)
+            .ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
         var treatment = new Treatment
         {
             Id = stateSpan.OriginalId ?? stateSpan.Id,
             EventType = "Temp Basal",
             Mills = stateSpan.StartMills,
+            Created_at = createdAt,
             EndMills = stateSpan.EndMills,
             Duration = CalculateDuration(stateSpan),
-            DataSource = stateSpan.Source
+            DataSource = stateSpan.Source,
+            UtcOffset = 0 // Default to UTC, matching Nightscout behavior
         };
 
         // Extract metadata values
@@ -85,6 +91,7 @@ public static class TreatmentStateSpanMapper
             treatment.Percent = GetMetadataDouble(stateSpan.Metadata, "percent");
             treatment.Temp = GetMetadataString(stateSpan.Metadata, "temp");
             treatment.EnteredBy = GetMetadataString(stateSpan.Metadata, "enteredBy");
+            treatment.UtcOffset = GetMetadataInt(stateSpan.Metadata, "utcOffset") ?? 0;
         }
 
         return treatment;
@@ -140,6 +147,9 @@ public static class TreatmentStateSpanMapper
         if (!string.IsNullOrEmpty(treatment.EnteredBy))
             metadata["enteredBy"] = treatment.EnteredBy;
 
+        // Store utcOffset for restoration
+        metadata["utcOffset"] = treatment.UtcOffset ?? 0;
+
         return metadata.Count > 0 ? metadata : null;
     }
 
@@ -177,6 +187,27 @@ public static class TreatmentStateSpanMapper
             string s => s,
             System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.String => je.GetString(),
             _ => value?.ToString()
+        };
+    }
+
+    /// <summary>
+    /// Safely extracts an int value from metadata
+    /// </summary>
+    private static int? GetMetadataInt(Dictionary<string, object> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var value))
+            return null;
+
+        return value switch
+        {
+            int i => i,
+            long l => (int)l,
+            double d => (int)d,
+            float f => (int)f,
+            decimal dec => (int)dec,
+            System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Number => je.GetInt32(),
+            string s when int.TryParse(s, out var parsed) => parsed,
+            _ => null
         };
     }
 }

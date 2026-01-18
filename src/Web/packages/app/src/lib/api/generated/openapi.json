@@ -13316,7 +13316,7 @@
           "x-position": 1
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Created treatments with assigned IDs",
             "content": {
               "application/json": {

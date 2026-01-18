@@ -47,7 +47,18 @@ public class ResponseComparer
             var expectedValue = GetHeaderValue(expected, header);
             var actualValue = GetHeaderValue(actual, header);
 
-            if (!string.Equals(expectedValue, actualValue, StringComparison.OrdinalIgnoreCase))
+            // For Content-Type, compare media type only (ignore charset and other parameters)
+            if (header.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+            {
+                var expectedMediaType = expectedValue?.Split(';')[0].Trim();
+                var actualMediaType = actualValue?.Split(';')[0].Trim();
+
+                if (!string.Equals(expectedMediaType, actualMediaType, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.AddDifference($"Header[{header}]", expectedMediaType, actualMediaType);
+                }
+            }
+            else if (!string.Equals(expectedValue, actualValue, StringComparison.OrdinalIgnoreCase))
             {
                 result.AddDifference($"Header[{header}]", expectedValue, actualValue);
             }
@@ -87,27 +98,52 @@ public class ResponseComparer
 
         JsonNode? expectedNode, actualNode;
 
-        try
+        // Try to parse as JSON; if both fail, compare as raw strings
+        var expectedIsJson = TryParseJson(expected!, out expectedNode);
+        var actualIsJson = TryParseJson(actual!, out actualNode);
+
+        if (!expectedIsJson && !actualIsJson)
         {
-            expectedNode = JsonNode.Parse(expected!);
-        }
-        catch (JsonException ex)
-        {
-            result.AddDifference(path, $"Invalid JSON: {ex.Message}", actual);
+            // Both are non-JSON (e.g., HTML), compare as strings
+            if (!string.Equals(expected, actual))
+            {
+                result.AddDifference(path, expected, actual);
+            }
             return;
         }
 
-        try
+        if (!expectedIsJson)
         {
-            actualNode = JsonNode.Parse(actual!);
+            result.AddDifference(path, $"Non-JSON: {Truncate(expected!, 100)}", $"JSON: {Truncate(actual!, 100)}");
+            return;
         }
-        catch (JsonException ex)
+
+        if (!actualIsJson)
         {
-            result.AddDifference(path, expected, $"Invalid JSON: {ex.Message}");
+            result.AddDifference(path, $"JSON: {Truncate(expected!, 100)}", $"Non-JSON: {Truncate(actual!, 100)}");
             return;
         }
 
         CompareNodes(expectedNode, actualNode, path, result);
+    }
+
+    private static bool TryParseJson(string value, out JsonNode? node)
+    {
+        try
+        {
+            node = JsonNode.Parse(value);
+            return true;
+        }
+        catch (JsonException)
+        {
+            node = null;
+            return false;
+        }
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        return value.Length <= maxLength ? value : value[..maxLength] + "...";
     }
 
     private void CompareNodes(JsonNode? expected, JsonNode? actual, string path, ComparisonResult result)
@@ -169,10 +205,16 @@ public class ResponseComparer
             var expectedHasKey = expected.ContainsKey(key);
             var actualHasKey = actual.ContainsKey(key);
 
-            // STRICT NULL VS MISSING: This is the critical check
-            // A field being present with null value is different from field being absent
+            // Handle missing/extra fields
             if (expectedHasKey != actualHasKey)
             {
+                // If AllowExtraActualFields is set and actual has a field that expected doesn't,
+                // that's acceptable (Nocturne returning more data than Nightscout)
+                if (_options.AllowExtraActualFields && !expectedHasKey && actualHasKey)
+                    continue;
+
+                // STRICT NULL VS MISSING: This is the critical check
+                // A field being present with null value is different from field being absent
                 var expectedDisplay = expectedHasKey
                     ? (expected[key]?.ToJsonString() ?? "null")
                     : "(missing)";
@@ -353,18 +395,27 @@ public class ComparisonOptions
     };
 
     /// <summary>
+    /// When true, allows the actual (Nocturne) response to have extra fields
+    /// that the expected (Nightscout) response doesn't have.
+    /// This is useful because Nocturne often returns richer data than Nightscout.
+    /// Default is true since Nocturne returning more data is acceptable.
+    /// </summary>
+    public bool AllowExtraActualFields { get; init; } = true;
+
+    /// <summary>
     /// Default options suitable for most parity tests
     /// </summary>
     public static ComparisonOptions Default => new();
 
     /// <summary>
-    /// Strict options - compare everything including timestamps
+    /// Strict options - compare everything including timestamps, no extra fields allowed
     /// </summary>
     public static ComparisonOptions Strict => new()
     {
         DynamicFields = new HashSet<string>(),
         IdFields = new HashSet<string>(),
-        TimestampFields = new HashSet<string>()
+        TimestampFields = new HashSet<string>(),
+        AllowExtraActualFields = false
     };
 
     /// <summary>
@@ -377,7 +428,8 @@ public class ComparisonOptions
             DynamicFields = new HashSet<string>(DynamicFields),
             IdFields = new HashSet<string>(IdFields),
             TimestampFields = new HashSet<string>(TimestampFields),
-            HeadersToCompare = new HashSet<string>(HeadersToCompare)
+            HeadersToCompare = new HashSet<string>(HeadersToCompare),
+            AllowExtraActualFields = AllowExtraActualFields
         };
 
         foreach (var field in fields)
@@ -386,5 +438,20 @@ public class ComparisonOptions
         }
 
         return options;
+    }
+
+    /// <summary>
+    /// Create options that require strict field matching (no extra fields allowed)
+    /// </summary>
+    public ComparisonOptions WithStrictFieldMatching()
+    {
+        return new ComparisonOptions
+        {
+            DynamicFields = new HashSet<string>(DynamicFields),
+            IdFields = new HashSet<string>(IdFields),
+            TimestampFields = new HashSet<string>(TimestampFields),
+            HeadersToCompare = new HashSet<string>(HeadersToCompare),
+            AllowExtraActualFields = false
+        };
     }
 }

@@ -1,8 +1,10 @@
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Testcontainers.MongoDb;
+using DotNet.Testcontainers.Networks;
 
 namespace Nocturne.API.Tests.Integration.Infrastructure;
 
@@ -15,8 +17,10 @@ public class NightscoutContainer : IAsyncDisposable
     private const string NightscoutImage = "nightscout/cgm-remote-monitor:15.0.3";
     private const string ApiSecret = "test-api-secret-12chars";
     private const int NightscoutPort = 1337;
+    private const string MongoNetworkAlias = "mongodb";
 
-    private MongoDbContainer? _mongoContainer;
+    private INetwork? _network;
+    private IContainer? _mongoContainer;
     private IContainer? _nightscoutContainer;
     private HttpClient? _httpClient;
 
@@ -24,12 +28,17 @@ public class NightscoutContainer : IAsyncDisposable
     public string MongoConnectionString { get; private set; } = string.Empty;
 
     /// <summary>
+    /// JWT token for V3 API authentication
+    /// </summary>
+    public string? JwtToken { get; private set; }
+
+    /// <summary>
     /// Pre-computed SHA1 hash of the API secret for authenticated requests
     /// </summary>
     public string ApiSecretHash { get; } = ComputeSha1Hash(ApiSecret);
 
     /// <summary>
-    /// HttpClient configured with the API secret header for authenticated requests
+    /// HttpClient configured with the API secret header for authenticated requests (V1/V2)
     /// </summary>
     public HttpClient Client => _httpClient ?? throw new InvalidOperationException("Container not started");
 
@@ -37,20 +46,42 @@ public class NightscoutContainer : IAsyncDisposable
     {
         using var measurement = TestPerformanceTracker.MeasureTest("NightscoutContainer.Start");
 
+        // Create a shared network for MongoDB and Nightscout containers
+        _network = new NetworkBuilder()
+            .WithName($"nightscout-test-{Guid.NewGuid():N}")
+            .Build();
+
+        await _network.CreateAsync(cancellationToken);
+
         // Start MongoDB first (Nightscout's backend)
-        _mongoContainer = new MongoDbBuilder()
+        // Use plain mongo container without authentication (MongoDbBuilder adds auth which breaks Nightscout)
+        _mongoContainer = new ContainerBuilder()
             .WithImage("mongo:7")
+            .WithNetwork(_network)
+            .WithNetworkAliases(MongoNetworkAlias)
+            .WithPortBinding(27017, true)
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilCommandIsCompleted("mongosh", "--eval", "db.runCommand('ping').ok"))
             .Build();
 
         await _mongoContainer.StartAsync(cancellationToken);
-        MongoConnectionString = _mongoContainer.GetConnectionString();
 
-        // Start Nightscout connected to MongoDB
+        // Store host-accessible connection string for external access
+        var mongoHost = _mongoContainer.Hostname;
+        var mongoPort = _mongoContainer.GetMappedPublicPort(27017);
+        MongoConnectionString = $"mongodb://{mongoHost}:{mongoPort}/nightscout";
+
+        // Build internal MongoDB connection string for Nightscout container
+        // Nightscout needs to connect via Docker network, not localhost
+        var internalMongoUri = $"mongodb://{MongoNetworkAlias}:27017/nightscout";
+
+        // Start Nightscout connected to MongoDB via internal network
         _nightscoutContainer = new ContainerBuilder()
             .WithImage(NightscoutImage)
+            .WithNetwork(_network)
             .WithPortBinding(NightscoutPort, true)
-            .WithEnvironment("MONGODB_URI", MongoConnectionString)
-            .WithEnvironment("MONGO_CONNECTION", MongoConnectionString)
+            .WithEnvironment("MONGODB_URI", internalMongoUri)
+            .WithEnvironment("MONGO_CONNECTION", internalMongoUri)
             .WithEnvironment("API_SECRET", ApiSecret)
             .WithEnvironment("DISPLAY_UNITS", "mg/dl")
             .WithEnvironment("ENABLE", "careportal basal iob cob bwp cage sage iage bage pump openaps loop")
@@ -69,13 +100,85 @@ public class NightscoutContainer : IAsyncDisposable
         var port = _nightscoutContainer.GetMappedPublicPort(NightscoutPort);
         BaseUrl = $"http://{host}:{port}";
 
-        // Create HttpClient with API secret header
+        // Create HttpClient with API secret header for V1/V2
         _httpClient = new HttpClient
         {
             BaseAddress = new Uri(BaseUrl),
             Timeout = TimeSpan.FromSeconds(30)
         };
         _httpClient.DefaultRequestHeaders.Add("api-secret", ApiSecretHash);
+
+        // Fetch JWT token for V3 API authentication
+        await FetchJwtTokenAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Fetches a JWT token from the Nightscout authorization endpoint for V3 API access.
+    /// Flow:
+    /// 1. Create a test subject with admin role
+    /// 2. Get the access token from the created subject
+    /// 3. Request a JWT using the access token
+    /// </summary>
+    private async Task FetchJwtTokenAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Step 1: Create a test subject with admin role
+            var createSubjectResponse = await _httpClient!.PostAsJsonAsync(
+                "/api/v2/authorization/subjects",
+                new { name = "parity-test", roles = new[] { "admin" } },
+                cancellationToken);
+
+            if (!createSubjectResponse.IsSuccessStatusCode)
+                return;
+
+            // Step 2: Get the created subject to retrieve the access token
+            var getSubjectsResponse = await _httpClient.GetAsync(
+                "/api/v2/authorization/subjects",
+                cancellationToken);
+
+            if (!getSubjectsResponse.IsSuccessStatusCode)
+                return;
+
+            var subjectsContent = await getSubjectsResponse.Content.ReadAsStringAsync(cancellationToken);
+            using var subjectsDoc = JsonDocument.Parse(subjectsContent);
+
+            string? accessToken = null;
+            foreach (var subject in subjectsDoc.RootElement.EnumerateArray())
+            {
+                if (subject.TryGetProperty("name", out var nameElement) &&
+                    nameElement.GetString() == "parity-test" &&
+                    subject.TryGetProperty("accessToken", out var tokenElement))
+                {
+                    accessToken = tokenElement.GetString();
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(accessToken))
+                return;
+
+            // Step 3: Request a JWT using the access token
+            var jwtResponse = await _httpClient.GetAsync(
+                $"/api/v2/authorization/request/{accessToken}",
+                cancellationToken);
+
+            if (!jwtResponse.IsSuccessStatusCode)
+                return;
+
+            var jwtContent = await jwtResponse.Content.ReadAsStringAsync(cancellationToken);
+            using var jwtDoc = JsonDocument.Parse(jwtContent);
+
+            if (jwtDoc.RootElement.TryGetProperty("token", out var jwtTokenElement))
+            {
+                JwtToken = jwtTokenElement.GetString();
+            }
+        }
+        catch
+        {
+            // JWT token fetch failed - V3 tests will fail with 401
+            // This is acceptable as it makes the issue visible in test output
+        }
     }
 
     /// <summary>
@@ -117,6 +220,12 @@ public class NightscoutContainer : IAsyncDisposable
         {
             await _mongoContainer.StopAsync();
             await _mongoContainer.DisposeAsync();
+        }
+
+        if (_network != null)
+        {
+            await _network.DeleteAsync();
+            await _network.DisposeAsync();
         }
     }
 

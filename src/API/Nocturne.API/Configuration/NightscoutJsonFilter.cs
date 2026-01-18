@@ -41,10 +41,9 @@ public class NightscoutJsonFilter : IAsyncResultFilter
 
         foreach (var property in typeInfo.Properties)
         {
-            var propertyInfo = typeInfo.Type.GetProperty(property.Name,
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-
-            if (propertyInfo?.GetCustomAttribute<NocturneOnlyAttribute>() != null)
+            // Use AttributeProvider to get the actual property/field info with its attributes
+            // This works correctly regardless of JsonPropertyName remapping
+            if (property.AttributeProvider?.GetCustomAttributes(typeof(NocturneOnlyAttribute), true).Length > 0)
             {
                 property.ShouldSerialize = (_, _) => false;
             }
