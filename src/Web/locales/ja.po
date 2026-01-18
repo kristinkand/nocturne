@@ -60,7 +60,6 @@ msgstr ""
 
 #: src/lib/components/TreatmentEditModal.svelte
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Exercise"
 msgstr ""
 
@@ -231,7 +230,6 @@ msgstr ""
 #: src/routes/settings/support/+page.svelte
 #: src/routes/settings/support/+page.svelte
 #: src/routes/settings/support/+page.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Loading..."
 msgstr ""
 
@@ -239,7 +237,6 @@ msgstr ""
 #: src/lib/components/dashboard/PredictionVisualizations.svelte
 #: src/lib/components/dashboard/widgets/ConnectionStatusWidget.svelte
 #: src/lib/components/status-pills/LoopPill.svelte
-#: src/routes/+layout.svelte
 #: src/routes/auth/forgot-password/+page.svelte
 #: src/routes/auth/login/+page.svelte
 #: src/routes/auth/register/+page.svelte
@@ -348,13 +345,14 @@ msgstr ""
 #: src/routes/compatibility/+page.svelte
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Time"
 msgstr ""
 
 #: src/lib/components/TreatmentsTable.svelte
 #: src/lib/components/treatments/TreatmentEditDialog.svelte
 #: src/routes/clock/config/+page.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Blood Glucose"
 msgstr ""
 
@@ -398,8 +396,8 @@ msgstr ""
 #: src/lib/components/treatments/TreatmentsDataTable.svelte
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
-#: src/routes/time-spans/+page.svelte
-#: src/routes/time-spans/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Profile"
 msgstr ""
 
@@ -788,6 +786,7 @@ msgstr ""
 #: src/routes/profile/+page.svelte
 #: src/routes/reports/+layout.svelte
 #: src/routes/reports/week-to-week/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Today"
 msgstr ""
 
@@ -822,6 +821,7 @@ msgstr ""
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Low"
 msgstr ""
 
@@ -843,6 +843,7 @@ msgstr ""
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "High"
 msgstr ""
 
@@ -1074,6 +1075,7 @@ msgstr ""
 #: src/routes/calendar/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "An error occurred"
 msgstr ""
 
@@ -1527,6 +1529,7 @@ msgstr ""
 msgid "NS: {0}"
 msgstr ""
 
+#: src/lib/components/SiteHeader.svelte
 #: src/lib/components/dashboard/CurrentBGDisplay.svelte
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/compatibility/+page.svelte
@@ -2513,6 +2516,7 @@ msgstr ""
 #: src/routes/reports/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Try again"
 msgstr ""
 
@@ -2716,36 +2720,46 @@ msgid ""
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Yesterday"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Profile - Nocturne"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Manage your diabetes therapy profile settings"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Your therapy settings and insulin parameters"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> New Profile"
 msgstr ""
 
 #. placeholder {0}: data.totalProfiles
 #. placeholder {1}: data.totalProfiles !== 1 ? "s" : ""
+#. placeholder {0}: data.totalProfiles
+#. placeholder {1}: data.totalProfiles !== 1 ? "s" : ""
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> {0} profile{1}"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "No Profile Found"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid ""
 "Profiles are typically uploaded from your diabetes management\n"
 "app (like AAPS, Loop, or xDrip+). They contain your basal rates,\n"
@@ -2753,18 +2767,22 @@ msgid ""
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Create Profile"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Configure Data Sources"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Profile History"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid ""
 "Select a profile to view its settings. The most recently used\n"
 "profile is shown first."
@@ -2772,6 +2790,7 @@ msgstr ""
 
 #: src/lib/components/profile/ProfileDeleteDialog.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Unnamed Profile"
 msgstr ""
 
@@ -2781,27 +2800,35 @@ msgstr ""
 #: src/routes/settings/appearance/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/migration/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/support/+page.svelte
 msgid "Active"
 msgstr ""
 
 #. placeholder {0}: formatDateDetailed(selectedProfile.created_at)
+#. placeholder {0}: formatDateDetailed(selectedProfile.created_at)
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Created {0}"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Edit Profile"
 msgstr ""
 
 #: src/lib/components/profile/ProfileDeleteDialog.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Delete Profile"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Units"
 msgstr ""
 
@@ -2810,16 +2837,21 @@ msgstr ""
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Timezone"
 msgstr ""
 
 #: src/lib/components/status-pills/TrackerPill.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Not set"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "DIA"
 msgstr ""
 
@@ -2827,39 +2859,53 @@ msgstr ""
 #. placeholder {0}: store.dia ?? "–"
 #. placeholder {0}: store.devices.cgmConfiguration?.sensorWarmupHours ?? 2
 #. placeholder {0}: store.features.display?.focusHours ?? 3
+#. placeholder {0}: defaultStore?.dia ?? "–"
+#. placeholder {0}: store.dia ?? "–"
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/features/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "{0} hours"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Carbs/hr"
 msgstr ""
 
 #. placeholder {0}: defaultStore?.carbs_hr ?? "–"
 #. placeholder {0}: store.carbs_hr ?? "–"
+#. placeholder {0}: defaultStore?.carbs_hr ?? "–"
+#. placeholder {0}: store.carbs_hr ?? "–"
 #: src/routes/profile/+page.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "{0} g/hr"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Default"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Edit"
 msgstr ""
 
 #: src/lib/components/profile/ProfileEditDialog.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Basal Rates"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Background insulin delivery rates"
 msgstr ""
 
@@ -2868,57 +2914,70 @@ msgstr ""
 #: src/routes/profile/+page.svelte
 #: src/routes/reports/basal-analysis/+page.svelte
 #: src/routes/settings/algorithm/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "U/hr"
 msgstr ""
 
 #: src/lib/components/profile/ProfileEditDialog.svelte
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Carb Ratios (I:C)"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Grams of carbs per unit of insulin"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Insulin Sensitivity (ISF)"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "BG drop per unit of insulin"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Target Range"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Desired blood glucose range"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Profile Settings"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "No data available for this profile store."
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid ""
 "This profile doesn't contain any therapy settings (basal, carb\n"
 "ratios, etc.)"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "<0/> Add Settings"
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Loading profiles..."
 msgstr ""
 
 #: src/routes/profile/+page.svelte
+#: src/routes/settings/profile/+page.svelte
 msgid "Failed to load profiles"
 msgstr ""
 
@@ -2970,6 +3029,7 @@ msgstr ""
 msgid "Tune prediction algorithms and automation settings"
 msgstr ""
 
+#: src/lib/components/SiteHeader.svelte
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/settings/+page.svelte
 #: src/routes/settings/features/+page.svelte
@@ -3010,6 +3070,7 @@ msgstr ""
 msgid "Connect data sources like Dexcom, Libre, and more"
 msgstr ""
 
+#: src/lib/components/StepIndicator.svelte
 #: src/routes/settings/+page.svelte
 msgid "Connectors"
 msgstr ""
@@ -3068,23 +3129,16 @@ msgid "Configure your Nocturne experience"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/routes/time-spans/+page.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Pump Mode"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/reports/InsulinDeliveryChart.svelte
-#: src/routes/time-spans/+page.svelte
-#: src/routes/time-spans/+page.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Temp Basal"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/routes/time-spans/+page.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Override"
 msgstr ""
 
@@ -3094,88 +3148,70 @@ msgid "<0/> Back to Dashboard"
 msgstr ""
 
 #: src/lib/components/layout/AppSidebar.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Time Spans"
 msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "State changes throughout the selected period"
-msgstr ""
+#~ msgid "State changes throughout the selected period"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "No state spans found for this period"
-msgstr ""
+#~ msgid "No state spans found for this period"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "Glucose Overlay"
-msgstr ""
+#~ msgid "Glucose Overlay"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "Blood glucose readings during this period"
-msgstr ""
+#~ msgid "Blood glucose readings during this period"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "No glucose data"
-msgstr ""
+#~ msgid "No glucose data"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "Legend"
-msgstr ""
+#~ msgid "Legend"
+#~ msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "Pump Modes"
-msgstr ""
+#~ msgid "Pump Modes"
+#~ msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Automatic"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Limited"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Manual"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Suspended"
 msgstr ""
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Overrides"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Boost"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Sleep"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "EaseOff"
 msgstr ""
 
 #: src/lib/components/status-pills/BasalPill.svelte
-#: src/routes/time-spans/+page.svelte
 msgid "Active Temp Basal"
 msgstr ""
 
-#: src/routes/time-spans/+page.svelte
-msgid "Glucose Line"
-msgstr ""
+#~ msgid "Glucose Line"
+#~ msgstr ""
 
 #: src/lib/components/ambulatory-glucose-profile/AmbulatoryGlucoseProfile.svelte
 msgid "No pattern data"
@@ -3425,6 +3461,7 @@ msgstr ""
 msgid "Treatment"
 msgstr ""
 
+#: src/lib/components/SiteHeader.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/layout/SidebarGlucoseWidget.svelte
 msgid "Demo"
@@ -12110,4 +12147,206 @@ msgstr ""
 #. placeholder {0}: Math.round( (selectedXDomain[1].getTime() - selectedXDomain[0].getTime()) / (1000 * 60) )
 #: src/lib/components/dashboard/MiniOverviewChart.svelte
 msgid "({0} min)"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Your Diabetes Data, <0>Your Way</0>"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"A modern, open-source platform for managing your glucose data with full\n"
+"Nightscout compatibility. Built by the diabetes community, for the\n"
+"diabetes community."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Get Started <0/>"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "<0/> See it in Action"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Explore Features"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Why Choose Nocturne?"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Modern architecture meets proven reliability. Get the features you need\n"
+"without sacrificing compatibility."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Nightscout Compatible"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Full API compatibility means your existing apps and devices work\n"
+"seamlessly. No migration headaches."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Modern Performance"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Built on .NET 10 for blazing fast performance. Handle more data with\n"
+"less resources."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Self-Hosted Security"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Your data stays on your server. Full control over your health\n"
+"information, always."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Multiple Data Sources"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Connect Dexcom, Libre, Glooko, and more. Bring all your data\n"
+"together in one place."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Real-Time Monitoring"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Live glucose updates with WebSocket support. Stay informed with\n"
+"instant notifications."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Easy Migration"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Import your existing Nightscout data with one click. Or run both\n"
+"side-by-side to test first."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Get Started in Minutes"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Our configuration wizard generates everything you need for a\n"
+"production-ready deployment."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Step 1"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Configure"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Choose your setup type and configure your data sources through our\n"
+"friendly wizard."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Step 2"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Deploy"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Download your configuration files and deploy with Docker in one\n"
+"command."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Step 3"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Monitor"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Start tracking your glucose data with a modern, responsive\n"
+"interface."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Ready to Take Control?"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid ""
+"Join the community of people managing their diabetes data on their own\n"
+"terms. Free, open source, and always will be."
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Start Configuration <0/>"
+msgstr ""
+
+#: src/routes/+page.svelte
+msgid "Read the Docs"
+msgstr ""
+
+#: src/lib/components/SiteHeader.svelte
+#: src/routes/+layout.svelte
+msgid "N"
+msgstr ""
+
+#: src/routes/+layout.svelte
+msgid "Nocturne Portal"
+msgstr ""
+
+#. placeholder {0}: new Date().getFullYear()
+#: src/routes/+layout.svelte
+msgid "Nocturne © {0} - Open source diabetes management"
+msgstr ""
+
+#: src/lib/components/StepIndicator.svelte
+msgid "Setup"
+msgstr ""
+
+#: src/lib/components/StepIndicator.svelte
+msgid "Download"
+msgstr ""
+
+#: src/lib/components/StepIndicator.svelte
+msgid "Setup progress"
+msgstr ""
+
+#: src/lib/components/SiteHeader.svelte
+msgid "Docs"
+msgstr ""
+
+#: src/lib/components/SiteHeader.svelte
+#: src/lib/components/SiteHeader.svelte
+msgid "Get Started"
+msgstr ""
+
+#: src/lib/components/SiteHeader.svelte
+msgid "Toggle menu"
 msgstr ""
