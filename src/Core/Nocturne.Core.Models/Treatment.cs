@@ -43,9 +43,11 @@ public class Treatment : ProcessableDocumentBase
     public string? GlucoseType { get; set; }
 
     /// <summary>
-    /// Gets or sets the carbohydrates in grams
+    /// Gets or sets the carbohydrates in grams.
+    /// Note: Nightscout V1 always includes this field even when null.
     /// </summary>
     [JsonPropertyName("carbs")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public double? Carbs { get; set; }
 
     private double? _insulin;
@@ -100,7 +102,7 @@ public class Treatment : ProcessableDocumentBase
     public string? Units { get; set; }
 
     /// <summary>
-    /// Gets or sets the time in milliseconds since the Unix epoch
+    /// Gets or sets the time in milliseconds since the Unix epoch.
     /// </summary>
     [JsonPropertyName("mills")]
     public override long Mills
@@ -153,9 +155,11 @@ public class Treatment : ProcessableDocumentBase
 
     /// <summary>
     /// Gets or sets the treatment duration in minutes.
-    /// Calculates from Insulin / Rate if null.
+    /// Calculates from Insulin / Rate if null, defaults to 0.
+    /// Note: Nightscout V1 always includes this field (defaults to 0).
     /// </summary>
     [JsonPropertyName("duration")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public double? Duration
     {
         get
@@ -171,7 +175,8 @@ public class Treatment : ProcessableDocumentBase
             {
                 return (i.Value / r.Value) * 60.0;
             }
-            return null;
+            // Nightscout returns 0 for duration when not set
+            return 0;
         }
         set => _duration = value;
     }
@@ -203,10 +208,12 @@ public class Treatment : ProcessableDocumentBase
     public string? Notes { get; set; }
 
     /// <summary>
-    /// Gets or sets who entered the treatment
+    /// Gets or sets who entered the treatment.
+    /// Note: Nightscout V1 always includes this field even when null.
     /// </summary>
     [JsonPropertyName("enteredBy")]
     [Sanitizable]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public string? EnteredBy { get; set; }
 
     /// <summary>
@@ -246,9 +253,11 @@ public class Treatment : ProcessableDocumentBase
     public int? CarbTime { get; set; }
 
     /// <summary>
-    /// Gets or sets the bolus calculator values
+    /// Gets or sets the bolus calculator values.
+    /// Note: Nightscout V1 API does not include boluscalc when empty.
     /// </summary>
     [JsonPropertyName("boluscalc")]
+    [NocturneOnly]
     public Dictionary<string, object>? BolusCalc { get; set; }
 
     /// <summary>
@@ -561,8 +570,10 @@ public class Treatment : ProcessableDocumentBase
     /// <summary>
     /// Gets or sets the insulin amount delivered in units.
     /// Returns Insulin if this is null.
+    /// Note: Nightscout V1 API does not include amount in treatment responses.
     /// </summary>
     [JsonPropertyName("amount")]
+    [NocturneOnly]
     public double? Amount
     {
         get => _amount ?? Insulin;

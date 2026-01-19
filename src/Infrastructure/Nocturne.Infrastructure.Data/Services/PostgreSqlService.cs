@@ -291,8 +291,26 @@ public class PostgreSqlService : IPostgreSqlService
     )
     {
         _logger.LogDebug("Bulk deleting treatments with query: {FindQuery}", findQuery);
-        // For now, treat findQuery as an eventType filter - this could be expanded later
-        return await _treatmentRepository.DeleteTreatmentsAsync(findQuery, cancellationToken);
+
+        // Parse eventType from the find query (supports find[eventType]=Value format)
+        string? eventType = null;
+        if (!string.IsNullOrEmpty(findQuery))
+        {
+            // Handle URL-encoded brackets: find%5BeventType%5D=Value or find[eventType]=Value
+            var decodedQuery = System.Web.HttpUtility.UrlDecode(findQuery);
+            var match = System.Text.RegularExpressions.Regex.Match(
+                decodedQuery,
+                @"find\[eventType\]=([^&]+)",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (match.Success)
+            {
+                eventType = match.Groups[1].Value;
+                _logger.LogDebug("Parsed eventType from find query: {EventType}", eventType);
+            }
+        }
+
+        return await _treatmentRepository.DeleteTreatmentsAsync(eventType, cancellationToken);
     }
 
     /// <inheritdoc />

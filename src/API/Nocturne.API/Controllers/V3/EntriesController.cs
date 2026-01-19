@@ -62,9 +62,6 @@ public class EntriesController : BaseV3Controller<Entry>
 
             var entriesList = entries.ToList();
 
-            // Get total count for pagination (approximation for performance)
-            var totalCount = await GetTotalCountAsync(type, findQuery, cancellationToken);
-
             // Check for conditional requests (304 Not Modified)
             var lastModified = GetLastModified(entriesList);
             var etag = GenerateETag(entriesList);
@@ -74,15 +71,13 @@ public class EntriesController : BaseV3Controller<Entry>
                 return StatusCode(304);
             }
 
-            // Create V3 response
-            var response = CreateV3CollectionResponse(entriesList, parameters, totalCount);
-
             _logger.LogDebug(
                 "Successfully returned {Count} entries with V3 format",
                 entriesList.Count
             );
 
-            return Ok(response);
+            // Return Nightscout V3-compatible response: {"status": 200, "result": [...]}
+            return CreateV3SuccessResponse(entriesList);
         }
         catch (ArgumentException ex)
         {
@@ -132,7 +127,8 @@ public class EntriesController : BaseV3Controller<Entry>
             Response.Headers["ETag"] = $"\"{etag}\"";
             Response.Headers["Cache-Control"] = "public, max-age=60";
 
-            return Ok(entry);
+            // Return Nightscout V3-compatible response: {"status": 200, "result": entry}
+            return CreateV3SuccessResponse(entry);
         }
         catch (Exception ex)
         {

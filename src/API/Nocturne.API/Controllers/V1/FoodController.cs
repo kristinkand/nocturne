@@ -307,7 +307,8 @@ public class FoodController : ControllerBase
             // Set response headers
             Response.Headers["Location"] = $"/api/v1/food";
 
-            return CreatedAtAction(nameof(GetFood), new { }, resultArray);
+            // Nightscout returns 200 OK for POST, not 201 Created
+            return Ok(resultArray);
         }
         catch (JsonException ex)
         {

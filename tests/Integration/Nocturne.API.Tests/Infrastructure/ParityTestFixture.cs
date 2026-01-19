@@ -139,6 +139,8 @@ public class ParityTestFixture : IAsyncLifetime
                 };
                 _nightscoutV3Client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", NightscoutContainer.JwtToken);
+                // Nightscout returns tab-separated text by default; we need JSON for parity tests
+                _nightscoutV3Client.DefaultRequestHeaders.Add("Accept", "application/json");
             }
 
             // Start PostgreSQL for Nocturne
@@ -200,6 +202,8 @@ public class ParityTestFixture : IAsyncLifetime
                 });
 
             NocturneClient = _nocturneFactory.CreateClient();
+            // Set Accept header to match Nightscout client behavior for consistent parity testing
+            NocturneClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             // Create DbContext for direct database operations
             var options = new DbContextOptionsBuilder<NocturneDbContext>()
@@ -235,9 +239,11 @@ public class ParityTestFixture : IAsyncLifetime
 }
 
 /// <summary>
-/// Collection definition for parity tests to share the fixture
+/// Collection definition for parity tests to share the fixture.
+/// DisableParallelization ensures tests run sequentially to avoid data contamination
+/// since they share the same Nightscout and PostgreSQL instances.
 /// </summary>
-[CollectionDefinition("Parity")]
+[CollectionDefinition("Parity", DisableParallelization = true)]
 public class ParityTestCollection : ICollectionFixture<ParityTestFixture>
 {
 }

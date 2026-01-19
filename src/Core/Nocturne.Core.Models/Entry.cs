@@ -18,6 +18,7 @@ public class Entry : ProcessableDocumentBase
     /// <summary>
     /// Gets or sets the time in milliseconds since the Unix epoch
     /// If not set but DateString is available, will be calculated from DateString
+    /// Nightscout returns both "date" and "mills" on GET requests (same value).
     /// </summary>
     [JsonPropertyName("mills")]
     public override long Mills
@@ -48,12 +49,10 @@ public class Entry : ProcessableDocumentBase
     private long _mills;
 
     /// <summary>
-    /// Gets or sets the date and time when this glucose reading was taken
-    /// If not set but Mills or DateString is available, will be calculated
+    /// Gets or sets the date and time when this glucose reading was taken.
+    /// If not set but Mills or DateString is available, will be calculated.
     /// </summary>
     [JsonIgnore]
-    [JsonPropertyName("date")]
-    [JsonConverter(typeof(JsonConverters.UnixTimestampOrDateTimeConverter))]
     public DateTime? Date
     {
         get
@@ -83,6 +82,13 @@ public class Entry : ProcessableDocumentBase
         set => _date = value;
     }
     private DateTime? _date;
+
+    /// <summary>
+    /// Gets the date as Unix milliseconds for JSON serialization.
+    /// Nightscout returns both "date" (Unix ms) and "mills" - this is the "date" field.
+    /// </summary>
+    [JsonPropertyName("date")]
+    public long DateAsMillis => Mills;
 
     /// <summary>
     /// Gets or sets the date and time as an ISO 8601 string
@@ -228,10 +234,16 @@ public class Entry : ProcessableDocumentBase
     public object? Scaled { get; set; }
 
     /// <summary>
-    /// Gets or sets the system time when the entry was processed
+    /// Gets or sets the system time when the entry was processed.
+    /// Defaults to DateString for Nightscout compatibility.
     /// </summary>
     [JsonPropertyName("sysTime")]
-    public string? SysTime { get; set; }
+    public string? SysTime
+    {
+        get => _sysTime ?? DateString;
+        set => _sysTime = value;
+    }
+    private string? _sysTime;
 
     /// <summary>
     /// Gets or sets UTC offset information
@@ -246,13 +258,15 @@ public class Entry : ProcessableDocumentBase
     public int? Noise { get; set; }
 
     /// <summary>
-    /// Gets or sets whether this entry has been filtered
+    /// Gets or sets whether this entry has been filtered.
+    /// Nightscout only includes this field when it has a value.
     /// </summary>
     [JsonPropertyName("filtered")]
     public double? Filtered { get; set; }
 
     /// <summary>
-    /// Gets or sets the unfiltered value
+    /// Gets or sets the unfiltered value.
+    /// Nightscout only includes this field when it has a value.
     /// </summary>
     [JsonPropertyName("unfiltered")]
     public double? Unfiltered { get; set; }

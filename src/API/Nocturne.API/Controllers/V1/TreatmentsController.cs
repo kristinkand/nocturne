@@ -87,17 +87,18 @@ public class TreatmentsController : ControllerBase
 
         try
         {
-            // Validate parameters
-            if (count < 0)
+            // Handle count parameter for Nightscout compatibility:
+            // - 0 or negative: return empty array (Nightscout behavior)
+            if (count <= 0)
             {
-                _logger.LogWarning("Invalid count parameter: {Count}", count);
-                return BadRequest($"Count must be non-negative, got {count}");
+                _logger.LogDebug("Returning empty array for count={Count}", count);
+                return Ok(Array.Empty<Treatment>());
             }
 
+            // Validate skip parameter (negative is not valid)
             if (skip < 0)
             {
-                _logger.LogWarning("Invalid skip parameter: {Skip}", skip);
-                return BadRequest($"Skip must be non-negative, got {skip}");
+                skip = 0; // Normalize to 0 for Nightscout compatibility
             }
 
             var treatments = await _treatmentService.GetTreatmentsAsync(
@@ -456,7 +457,15 @@ public class TreatmentsController : ControllerBase
             _logger.LogDebug("Successfully deleted {Count} treatments", deletedCount);
 
             // Return result in the same format as Nightscout legacy API
-            return Ok(new { n = deletedCount });
+            // Nightscout returns MongoDB driver result which includes result object, n, and ok
+            // Use Dictionary to ensure 'n' is always serialized even when 0 (WhenWritingDefault would omit it)
+            var response = new Dictionary<string, object>
+            {
+                ["result"] = new Dictionary<string, object> { ["n"] = deletedCount, ["ok"] = 1 },
+                ["n"] = deletedCount,
+                ["ok"] = 1
+            };
+            return Ok(response);
         }
         catch (Exception ex)
         {

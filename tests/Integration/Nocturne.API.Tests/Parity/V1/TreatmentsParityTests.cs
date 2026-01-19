@@ -13,6 +13,13 @@ public class TreatmentsParityTests : ParityTestBase
     public TreatmentsParityTests(ParityTestFixture fixture, ITestOutputHelper output)
         : base(fixture, output) { }
 
+    protected override ComparisonOptions GetComparisonOptions()
+    {
+        return ComparisonOptions.Default.WithIgnoredFields(
+            "connection" // MongoDB driver internal state leaked in Nightscout delete responses
+        );
+    }
+
     #region GET /api/v1/treatments
 
     [Fact]
@@ -68,15 +75,18 @@ public class TreatmentsParityTests : ParityTestBase
     [Fact]
     public async Task GetTreatments_WithEventTypeFilter_ReturnsSameShape()
     {
+        // Note: Nightscout deduplicates by created_at + eventType, so each entry needs a unique timestamp
+        // Also note: Temp Basal treatments go through StateSpan handling in Nocturne, so use regular treatments
+        var baseTime = TestTimeProvider.GetTestTime();
         var treatments = new[]
         {
-            TestDataFactory.CreateTreatment(eventType: "Temp Basal"),
-            TestDataFactory.CreateTreatment(eventType: "Correction Bolus"),
-            TestDataFactory.CreateTreatment(eventType: "Temp Basal")
+            TestDataFactory.CreateTreatment(eventType: "Meal Bolus", timestamp: baseTime),
+            TestDataFactory.CreateTreatment(eventType: "Correction Bolus", timestamp: baseTime.AddMinutes(-5)),
+            TestDataFactory.CreateTreatment(eventType: "Meal Bolus", timestamp: baseTime.AddMinutes(-10))
         };
         await SeedTreatmentsAsync(treatments);
 
-        await AssertGetParityAsync("/api/v1/treatments?find[eventType]=Temp%20Basal");
+        await AssertGetParityAsync("/api/v1/treatments?find[eventType]=Meal%20Bolus");
     }
 
     #endregion
@@ -149,10 +159,12 @@ public class TreatmentsParityTests : ParityTestBase
     [Fact]
     public async Task DeleteTreatments_Bulk_ReturnsSameShape()
     {
+        // Note: Nightscout deduplicates by created_at + eventType, so each entry needs a unique timestamp
+        var baseTime = TestTimeProvider.GetTestTime();
         var treatments = new[]
         {
-            TestDataFactory.CreateTreatment(eventType: "Note"),
-            TestDataFactory.CreateTreatment(eventType: "Note")
+            TestDataFactory.CreateTreatment(eventType: "Note", timestamp: baseTime),
+            TestDataFactory.CreateTreatment(eventType: "Note", timestamp: baseTime.AddMinutes(-5))
         };
         await SeedTreatmentsAsync(treatments);
 

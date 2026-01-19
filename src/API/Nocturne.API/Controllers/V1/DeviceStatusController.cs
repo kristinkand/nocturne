@@ -58,21 +58,20 @@ public class DeviceStatusController : ControllerBase
 
         try
         {
-            // Validate parameters
-            if (count < 0)
+            // Handle count parameter for Nightscout compatibility:
+            // - 0 or negative: return empty array (Nightscout behavior)
+            if (count <= 0)
             {
-                _logger.LogWarning(
-                    "Invalid count parameter: {Count}. Must be non-negative",
-                    count
-                );
-                return BadRequest($"Count must be non-negative, got {count}");
+                _logger.LogDebug("Returning empty array for count={Count}", count);
+                return Ok(Array.Empty<DeviceStatus>());
             }
 
+            // Normalize skip parameter (negative is not valid)
             if (skip < 0)
             {
-                _logger.LogWarning("Invalid skip parameter: {Skip}. Must be >= 0", skip);
-                return BadRequest($"Skip must be >= 0, got {skip}");
+                skip = 0; // Normalize to 0 for Nightscout compatibility
             }
+
             var deviceStatusEntries = await _deviceStatusService.GetDeviceStatusAsync(
                 count: count,
                 skip: skip,
@@ -118,32 +117,54 @@ public class DeviceStatusController : ControllerBase
     /// <summary>
     /// Create new device status entries
     /// </summary>
-    /// <param name="deviceStatusEntries">Device status entries to create</param>
+    /// <param name="body">Device status entry or array of entries to create (accepts both single object and array)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created device status entries with assigned IDs</returns>
     [HttpPost]
     [NightscoutEndpoint("/api/v1/devicestatus")]
-    [ProducesResponseType(typeof(DeviceStatus[]), 201)]
+    [ProducesResponseType(typeof(DeviceStatus[]), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
     public async Task<ActionResult<DeviceStatus[]>> CreateDeviceStatus(
-        [FromBody] DeviceStatus[] deviceStatusEntries,
+        [FromBody] JsonElement body,
         CancellationToken cancellationToken = default
     )
     {
         _logger.LogDebug(
-            "Device status creation endpoint requested with {Count} entries from {RemoteIpAddress}",
-            deviceStatusEntries?.Length ?? 0,
+            "Device status creation endpoint requested from {RemoteIpAddress}",
             HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown"
         );
 
         try
         {
-            if (deviceStatusEntries == null || !deviceStatusEntries.Any())
+            DeviceStatus[] deviceStatusEntries;
+
+            // Handle both single object and array of device status entries (Nightscout compatibility)
+            if (body.ValueKind == JsonValueKind.Array)
+            {
+                deviceStatusEntries = JsonSerializer.Deserialize<DeviceStatus[]>(body.GetRawText())
+                    ?? Array.Empty<DeviceStatus>();
+            }
+            else if (body.ValueKind == JsonValueKind.Object)
+            {
+                var singleEntry = JsonSerializer.Deserialize<DeviceStatus>(body.GetRawText());
+                deviceStatusEntries = singleEntry != null
+                    ? new[] { singleEntry }
+                    : Array.Empty<DeviceStatus>();
+            }
+            else
+            {
+                _logger.LogWarning("Invalid JSON format for device status");
+                return BadRequest("Invalid JSON format. Expected object or array of device status entries.");
+            }
+
+            if (deviceStatusEntries.Length == 0)
             {
                 _logger.LogWarning("Device status creation requested with no entries");
                 return BadRequest("At least one device status entry is required");
-            } // Validate entries
+            }
+
+            // Validate entries - device name is required
             for (int i = 0; i < deviceStatusEntries.Length; i++)
             {
                 var deviceStatus = deviceStatusEntries[i];
@@ -155,7 +176,9 @@ public class DeviceStatusController : ControllerBase
                     );
                     return BadRequest($"Device status entry at index {i} must have a device name");
                 }
-            } // Process and create entries using domain service (which handles validation, processing, and WebSocket broadcasting)
+            }
+
+            // Process and create entries using domain service (which handles validation, processing, and WebSocket broadcasting)
             var createdEntries = await _deviceStatusService.CreateDeviceStatusAsync(
                 deviceStatusEntries,
                 cancellationToken
@@ -167,11 +190,13 @@ public class DeviceStatusController : ControllerBase
                 createdArray.Length
             );
 
-            return CreatedAtAction(
-                nameof(GetDeviceStatus),
-                new { count = createdArray.Length },
-                createdArray
-            );
+            // Nightscout returns 200 OK for POST, not 201 Created
+            return Ok(createdArray);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid JSON in create device status request");
+            return BadRequest("Invalid JSON format");
         }
         catch (Exception ex)
         {

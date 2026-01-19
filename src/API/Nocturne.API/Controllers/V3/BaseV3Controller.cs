@@ -193,29 +193,34 @@ public abstract class BaseV3Controller<T> : ControllerBase
     }
 
     /// <summary>
-    /// Create a standardized V3 error response
+    /// Create a standardized V3 error response (Nightscout compatible)
+    /// Nightscout V3 API returns simple {"status": STATUS_CODE} for errors
     /// </summary>
     /// <param name="statusCode">HTTP status code</param>
-    /// <param name="message">Error message</param>
-    /// <param name="details">Additional error details</param>
-    /// <returns>Standardized error response</returns>
+    /// <param name="message">Error message (unused in Nightscout format, kept for logging)</param>
+    /// <param name="details">Additional error details (unused in Nightscout format)</param>
+    /// <returns>Nightscout-compatible error response</returns>
     protected ActionResult CreateV3ErrorResponse(
         int statusCode,
         string message,
         object? details = null
     )
     {
-        var error = new V3ErrorResponse
-        {
-            Status = "error",
-            Code = statusCode.ToString(),
-            Message = message,
-            Timestamp = DateTimeOffset.UtcNow,
-            Path = Request.Path,
-            Details = details as Dictionary<string, object>,
-        };
+        _logger.LogDebug("V3 error response: {StatusCode} - {Message}", statusCode, message);
 
-        return StatusCode(statusCode, error);
+        // Nightscout V3 API returns simple {"status": STATUS_CODE} for errors
+        return StatusCode(statusCode, new { status = statusCode });
+    }
+
+    /// <summary>
+    /// Create a Nightscout V3-compatible success response
+    /// Nightscout V3 API returns {"status": 200, "result": DATA} for success
+    /// </summary>
+    /// <param name="result">Result data</param>
+    /// <returns>Nightscout-compatible success response</returns>
+    protected ActionResult CreateV3SuccessResponse(object result)
+    {
+        return Ok(new { status = 200, result });
     }
 
     /// <summary>

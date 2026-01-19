@@ -107,6 +107,8 @@ public class NightscoutContainer : IAsyncDisposable
             Timeout = TimeSpan.FromSeconds(30)
         };
         _httpClient.DefaultRequestHeaders.Add("api-secret", ApiSecretHash);
+        // Nightscout returns tab-separated text by default; we need JSON for parity tests
+        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
         // Fetch JWT token for V3 API authentication
         await FetchJwtTokenAsync(cancellationToken);
@@ -188,20 +190,69 @@ public class NightscoutContainer : IAsyncDisposable
     {
         if (_httpClient == null) return;
 
-        var collections = new[] { "entries", "treatments", "devicestatus", "food", "profile" };
+        // Create a JWT-authenticated client for V3 cleanup operations
+        using var v3Client = new HttpClient
+        {
+            BaseAddress = new Uri(BaseUrl!),
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+        v3Client.DefaultRequestHeaders.Add("Accept", "application/json");
+        if (!string.IsNullOrEmpty(JwtToken))
+        {
+            v3Client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtToken);
+        }
 
-        foreach (var collection in collections)
+        // Use V3 API for cleanup - it supports deletion by identifier
+        var v3Collections = new[] { "entries", "treatments", "devicestatus", "food" };
+        foreach (var collection in v3Collections)
         {
             try
             {
-                // Nightscout bulk delete with find query
-                await _httpClient.DeleteAsync(
-                    $"/api/v1/{collection}?find[created_at][$exists]=true",
-                    cancellationToken);
+                // Keep fetching and deleting until no more documents
+                int deleted;
+                do
+                {
+                    deleted = 0;
+                    var getResponse = await v3Client.GetAsync(
+                        $"/api/v3/{collection}?limit=100",
+                        cancellationToken);
+
+                    if (!getResponse.IsSuccessStatusCode) break;
+
+                    var content = await getResponse.Content.ReadAsStringAsync(cancellationToken);
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+
+                    if (doc.RootElement.TryGetProperty("result", out var results))
+                    {
+                        foreach (var item in results.EnumerateArray())
+                        {
+                            // Try both 'identifier' and '_id' field names
+                            string? identifier = null;
+                            if (item.TryGetProperty("identifier", out var idProp))
+                            {
+                                identifier = idProp.GetString();
+                            }
+                            else if (item.TryGetProperty("_id", out var mongoIdProp))
+                            {
+                                identifier = mongoIdProp.GetString();
+                            }
+
+                            if (!string.IsNullOrEmpty(identifier))
+                            {
+                                var deleteResponse = await v3Client.DeleteAsync(
+                                    $"/api/v3/{collection}/{identifier}?permanent=true",
+                                    cancellationToken);
+                                if (deleteResponse.IsSuccessStatusCode)
+                                    deleted++;
+                            }
+                        }
+                    }
+                } while (deleted > 0);
             }
             catch
             {
-                // Ignore cleanup errors - collection might be empty
+                // Ignore cleanup errors
             }
         }
     }

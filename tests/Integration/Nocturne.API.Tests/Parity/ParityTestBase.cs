@@ -85,21 +85,24 @@ public abstract class ParityTestBase : IAsyncLifetime
     {
         foreach (var entry in entries)
         {
-            // Convert to anonymous object for Nightscout (it expects specific field names)
-            var nsEntry = new
+            // Convert to dictionary for Nightscout - only include non-null values
+            // This matches real-world behavior where clients only send fields they have
+            var nsEntry = new Dictionary<string, object?>
             {
-                type = entry.Type ?? "sgv",
-                sgv = entry.Sgv,
-                direction = entry.Direction,
-                device = entry.Device,
-                date = entry.Mills,
-                dateString = entry.DateString,
-                noise = entry.Noise,
-                filtered = entry.Filtered,
-                unfiltered = entry.Unfiltered,
-                rssi = entry.Rssi,
-                delta = entry.Delta
+                ["type"] = entry.Type ?? "sgv",
+                ["sgv"] = entry.Sgv,
+                ["direction"] = entry.Direction,
+                ["device"] = entry.Device,
+                ["date"] = entry.Mills,
+                ["dateString"] = entry.DateString,
             };
+
+            // Only include optional fields if they have values
+            if (entry.Noise.HasValue) nsEntry["noise"] = entry.Noise.Value;
+            if (entry.Filtered.HasValue) nsEntry["filtered"] = entry.Filtered.Value;
+            if (entry.Unfiltered.HasValue) nsEntry["unfiltered"] = entry.Unfiltered.Value;
+            if (entry.Rssi.HasValue) nsEntry["rssi"] = entry.Rssi.Value;
+            if (entry.Delta.HasValue) nsEntry["delta"] = entry.Delta.Value;
 
             var nsResponse = await NightscoutClient.PostAsJsonAsync("/api/v1/entries", new[] { nsEntry });
             nsResponse.EnsureSuccessStatusCode();
@@ -110,29 +113,35 @@ public abstract class ParityTestBase : IAsyncLifetime
     }
 
     /// <summary>
-    /// Seeds treatments to both systems
+    /// Seeds treatments to both systems.
+    /// Uses a dictionary to avoid sending default values that might affect behavior.
     /// </summary>
     protected async Task SeedTreatmentsAsync(params Treatment[] treatments)
     {
         foreach (var treatment in treatments)
         {
-            var nsTreatment = new
+            // Convert to dictionary for both systems - only include non-null values
+            // This matches real-world behavior where clients only send fields they have
+            var treatmentData = new Dictionary<string, object?>
             {
-                eventType = treatment.EventType,
-                created_at = treatment.CreatedAt,
-                insulin = treatment.Insulin,
-                carbs = treatment.Carbs,
-                notes = treatment.Notes,
-                enteredBy = treatment.EnteredBy,
-                glucose = treatment.Glucose,
-                glucoseType = treatment.GlucoseType,
-                duration = treatment.Duration
+                ["eventType"] = treatment.EventType,
+                ["created_at"] = treatment.CreatedAt,
             };
 
-            var nsResponse = await NightscoutClient.PostAsJsonAsync("/api/v1/treatments", nsTreatment);
+            // Only include optional fields if they have values
+            if (treatment.Insulin.HasValue) treatmentData["insulin"] = treatment.Insulin.Value;
+            if (treatment.Carbs.HasValue) treatmentData["carbs"] = treatment.Carbs.Value;
+            if (!string.IsNullOrEmpty(treatment.Notes)) treatmentData["notes"] = treatment.Notes;
+            if (!string.IsNullOrEmpty(treatment.EnteredBy)) treatmentData["enteredBy"] = treatment.EnteredBy;
+            if (treatment.Glucose.HasValue) treatmentData["glucose"] = treatment.Glucose.Value;
+            if (!string.IsNullOrEmpty(treatment.GlucoseType)) treatmentData["glucoseType"] = treatment.GlucoseType;
+            // Only include duration if non-zero (0 is default and means not explicitly set for seeding purposes)
+            if (treatment.Duration > 0) treatmentData["duration"] = treatment.Duration.Value;
+
+            var nsResponse = await NightscoutClient.PostAsJsonAsync("/api/v1/treatments", treatmentData);
             nsResponse.EnsureSuccessStatusCode();
 
-            var nocResponse = await NocturneClient.PostAsJsonAsync("/api/v1/treatments", treatment);
+            var nocResponse = await NocturneClient.PostAsJsonAsync("/api/v1/treatments", treatmentData);
             nocResponse.EnsureSuccessStatusCode();
         }
     }

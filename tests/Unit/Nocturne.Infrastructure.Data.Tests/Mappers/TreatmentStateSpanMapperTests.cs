@@ -195,7 +195,7 @@ public class TreatmentStateSpanMapperTests
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void ToStateSpan_TreatmentWithMinimalMetadata_HasNullMetadata()
+    public void ToStateSpan_TreatmentWithMinimalMetadata_HasOnlyUtcOffsetMetadata()
     {
         // Arrange
         var treatment = new Treatment
@@ -213,9 +213,12 @@ public class TreatmentStateSpanMapperTests
         // Act
         var result = TreatmentStateSpanMapper.ToStateSpan(treatment);
 
-        // Assert
+        // Assert - utcOffset is always stored to preserve round-trip fidelity
         result.Should().NotBeNull();
-        result!.Metadata.Should().BeNull();
+        result!.Metadata.Should().NotBeNull();
+        result.Metadata.Should().ContainKey("utcOffset");
+        result.Metadata!["utcOffset"].Should().Be(0);
+        result.Metadata.Should().HaveCount(1); // Only utcOffset should be present
     }
 
     #endregion
