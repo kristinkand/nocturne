@@ -257,7 +257,7 @@ jobs:
 
           RUN npm install -g pnpm@9
 
-          # Copy workspace files needed for dependency installation
+          # Copy workspace structure
           COPY --from=builder /app/package.json ./
           COPY --from=builder /app/pnpm-lock.yaml ./
           COPY --from=builder /app/pnpm-workspace.yaml ./
@@ -265,8 +265,9 @@ jobs:
           COPY --from=builder /app/packages/bridge/package.json ./packages/bridge/
           COPY --from=builder /app/packages/bridge/dist ./packages/bridge/dist
 
-          # Install production dependencies only
-          RUN pnpm install --prod --frozen-lockfile
+          # Install production dependencies with shamefully-hoist to create flat structure
+          # This avoids symlink resolution issues in Docker
+          RUN pnpm install --prod --frozen-lockfile --shamefully-hoist
 
           # Copy built artifacts
           COPY --from=builder /app/packages/app/build ./build
