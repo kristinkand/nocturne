@@ -70,11 +70,11 @@ public abstract class BaseV3Controller<T> : ControllerBase
     /// <param name="data">Data to filter</param>
     /// <param name="fields">Fields to include</param>
     /// <returns>Filtered data with only selected fields</returns>
-    protected IEnumerable<object> ApplyFieldSelection(IEnumerable<T> data, string[]? fields)
+    protected IEnumerable<object> ApplyFieldSelection<TItem>(IEnumerable<TItem> data, string[]? fields)
     {
         if (fields == null || fields.Length == 0)
         {
-            return data;
+            return data.Cast<object>();
         }
 
         return data.Select(item =>
@@ -100,7 +100,7 @@ public abstract class BaseV3Controller<T> : ControllerBase
     /// </summary>
     /// <param name="data">Data to generate ETag for</param>
     /// <returns>ETag value</returns>
-    protected string GenerateETag(IEnumerable<T> data)
+    protected string GenerateETag<TItem>(IEnumerable<TItem> data)
     {
         var json = JsonSerializer.Serialize(data);
         var hash = System.Security.Cryptography.SHA256.HashData(
@@ -115,8 +115,8 @@ public abstract class BaseV3Controller<T> : ControllerBase
     /// <param name="data">Response data</param>
     /// <param name="parameters">Query parameters</param>
     /// <param name="totalCount">Total count of items (for pagination)</param>
-    protected void SetV3ResponseHeaders(
-        IEnumerable<T> data,
+    protected void SetV3ResponseHeaders<TItem>(
+        IEnumerable<TItem> data,
         V3QueryParameters parameters,
         long totalCount
     )
@@ -208,8 +208,8 @@ public abstract class BaseV3Controller<T> : ControllerBase
     {
         _logger.LogDebug("V3 error response: {StatusCode} - {Message}", statusCode, message);
 
-        // Nightscout V3 API returns simple {"status": STATUS_CODE} for errors
-        return StatusCode(statusCode, new { status = statusCode });
+        // Nightscout V3 API returns {"status": STATUS_CODE, "message": "..."} for errors
+        return StatusCode(statusCode, new { status = statusCode, message });
     }
 
     /// <summary>
@@ -230,8 +230,8 @@ public abstract class BaseV3Controller<T> : ControllerBase
     /// <param name="parameters">Query parameters</param>
     /// <param name="totalCount">Total count for pagination</param>
     /// <returns>Standardized success response</returns>
-    protected ActionResult<V3CollectionResponse<object>> CreateV3CollectionResponse(
-        IEnumerable<T> data,
+    protected IActionResult CreateV3CollectionResponse<TItem>(
+        IEnumerable<TItem> data,
         V3QueryParameters parameters,
         long totalCount
     )
@@ -258,7 +258,12 @@ public abstract class BaseV3Controller<T> : ControllerBase
         // Set response headers
         SetV3ResponseHeaders(data, parameters, totalCount);
 
-        return Ok(response);
+        // Nightscout V3 API returns {"status": 200, "result": [...]}
+        return Ok(new Dictionary<string, object>
+        {
+            ["status"] = 200,
+            ["result"] = responseData.ToList()
+        });
     }
 
     #region Parameter Parsing Helpers
@@ -375,10 +380,16 @@ public abstract class BaseV3Controller<T> : ControllerBase
     protected bool ExtractSortDirection(string? sort)
     {
         if (string.IsNullOrEmpty(sort))
-            return false;
+            return true; // Nightscout defaults to Ascending (Oldest first)
 
-        // Check if sort starts with '-' (descending) or '+' (ascending)
-        return sort.StartsWith('+') || sort.StartsWith("asc", StringComparison.OrdinalIgnoreCase);
+        // Check if sort starts with '-' (descending) or 'desc' (descending)
+        if (sort.StartsWith('-') || sort.StartsWith("desc", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Default to ascending (true) if just field name is provided
+        return true;
     }
 
     /// <summary>

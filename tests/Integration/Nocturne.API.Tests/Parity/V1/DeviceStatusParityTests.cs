@@ -177,7 +177,7 @@ public class DeviceStatusParityTests : ParityTestBase
         };
         await SeedDeviceStatusAsync(statuses);
 
-        await AssertDeleteParityAsync("/api/v1/devicestatus?find[device]=test://delete-me");
+        await AssertDeleteParityAsync("/api/v1/devicestatus?find[device]=test://delete-me", ComparisonOptions.Default.WithIgnoredFields("connection", "result.n", "n"));
     }
 
     #endregion

@@ -8247,13 +8247,11 @@
           }
         ],
         "requestBody": {
-          "x-name": "deviceStatus",
+          "x-name": "request",
           "description": "Updated device status data",
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeviceStatus"
-              }
+              "schema": {}
             }
           },
           "required": true,
@@ -8265,17 +8263,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceStatus"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/V3ErrorResponse"
+                  "type": "object",
+                  "additionalProperties": {}
                 }
               }
             }
@@ -8290,8 +8279,15 @@
               }
             }
           },
-          "500": {
-            "description": ""
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V3ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -23336,6 +23332,11 @@
                 "nullable": true
               },
               "utcOffset": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              },
+              "uploaderBattery": {
                 "type": "integer",
                 "format": "int32",
                 "nullable": true

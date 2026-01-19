@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Entities;
+using System.Text.Json;
 using Nocturne.Infrastructure.Data.Mappers;
 
 namespace Nocturne.Infrastructure.Data.Repositories;
@@ -88,19 +89,45 @@ public class DeviceStatusRepository
         // Note: This is a simplified implementation. Full MongoDB query parsing would be more complex.
         if (!string.IsNullOrEmpty(findQuery))
         {
-            // Basic device filter support - could be extended for more complex queries
-            if (findQuery.Contains("device"))
+            string? deviceValue = null;
+
+            // Try to parse as JSON first (used by V1 and V3 controllers)
+            if (findQuery.TrimStart().StartsWith("{"))
             {
-                // Extract device value from query string - simplified parsing
-                var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                    findQuery,
-                    @"device[^=]*=([^&]*)"
-                );
-                if (deviceMatch.Success)
+                try
                 {
-                    var deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    query = query.Where(ds => ds.Device.Contains(deviceValue));
+                    using var doc = JsonDocument.Parse(findQuery);
+                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
+                    {
+                        deviceValue = deviceProp.GetString();
+                    }
                 }
+                catch
+                {
+                    // Ignore JSON parse error, fall back to regex
+                }
+            }
+
+            if (deviceValue == null)
+            {
+                // Basic device filter support - could be extended for more complex queries
+                if (findQuery.Contains("device"))
+                {
+                    // Extract device value from query string - simplified parsing
+                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
+                        findQuery,
+                        @"device[^=]*=([^&]*)"
+                    );
+                    if (deviceMatch.Success)
+                    {
+                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(deviceValue))
+            {
+                query = query.Where(ds => ds.Device.Contains(deviceValue));
             }
         }
 
@@ -238,20 +265,47 @@ public class DeviceStatusRepository
         var query = _context.DeviceStatuses.AsQueryable();
 
         // Apply find query filtering if specified
+        // Apply find query filtering if specified
         if (!string.IsNullOrEmpty(findQuery))
         {
-            // Basic device filter support - could be extended for more complex queries
-            if (findQuery.Contains("device"))
+            string? deviceValue = null;
+
+            // Try to parse as JSON first (used by V1 and V3 controllers)
+            if (findQuery.TrimStart().StartsWith("{"))
             {
-                var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                    findQuery,
-                    @"device[^=]*=([^&]*)"
-                );
-                if (deviceMatch.Success)
+                try
                 {
-                    var deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    query = query.Where(ds => ds.Device.Contains(deviceValue));
+                    using var doc = JsonDocument.Parse(findQuery);
+                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
+                    {
+                        deviceValue = deviceProp.GetString();
+                    }
                 }
+                catch
+                {
+                    // Ignore JSON parse error, fall back to regex
+                }
+            }
+
+            if (deviceValue == null)
+            {
+                // Basic device filter support - could be extended for more complex queries
+                if (findQuery.Contains("device"))
+                {
+                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
+                        findQuery,
+                        @"device[^=]*=([^&]*)"
+                    );
+                    if (deviceMatch.Success)
+                    {
+                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(deviceValue))
+            {
+                query = query.Where(ds => ds.Device.Contains(deviceValue));
             }
         }
 
@@ -278,20 +332,47 @@ public class DeviceStatusRepository
         var query = _context.DeviceStatuses.AsQueryable();
 
         // Apply find query filtering if specified
+        // Apply find query filtering if specified
         if (!string.IsNullOrEmpty(findQuery))
         {
-            // Basic device filter support - could be extended for more complex queries
-            if (findQuery.Contains("device"))
+            string? deviceValue = null;
+
+            // Try to parse as JSON first (used by V1 and V3 controllers)
+            if (findQuery.TrimStart().StartsWith("{"))
             {
-                var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                    findQuery,
-                    @"device[^=]*=([^&]*)"
-                );
-                if (deviceMatch.Success)
+                try
                 {
-                    var deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    query = query.Where(ds => ds.Device.Contains(deviceValue));
+                    using var doc = JsonDocument.Parse(findQuery);
+                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
+                    {
+                        deviceValue = deviceProp.GetString();
+                    }
                 }
+                catch
+                {
+                    // Ignore JSON parse error, fall back to regex
+                }
+            }
+
+            if (deviceValue == null)
+            {
+                // Basic device filter support - could be extended for more complex queries
+                if (findQuery.Contains("device"))
+                {
+                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
+                        findQuery,
+                        @"device[^=]*=([^&]*)"
+                    );
+                    if (deviceMatch.Success)
+                    {
+                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(deviceValue))
+            {
+                query = query.Where(ds => ds.Device.Contains(deviceValue));
             }
         }
 

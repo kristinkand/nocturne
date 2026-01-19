@@ -10193,17 +10193,17 @@ export class DeviceStatusClient {
     /**
      * Update a device status record by ID with V3 format
      * @param id Device status ID to update
-     * @param deviceStatus Updated device status data
+     * @param request Updated device status data
      * @return Updated device status record
      */
-    updateDeviceStatus(id: string, deviceStatus: DeviceStatus, signal?: AbortSignal): Promise<DeviceStatus> {
+    updateDeviceStatus(id: string, request: any, signal?: AbortSignal): Promise<{ [key: string]: any; }> {
         let url_ = this.baseUrl + "/api/v3/DeviceStatus/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(deviceStatus);
+        const content_ = JSON.stringify(request);
 
         let options_: RequestInit = {
             body: content_,
@@ -10220,13 +10220,13 @@ export class DeviceStatusClient {
         });
     }
 
-    protected processUpdateDeviceStatus(response: Response): Promise<DeviceStatus> {
+    protected processUpdateDeviceStatus(response: Response): Promise<{ [key: string]: any; }> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceStatus;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as { [key: string]: any; };
             return result200;
             });
         } else if (status === 400) {
@@ -10241,16 +10241,12 @@ export class DeviceStatusClient {
             result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as V3ErrorResponse;
             return throwException("A server side error occurred.", status, _responseText, _headers, result404);
             });
-        } else if (status === 500) {
-            return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
-            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<DeviceStatus>(null as any);
+        return Promise.resolve<{ [key: string]: any; }>(null as any);
     }
 
     /**
@@ -19161,6 +19157,7 @@ export interface DeviceStatus extends ProcessableDocumentBase {
     mills?: number;
     created_at?: string | undefined;
     utcOffset?: number | undefined;
+    uploaderBattery?: number | undefined;
     device?: string;
     isCharging?: boolean | undefined;
     uploader?: UploaderStatus | undefined;

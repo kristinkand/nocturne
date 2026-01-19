@@ -72,7 +72,23 @@ public class DeviceStatusController : ControllerBase
                 skip = 0; // Normalize to 0 for Nightscout compatibility
             }
 
+            // Extract query string for filtering (Nightscout supports find[field]=value syntax)
+            // We need to convert query parameters to a MongoDB-style JSON query string
+            var findDict = new Dictionary<string, object>();
+            foreach (var key in HttpContext.Request.Query.Keys)
+            {
+                if (key.StartsWith("find[") && key.EndsWith("]"))
+                {
+                    var fieldName = key.Substring(5, key.Length - 6);
+                    var value = HttpContext.Request.Query[key].ToString();
+                    findDict[fieldName] = value;
+                }
+            }
+
+            string? findQuery = findDict.Any() ? JsonSerializer.Serialize(findDict) : null;
+
             var deviceStatusEntries = await _deviceStatusService.GetDeviceStatusAsync(
+                find: findQuery,
                 count: count,
                 skip: skip,
                 cancellationToken: cancellationToken
@@ -164,17 +180,13 @@ public class DeviceStatusController : ControllerBase
                 return BadRequest("At least one device status entry is required");
             }
 
-            // Validate entries - device name is required
+            // Validate entries - device name is required (Relaxed for parity with Nightscout V1)
             for (int i = 0; i < deviceStatusEntries.Length; i++)
             {
                 var deviceStatus = deviceStatusEntries[i];
-                if (string.IsNullOrWhiteSpace(deviceStatus.Device))
+                if (deviceStatus.Device == null)
                 {
-                    _logger.LogWarning(
-                        "Device status entry at index {Index} has no device name",
-                        i
-                    );
-                    return BadRequest($"Device status entry at index {i} must have a device name");
+                    deviceStatus.Device = string.Empty;
                 }
             }
 
@@ -294,7 +306,7 @@ public class DeviceStatusController : ControllerBase
             {
                 findQuery = findQuery.Substring(1);
             }
-            var deletedCount = await _deviceStatusService.DeleteDeviceStatusAsync(
+            var deletedCount = await _deviceStatusService.DeleteDeviceStatusEntriesAsync(
                 findQuery,
                 cancellationToken
             );
@@ -305,7 +317,13 @@ public class DeviceStatusController : ControllerBase
             );
 
             // Return response compatible with Nightscout format
-            return Ok(new { n = deletedCount });
+            // Nightscout returns: { result: { n: X, ok: 1 }, n: X, ok: 1 } (plus connection info which we omit)
+            return Ok(new Dictionary<string, object>
+            {
+                ["result"] = new { n = deletedCount, ok = 1 },
+                ["n"] = deletedCount,
+                ["ok"] = 1
+            });
         }
         catch (Exception ex)
         {
