@@ -62,6 +62,66 @@ public class DeviceStatusParityTests : ParityTestBase
         await AssertGetParityAsync("/api/v1/devicestatus?find[device]=loop://iPhone");
     }
 
+    [Fact]
+    public async Task GetDeviceStatus_WithCreatedAtDateRangeFilter_ReturnsSameShape()
+    {
+        // Create device statuses with different timestamps
+        var baseTime = TestTimeProvider.GetTestTime();
+        var statuses = new[]
+        {
+            // Status from 2 days ago - should be outside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://old-device",
+                timestamp: baseTime.AddDays(-2)),
+            // Status from today - should be inside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://new-device",
+                timestamp: baseTime),
+            // Status from 1 day ago - should be inside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://yesterday-device",
+                timestamp: baseTime.AddDays(-1))
+        };
+        await SeedDeviceStatusAsync(statuses);
+
+        // Query for statuses with created_at >= 1.5 days ago
+        var startDate = baseTime.AddDays(-1.5).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        await AssertGetParityAsync($"/api/v1/devicestatus?find[created_at][$gte]={Uri.EscapeDataString(startDate)}");
+    }
+
+    [Fact]
+    public async Task GetDeviceStatus_WithCreatedAtDateRangeFilterGteAndLt_ReturnsSameShape()
+    {
+        // Create device statuses with different timestamps across multiple days
+        var baseTime = TestTimeProvider.GetTestTime();
+        var statuses = new[]
+        {
+            // Status from 3 days ago - should be outside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://very-old-device",
+                timestamp: baseTime.AddDays(-3)),
+            // Status from 2 days ago - should be inside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://target-device-1",
+                timestamp: baseTime.AddDays(-2)),
+            // Status from 1.5 days ago - should be inside the range
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://target-device-2",
+                timestamp: baseTime.AddDays(-1.5)),
+            // Status from today - should be outside the range (too recent)
+            TestDataFactory.CreateDeviceStatus(
+                device: "test://new-device",
+                timestamp: baseTime)
+        };
+        await SeedDeviceStatusAsync(statuses);
+
+        // Query for statuses with created_at >= 2.5 days ago AND created_at < 1 day ago
+        var startDate = baseTime.AddDays(-2.5).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        var endDate = baseTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        await AssertGetParityAsync(
+            $"/api/v1/devicestatus?find[created_at][$gte]={Uri.EscapeDataString(startDate)}&find[created_at][$lt]={Uri.EscapeDataString(endDate)}");
+    }
+
     #endregion
 
     #region GET /api/v1/devicestatus.json

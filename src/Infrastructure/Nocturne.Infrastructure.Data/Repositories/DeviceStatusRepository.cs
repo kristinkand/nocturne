@@ -1,8 +1,7 @@
-using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Entities;
-using System.Text.Json;
 using Nocturne.Infrastructure.Data.Mappers;
 
 namespace Nocturne.Infrastructure.Data.Repositories;
@@ -13,14 +12,49 @@ namespace Nocturne.Infrastructure.Data.Repositories;
 public class DeviceStatusRepository
 {
     private readonly NocturneDbContext _context;
+    private readonly IQueryParser _queryParser;
+
+    private static readonly Dictionary<string, Func<string, object>> DeviceStatusConverters = new()
+    {
+        ["created_at"] = ParseIsoDateToMills,
+        ["date"] = ParseIsoDateToMills,
+        ["mills"] = ParseIsoDateToMills,
+        ["device"] = s => s.Trim('\'', '"'),
+    };
+
+    private static object ParseIsoDateToMills(string value)
+    {
+        // Handle ISO 8601 date strings and convert to epoch milliseconds
+        if (DateTimeOffset.TryParse(value, out var dateTime))
+        {
+            return dateTime.ToUnixTimeMilliseconds();
+        }
+
+        // If it's already a number (mills), parse it directly
+        if (long.TryParse(value, out var mills))
+        {
+            return mills;
+        }
+
+        // Fallback: try trimming quotes
+        var trimmed = value.Trim('\'', '"');
+        if (DateTimeOffset.TryParse(trimmed, out dateTime))
+        {
+            return dateTime.ToUnixTimeMilliseconds();
+        }
+
+        return value;
+    }
 
     /// <summary>
     /// Initializes a new instance of the DeviceStatusRepository class
     /// </summary>
     /// <param name="context">The database context</param>
-    public DeviceStatusRepository(NocturneDbContext context)
+    /// <param name="queryParser">MongoDB query parser for advanced filtering</param>
+    public DeviceStatusRepository(NocturneDbContext context, IQueryParser queryParser)
     {
         _context = context;
+        _queryParser = queryParser;
     }
 
     /// <summary>
@@ -85,50 +119,24 @@ public class DeviceStatusRepository
     {
         var query = _context.DeviceStatuses.AsQueryable();
 
-        // Apply find query filtering if specified
-        // Note: This is a simplified implementation. Full MongoDB query parsing would be more complex.
+        // Apply advanced MongoDB-style query filtering using QueryParser
         if (!string.IsNullOrEmpty(findQuery))
         {
-            string? deviceValue = null;
-
-            // Try to parse as JSON first (used by V1 and V3 controllers)
-            if (findQuery.TrimStart().StartsWith("{"))
+            var options = new QueryOptions
             {
-                try
-                {
-                    using var doc = JsonDocument.Parse(findQuery);
-                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
-                    {
-                        deviceValue = deviceProp.GetString();
-                    }
-                }
-                catch
-                {
-                    // Ignore JSON parse error, fall back to regex
-                }
-            }
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4),
+                TypeConverters = DeviceStatusConverters,
+                DisableDefaultDateFilter = true, // Device status queries don't auto-filter by date
+            };
 
-            if (deviceValue == null)
-            {
-                // Basic device filter support - could be extended for more complex queries
-                if (findQuery.Contains("device"))
-                {
-                    // Extract device value from query string - simplified parsing
-                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                        findQuery,
-                        @"device[^=]*=([^&]*)"
-                    );
-                    if (deviceMatch.Success)
-                    {
-                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(deviceValue))
-            {
-                query = query.Where(ds => ds.Device.Contains(deviceValue));
-            }
+            query = await _queryParser.ApplyQueryAsync(
+                query,
+                findQuery,
+                options,
+                cancellationToken
+            );
         }
 
         // Apply ordering
@@ -264,49 +272,24 @@ public class DeviceStatusRepository
     {
         var query = _context.DeviceStatuses.AsQueryable();
 
-        // Apply find query filtering if specified
-        // Apply find query filtering if specified
+        // Apply advanced MongoDB-style query filtering using QueryParser
         if (!string.IsNullOrEmpty(findQuery))
         {
-            string? deviceValue = null;
-
-            // Try to parse as JSON first (used by V1 and V3 controllers)
-            if (findQuery.TrimStart().StartsWith("{"))
+            var options = new QueryOptions
             {
-                try
-                {
-                    using var doc = JsonDocument.Parse(findQuery);
-                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
-                    {
-                        deviceValue = deviceProp.GetString();
-                    }
-                }
-                catch
-                {
-                    // Ignore JSON parse error, fall back to regex
-                }
-            }
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4),
+                TypeConverters = DeviceStatusConverters,
+                DisableDefaultDateFilter = true,
+            };
 
-            if (deviceValue == null)
-            {
-                // Basic device filter support - could be extended for more complex queries
-                if (findQuery.Contains("device"))
-                {
-                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                        findQuery,
-                        @"device[^=]*=([^&]*)"
-                    );
-                    if (deviceMatch.Success)
-                    {
-                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(deviceValue))
-            {
-                query = query.Where(ds => ds.Device.Contains(deviceValue));
-            }
+            query = await _queryParser.ApplyQueryAsync(
+                query,
+                findQuery,
+                options,
+                cancellationToken
+            );
         }
 
         var entitiesToDelete = await query.ToListAsync(cancellationToken);
@@ -331,49 +314,24 @@ public class DeviceStatusRepository
     {
         var query = _context.DeviceStatuses.AsQueryable();
 
-        // Apply find query filtering if specified
-        // Apply find query filtering if specified
+        // Apply advanced MongoDB-style query filtering using QueryParser
         if (!string.IsNullOrEmpty(findQuery))
         {
-            string? deviceValue = null;
-
-            // Try to parse as JSON first (used by V1 and V3 controllers)
-            if (findQuery.TrimStart().StartsWith("{"))
+            var options = new QueryOptions
             {
-                try
-                {
-                    using var doc = JsonDocument.Parse(findQuery);
-                    if (doc.RootElement.TryGetProperty("device", out var deviceProp))
-                    {
-                        deviceValue = deviceProp.GetString();
-                    }
-                }
-                catch
-                {
-                    // Ignore JSON parse error, fall back to regex
-                }
-            }
+                DateField = "Mills",
+                UseEpochDates = true,
+                DefaultDateRange = TimeSpan.FromDays(4),
+                TypeConverters = DeviceStatusConverters,
+                DisableDefaultDateFilter = true,
+            };
 
-            if (deviceValue == null)
-            {
-                // Basic device filter support - could be extended for more complex queries
-                if (findQuery.Contains("device"))
-                {
-                    var deviceMatch = System.Text.RegularExpressions.Regex.Match(
-                        findQuery,
-                        @"device[^=]*=([^&]*)"
-                    );
-                    if (deviceMatch.Success)
-                    {
-                        deviceValue = WebUtility.UrlDecode(deviceMatch.Groups[1].Value);
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(deviceValue))
-            {
-                query = query.Where(ds => ds.Device.Contains(deviceValue));
-            }
+            query = await _queryParser.ApplyQueryAsync(
+                query,
+                findQuery,
+                options,
+                cancellationToken
+            );
         }
 
         return await query.CountAsync(cancellationToken);

@@ -72,20 +72,25 @@ public class DeviceStatusController : ControllerBase
                 skip = 0; // Normalize to 0 for Nightscout compatibility
             }
 
-            // Extract query string for filtering (Nightscout supports find[field]=value syntax)
-            // We need to convert query parameters to a MongoDB-style JSON query string
-            var findDict = new Dictionary<string, object>();
-            foreach (var key in HttpContext.Request.Query.Keys)
+            // Extract find query parameters from query string
+            // The QueryParser handles URL-encoded find[field][$op]=value format directly
+            string? findQuery = null;
+            var queryKeys = HttpContext?.Request?.Query?.Keys;
+            if (queryKeys != null)
             {
-                if (key.StartsWith("find[") && key.EndsWith("]"))
+                var findParams = queryKeys
+                    .Where(k => k.StartsWith("find["))
+                    .ToList();
+
+                if (findParams.Count > 0)
                 {
-                    var fieldName = key.Substring(5, key.Length - 6);
-                    var value = HttpContext.Request.Query[key].ToString();
-                    findDict[fieldName] = value;
+                    // Pass the relevant query string parameters to the QueryParser
+                    var queryParts = findParams
+                        .Select(k => $"{k}={HttpContext!.Request.Query[k]}")
+                        .ToList();
+                    findQuery = string.Join("&", queryParts);
                 }
             }
-
-            string? findQuery = findDict.Any() ? JsonSerializer.Serialize(findDict) : null;
 
             var deviceStatusEntries = await _deviceStatusService.GetDeviceStatusAsync(
                 find: findQuery,
