@@ -15940,6 +15940,332 @@ export class TimeQueryClient {
     }
 }
 
+export class ConfigurationClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Gets the configuration for a specific connector.
+    Returns runtime configuration only (secrets are not included).
+     * @param connectorName The connector name (e.g., "Dexcom", "Glooko")
+     * @return Configuration response or 404 if not found
+     */
+    getConfiguration(connectorName: string, signal?: AbortSignal): Promise<ConnectorConfigurationResponse> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetConfiguration(_response);
+        });
+    }
+
+    protected processGetConfiguration(response: Response): Promise<ConnectorConfigurationResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectorConfigurationResponse;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConnectorConfigurationResponse>(null as any);
+    }
+
+    /**
+     * Saves or updates runtime configuration for a connector.
+    Only properties marked with [RuntimeConfigurable] are accepted.
+     * @param connectorName The connector name
+     * @param configuration Configuration values as JSON
+     * @return The saved configuration
+     */
+    saveConfiguration(connectorName: string, configuration: JsonDocument, signal?: AbortSignal): Promise<ConnectorConfigurationResponse> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(configuration);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSaveConfiguration(_response);
+        });
+    }
+
+    protected processSaveConfiguration(response: Response): Promise<ConnectorConfigurationResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectorConfigurationResponse;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConnectorConfigurationResponse>(null as any);
+    }
+
+    /**
+     * Deletes all configuration and secrets for a connector.
+     * @param connectorName The connector name
+     */
+    deleteConfiguration(connectorName: string, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteConfiguration(_response);
+        });
+    }
+
+    protected processDeleteConfiguration(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            result404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Gets the JSON Schema for a connector's configuration.
+    Schema is generated from the connector's configuration class attributes.
+     * @param connectorName The connector name
+     * @return JSON Schema document
+     */
+    getSchema(connectorName: string, signal?: AbortSignal): Promise<JsonDocument> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}/schema";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetSchema(_response);
+        });
+    }
+
+    protected processGetSchema(response: Response): Promise<JsonDocument> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JsonDocument;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<JsonDocument>(null as any);
+    }
+
+    /**
+     * Saves encrypted secrets for a connector.
+    Secrets are encrypted using AES-256-GCM before storage.
+     * @param connectorName The connector name
+     * @param secrets Dictionary of secret property names to plaintext values
+     */
+    saveSecrets(connectorName: string, secrets: { [key: string]: string; }, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}/secrets";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(secrets);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSaveSecrets(_response);
+        });
+    }
+
+    protected processSaveSecrets(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetails;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Gets status information for all registered connectors.
+     * @return List of connector status information
+     */
+    getAllConnectorStatus(signal?: AbortSignal): Promise<ConnectorStatusInfo[]> {
+        let url_ = this.baseUrl + "/internal/config";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAllConnectorStatus(_response);
+        });
+    }
+
+    protected processGetAllConnectorStatus(response: Response): Promise<ConnectorStatusInfo[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectorStatusInfo[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ConnectorStatusInfo[]>(null as any);
+    }
+
+    /**
+     * Enables or disables a connector.
+     * @param connectorName The connector name
+     * @param request Request containing the active state
+     */
+    setActive(connectorName: string, request: SetActiveRequest, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/internal/config/{connectorName}/active";
+        if (connectorName === undefined || connectorName === null)
+            throw new globalThis.Error("The parameter 'connectorName' must be defined.");
+        url_ = url_.replace("{connectorName}", encodeURIComponent("" + connectorName));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PATCH",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSetActive(_response);
+        });
+    }
+
+    protected processSetActive(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+}
+
 export interface PerformanceMetrics {
     averageResponseTime?: number;
     totalRequests?: number;
@@ -19813,6 +20139,34 @@ export interface TimeQueryEcho {
 export interface TimeQueryRequest {
     params?: { [key: string]: string; };
     query?: { [key: string]: any; };
+}
+
+export interface ConnectorConfigurationResponse {
+    connectorName?: string;
+    configuration?: JsonDocument;
+    schemaVersion?: number;
+    isActive?: boolean;
+    lastModified?: Date;
+    modifiedBy?: string | undefined;
+}
+
+export interface JsonDocument {
+    isDisposable?: boolean;
+    rootElement?: any;
+}
+
+export interface ConnectorStatusInfo {
+    connectorName?: string;
+    isEnabled?: boolean;
+    hasDatabaseConfig?: boolean;
+    hasSecrets?: boolean;
+    lastModified?: Date | undefined;
+}
+
+/** Request model for setting connector active state. */
+export interface SetActiveRequest {
+    /** Whether the connector should be active. */
+    isActive?: boolean;
 }
 
 export interface FileResponse {

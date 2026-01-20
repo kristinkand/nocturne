@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Services;
 
@@ -29,12 +30,40 @@ namespace Nocturne.Connectors.Core.Extensions
             {
                 var httpClientFactory = sp.GetRequiredService<System.Net.Http.IHttpClientFactory>();
                 var httpClient = httpClientFactory.CreateClient("NocturneApi");
-                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ApiDataSubmitter>>();
+                var logger = sp.GetRequiredService<ILogger<ApiDataSubmitter>>();
                 if (string.IsNullOrEmpty(apiUrl))
                 {
                     throw new InvalidOperationException("NocturneApiUrl configuration is missing.");
                 }
                 return new ApiDataSubmitter(httpClient, apiUrl, apiSecret, logger);
+            });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the configuration client for fetching runtime configuration from the API.
+        /// </summary>
+        /// <param name="services">The service collection</param>
+        /// <param name="configuration">Application configuration</param>
+        /// <returns>The service collection for chaining</returns>
+        public static IServiceCollection AddConfigurationClient(this IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration)
+        {
+            var apiUrl = configuration["NocturneApiUrl"]
+                      ?? configuration["services:nocturne-api:https:0"]
+                      ?? configuration["services:nocturne-api:http:0"];
+
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                throw new InvalidOperationException("NocturneApiUrl configuration is missing. Set NocturneApiUrl or use Aspire service discovery.");
+            }
+
+            services.AddSingleton<IConfigurationClient>(sp =>
+            {
+                var httpClientFactory = sp.GetRequiredService<System.Net.Http.IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("ConfigurationClient");
+                var logger = sp.GetRequiredService<ILogger<ConfigurationClient>>();
+                return new ConfigurationClient(httpClient, apiUrl, logger);
             });
 
             return services;

@@ -204,6 +204,13 @@ public class NocturneDbContext : DbContext
     /// </summary>
     public DbSet<LinkedRecordEntity> LinkedRecords { get; set; }
 
+    // Connector Configuration entities
+
+    /// <summary>
+    /// Gets or sets the ConnectorConfigurations table for connector runtime configuration and encrypted secrets
+    /// </summary>
+    public DbSet<ConnectorConfigurationEntity> ConnectorConfigurations { get; set; }
+
 
     /// <summary>
     /// Configure the database model and relationships
@@ -992,6 +999,17 @@ public class NocturneDbContext : DbContext
             .HasIndex(l => new { l.RecordType, l.SourceTimestamp })
             .HasDatabaseName("ix_linked_records_type_timestamp");
 
+        // ConnectorConfiguration indexes - optimized for connector lookups
+        modelBuilder
+            .Entity<ConnectorConfigurationEntity>()
+            .HasIndex(c => c.ConnectorName)
+            .HasDatabaseName("ix_connector_configurations_connector_name")
+            .IsUnique();
+
+        modelBuilder
+            .Entity<ConnectorConfigurationEntity>()
+            .HasIndex(c => c.IsActive)
+            .HasDatabaseName("ix_connector_configurations_is_active");
     }
 
     private static void ConfigureEntities(ModelBuilder modelBuilder)
@@ -1119,6 +1137,11 @@ public class NocturneDbContext : DbContext
         modelBuilder
             .Entity<LinkedRecordEntity>()
             .Property(l => l.Id)
+            .HasValueGenerator<GuidV7ValueGenerator>();
+
+        modelBuilder
+            .Entity<ConnectorConfigurationEntity>()
+            .Property(c => c.Id)
             .HasValueGenerator<GuidV7ValueGenerator>();
 
         modelBuilder
@@ -1800,6 +1823,15 @@ public class NocturneDbContext : DbContext
                 {
                     linkedRecordEntity.SysCreatedAt = utcNow;
                 }
+            }
+            else if (entry.Entity is ConnectorConfigurationEntity connectorConfigEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    connectorConfigEntity.SysCreatedAt = utcNow;
+                    connectorConfigEntity.LastModified = DateTimeOffset.UtcNow;
+                }
+                connectorConfigEntity.SysUpdatedAt = utcNow;
             }
         }
     }

@@ -70,6 +70,11 @@ public interface ISignalRBroadcastService
     /// Broadcast password reset request to admin subscribers via DataHub
     /// </summary>
     Task BroadcastPasswordResetRequestAsync();
+
+    /// <summary>
+    /// Broadcast configuration change event to subscribers via ConfigHub
+    /// </summary>
+    Task BroadcastConfigChangeAsync(ConfigurationChangeEvent change);
 }
 
 /// <summary>
@@ -79,16 +84,19 @@ public class SignalRBroadcastService : ISignalRBroadcastService
 {
     private readonly IHubContext<DataHub> _dataHubContext;
     private readonly IHubContext<AlarmHub> _alarmHubContext;
+    private readonly IHubContext<ConfigHub> _configHubContext;
     private readonly ILogger<SignalRBroadcastService> _logger;
 
     public SignalRBroadcastService(
         IHubContext<DataHub> dataHubContext,
         IHubContext<AlarmHub> alarmHubContext,
+        IHubContext<ConfigHub> configHubContext,
         ILogger<SignalRBroadcastService> logger
     )
     {
         _dataHubContext = dataHubContext;
         _alarmHubContext = alarmHubContext;
+        _configHubContext = configHubContext;
         _logger = logger;
     }
 
@@ -320,6 +328,40 @@ public class SignalRBroadcastService : ISignalRBroadcastService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error broadcasting password reset request");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task BroadcastConfigChangeAsync(ConfigurationChangeEvent change)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Broadcasting config change for {ConnectorName}: {ChangeType}",
+                change.ConnectorName,
+                change.ChangeType
+            );
+
+            // Broadcast to connector-specific group
+            var connectorGroup = $"config:{change.ConnectorName.ToLowerInvariant()}";
+            await _configHubContext
+                .Clients.Group(connectorGroup)
+                .SendCoreAsync("configChanged", new[] { change });
+
+            // Also broadcast to "all" subscribers
+            await _configHubContext
+                .Clients.Group("config:all")
+                .SendCoreAsync("configChanged", new[] { change });
+
+            _logger.LogDebug("Config change broadcast completed for {ConnectorName}", change.ConnectorName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error broadcasting config change for {ConnectorName}",
+                change.ConnectorName
+            );
         }
     }
 }

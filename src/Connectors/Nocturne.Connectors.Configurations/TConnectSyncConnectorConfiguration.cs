@@ -38,12 +38,14 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("TCONNECT_EMAIL")]
         [AspireParameter("tconnect-email", "Email", secret: true, description: "Tandem Source email")]
+        [RuntimeConfigurable("Email", "Connection")]
         public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// Tandem Source password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("TCONNECT_PASSWORD")]
         [AspireParameter("tconnect-password", "Password", secret: true, description: "Tandem Source password")]
         public string Password { get; set; } = string.Empty;
@@ -53,6 +55,8 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("TCONNECT_REGION")]
         [AspireParameter("tconnect-region", "Region", secret: false, description: "Tandem Source region (US or EU)", defaultValue: "US")]
+        [RuntimeConfigurable("Region", "Connection")]
+        [ConfigSchema(Enum = new[] { "US", "EU" })]
         public string Region { get; set; } = "US";
 
         protected override void ValidateSourceSpecificConfiguration()

@@ -1,12 +1,30 @@
 services:
-  production-dashboard:
+  compose-dashboard:
     image: "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest"
-    expose:
+    ports:
       - "18888"
+    expose:
       - "18889"
+      - "18890"
     networks:
-      - "nocturne-network"
+      - "aspire"
     restart: "always"
+  nocturne-postgres-server:
+    image: "docker.io/library/postgres:17.6"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "${POSTGRES_USERNAME}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    expose:
+      - "5432"
+    volumes:
+      - type: "volume"
+        target: "/var/lib/postgresql/data"
+        source: "nocturne-postgres-data"
+        read_only: false
+    networks:
+      - "aspire"
   nocturne-api:
     image: "${NOCTURNE_API_IMAGE}"
     environment:
@@ -15,17 +33,61 @@ services:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       HTTP_PORTS: "${NOCTURNE_API_PORT}"
-      ConnectionStrings__nocturne-postgres: "${NOCTURNE_POSTGRES}"
-      NIGHTSCOUT-CONNECTOR_HTTP: "http://nightscout-connector:${NIGHTSCOUT_CONNECTOR_PORT}"
+      ConnectionStrings__nocturne-postgres: "Host=nocturne-postgres-server;Port=5432;Username=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD};Database=nocturne-rhys"
+      NOCTURNE_POSTGRES_HOST: "nocturne-postgres-server"
+      NOCTURNE_POSTGRES_PORT: "5432"
+      NOCTURNE_POSTGRES_USERNAME: "${POSTGRES_USERNAME}"
+      NOCTURNE_POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      NOCTURNE_POSTGRES_URI: "postgresql://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@nocturne-postgres-server:5432/nocturne-rhys"
+      NOCTURNE_POSTGRES_JDBCCONNECTIONSTRING: "jdbc:postgresql://nocturne-postgres-server:5432/nocturne-rhys"
+      NOCTURNE_POSTGRES_DATABASENAME: "nocturne-rhys"
+      GLOOKO_CONNECTOR_HTTP: "http://glooko-connector:${GLOOKO_CONNECTOR_PORT}"
+      services__glooko-connector__http__0: "http://glooko-connector:${GLOOKO_CONNECTOR_PORT}"
+      NIGHTSCOUT_CONNECTOR_HTTP: "http://nightscout-connector:${NIGHTSCOUT_CONNECTOR_PORT}"
       services__nightscout-connector__http__0: "http://nightscout-connector:${NIGHTSCOUT_CONNECTOR_PORT}"
+      MYFITNESSPAL_CONNECTOR_HTTP: "http://myfitnesspal-connector:${MYFITNESSPAL_CONNECTOR_PORT}"
+      services__myfitnesspal-connector__http__0: "http://myfitnesspal-connector:${MYFITNESSPAL_CONNECTOR_PORT}"
+      MYLIFE_CONNECTOR_HTTP: "http://mylife-connector:${MYLIFE_CONNECTOR_PORT}"
+      services__mylife-connector__http__0: "http://mylife-connector:${MYLIFE_CONNECTOR_PORT}"
       DemoService__Enabled: "false"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-dashboard:18889"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "nocturne-api"
-    ports:
+    expose:
       - "${NOCTURNE_API_PORT}"
+    depends_on:
+      nocturne-postgres-server:
+        condition: "service_started"
     networks:
-      - "nocturne-network"
+      - "aspire"
+  glooko-connector:
+    image: "${GLOOKO_CONNECTOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${GLOOKO_CONNECTOR_PORT}"
+      Enabled: "${GLOOKO_ENABLED:-true}"
+      NocturneApiUrl: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      ApiSecret: "${API_SECRET}"
+      NOCTURNE_API_API: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      CONNECT_GLOOKO_USERNAME: "${GLOOKO_USERNAME}"
+      CONNECT_GLOOKO_PASSWORD: "${GLOOKO_PASSWORD}"
+      CONNECT_GLOOKO_SERVER: "${GLOOKO_SERVER}"
+      SaveRawData: "${GLOOKO_SAVE_RAW_DATA}"
+      DataDirectory: "${GLOOKO_DATA_DIRECTORY}"
+      TimezoneOffset: "${GLOOKO_TIMEZONE_OFFSET}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "glooko-connector"
+    expose:
+      - "${GLOOKO_CONNECTOR_PORT}"
+    depends_on:
+      nocturne-api:
+        condition: "service_started"
+    networks:
+      - "aspire"
   nightscout-connector:
     image: "${NIGHTSCOUT_CONNECTOR_IMAGE}"
     environment:
@@ -34,16 +96,16 @@ services:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       HTTP_PORTS: "${NIGHTSCOUT_CONNECTOR_PORT}"
+      Enabled: "${NIGHTSCOUT_ENABLED:-true}"
       NocturneApiUrl: "http://nocturne-api:${NOCTURNE_API_PORT}"
       ApiSecret: "${API_SECRET}"
-      NOCTURNE-API_HTTP: "http://nocturne-api:${NOCTURNE_API_PORT}"
-      services__nocturne-api__http__0: "http://nocturne-api:${NOCTURNE_API_PORT}"
-      NOCTURNE-API_HTTPS: "https://nocturne-api:${NOCTURNE_API_PORT}"
+      NOCTURNE_API_API: "http://nocturne-api:${NOCTURNE_API_PORT}"
       CONNECT_NS_URL: "${NIGHTSCOUT_SOURCE_URL}"
       CONNECT_NS_API_SECRET: "${NIGHTSCOUT_SOURCE_SECRET}"
       SaveRawData: "${NIGHTSCOUT_SAVE_RAW_DATA}"
       DataDirectory: "${NIGHTSCOUT_DATA_DIRECTORY}"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://production-dashboard:18889"
+      TimezoneOffset: "${NIGHTSCOUT_TIMEZONE_OFFSET}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "nightscout-connector"
     expose:
@@ -52,21 +114,124 @@ services:
       nocturne-api:
         condition: "service_started"
     networks:
-      - "nocturne-network"
+      - "aspire"
+  myfitnesspal-connector:
+    image: "${MYFITNESSPAL_CONNECTOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${MYFITNESSPAL_CONNECTOR_PORT}"
+      Enabled: "${MYFITNESSPAL_ENABLED:-true}"
+      NocturneApiUrl: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      ApiSecret: "${API_SECRET}"
+      NOCTURNE_API_API: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      CONNECT_MFP_USERNAME: "${MFP_USERNAME}"
+      CONNECT_MFP_PASSWORD: "${MFP_PASSWORD}"
+      CONNECT_MFP_API_KEY: "${MFP_API_KEY}"
+      SaveRawData: "${MYFITNESSPAL_SAVE_RAW_DATA}"
+      DataDirectory: "${MYFITNESSPAL_DATA_DIRECTORY}"
+      TimezoneOffset: "${MYFITNESSPAL_TIMEZONE_OFFSET}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "myfitnesspal-connector"
+    expose:
+      - "${MYFITNESSPAL_CONNECTOR_PORT}"
+    depends_on:
+      nocturne-api:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  mylife-connector:
+    image: "${MYLIFE_CONNECTOR_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${MYLIFE_CONNECTOR_PORT}"
+      Enabled: "${MYLIFE_ENABLED:-true}"
+      NocturneApiUrl: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      ApiSecret: "${API_SECRET}"
+      NOCTURNE_API_API: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      CONNECT_MYLIFE_USERNAME: "${MYLIFE_USERNAME}"
+      CONNECT_MYLIFE_PASSWORD: "${MYLIFE_PASSWORD}"
+      CONNECT_MYLIFE_PATIENT_ID: "${MYLIFE_PATIENT_ID}"
+      CONNECT_MYLIFE_SERVICE_URL: "${MYLIFE_SERVICE_URL}"
+      CONNECT_MYLIFE_ENABLE_GLUCOSE_SYNC: "${MYLIFE_ENABLE_GLUCOSE_SYNC}"
+      CONNECT_MYLIFE_ENABLE_MANUAL_BG_SYNC: "${MYLIFE_ENABLE_MANUAL_BG_SYNC}"
+      CONNECT_MYLIFE_ENABLE_MEAL_CARB_CONSOLIDATION: "${MYLIFE_ENABLE_MEAL_CARB_CONSOLIDATION}"
+      CONNECT_MYLIFE_ENABLE_TEMP_BASAL_CONSOLIDATION: "${MYLIFE_ENABLE_TEMP_BASAL_CONSOLIDATION}"
+      CONNECT_MYLIFE_TEMP_BASAL_CONSOLIDATION_WINDOW_MINUTES: "${MYLIFE_TEMP_BASAL_CONSOLIDATION_WINDOW_MINUTES}"
+      CONNECT_MYLIFE_APP_PLATFORM: "${MYLIFE_APP_PLATFORM}"
+      CONNECT_MYLIFE_APP_VERSION: "${MYLIFE_APP_VERSION}"
+      CONNECT_MYLIFE_SYNC_MONTHS: "${MYLIFE_SYNC_MONTHS}"
+      SaveRawData: "${MYLIFE_SAVE_RAW_DATA}"
+      DataDirectory: "${MYLIFE_DATA_DIRECTORY}"
+      TimezoneOffset: "${MYLIFE_TIMEZONE_OFFSET}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "mylife-connector"
+    expose:
+      - "${MYLIFE_CONNECTOR_PORT}"
+    depends_on:
+      nocturne-api:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  nocturne-web:
+    image: "${NOCTURNE_WEB_IMAGE}"
+    environment:
+      PORT: "${NOCTURNE_WEB_PORT:-5173}"
+      PUBLIC_API_URL: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      NOCTURNE_API_URL: "http://nocturne-api:${NOCTURNE_API_PORT}"
+      API_SECRET: "${API_SECRET}"
+      PUBLIC_WEBSOCKET_RECONNECT_ATTEMPTS: "${WEBSOCKET_RECONNECT_ATTEMPTS:-5}"
+      PUBLIC_WEBSOCKET_MAX_RECONNECT_DELAY: "${WEBSOCKET_MAX_RECONNECT_DELAY:-30000}"
+      PUBLIC_WEBSOCKET_RECONNECT_DELAY: "${WEBSOCKET_RECONNECT_DELAY:-1000}"
+      PUBLIC_WEBSOCKET_PING_TIMEOUT: "${WEBSOCKET_PING_TIMEOUT:-15000}"
+      PUBLIC_WEBSOCKET_PING_INTERVAL: "${WEBSOCKET_PING_INTERVAL:-20000}"
+      PUBLIC_DEFAULT_LANGUAGE: "${DEFAULT_LANGUAGE:-en}"
+      COOKIE_ACCESS_TOKEN_NAME: "${COOKIE_ACCESS_TOKEN_NAME:-.Nocturne.AccessToken}"
+      COOKIE_REFRESH_TOKEN_NAME: "${COOKIE_REFRESH_TOKEN_NAME:-.Nocturne.RefreshToken}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "nocturne-web"
+    ports:
+      - "${NOCTURNE_WEB_PORT:-5173}:${NOCTURNE_WEB_PORT:-5173}"
+    depends_on:
+      nocturne-api:
+        condition: "service_started"
+    networks:
+      - "aspire"
   scalar:
     image: "scalarapi/aspire-api-reference:0.8.0"
     environment:
-      API_REFERENCE_CONFIG: "W3sicHJveHlVcmwiOiIvc2NhbGFyLXByb3h5Iiwic2VydmVycyI6W3sidXJsIjoiaHR0cDovL25vY3R1cm5lLWFwaSIsImRlc2NyaXB0aW9uIjoibm9jdHVybmUtYXBpIn1dLCJ0aGVtZSI6Ik1hcnMiLCJmYXZpY29uIjoiZmF2aWNvbi5zdmciLCJfaW50ZWdyYXRpb24iOiJkb3RuZXQiLCJzb3VyY2VzIjpbeyJ0aXRsZSI6Im5vY3R1cm5lLWFwaSB8IE5vY3R1cm5lIEFQSSIsInVybCI6Imh0dHA6Ly9ub2N0dXJuZS1hcGkvb3BlbmFwaS92MS5qc29uIn1dfV0="
+      API_REFERENCE_CONFIG: "W3sicHJveHlVcmwiOiIvc2NhbGFyLXByb3h5Iiwic2VydmVycyI6W3sidXJsIjoiaHR0cHM6Ly9ub2N0dXJuZS1hcGkiLCJkZXNjcmlwdGlvbiI6Im5vY3R1cm5lLWFwaSJ9XSwidGhlbWUiOiJNYXJzIiwiZmF2aWNvbiI6ImZhdmljb24uc3ZnIiwiX2ludGVncmF0aW9uIjoiZG90bmV0Iiwic291cmNlcyI6W3sidGl0bGUiOiJub2N0dXJuZS1hcGkgfCBOb2N0dXJuZSBBUEkiLCJ1cmwiOiJodHRwczovL25vY3R1cm5lLWFwaS9vcGVuYXBpL3YxLmpzb24ifV19XQ=="
       CDN_URL: "scalar.js"
       ALLOW_SELF_SIGNED_CERTIFICATES: "False"
       DEFAULT_PROXY: "True"
-      NOCTURNE-API_HTTP: "http://nocturne-api:${NOCTURNE_API_PORT}"
-      services__nocturne-api__http__0: "http://nocturne-api:${NOCTURNE_API_PORT}"
-      NOCTURNE-API_HTTPS: "https://nocturne-api:${NOCTURNE_API_PORT}"
+      NOCTURNE_API_API: "http://nocturne-api:${NOCTURNE_API_PORT}"
     expose:
       - "8080"
     networks:
-      - "nocturne-network"
+      - "aspire"
+  watchtower:
+    image: "containrrr/watchtower:latest"
+    environment:
+      WATCHTOWER_CLEANUP: "${WATCHTOWER_CLEANUP:-true}"
+      WATCHTOWER_POLL_INTERVAL: "${WATCHTOWER_POLL_INTERVAL:-86400}"
+      WATCHTOWER_INCLUDE_STOPPED: "false"
+      WATCHTOWER_REVIVE_STOPPED: "false"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - "aspire"
+    restart: "unless-stopped"
 networks:
-  nocturne-network:
+  aspire:
     driver: "bridge"
+volumes:
+  nocturne-postgres-data:
+    driver: "local"

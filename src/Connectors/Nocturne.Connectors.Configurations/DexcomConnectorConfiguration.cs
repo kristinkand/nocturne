@@ -36,12 +36,14 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("CONNECT_DEXCOM_USERNAME")]
         [AspireParameter("dexcom-username", "Username", secret: false, description: "Dexcom account username")]
+        [RuntimeConfigurable("Username", "Connection")]
         public string DexcomUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// Dexcom Share password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("CONNECT_DEXCOM_PASSWORD")]
         [AspireParameter("dexcom-password", "Password", secret: true, description: "Dexcom account password")]
         public string DexcomPassword { get; set; } = string.Empty;
@@ -51,6 +53,8 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("CONNECT_DEXCOM_SERVER")]
         [AspireParameter("dexcom-server", "Server", secret: false, description: "Dexcom server (US or EU)", defaultValue: "US")]
+        [RuntimeConfigurable("Server", "Connection")]
+        [ConfigSchema(Enum = new[] { "US", "EU" })]
         public string DexcomServer { get; set; } = "US";
 
         protected override void ValidateSourceSpecificConfiguration()

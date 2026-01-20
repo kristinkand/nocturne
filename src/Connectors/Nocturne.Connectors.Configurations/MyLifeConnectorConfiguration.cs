@@ -33,9 +33,11 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         description: "MyLife account username"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeUsername)]
+    [RuntimeConfigurable("Username", "Connection")]
     public string MyLifeUsername { get; set; } = string.Empty;
 
     [Required]
+    [Secret]
     [AspireParameter(
         "mylife-password",
         "Password",
@@ -53,6 +55,7 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: ""
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifePatientId)]
+    [RuntimeConfigurable("Patient ID", "Connection")]
     public string MyLifePatientId { get; set; } = string.Empty;
 
     [AspireParameter(
@@ -63,6 +66,8 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: ""
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeServiceUrl)]
+    [RuntimeConfigurable("Service URL", "Connection")]
+    [ConfigSchema(Format = "uri")]
     public string MyLifeServiceUrl { get; set; } = string.Empty;
 
     [AspireParameter(
@@ -73,6 +78,7 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "true"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableGlucoseSync)]
+    [RuntimeConfigurable("Enable Glucose Sync", "Sync")]
     public bool EnableGlucoseSync { get; set; } = true;
 
     [AspireParameter(
@@ -83,6 +89,7 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "true"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableManualBgSync)]
+    [RuntimeConfigurable("Enable Manual BG Sync", "Sync")]
     public bool EnableManualBgSync { get; set; } = true;
 
     [AspireParameter(
@@ -93,6 +100,7 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "true"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableMealCarbConsolidation)]
+    [RuntimeConfigurable("Meal Carb Consolidation", "Advanced")]
     public bool EnableMealCarbConsolidation { get; set; } = true;
 
     [AspireParameter(
@@ -103,6 +111,7 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "true"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableTempBasalConsolidation)]
+    [RuntimeConfigurable("Temp Basal Consolidation", "Advanced")]
     public bool EnableTempBasalConsolidation { get; set; } = true;
 
     [AspireParameter(
@@ -113,6 +122,8 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "5"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeTempBasalConsolidationWindowMinutes)]
+    [RuntimeConfigurable("Consolidation Window (min)", "Advanced")]
+    [ConfigSchema(Minimum = 1, Maximum = 30)]
     public int TempBasalConsolidationWindowMinutes { get; set; } = 5;
 
     [AspireParameter(
@@ -143,6 +154,8 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         defaultValue: "6"
     )]
     [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeSyncMonths)]
+    [RuntimeConfigurable("Sync Months", "Sync")]
+    [ConfigSchema(Minimum = 1, Maximum = 24)]
     public int SyncMonths { get; set; } = 6;
 
     protected override void ValidateSourceSpecificConfiguration()

@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\Infrastructure\Nocturne.Infrastructure.Cache\Nocturne.Infrastructure.Cache.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />

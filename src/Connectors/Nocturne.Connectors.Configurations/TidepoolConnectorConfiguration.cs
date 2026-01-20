@@ -36,12 +36,14 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("CONNECT_TIDEPOOL_USERNAME")]
         [AspireParameter("tidepool-username", "Username", secret: false, description: "Tidepool account email")]
+        [RuntimeConfigurable("Username", "Connection")]
         public string TidepoolUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// Tidepool account password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("CONNECT_TIDEPOOL_PASSWORD")]
         [AspireParameter("tidepool-password", "Password", secret: true, description: "Tidepool account password")]
         public string TidepoolPassword { get; set; } = string.Empty;
@@ -51,6 +53,8 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("CONNECT_TIDEPOOL_SERVER")]
         [AspireParameter("tidepool-server", "Server", secret: false, description: "Tidepool API server URL", defaultValue: "https://api.tidepool.org")]
+        [RuntimeConfigurable("Server URL", "Connection")]
+        [ConfigSchema(Format = "uri")]
         public string TidepoolServer { get; set; } = "https://api.tidepool.org";
 
         /// <summary>
@@ -58,6 +62,7 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("CONNECT_TIDEPOOL_SYNC_TREATMENTS")]
         [AspireParameter("tidepool-sync-treatments", "SyncTreatments", secret: false, description: "Sync treatment data (bolus, carbs, exercise)", defaultValue: "true")]
+        [RuntimeConfigurable("Sync Treatments", "Sync")]
         public bool SyncTreatments { get; set; } = true;
 
         /// <summary>
@@ -65,6 +70,7 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("CONNECT_TIDEPOOL_SYNC_PROFILES")]
         [AspireParameter("tidepool-sync-profiles", "SyncProfiles", secret: false, description: "Sync profile data (basal, ISF, ICR, targets)", defaultValue: "true")]
+        [RuntimeConfigurable("Sync Profiles", "Sync")]
         public bool SyncProfiles { get; set; } = true;
 
         protected override void ValidateSourceSpecificConfiguration()

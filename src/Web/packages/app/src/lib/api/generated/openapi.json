@@ -13544,6 +13544,275 @@
           }
         }
       }
+    },
+    "/internal/config/{connectorName}": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets the configuration for a specific connector.\nReturns runtime configuration only (secrets are not included).",
+        "operationId": "Configuration_GetConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name (e.g., \"Dexcom\", \"Glooko\")",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration response or 404 if not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorConfigurationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Saves or updates runtime configuration for a connector.\nOnly properties marked with [RuntimeConfigurable] are accepted.",
+        "operationId": "Configuration_SaveConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "configuration",
+          "description": "Configuration values as JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonDocument"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "The saved configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Deletes all configuration and secrets for a connector.",
+        "operationId": "Configuration_DeleteConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/schema": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets the JSON Schema for a connector's configuration.\nSchema is generated from the connector's configuration class attributes.",
+        "operationId": "Configuration_GetSchema",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON Schema document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonDocument"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/secrets": {
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Saves encrypted secrets for a connector.\nSecrets are encrypted using AES-256-GCM before storage.",
+        "operationId": "Configuration_SaveSecrets",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "secrets",
+          "description": "Dictionary of secret property names to plaintext values",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets status information for all registered connectors.",
+        "operationId": "Configuration_GetAllConnectorStatus",
+        "responses": {
+          "200": {
+            "description": "List of connector status information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorStatusInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/active": {
+      "patch": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Enables or disables a connector.",
+        "operationId": "Configuration_SetActive",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "description": "Request containing the active state",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -25850,6 +26119,77 @@
           "query": {
             "type": "object",
             "additionalProperties": {}
+          }
+        }
+      },
+      "ConnectorConfigurationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectorName": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/JsonDocument"
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "JsonDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isDisposable": {
+            "type": "boolean"
+          },
+          "rootElement": {}
+        }
+      },
+      "ConnectorStatusInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectorName": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "hasDatabaseConfig": {
+            "type": "boolean"
+          },
+          "hasSecrets": {
+            "type": "boolean"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SetActiveRequest": {
+        "type": "object",
+        "description": "Request model for setting connector active state.",
+        "additionalProperties": false,
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the connector should be active."
           }
         }
       }

@@ -41,12 +41,14 @@ namespace Nocturne.Connectors.Configurations
             secret: false,
             description: "Glooko account email"
         )]
+        [RuntimeConfigurable("Email", "Connection")]
         public string GlookoUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// Glooko account password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("CONNECT_GLOOKO_PASSWORD")]
         [AspireParameter(
             "glooko-password",
@@ -67,6 +69,8 @@ namespace Nocturne.Connectors.Configurations
             description: "Glooko server (US or EU)",
             defaultValue: "US"
         )]
+        [RuntimeConfigurable("Server", "Connection")]
+        [ConfigSchema(Enum = new[] { "US", "EU" })]
         public string GlookoServer { get; set; } = "US";
 
         /// <summary>
@@ -74,6 +78,7 @@ namespace Nocturne.Connectors.Configurations
         /// This provides a single API call instead of multiple v2 calls.
         /// </summary>
         [EnvironmentVariable("CONNECT_GLOOKO_USE_V3_API")]
+        [RuntimeConfigurable("Use V3 API", "Advanced")]
         public bool UseV3Api { get; set; } = true;
 
         /// <summary>
@@ -81,6 +86,7 @@ namespace Nocturne.Connectors.Configurations
         /// Only use this if you want Glooko to fill gaps in your primary CGM data.
         /// </summary>
         [EnvironmentVariable("CONNECT_GLOOKO_V3_CGM_BACKFILL")]
+        [RuntimeConfigurable("CGM Backfill", "Advanced")]
         public bool V3IncludeCgmBackfill { get; set; } = false;
 
         protected override void ValidateSourceSpecificConfiguration()
