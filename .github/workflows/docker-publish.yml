@@ -164,6 +164,17 @@ jobs:
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/nightscout-connector \
             -p:ContainerImageTag=${{ steps.version.outputs.version }}
 
+      - name: Build and push MyLife connector
+        if: github.event_name != 'pull_request'
+        working-directory: src/Connectors/Nocturne.Connectors.MyLife
+        run: |
+          dotnet publish \
+            -c Release \
+            -p:PublishProfile=DefaultContainer \
+            -p:ContainerRegistry=${{ env.REGISTRY }} \
+            -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/mylife-connector \
+            -p:ContainerImageTag=${{ steps.version.outputs.version }}
+
       - name: Build and push MyFitnessPal connector
         if: github.event_name != 'pull_request'
         working-directory: src/Connectors/Nocturne.Connectors.MyFitnessPal
@@ -401,6 +412,8 @@ jobs:
           - `${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/minimed-connector:${{ steps.version.outputs.version }}`
           - `${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/nightscout-connector:${{ steps.version.outputs.version }}`
           - `${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/myfitnesspal-connector:${{ steps.version.outputs.version }}`
+          - `${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/mylife-connector:${{ steps.version.outputs.version }}`
+
 
           ## Files in this release
 
