@@ -112,7 +112,7 @@ public class ConnectorHealthService : IConnectorHealthService
         CancellationToken cancellationToken
     )
     {
-        var isEnabled = IsConnectorEnabled(connector.ConfigKey);
+        var enabledConfig = GetConnectorEnabledConfig(connector.ConfigKey);
 
         // Always get database stats for historical data (entries + treatments)
         var dbStats = await _postgreSqlService.GetEntryStatsBySourceAsync(
@@ -121,17 +121,18 @@ public class ConnectorHealthService : IConnectorHealthService
         );
 
         _logger.LogInformation(
-            "Connector {Id}: Enabled={Enabled}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}",
+            "Connector {Id}: EnabledConfig={EnabledConfig}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}",
             connector.Id,
-            isEnabled,
+            enabledConfig?.ToString() ?? "not configured",
             connector.DataSourceId,
             dbStats.TotalEntries,
             dbStats.TotalTreatments
         );
 
-        if (!isEnabled)
+        // If explicitly disabled, return disabled status without checking health
+        if (enabledConfig == false)
         {
-            // Connector is disabled - return database-only stats
+            // Connector is explicitly disabled - return database-only stats
             // Use TotalItems which combines entries + treatments
             return new ConnectorStatusDto
             {
@@ -146,8 +147,16 @@ public class ConnectorHealthService : IConnectorHealthService
             };
         }
 
-        // Connector is enabled - get live health status and merge with DB stats
+        // Connector is enabled or not explicitly configured - try to get live health status
         var liveStatus = await CheckConnectorStatusAsync(connector, cancellationToken);
+
+        // If connector is not configured (enabledConfig == null) and unreachable,
+        // mark it as "Not Configured" instead of "Unreachable"
+        if (enabledConfig == null && liveStatus.Status == "Unreachable")
+        {
+            liveStatus.Status = "Not Configured";
+            liveStatus.State = "Not Configured";
+        }
 
         // Prefer live stats if available, fall back to DB stats
         // (live stats should be accurate, but DB stats provide backup)
@@ -164,11 +173,14 @@ public class ConnectorHealthService : IConnectorHealthService
         return liveStatus;
     }
 
-    private bool IsConnectorEnabled(string configKey)
+    /// <summary>
+    /// Gets the connector enabled configuration.
+    /// Returns true if explicitly enabled, false if explicitly disabled, null if not configured.
+    /// </summary>
+    private bool? GetConnectorEnabledConfig(string configKey)
     {
         // Check Parameters:Connectors:{ConfigKey}:Enabled
-        var enabled = _configuration.GetValue<bool>($"Parameters:Connectors:{configKey}:Enabled");
-        return enabled;
+        return _configuration.GetValue<bool?>($"Parameters:Connectors:{configKey}:Enabled");
     }
 
     private async Task<ConnectorStatusDto> CheckConnectorStatusAsync(
