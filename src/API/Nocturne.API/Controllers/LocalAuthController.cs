@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Nocturne.API.Attributes;
-using Nocturne.API.Configuration;
 using Nocturne.API.Extensions;
 using Nocturne.Core.Contracts;
+using Nocturne.Core.Models.Configuration;
+using SameSiteMode = Nocturne.Core.Models.Configuration.SameSiteMode;
 
 namespace Nocturne.API.Controllers;
 
@@ -644,9 +645,9 @@ public class LocalAuthController : ControllerBase
             Secure = _oidcOptions.Cookie.Secure,
             SameSite = _oidcOptions.Cookie.SameSite switch
             {
-                Configuration.SameSiteMode.Strict => Microsoft.AspNetCore.Http.SameSiteMode.Strict,
-                Configuration.SameSiteMode.Lax => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-                Configuration.SameSiteMode.None => Microsoft.AspNetCore.Http.SameSiteMode.None,
+                SameSiteMode.Strict => Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                SameSiteMode.Lax => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+                SameSiteMode.None => Microsoft.AspNetCore.Http.SameSiteMode.None,
                 _ => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
             },
             Path = "/",

@@ -1,4 +1,4 @@
-namespace Nocturne.API.Configuration;
+namespace Nocturne.Core.Models.Configuration;
 
 /// <summary>
 /// Email sending configuration

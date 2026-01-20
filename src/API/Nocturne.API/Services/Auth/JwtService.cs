@@ -5,49 +5,9 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Nocturne.Core.Contracts;
+using Nocturne.Core.Models.Configuration;
 
 namespace Nocturne.API.Services.Auth;
-
-/// <summary>
-/// Configuration options for JWT generation and validation
-/// </summary>
-public class JwtOptions
-{
-    /// <summary>
-    /// Configuration section name
-    /// </summary>
-    public const string SectionName = "Jwt";
-
-    /// <summary>
-    /// Secret key for signing JWTs (min 32 characters)
-    /// </summary>
-    public string SecretKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Token issuer
-    /// </summary>
-    public string Issuer { get; set; } = "nocturne";
-
-    /// <summary>
-    /// Token audience
-    /// </summary>
-    public string Audience { get; set; } = "nocturne-api";
-
-    /// <summary>
-    /// Access token lifetime in minutes
-    /// </summary>
-    public int AccessTokenLifetimeMinutes { get; set; } = 15;
-
-    /// <summary>
-    /// Refresh token lifetime in days
-    /// </summary>
-    public int RefreshTokenLifetimeDays { get; set; } = 7;
-
-    /// <summary>
-    /// Refresh token length in bytes (will be base64 encoded)
-    /// </summary>
-    public int RefreshTokenLengthBytes { get; set; } = 64;
-}
 
 /// <summary>
 /// JWT service implementation for access and refresh token management

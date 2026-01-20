@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Options;
-using Nocturne.API.Configuration;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models.Authorization;
+using Nocturne.Core.Models.Configuration;
+using SameSiteMode = Nocturne.Core.Models.Configuration.SameSiteMode;
 
 namespace Nocturne.API.Middleware.Handlers;
 
@@ -249,14 +250,14 @@ public class SessionCookieHandler : IAuthHandler
     /// Map SameSite mode
     /// </summary>
     private static Microsoft.AspNetCore.Http.SameSiteMode MapSameSiteMode(
-        Configuration.SameSiteMode mode
+        SameSiteMode mode
     )
     {
         return mode switch
         {
-            Configuration.SameSiteMode.None => Microsoft.AspNetCore.Http.SameSiteMode.None,
-            Configuration.SameSiteMode.Lax => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-            Configuration.SameSiteMode.Strict => Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+            SameSiteMode.None => Microsoft.AspNetCore.Http.SameSiteMode.None,
+            SameSiteMode.Lax => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+            SameSiteMode.Strict => Microsoft.AspNetCore.Http.SameSiteMode.Strict,
             _ => Microsoft.AspNetCore.Http.SameSiteMode.Lax,
         };
     }
