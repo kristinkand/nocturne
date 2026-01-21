@@ -1003,6 +1003,13 @@ public class DeduplicationService : IDeduplicationService
             merged.Protein ??= treatment.Protein;
             merged.Fat ??= treatment.Fat;
 
+            // Enrich basal-related fields
+            merged.Duration ??= treatment.Duration;
+            merged.Percent ??= treatment.Percent;
+            merged.Rate ??= treatment.Rate;
+            merged.Carbs ??= treatment.Carbs;
+            merged.Insulin ??= treatment.Insulin;
+
             // Merge additional properties
             if (treatment.AdditionalProperties != null)
             {
