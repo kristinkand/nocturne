@@ -1,7 +1,5 @@
 import type { BridgeConfig, CompleteBridgeConfig } from "../types.js";
 import {
-  PortConstants,
-  UrlConstants,
   EnvironmentVariables,
 } from "../constants.js";
 

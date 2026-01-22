@@ -195,6 +195,9 @@ msgstr "Raison de ce traitement"
 #: src/routes/settings/admin/+page.svelte
 #: src/routes/settings/admin/+page.svelte
 #: src/routes/settings/admin/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/[connector]/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -252,6 +255,8 @@ msgstr "Chargement..."
 #: src/routes/food/food-state.svelte.ts
 #: src/routes/food/food-state.svelte.ts
 #: src/routes/food/food-state.svelte.ts
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/[connector]/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -309,6 +314,7 @@ msgstr "Connexion échouée"
 #: src/lib/components/dashboard/widgets/ConnectionStatusWidget.svelte
 #: src/lib/stores/settings-store.svelte.ts
 #: src/routes/settings/admin/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Never"
 msgstr "Jamais"
@@ -559,6 +565,7 @@ msgid "Failed to save alarm configuration"
 msgstr "Impossible d'enregistrer la configuration de l'alarme"
 
 #: src/lib/stores/settings-store.svelte.ts
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Just now"
@@ -1091,6 +1098,7 @@ msgstr "Une erreur s'est produite"
 #: src/routes/auth/register/+page.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/dashboard/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Try Again"
 msgstr "Réessayer"
@@ -1187,6 +1195,8 @@ msgstr "Erreur de comparaison"
 #: src/routes/reports/treatments/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/migration/+page.svelte
@@ -1213,6 +1223,8 @@ msgstr "Surveillez la compatibilité API Nightscout/Nocturne en temps réel"
 
 #: src/routes/dashboard/+page.svelte
 #: src/routes/reports/battery/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Refresh"
@@ -1333,6 +1345,7 @@ msgid "Failed to load dashboard data"
 msgstr "Échec du chargement des données du tableau de bord"
 
 #: src/routes/dashboard/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Unknown error"
 msgstr "Erreur inconnue"
@@ -1392,6 +1405,7 @@ msgstr "Configuration"
 
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/test/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/setup/+page.svelte
@@ -1489,6 +1503,8 @@ msgstr "Chemin"
 #: src/lib/components/status-pills/COBPill.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/meals/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Status"
@@ -1826,6 +1842,7 @@ msgstr "Total : {0} g de glucides"
 #: src/lib/components/status-pills/COBPill.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/food/QuickPickItem.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Food"
 msgstr "Aliment"
@@ -1879,6 +1896,9 @@ msgstr "Enregistrer"
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -1897,6 +1917,7 @@ msgstr "Terminé"
 #: src/routes/meals/+page.svelte
 #: src/routes/meals/+page.svelte
 #: src/routes/notifications/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Other"
@@ -1906,6 +1927,9 @@ msgstr "Autre"
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -1966,6 +1990,9 @@ msgstr "Replanifié"
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -2580,6 +2607,7 @@ msgstr "Profil sans nom"
 #: src/routes/profile/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/[connector]/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/migration/+page.svelte
@@ -2787,7 +2815,6 @@ msgstr "Apparence"
 msgid "Customize themes, colors, units, and display preferences"
 msgstr "Personnalisez thèmes, couleurs, unités et préférences d'affichage"
 
-#: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/settings/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 msgid "Devices"
@@ -2806,7 +2833,6 @@ msgstr "Thérapie (Profil)"
 msgid "Configure insulin ratios, sensitivity factors, and targets via your Profile"
 msgstr "Configurez les ratios d'insuline, facteurs de sensibilité et cibles via votre profil."
 
-#: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/settings/+page.svelte
 msgid "Algorithm"
 msgstr "Algorithme"
@@ -2849,7 +2875,6 @@ msgstr "Notifications et trackers"
 msgid "Track consumables, appointments, and custom reminders"
 msgstr "Suivez consommables, rendez-vous et rappels personnalisés"
 
-#: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/settings/+page.svelte
 msgid "Services"
 msgstr "Services"
@@ -2859,6 +2884,7 @@ msgid "Connect data sources like Dexcom, Libre, and more"
 msgstr "Connectez sources de données comme Dexcom, Libre, etc."
 
 #: src/lib/components/StepIndicator.svelte
+#: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/download/+page.svelte
 #: src/routes/settings/+page.svelte
 msgid "Connectors"
@@ -7228,6 +7254,7 @@ msgstr "Mode démo"
 
 #: src/lib/components/ui/connector-toggle-group/connector-toggle-group-item.svelte
 #: src/routes/clock/[face]/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Configure"
 msgstr "<0/> Configurer"
@@ -9285,6 +9312,10 @@ msgstr "Aucun jeton d'accès disponible pour ce sujet."
 #: src/lib/components/ui/sheet/sheet-content.svelte
 #: src/routes/settings/admin/+page.svelte
 #: src/routes/settings/admin/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -9732,6 +9763,7 @@ msgstr "x"
 msgid "Maximum basal as multiplier of highest scheduled rate"
 msgstr "Basal maximal comme multiple du taux programmé le plus élevé"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/devices/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Stale"
@@ -10351,6 +10383,7 @@ msgstr "<0/> API Nightscout"
 msgid "<0/> MongoDB (Advanced)"
 msgstr "<0/> MongoDB (avancé)"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/setup/+page.svelte
@@ -10417,6 +10450,7 @@ msgstr "Migration active <0/>"
 msgid "Monitor the progress of your current migration."
 msgstr "Surveillez l'avancement de votre migration en cours."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Progress"
@@ -10495,26 +10529,38 @@ msgstr "Thérapie - Paramètres - Nocturne"
 msgid "Redirecting to Profile..."
 msgstr "Redirection vers le profil..."
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to load services"
 msgstr "Impossible de charger les services"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to delete connector data"
 msgstr "Échec de la suppression des données du connecteur"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to delete demo data"
 msgstr "Échec de la suppression des données de démonstration"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to delete data"
 msgstr "Échec de la suppression des données"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -10522,84 +10568,108 @@ msgstr "Échec de la suppression des données"
 msgid "Unreachable"
 msgstr "Inaccessible"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Request failed"
 msgstr "La requête a échoué"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to trigger manual sync"
 msgstr "Échec du déclenchement de la synchronisation manuelle"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Syncing"
 msgstr "Synchronisation en cours"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to trigger sync"
 msgstr "Échec du déclenchement de la synchronisation"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to sync food data"
 msgstr "Échec de la synchronisation des données alimentaires"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/[connector]/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Inactive"
 msgstr "Inactif"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Services - Settings - Nocturne"
 msgstr "Services - Paramètres - Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Data Sources & Services"
 msgstr "Sources de données et services"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "See what's sending data to Nocturne and set up new connections"
 msgstr "Découvrez ce qui envoie des données à Nocturne et configurez de nouvelles connexions"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Active Data Sources"
 msgstr "<0/> Sources de données actives"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Devices and apps currently sending data to this Nocturne instance"
 msgstr "Appareils et applications envoyant actuellement des données à cette instance Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "No data sources detected"
 msgstr "Aucune source de données détectée"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Set up an uploader app to start sending data to Nocturne"
 msgstr "Configurez une application d'uploader pour commencer à envoyer des données à Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Demo"
 msgstr "<0/> Démo"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Set Up an Uploader"
 msgstr "<0/> Configurer un uploader"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #, fuzzy
 msgid "Connect your CGM app or AID system to push data to Nocturne"
 msgstr "Connectez votre application CGM ou votre système AID pour envoyer des données à Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #, fuzzy
 msgid "CGM Apps"
 msgstr "Applications CGM"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #, fuzzy
 msgid "AID Systems"
 msgstr "Systèmes AID"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -10607,39 +10677,51 @@ msgstr "Systèmes AID"
 msgid "<0/> Active"
 msgstr "<0/> Actif"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Server Connectors"
 msgstr "<0/> Connecteurs serveur"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connectors that run on the server to pull data from cloud services"
 msgstr "Connecteurs qui s'exécutent sur le serveur pour récupérer des données depuis des services cloud"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Syncing..."
 msgstr "<0/> Synchronisation..."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Manual Sync"
 msgstr "<0/> Synchronisation manuelle"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Syncing"
 msgstr "<0/> Synchronisation"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "BackingOff"
 msgstr "Attente"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Backing Off"
 msgstr "<0/> En attente"
 
 #: src/routes/dashboard/analyses/[id]/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Error"
 msgstr "<0/> Erreur"
@@ -10652,22 +10734,27 @@ msgstr "<0/> Erreur"
 #~ "documentation for setup instructions."
 #~ msgstr "Les connecteurs serveur nécessitent une configuration par variables d'environnement. Consultez la documentation pour les instructions de mise en place."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> API Information"
 msgstr "<0/> Informations API"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Use these endpoints to configure uploaders manually"
 msgstr "Utilisez ces points de terminaison pour configurer manuellement les uploaders"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Base URL"
 msgstr "URL de base"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Entries Endpoint"
 msgstr "Point de terminaison des entrées"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "Most uploaders use the Nightscout API format. Use your API secret\n"
@@ -10675,67 +10762,85 @@ msgid ""
 msgstr "La plupart des uploaders utilisent le format API Nightscout. Utilisez votre secret API pour l'authentification via l'en-tête <0/> ou intégrez-le à l'URL."
 
 #. placeholder {0}: selectedUploader.name
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Set up {0}"
 msgstr "<0/> Configurez {0}"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connection Details"
 msgstr "Détails de connexion"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "xDrip+ Style URL (with API secret)"
 msgstr "URL au format xDrip+ (avec secret API)"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Replace YOUR-API-SECRET with your actual API secret"
 msgstr "Remplacez YOUR-API-SECRET par votre secret API réel"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Use the API secret you configured for your Nocturne instance"
 msgstr "Utilisez le secret API que vous avez configuré pour votre instance Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Setup Instructions"
 msgstr "Instructions de configuration"
 
 #. placeholder {0}: selectedUploader.name
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Visit {0} Website"
 msgstr "<0/> Visitez le site {0}"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Demo Data"
 msgstr "<0/> Données de démonstration"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Manage the simulated demo data in your Nocturne instance"
 msgstr "Gérez les données de démonstration simulées de votre instance Nocturne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Demo data cleared successfully"
 msgstr "Les données de démonstration ont été supprimées avec succès"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0>This is demo data</0> — synthetic glucose readings generated for testing and demonstration purposes."
 msgstr "<0>Ce sont des données de démonstration</0> — lectures glycémiques synthétiques générées pour les tests et les démonstrations."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "You can safely delete all demo data. It's very easy to regenerate:"
 msgstr "Vous pouvez supprimer toutes les données de démonstration en toute sécurité. Il est très facile de les régénérer :"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Restart the demo service to regenerate data"
 msgstr "Redémarrez le service de démonstration pour régénérer les données"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Only demo-generated data will be deleted"
 msgstr "Seules les données générées par la démonstration seront supprimées"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Your real health data (if any) is not affected"
 msgstr "Vos données médicales réelles (le cas échéant) ne sont pas concernées"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/[connector]/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -10743,86 +10848,110 @@ msgstr "Vos données médicales réelles (le cas échéant) ne sont pas concern�
 msgid "<0/> Deleting..."
 msgstr "<0/> Suppression…"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Clear Demo Data"
 msgstr "<0/> Supprimer les données de démonstration"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Last Seen"
 msgstr "Dernière connexion"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Delete All Data from This Source"
 msgstr "Supprimer toutes les données de cette source"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This will permanently delete all entries, treatments, and device\n"
 "status records from this data source."
 msgstr "Cela supprimera définitivement toutes les entrées, traitements et états des appareils provenant de cette source de données."
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Delete Data..."
 msgstr "<0/> Supprimer les données…"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Permanently Delete Data"
 msgstr "<0/> Supprimer définitivement les données"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "⚠️ THIS ACTION CANNOT BE UNDONE"
 msgstr "⚠️ CETTE ACTION EST IRRÉVERSIBLE"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "You are about to permanently delete <0>all data</0> from <1/> . This includes:"
 msgstr "Vous êtes sur le point de supprimer définitivement <0>toutes les données</0> de <1/> . Cela inclut :"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "All treatments entered by this device"
 msgstr "Tous les traitements saisis par cet appareil"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "All device status records"
 msgstr "Tous les états d'appareil enregistrés"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Data deleted successfully"
 msgstr "Données supprimées avec succès"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #, fuzzy
 msgid "Type <0>DELETE</0> to confirm:"
 msgstr "Tapez <0>DELETE</0> pour confirmer :"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #, fuzzy
 msgid "Type DELETE"
 msgstr "Tapez DELETE"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Delete All Data"
 msgstr "<0/> Supprimer toutes les données"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Manual Sync Results"
 msgstr "<0/> Résultats de synchronisation manuelle"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "Re-sync data from all enabled connectors for the configured lookback\n"
 "period"
 msgstr "Re-synchronisez les données de tous les connecteurs activés pour la période configurée"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Syncing all enabled connectors..."
 msgstr "Synchronisation de tous les connecteurs activés…"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Sync completed successfully"
 msgstr "Synchronisation terminée avec succès"
@@ -10830,85 +10959,108 @@ msgstr "Synchronisation terminée avec succès"
 #. placeholder {0}: manualSyncResult.successfulConnectors
 #. placeholder {1}: manualSyncResult.totalConnectors
 #. placeholder {2}: Math.round( (new Date(manualSyncResult.endTime!).getTime() - new Date(manualSyncResult.startTime!).getTime()) / 1000 )
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "{0} of {1} connectors synced in {2}s"
 msgstr "{0} connecteur(s) sur {1} synchronisés en {2}s"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Sync failed"
 msgstr "Échec de la synchronisation"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connector Results"
 msgstr "Résultats des connecteurs"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connector health and data metrics"
 msgstr "Santé et métriques des connecteurs"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Healthy"
 msgstr "<0/> Sain"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Offline"
 msgstr "<0/> Hors ligne"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Breakdown by type:"
 msgstr "Répartition par type :"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "No breakdown available"
 msgstr "Aucune répartition disponible"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connector Offline"
 msgstr "Connecteur hors ligne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This connector is not currently running or cannot be reached.\n"
 "Check your server configuration and logs."
 msgstr "Ce connecteur ne fonctionne pas actuellement ou est inaccessible. Vérifiez votre configuration serveur et les journaux."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Manual Sync"
 msgstr "Synchronisation manuelle"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Select a date range to re-sync specific data."
 msgstr "Sélectionnez une plage de dates pour resynchroniser des données spécifiques."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "From"
 msgstr "De"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "To"
 msgstr "À"
 
 #. placeholder {0}: Object.values( granularSyncResult.itemsSynced || {} ).reduce((a, b) => (a || 0) + (b || 0), 0)
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "({0} items)"
 msgstr "({0} éléments)"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Sync initiated successfully <1/>"
 msgstr "<0/> Synchronisation lancée avec succès <1/>"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Sync Now"
 msgstr "<0/> Synchroniser maintenant"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Food Definitions"
 msgstr "Définitions alimentaires"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "Download food data from MyFitnessPal for the date range above,\n"
@@ -10917,44 +11069,54 @@ msgid ""
 msgstr "Téléchargez les données alimentaires depuis MyFitnessPal pour la période ci-dessus, sans créer de traitements. Utile pour enrichir votre base d'aliments."
 
 #. placeholder {0}: foodOnlySyncResult.itemsSynced.Food
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "({0} foods imported)"
 msgstr "({0} aliments importés)"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Food sync completed <1/>"
 msgstr "<0/> Synchronisation alimentaire terminée <1/>"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Food sync failed"
 msgstr "Échec de la synchronisation alimentaire"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Downloading..."
 msgstr "<0/> Téléchargement en cours…"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Download Food Definitions"
 msgstr "<0/> Télécharger les définitions alimentaires"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Delete All Data from This Connector"
 msgstr "Supprimer toutes les données de ce connecteur"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This will permanently delete all entries, treatments, and\n"
 "device status records synchronized by this connector."
 msgstr "Cela supprimera définitivement toutes les entrées, traitements et états d'appareils synchronisés par ce connecteur."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Permanently Delete Connector Data"
 msgstr "<0/> Supprimer définitivement les données du connecteur"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "You are about to permanently delete <0>all data</0> synchronized by <1/> . This includes:"
 msgstr "Vous êtes sur le point de supprimer définitivement <0>toutes les données</0> synchronisées par <1/> . Cela inclut :"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Any treatments and device status records from this connector"
 msgstr "Tous les traitements et états d'appareils provenant de ce connecteur"
@@ -11562,6 +11724,13 @@ msgstr "Votre préférence de langue sera enregistrée sur votre compte et synch
 msgid "Sign in to sync your language preference across devices."
 msgstr "Connectez-vous pour synchroniser votre préférence linguistique entre vos appareils."
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -11572,20 +11741,28 @@ msgstr "Connectez-vous pour synchroniser votre préférence linguistique entre v
 msgid "Offline"
 msgstr "Hors ligne"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Has Data"
 msgstr "<0/> Contient des données"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connector Not Running"
 msgstr "Connecteur non en service"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This connector is not currently running, but data from previous\n"
 "syncs is still stored. You can delete this data below."
 msgstr "Ce connecteur ne fonctionne pas actuellement, mais les données des synchronisations précédentes sont toujours conservées. Vous pouvez les supprimer ci-dessous."
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
@@ -11594,20 +11771,25 @@ msgstr "Ce connecteur ne fonctionne pas actuellement, mais les données des sync
 msgid "Disabled"
 msgstr "Désactivé"
 
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Disabled"
 msgstr "<0/> Désactivé"
 
 #. placeholder {0}: entries24h.toLocaleString()
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "({0} in 24h)"
 msgstr "({0} en 24h)"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Connector Disabled"
 msgstr "Connecteur désactivé"
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This connector is not currently enabled, but historical data from\n"
@@ -11737,24 +11919,29 @@ msgid ""
 "healthcare provider for medical advice."
 msgstr "Ce rapport est fourni uniquement à titre informatif. Consultez toujours votre professionnel de santé pour un avis médical."
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to start deduplication job"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Failed to start deduplication"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Job failed"
 msgstr ""
 
 #. placeholder {0}: source.entriesLast24h ?? 0
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "{0} records (24h)"
 msgstr ""
 
 #. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "{0} records\n"
@@ -11763,28 +11950,34 @@ msgstr ""
 
 #. placeholder {0}: entryCount?.toLocaleString() ?? 0
 #. placeholder {1}: formatLastSeen(lastSeen)
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "{0} records <0/> • Last seen {1}"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Data Maintenance"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Administrative tools for managing your data"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Deduplicate Records"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "Link records from multiple data sources that represent the same underlying event.\n"
 "This improves data quality when the same glucose readings or treatments are uploaded from different apps."
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Run Deduplication"
 msgstr ""
@@ -11792,116 +11985,145 @@ msgstr ""
 #. placeholder {0}: demoDeleteResult.entriesDeleted?.toLocaleString() ?? 0
 #. placeholder {0}: deleteResult.entriesDeleted?.toLocaleString() ?? 0
 #. placeholder {0}: connectorDeleteResult.entriesDeleted?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Deleted {0} records"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Records (24h)"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Total Records"
 msgstr ""
 
 #. placeholder {0}: selectedDataSource.totalEntries?.toLocaleString() ?? 0
 #. placeholder {0}: selectedConnector.totalEntries?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "All glucose records ({0} records)"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Total records"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Records in last 24 hours"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Last record received"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Deduplicate Records"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Link records from multiple data sources that represent the same underlying event"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Deduplication Complete"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Records processed:"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Groups created:"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Duplicates found:"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Job Cancelled"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Running deduplication..."
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Initializing"
 msgstr ""
 
 #. placeholder {0}: deduplicationStatus.progress.processedRecords?.toLocaleString() ?? 0
 #. placeholder {1}: deduplicationStatus.progress.totalRecords?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Processed: {0} / {1}"
 msgstr ""
 
 #. placeholder {0}: deduplicationStatus.progress.groupsFound?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Groups: {0}"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "This process will scan all your glucose records, treatments, and state spans\n"
 "to identify and link records that represent the same event from different data sources."
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Records within 30 seconds are considered potential matches"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Matching criteria include timestamps and values"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Original data is preserved; only links are created"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Safe to run multiple times"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Done"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Cancel Job"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "<0/> Start Deduplication"
 msgstr ""
@@ -13319,10 +13541,12 @@ msgstr ""
 msgid "Visit GitHub"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Not Configured"
 msgstr ""
 
+#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "Click on a connector to configure credentials and settings. Changes take effect immediately."
 msgstr ""

@@ -246,7 +246,7 @@
 
     if (result.success) {
       // Navigate back to services
-      goto("/settings/services");
+      goto("/settings/connectors");
     } else {
       saveMessage = {
         type: "error",

@@ -28,9 +28,10 @@
     HelpCircle,
     CheckCircle,
   } from "lucide-svelte";
-  import { EXTERNAL_URLS } from "$lib/constants";
+  import { fetchExternalUrls } from "$lib/data/metadata.remote";
   import { onMount } from "svelte";
   import { getApiClient } from "$lib/api/client";
+  import type { ExternalUrls } from "$lib/api";
 
   let includeDeviceInfo = $state(true);
   let includeRecentLogs = $state(true);
@@ -42,6 +43,7 @@
   let buildDate = $state("Loading...");
   let commitHash = $state("Loading...");
   let apiCompat = $state("Loading...");
+  let externalUrls = $state<ExternalUrls | null>(null);
 
   onMount(async () => {
     try {
@@ -58,6 +60,12 @@
       buildDate = "Error";
       commitHash = "Error";
       apiCompat = "Error";
+    }
+
+    try {
+      externalUrls = await fetchExternalUrls();
+    } catch (e) {
+      console.error("Failed to load external URLs", e);
     }
   });
 
@@ -80,7 +88,7 @@
       name: "Documentation",
       description: "Guides, tutorials, and API reference",
       icon: BookOpen,
-      href: EXTERNAL_URLS.docsBase!,
+      href: externalUrls?.docsBase ?? "#",
     },
     {
       name: "Nightscout Foundation",

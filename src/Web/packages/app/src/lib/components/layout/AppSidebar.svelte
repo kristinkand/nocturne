@@ -27,10 +27,8 @@
     Apple,
     Utensils,
     Bell,
-    Brain,
     HeartHandshake,
     Plug,
-    Smartphone,
     Sparkles,
     Calendar,
     BatteryFull,
@@ -166,9 +164,7 @@
       children: [
         { title: "Account", href: "/settings/account", icon: User },
         { title: "Appearance", href: "/settings/appearance", icon: Palette },
-        { title: "Devices", href: "/settings/devices", icon: Smartphone },
         { title: "Therapy", href: "/settings/profile", icon: Syringe },
-        { title: "Algorithm", href: "/settings/algorithm", icon: Brain },
         { title: "Features", href: "/settings/features", icon: Sparkles },
         { title: "Alarms", href: "/settings/alarms", icon: Bell },
         {
@@ -176,7 +172,7 @@
           href: "/settings/trackers",
           icon: Timer,
         },
-        { title: "Services", href: "/settings/services", icon: Plug },
+        { title: "Connectors", href: "/settings/connectors", icon: Plug },
         {
           title: "Support & Community",
           href: "/settings/support",
@@ -207,7 +203,7 @@
     if (item.href && item?.strict) {
       return page.url.pathname === item.href;
     }
-    
+
     if (item.href) {
       return page.url.pathname.startsWith(item.href)
     }
@@ -218,7 +214,7 @@
 
     return false;
   };
-  
+
   // Initialize open state for menus that have active children
   $effect(() => {
     navigation.forEach((item) => {

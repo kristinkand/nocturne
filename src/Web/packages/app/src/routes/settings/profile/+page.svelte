@@ -360,7 +360,7 @@
                 <Plus class="h-4 w-4 mr-2" />
                 Create Profile
               </Button>
-              <Button variant="outline" href="/settings/services">
+              <Button variant="outline" href="/settings/connectors">
                 <Settings class="h-4 w-4 mr-2" />
                 Configure Data Sources
               </Button>
