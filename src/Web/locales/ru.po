@@ -69,7 +69,6 @@ msgstr ""
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 #: src/lib/components/reports/SiteChangeImpactChart.svelte
-#: src/lib/components/status-pills/StatusPillBar.svelte
 msgid "Site Change"
 msgstr ""
 
@@ -102,7 +101,6 @@ msgstr ""
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 #: src/lib/components/status-pills/SAGEPill.svelte
-#: src/lib/components/status-pills/StatusPillBar.svelte
 msgid "Sensor Change"
 msgstr ""
 
@@ -477,7 +475,6 @@ msgstr ""
 msgid "Failed to load session"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/lib/stores/auth-store.svelte.ts
@@ -1888,7 +1885,6 @@ msgid "Save"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/connectors/+page.svelte
@@ -1904,7 +1900,6 @@ msgstr ""
 
 #: src/lib/components/settings/ConnectorConfigForm.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/lib/components/treatments/CarbBreakdownBar.svelte
 #: src/lib/components/treatments/TreatmentFoodBreakdown.svelte
@@ -1918,7 +1913,6 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
@@ -1934,14 +1928,12 @@ msgid "Failed"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Fell Off"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
@@ -1950,14 +1942,12 @@ msgid "Replaced Early"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Empty"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
@@ -1966,7 +1956,6 @@ msgid "Refilled"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
@@ -1974,14 +1963,12 @@ msgid "Attended"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Rescheduled"
 msgstr ""
 
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
@@ -1997,7 +1984,6 @@ msgid "Cancelled"
 msgstr ""
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
-#: src/lib/components/trackers/TrackerCompletionDialog.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 #: src/routes/notifications/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
@@ -2008,35 +1994,26 @@ msgstr ""
 msgid "Failed to load notification data"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Tracker active"
 msgstr ""
 
 #. placeholder {0}: thresholdHours ?? "?"
-#. placeholder {0}: thresholdHours ?? "?"
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Exceeded {0}h - change urgently!"
 msgstr ""
 
 #. placeholder {0}: thresholdHours ?? "?"
-#. placeholder {0}: thresholdHours ?? "?"
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Exceeded {0}h - change soon"
 msgstr ""
 
 #. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
-#. placeholder {0}: thresholdHours ?? def.lifespanHours ?? "?"
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Approaching {0}h limit"
 msgstr ""
 
 #. placeholder {0}: Math.floor(instance.ageHours ?? 0)
-#. placeholder {0}: Math.floor(instance.ageHours ?? 0)
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Active for {0}h"
 msgstr ""
@@ -2069,7 +2046,6 @@ msgstr ""
 msgid "Administrative tasks requiring your attention"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/routes/notifications/+page.svelte
 msgid "Password Reset Request"
 msgstr ""
@@ -3892,40 +3868,30 @@ msgstr ""
 msgid "No active notifications"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "Set up trackers →"
-msgstr ""
+#~ msgid "Set up trackers →"
+#~ msgstr ""
 
-#. placeholder {0}: pendingResets.length
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "<0/> Admin Actions Required ({0})"
-msgstr ""
+#~ msgid "<0/> Admin Actions Required ({0})"
+#~ msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "<0/> Handle"
-msgstr ""
+#~ msgid "<0/> Handle"
+#~ msgstr ""
 
-#. placeholder {0}: trackerNotifications.length
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "<0/> Tracker Alerts ({0})"
-msgstr ""
+#~ msgid "<0/> Tracker Alerts ({0})"
+#~ msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
 #: src/lib/components/settings/AlarmProfileDialog.svelte
 msgid "<0/> Snooze"
 msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "<0/> Done"
-msgstr ""
+#~ msgid "<0/> Done"
+#~ msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "Acknowledge for all devices"
-msgstr ""
+#~ msgid "Acknowledge for all devices"
+#~ msgstr ""
 
-#: src/lib/components/layout/SidebarNotifications.svelte
-msgid "Ack All"
-msgstr ""
+#~ msgid "Ack All"
+#~ msgstr ""
 
 #: src/lib/components/layout/SidebarNotifications.svelte
 msgid "View all notifications"
@@ -13671,4 +13637,18 @@ msgid ""
 "This will permanently delete all configuration and credentials for this\n"
 "connector. The connector will stop syncing data. This action cannot be\n"
 "undone."
+msgstr ""
+
+#~ msgid "<0/> Setup Required ({0})"
+#~ msgstr ""
+
+#~ msgid "Configure notification thresholds for alerts"
+#~ msgstr ""
+
+#: src/lib/components/layout/SidebarNotifications.svelte
+msgid "Set up trackers"
+msgstr ""
+
+#: src/lib/components/layout/NotificationItem.svelte
+msgid "Notification"
 msgstr ""

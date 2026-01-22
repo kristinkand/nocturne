@@ -4747,6 +4747,144 @@
         }
       }
     },
+    "/api/v4/notifications": {
+      "get": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Get all active notifications for the current user",
+        "operationId": "Notifications_GetNotifications",
+        "responses": {
+          "200": {
+            "description": "List of active notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InAppNotificationDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/notifications/{id}/actions/{actionId}": {
+      "post": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Execute an action on a notification",
+        "operationId": "Notifications_ExecuteAction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The notification ID",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "The action ID to execute",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content if successful"
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/notifications/{id}": {
+      "delete": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Dismiss a notification (archive with dismissed reason)",
+        "operationId": "Notifications_DismissNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The notification ID to dismiss",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content if successful"
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v4/predictions": {
       "get": {
         "tags": [
@@ -6580,28 +6718,6 @@
         }
       }
     },
-    "/api/v4/trackers/seed": {
-      "post": {
-        "tags": [
-          "V4 Trackers"
-        ],
-        "summary": "Seed default tracker definitions for the current user",
-        "operationId": "Trackers_SeedDefaults",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v4/trackers/definitions": {
       "get": {
         "tags": [
@@ -7395,6 +7511,140 @@
                   "items": {
                     "$ref": "#/components/schemas/MealTreatment"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments": {
+      "post": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Create a treatment with tracker integration.\nIf the treatment's event type matches a tracker's trigger event types,\nthe tracker instance will be automatically started/restarted.",
+        "operationId": "Treatments_CreateTreatment",
+        "requestBody": {
+          "x-name": "treatment",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Treatment"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments/bulk": {
+      "post": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Create multiple treatments with tracker integration.",
+        "operationId": "Treatments_CreateTreatments",
+        "requestBody": {
+          "x-name": "treatments",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Treatment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments/{id}": {
+      "get": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Get a specific treatment by ID",
+        "operationId": "Treatments_GetTreatment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -9152,7 +9402,7 @@
           "Treatments"
         ],
         "summary": "Create a new treatment via V3 API",
-        "operationId": "Treatments_CreateTreatment",
+        "operationId": "Treatments_CreateTreatment2",
         "requestBody": {
           "x-name": "treatment",
           "description": "Treatment to create",
@@ -9199,7 +9449,7 @@
           "Treatments"
         ],
         "summary": "Get a specific treatment by ID with V3 format",
-        "operationId": "Treatments_GetTreatment",
+        "operationId": "Treatments_GetTreatment2",
         "parameters": [
           {
             "name": "id",
@@ -9349,7 +9599,7 @@
           "Treatments"
         ],
         "summary": "Create multiple treatments via V3 API (bulk operation)",
-        "operationId": "Treatments_CreateTreatments",
+        "operationId": "Treatments_CreateTreatments2",
         "requestBody": {
           "x-name": "treatments",
           "description": "Treatments to create",
@@ -13303,7 +13553,7 @@
           "Treatments"
         ],
         "summary": "Create new treatments",
-        "operationId": "Treatments_CreateTreatments2",
+        "operationId": "Treatments_CreateTreatments22",
         "requestBody": {
           "x-name": "treatments",
           "description": "Treatments to create (can be single object or array)",
@@ -20384,6 +20634,99 @@
           "AutoDelete"
         ]
       },
+      "InAppNotificationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/InAppNotificationType"
+          },
+          "urgency": {
+            "$ref": "#/components/schemas/NotificationUrgency"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationActionDto"
+            }
+          }
+        }
+      },
+      "InAppNotificationType": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "PasswordResetRequest",
+          "UnconfiguredTracker",
+          "TrackerAlert",
+          "StatisticsSummary",
+          "HelpResponse",
+          "AnonymousLoginRequest",
+          "PredictedLow",
+          "SuggestedMealMatch"
+        ],
+        "enum": [
+          "PasswordResetRequest",
+          "UnconfiguredTracker",
+          "TrackerAlert",
+          "StatisticsSummary",
+          "HelpResponse",
+          "AnonymousLoginRequest",
+          "PredictedLow",
+          "SuggestedMealMatch"
+        ]
+      },
+      "NotificationUrgency": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Info",
+          "Warn",
+          "Hazard",
+          "Urgent"
+        ],
+        "enum": [
+          "Info",
+          "Warn",
+          "Hazard",
+          "Urgent"
+        ]
+      },
+      "NotificationActionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "actionId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "variant": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "GlucosePredictionResponse": {
         "type": "object",
         "description": "Response containing glucose predictions.",
@@ -21680,22 +22023,6 @@
             "type": "boolean"
           }
         }
-      },
-      "NotificationUrgency": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Info",
-          "Warn",
-          "Hazard",
-          "Urgent"
-        ],
-        "enum": [
-          "Info",
-          "Warn",
-          "Hazard",
-          "Urgent"
-        ]
       },
       "TrackerDefinitionDto": {
         "type": "object",

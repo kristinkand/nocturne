@@ -7,18 +7,12 @@ using Microsoft.Extensions.ServiceDiscovery;
 using Microsoft.IdentityModel.Tokens;
 using Nocturne.API.Configuration;
 using Nocturne.API.Extensions;
-using Nocturne.Core.Models.Configuration;
-using JwtOptions = Nocturne.Core.Models.Configuration.JwtOptions;
-using OidcOptions = Nocturne.Core.Models.Configuration.OidcOptions;
-using LocalIdentityOptions = Nocturne.Core.Models.Configuration.LocalIdentityOptions;
-using EmailOptions = Nocturne.Core.Models.Configuration.EmailOptions;
 using Nocturne.API.Hubs;
 using Nocturne.API.Middleware;
 using Nocturne.API.Middleware.Handlers;
 using Nocturne.API.Services;
 using Nocturne.API.Services.Auth;
 using Nocturne.API.Services.BackgroundServices;
-
 using Nocturne.Connectors.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Services;
@@ -31,6 +25,7 @@ using Nocturne.Connectors.Nightscout.Services;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Configuration;
 using Nocturne.Infrastructure.Cache.Extensions;
 using Nocturne.Infrastructure.Data.Abstractions;
 using Nocturne.Infrastructure.Data.Extensions;
@@ -41,6 +36,10 @@ using NSwag;
 using OpenTelemetry.Logs;
 using Polly;
 using Scalar.AspNetCore;
+using EmailOptions = Nocturne.Core.Models.Configuration.EmailOptions;
+using JwtOptions = Nocturne.Core.Models.Configuration.JwtOptions;
+using LocalIdentityOptions = Nocturne.Core.Models.Configuration.LocalIdentityOptions;
+using OidcOptions = Nocturne.Core.Models.Configuration.OidcOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -418,7 +417,6 @@ builder.Services.Configure<DeviceHealthOptions>(
 // Register device health services
 builder.Services.AddScoped<IDeviceRegistryService, DeviceRegistryService>();
 
-
 // Configure alert monitoring settings
 builder.Services.Configure<AlertMonitoringOptions>(
     builder.Configuration.GetSection(AlertMonitoringOptions.SectionName)
@@ -444,7 +442,10 @@ builder.Services.AddHttpClient(ConnectorHealthService.HttpClientName).AddService
 builder.Services.AddScoped<IConnectorHealthService, ConnectorHealthService>();
 
 // Register migration job service for data migration from Nightscout
-builder.Services.AddSingleton<Nocturne.API.Services.Migration.IMigrationJobService, Nocturne.API.Services.Migration.MigrationJobService>();
+builder.Services.AddSingleton<
+    Nocturne.API.Services.Migration.IMigrationJobService,
+    Nocturne.API.Services.Migration.MigrationJobService
+>();
 
 // Register migration startup service to check for pending migrations and create admin notifications
 builder.Services.AddHostedService<Nocturne.API.Services.Migration.MigrationStartupService>();

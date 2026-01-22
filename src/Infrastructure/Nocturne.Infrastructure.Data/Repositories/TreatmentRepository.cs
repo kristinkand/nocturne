@@ -90,6 +90,18 @@ public class TreatmentRepository
     }
 
     /// <summary>
+    /// Create a single treatment and link to canonical groups for deduplication
+    /// </summary>
+    public async Task<Treatment?> CreateTreatmentAsync(
+        Treatment treatment,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var results = await CreateTreatmentsAsync([treatment], cancellationToken);
+        return results.FirstOrDefault();
+    }
+
+    /// <summary>
     /// Create new treatments and link to canonical groups for deduplication
     /// </summary>
     public async Task<IEnumerable<Treatment>> CreateTreatmentsAsync(

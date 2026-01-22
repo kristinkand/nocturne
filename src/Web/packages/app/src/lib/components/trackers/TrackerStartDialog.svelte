@@ -3,9 +3,11 @@
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
+  import { TextareaAutosize } from "$lib/components/ui/textarea";
   import { Play } from "lucide-svelte";
   import { cn } from "$lib/utils";
   import moment from "moment-timezone";
+
   import {
     type TrackerDefinitionDto,
     type TrackerInstanceDto,
@@ -210,8 +212,7 @@
 
       <div class="space-y-2">
         <Label for="startNotes">Notes (optional)</Label>
-        <Input
-          id="startNotes"
+        <TextareaAutosize
           bind:value={startNotes}
           placeholder="e.g., Left arm, Lot #12345"
         />

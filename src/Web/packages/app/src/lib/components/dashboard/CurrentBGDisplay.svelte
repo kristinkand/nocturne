@@ -251,12 +251,9 @@
     <StatusPillBar
       iob={realtimeStore.pillsData.iob}
       cob={realtimeStore.pillsData.cob}
-      cage={realtimeStore.pillsData.cage}
-      sage={realtimeStore.pillsData.sage}
       basal={realtimeStore.pillsData.basal}
       loop={realtimeStore.pillsData.loop}
       units={unitLabel}
-      onAddTreatment={handleAddTreatment}
     />
     {#if trackerPillsEnabled && realtimeStore.trackerInstances.length > 0}
       <TrackerPillBar
