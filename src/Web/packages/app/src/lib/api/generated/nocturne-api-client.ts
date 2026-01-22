@@ -4991,11 +4991,11 @@ export class DeviceHealthClient {
     protected processRegisterDevice(response: Response): Promise<DeviceHealth> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DeviceHealth;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -7212,11 +7212,11 @@ export class StateSpansClient {
     protected processCreateStateSpan(response: Response): Promise<StateSpan> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as StateSpan;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as StateSpan;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -8054,11 +8054,11 @@ export class SystemEventsClient {
     protected processCreateSystemEvent(response: Response): Promise<SystemEvent> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SystemEvent;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SystemEvent;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -8361,11 +8361,11 @@ export class TrackersClient {
     protected processCreateDefinition(response: Response): Promise<TrackerDefinitionDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerDefinitionDto;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerDefinitionDto;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -8568,11 +8568,11 @@ export class TrackersClient {
     protected processStartInstance(response: Response): Promise<TrackerInstanceDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerInstanceDto;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerInstanceDto;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -8869,11 +8869,11 @@ export class TrackersClient {
     protected processCreatePreset(response: Response): Promise<TrackerPresetDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
+        if (status === 201) {
             return response.text().then((_responseText) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerPresetDto;
-            return result200;
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrackerPresetDto;
+            return result201;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {

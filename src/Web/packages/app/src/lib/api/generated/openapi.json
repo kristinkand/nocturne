@@ -3878,7 +3878,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Registered device information",
             "content": {
               "application/json": {
@@ -5711,7 +5711,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -6456,7 +6456,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -6663,7 +6663,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -6826,7 +6826,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -7088,7 +7088,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {

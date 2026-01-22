@@ -137,6 +137,7 @@ public class TrackersController : ControllerBase
     /// </summary>
     [HttpPost("definitions")]
     [Authorize]
+    [ProducesResponseType(typeof(TrackerDefinitionDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<TrackerDefinitionDto>> CreateDefinition(
         [FromBody] CreateTrackerDefinitionRequest request
     )
@@ -348,6 +349,7 @@ public class TrackersController : ControllerBase
     /// </summary>
     [HttpPost("instances")]
     [Authorize]
+    [ProducesResponseType(typeof(TrackerInstanceDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<TrackerInstanceDto>> StartInstance(
         [FromBody] StartTrackerInstanceRequest request
     )
@@ -509,6 +511,7 @@ public class TrackersController : ControllerBase
     /// </summary>
     [HttpPost("presets")]
     [Authorize]
+    [ProducesResponseType(typeof(TrackerPresetDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<TrackerPresetDto>> CreatePreset(
         [FromBody] CreateTrackerPresetRequest request
     )

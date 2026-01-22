@@ -225,18 +225,9 @@ public class SignalRBroadcastService : ISignalRBroadcastService
     {
         try
         {
-            _logger.LogInformation(
-                "Broadcasting storage create event for collection {Collection}: {DataType}",
-                collectionName,
-                data?.GetType().Name ?? "null"
-            );
             await _dataHubContext
                 .Clients.Group(collectionName)
                 .SendCoreAsync("create", new[] { data });
-            _logger.LogInformation(
-                "Storage create event broadcast completed for collection {Collection}",
-                collectionName
-            );
         }
         catch (Exception ex)
         {
