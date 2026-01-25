@@ -161,7 +161,7 @@
         padding={{ top: 20, right: 20, bottom: 40, left: 50 }}
       >
         <!-- Target range overlay (70-180 mg/dL) -->
-        {#snippet children()}
+        {#snippet aboveMarks()}
           <!-- Horizontal reference lines for target range -->
           <Rule y={70} class="stroke-success/50 stroke-1 stroke-dashed" />
           <Rule y={180} class="stroke-warning/50 stroke-1 stroke-dashed" />
