@@ -38,7 +38,6 @@
     Loader2,
     AlertCircle,
     Trash2,
-    Power,
     ExternalLink,
   } from "lucide-svelte";
   import SettingsPageSkeleton from "$lib/components/settings/SettingsPageSkeleton.svelte";
@@ -78,7 +77,7 @@
       servicesOverview = await getServicesOverview();
       connectorInfo =
         servicesOverview?.availableConnectors?.find(
-          (c) => c.id?.toLowerCase() === connectorName.toLowerCase()
+          (c) => c.id?.toLowerCase() === connectorName?.toLowerCase()
         ) ?? null;
 
       if (!connectorInfo) {

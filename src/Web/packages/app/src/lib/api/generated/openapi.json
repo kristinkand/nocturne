@@ -1335,6 +1335,27 @@
         }
       }
     },
+    "/api/Metadata/statistics-types": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Get statistics metadata for type generation\nThis endpoint exists primarily to ensure NSwag generates TypeScript types for statistics models",
+        "operationId": "Metadata_GetStatisticsTypes",
+        "responses": {
+          "200": {
+            "description": "Statistics types metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTypesMetadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Metadata/widget-definitions": {
       "get": {
         "tags": [
@@ -2450,6 +2471,49 @@
         }
       }
     },
+    "/api/v1/Statistics/daily-basal-bolus-ratios": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Calculate daily basal/bolus ratio statistics for a date range",
+        "operationId": "Statistics_GetDailyBasalBolusRatios",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily basal/bolus ratio breakdown with averages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBasalBolusRatioResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/Statistics/insulin-delivery-stats": {
       "get": {
         "tags": [
@@ -2486,6 +2550,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InsulinDeliveryStatistics"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Statistics/basal-analysis": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Calculate comprehensive basal analysis statistics for a date range",
+        "operationId": "Statistics_GetBasalAnalysis",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comprehensive basal analysis with stats, temp basal info, and hourly percentiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasalAnalysisResponse"
                 }
               }
             }
@@ -15440,6 +15547,316 @@
           }
         }
       },
+      "StatisticsTypesMetadata": {
+        "type": "object",
+        "description": "Metadata about statistics types for NSwag generation",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the statistics types"
+          },
+          "sampleBasalAnalysis": {
+            "description": "Sample basal analysis response (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BasalAnalysisResponse"
+              }
+            ]
+          },
+          "sampleDailyBasalBolusRatio": {
+            "description": "Sample daily basal/bolus ratio response (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DailyBasalBolusRatioResponse"
+              }
+            ]
+          },
+          "sampleHourlyPercentile": {
+            "description": "Sample hourly basal percentile data (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/HourlyBasalPercentileData"
+              }
+            ]
+          },
+          "sampleDailyData": {
+            "description": "Sample daily basal/bolus ratio data (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DailyBasalBolusRatioData"
+              }
+            ]
+          },
+          "sampleInsulinDelivery": {
+            "description": "Sample insulin delivery statistics (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InsulinDeliveryStatistics"
+              }
+            ]
+          }
+        }
+      },
+      "BasalAnalysisResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "stats": {
+            "$ref": "#/components/schemas/BasalStats"
+          },
+          "tempBasalInfo": {
+            "$ref": "#/components/schemas/TempBasalInfo"
+          },
+          "hourlyPercentiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HourlyBasalPercentileData"
+            }
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          }
+        }
+      },
+      "BasalStats": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "avgRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "minRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalDelivered": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "TempBasalInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "perDay": {
+            "type": "number",
+            "format": "double"
+          },
+          "highTemps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowTemps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "zeroTemps": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HourlyBasalPercentileData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "p10": {
+            "type": "number",
+            "format": "double"
+          },
+          "p25": {
+            "type": "number",
+            "format": "double"
+          },
+          "median": {
+            "type": "number",
+            "format": "double"
+          },
+          "p75": {
+            "type": "number",
+            "format": "double"
+          },
+          "p90": {
+            "type": "number",
+            "format": "double"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DailyBasalBolusRatioResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "dailyData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyBasalBolusRatioData"
+            }
+          },
+          "averageBasalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageBolusPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageTdd": {
+            "type": "number",
+            "format": "double"
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DailyBasalBolusRatioData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "displayDate": {
+            "type": "string"
+          },
+          "basal": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "basalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusPercent": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "InsulinDeliveryStatistics": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalBolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalBasal": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInsulin": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCarbs": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "basalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "basalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "tdd": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgBolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "mealBoluses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correctionBoluses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "icRatio": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusesPerDay": {
+            "type": "number",
+            "format": "double"
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "carbCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carbBolusCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "WidgetDefinitionsMetadata": {
         "type": "object",
         "description": "Metadata about available widget definitions",
@@ -18122,86 +18539,6 @@
             "format": "int32"
           },
           "treatmentCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "InsulinDeliveryStatistics": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "totalBolus": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalBasal": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalInsulin": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalCarbs": {
-            "type": "number",
-            "format": "double"
-          },
-          "bolusCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "basalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "basalPercent": {
-            "type": "number",
-            "format": "double"
-          },
-          "bolusPercent": {
-            "type": "number",
-            "format": "double"
-          },
-          "tdd": {
-            "type": "number",
-            "format": "double"
-          },
-          "avgBolus": {
-            "type": "number",
-            "format": "double"
-          },
-          "mealBoluses": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "correctionBoluses": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "icRatio": {
-            "type": "number",
-            "format": "double"
-          },
-          "bolusesPerDay": {
-            "type": "number",
-            "format": "double"
-          },
-          "dayCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "startDate": {
-            "type": "string"
-          },
-          "endDate": {
-            "type": "string"
-          },
-          "carbCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "carbBolusCount": {
             "type": "integer",
             "format": "int32"
           }

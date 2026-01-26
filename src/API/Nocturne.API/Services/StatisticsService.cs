@@ -1818,13 +1818,14 @@ public class StatisticsService : IStatisticsService
             {
                 date = DateTimeOffset.FromUnixTimeMilliseconds(treatment.Mills).DateTime;
             }
-            else if (treatment.Date.HasValue)
+            else if (treatment.Date.HasValue && treatment.Date.Value > 0)
             {
-                date = treatment.Date.Value;
+                date = DateTimeOffset.FromUnixTimeMilliseconds(treatment.Date.Value).DateTime;
             }
-            else if (treatment.Created_at.HasValue)
+            else if (!string.IsNullOrEmpty(treatment.Created_at))
             {
-                date = treatment.Created_at.Value;
+                if (!DateTime.TryParse(treatment.Created_at, out date))
+                    continue;
             }
             else if (!string.IsNullOrEmpty(treatment.EventTime))
             {
@@ -2010,13 +2011,14 @@ public class StatisticsService : IStatisticsService
             {
                 date = DateTimeOffset.FromUnixTimeMilliseconds(treatment.Mills).DateTime;
             }
-            else if (treatment.Date.HasValue)
+            else if (treatment.Date.HasValue && treatment.Date.Value > 0)
             {
-                date = treatment.Date.Value;
+                date = DateTimeOffset.FromUnixTimeMilliseconds(treatment.Date.Value).DateTime;
             }
-            else if (treatment.Created_at.HasValue)
+            else if (!string.IsNullOrEmpty(treatment.Created_at))
             {
-                date = treatment.Created_at.Value;
+                if (!DateTime.TryParse(treatment.Created_at, out date))
+                    continue;
             }
             else if (!string.IsNullOrEmpty(treatment.EventTime))
             {

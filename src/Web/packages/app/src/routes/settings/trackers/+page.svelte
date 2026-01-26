@@ -259,13 +259,6 @@
     return def.lifespanHours - instance.ageHours;
   }
 
-  // Format time remaining
-  function formatTimeRemaining(hours: number | undefined): string {
-    if (hours === undefined) return "";
-    if (hours <= 0) return "Overdue";
-    return `${formatAge(hours)} left`;
-  }
-
   // Get notification level for instance
   function getInstanceLevel(
     instance: TrackerInstanceDto

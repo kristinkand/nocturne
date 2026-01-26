@@ -22,6 +22,11 @@
     AvailableConnector,
     DeduplicationJobStatus,
   } from "$lib/api/generated/nocturne-api-client";
+
+  // Extended type that includes description for UI display
+  interface ConnectorStatusWithDescription extends ConnectorStatusDto {
+    description?: string;
+  }
   import {
     Card,
     CardContent,
@@ -131,7 +136,7 @@
   // Connector heartbeat metrics state
   let connectorStatuses = $state<ConnectorStatusDto[]>([]);
   let isLoadingConnectorStatuses = $state(false);
-  let selectedConnector = $state<ConnectorStatusDto | null>(null);
+  let selectedConnector = $state<ConnectorStatusWithDescription | null>(null);
   let showConnectorDialog = $state(false);
 
   // Connector deletion state

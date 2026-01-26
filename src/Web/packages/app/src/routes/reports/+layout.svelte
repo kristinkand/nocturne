@@ -2,8 +2,7 @@
     import {page} from "$app/state";
     import Button from "$lib/components/ui/button/button.svelte";
     import {ReportsFilterSidebar} from "$lib/components/layout";
-    import * as Sidebar from "$lib/components/ui/sidebar";
-    import {ArrowLeftIcon, Filter, Calendar} from "lucide-svelte";
+    import {Filter, Calendar} from "lucide-svelte";
     import {useDateParams, setDateParamsContext} from "$lib/hooks/date-params.svelte";
 
     let {children} = $props();

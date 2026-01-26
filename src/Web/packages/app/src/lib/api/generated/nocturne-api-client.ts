@@ -1772,6 +1772,45 @@ export class MetadataClient {
     }
 
     /**
+     * Get statistics metadata for type generation
+    This endpoint exists primarily to ensure NSwag generates TypeScript types for statistics models
+     * @return Statistics types metadata
+     */
+    getStatisticsTypes(signal?: AbortSignal): Promise<StatisticsTypesMetadata> {
+        let url_ = this.baseUrl + "/api/Metadata/statistics-types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetStatisticsTypes(_response);
+        });
+    }
+
+    protected processGetStatisticsTypes(response: Response): Promise<StatisticsTypesMetadata> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as StatisticsTypesMetadata;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<StatisticsTypesMetadata>(null as any);
+    }
+
+    /**
      * Get widget definitions metadata
     This endpoint provides all available dashboard widget definitions for frontend configuration
      * @return Widget definitions metadata
@@ -3175,6 +3214,54 @@ export class StatisticsClient {
     }
 
     /**
+     * Calculate daily basal/bolus ratio statistics for a date range
+     * @param startDate (optional) Start date of the analysis period
+     * @param endDate (optional) End date of the analysis period
+     * @return Daily basal/bolus ratio breakdown with averages
+     */
+    getDailyBasalBolusRatios(startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<DailyBasalBolusRatioResponse> {
+        let url_ = this.baseUrl + "/api/v1/Statistics/daily-basal-bolus-ratios?";
+        if (startDate === null)
+            throw new globalThis.Error("The parameter 'startDate' cannot be null.");
+        else if (startDate !== undefined)
+            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+        if (endDate === null)
+            throw new globalThis.Error("The parameter 'endDate' cannot be null.");
+        else if (endDate !== undefined)
+            url_ += "endDate=" + encodeURIComponent(endDate ? "" + endDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDailyBasalBolusRatios(_response);
+        });
+    }
+
+    protected processGetDailyBasalBolusRatios(response: Response): Promise<DailyBasalBolusRatioResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DailyBasalBolusRatioResponse;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DailyBasalBolusRatioResponse>(null as any);
+    }
+
+    /**
      * Calculate comprehensive insulin delivery statistics for a date range
      * @param startDate (optional) Start date of the analysis period
      * @param endDate (optional) End date of the analysis period
@@ -3220,6 +3307,54 @@ export class StatisticsClient {
             });
         }
         return Promise.resolve<InsulinDeliveryStatistics>(null as any);
+    }
+
+    /**
+     * Calculate comprehensive basal analysis statistics for a date range
+     * @param startDate (optional) Start date of the analysis period
+     * @param endDate (optional) End date of the analysis period
+     * @return Comprehensive basal analysis with stats, temp basal info, and hourly percentiles
+     */
+    getBasalAnalysis(startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<BasalAnalysisResponse> {
+        let url_ = this.baseUrl + "/api/v1/Statistics/basal-analysis?";
+        if (startDate === null)
+            throw new globalThis.Error("The parameter 'startDate' cannot be null.");
+        else if (startDate !== undefined)
+            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+        if (endDate === null)
+            throw new globalThis.Error("The parameter 'endDate' cannot be null.");
+        else if (endDate !== undefined)
+            url_ += "endDate=" + encodeURIComponent(endDate ? "" + endDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetBasalAnalysis(_response);
+        });
+    }
+
+    protected processGetBasalAnalysis(response: Response): Promise<BasalAnalysisResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BasalAnalysisResponse;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BasalAnalysisResponse>(null as any);
     }
 }
 
@@ -17264,6 +17399,97 @@ export interface EventTypeConfiguration {
     sensor?: boolean;
 }
 
+/** Metadata about statistics types for NSwag generation */
+export interface StatisticsTypesMetadata {
+    /** Description of the statistics types */
+    description?: string;
+    /** Sample basal analysis response (for type generation) */
+    sampleBasalAnalysis?: BasalAnalysisResponse | undefined;
+    /** Sample daily basal/bolus ratio response (for type generation) */
+    sampleDailyBasalBolusRatio?: DailyBasalBolusRatioResponse | undefined;
+    /** Sample hourly basal percentile data (for type generation) */
+    sampleHourlyPercentile?: HourlyBasalPercentileData | undefined;
+    /** Sample daily basal/bolus ratio data (for type generation) */
+    sampleDailyData?: DailyBasalBolusRatioData | undefined;
+    /** Sample insulin delivery statistics (for type generation) */
+    sampleInsulinDelivery?: InsulinDeliveryStatistics | undefined;
+}
+
+export interface BasalAnalysisResponse {
+    stats?: BasalStats;
+    tempBasalInfo?: TempBasalInfo;
+    hourlyPercentiles?: HourlyBasalPercentileData[];
+    dayCount?: number;
+    startDate?: string;
+    endDate?: string;
+}
+
+export interface BasalStats {
+    count?: number;
+    avgRate?: number;
+    minRate?: number;
+    maxRate?: number;
+    totalDelivered?: number;
+}
+
+export interface TempBasalInfo {
+    total?: number;
+    perDay?: number;
+    highTemps?: number;
+    lowTemps?: number;
+    zeroTemps?: number;
+}
+
+export interface HourlyBasalPercentileData {
+    hour?: number;
+    p10?: number;
+    p25?: number;
+    median?: number;
+    p75?: number;
+    p90?: number;
+    count?: number;
+}
+
+export interface DailyBasalBolusRatioResponse {
+    dailyData?: DailyBasalBolusRatioData[];
+    averageBasalPercent?: number;
+    averageBolusPercent?: number;
+    averageTdd?: number;
+    dayCount?: number;
+}
+
+export interface DailyBasalBolusRatioData {
+    date?: string;
+    displayDate?: string;
+    basal?: number;
+    bolus?: number;
+    total?: number;
+    basalPercent?: number;
+    bolusPercent?: number;
+}
+
+export interface InsulinDeliveryStatistics {
+    totalBolus?: number;
+    totalBasal?: number;
+    totalInsulin?: number;
+    totalCarbs?: number;
+    bolusCount?: number;
+    basalCount?: number;
+    basalPercent?: number;
+    bolusPercent?: number;
+    tdd?: number;
+    avgBolus?: number;
+    mealBoluses?: number;
+    correctionBoluses?: number;
+    icRatio?: number;
+    bolusesPerDay?: number;
+    dayCount?: number;
+    startDate?: string;
+    endDate?: string;
+    carbCount?: number;
+    carbBolusCount?: number;
+}
+
 /** Metadata about available widget definitions */
 export interface WidgetDefinitionsMetadata {
     /** Array of all widget definitions with full metadata */
@@ -18096,28 +18322,6 @@ export interface PeriodStatistics {
     hasSufficientData?: boolean;
     entryCount?: number;
     treatmentCount?: number;
-}
-
-export interface InsulinDeliveryStatistics {
-    totalBolus?: number;
-    totalBasal?: number;
-    totalInsulin?: number;
-    totalCarbs?: number;
-    bolusCount?: number;
-    basalCount?: number;
-    basalPercent?: number;
-    bolusPercent?: number;
-    tdd?: number;
-    avgBolus?: number;
-    mealBoluses?: number;
-    correctionBoluses?: number;
-    icRatio?: number;
-    bolusesPerDay?: number;
-    dayCount?: number;
-    startDate?: string;
-    endDate?: string;
-    carbCount?: number;
-    carbBolusCount?: number;
 }
 
 export interface SiteChangeImpactAnalysis {

@@ -5653,7 +5653,6 @@ msgstr "Not set"
 
 #: src/lib/components/status-pills/TrackerPill.svelte
 #: src/routes/settings/trackers/+page.svelte
-#: src/routes/settings/trackers/+page.svelte
 msgid "Overdue"
 msgstr "Overdue"
 

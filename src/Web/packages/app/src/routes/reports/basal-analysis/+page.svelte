@@ -71,26 +71,22 @@
     { debounce: 100 }
   );
 
-  // Get stats and tempBasalInfo from backend response
-  const basalStats = $derived(
-    basalAnalysisResource.current?.stats ?? {
-      count: 0,
-      avgRate: 0,
-      minRate: 0,
-      maxRate: 0,
-      totalDelivered: 0,
-    }
-  );
+  // Get stats and tempBasalInfo from backend response with explicit defaults
+  const basalStats = $derived({
+    count: basalAnalysisResource.current?.stats?.count ?? 0,
+    avgRate: basalAnalysisResource.current?.stats?.avgRate ?? 0,
+    minRate: basalAnalysisResource.current?.stats?.minRate ?? 0,
+    maxRate: basalAnalysisResource.current?.stats?.maxRate ?? 0,
+    totalDelivered: basalAnalysisResource.current?.stats?.totalDelivered ?? 0,
+  });
 
-  const tempBasalInfo = $derived(
-    basalAnalysisResource.current?.tempBasalInfo ?? {
-      total: 0,
-      perDay: 0,
-      highTemps: 0,
-      lowTemps: 0,
-      zeroTemps: 0,
-    }
-  );
+  const tempBasalInfo = $derived({
+    total: basalAnalysisResource.current?.tempBasalInfo?.total ?? 0,
+    perDay: basalAnalysisResource.current?.tempBasalInfo?.perDay ?? 0,
+    highTemps: basalAnalysisResource.current?.tempBasalInfo?.highTemps ?? 0,
+    lowTemps: basalAnalysisResource.current?.tempBasalInfo?.lowTemps ?? 0,
+    zeroTemps: basalAnalysisResource.current?.tempBasalInfo?.zeroTemps ?? 0,
+  });
 
   const hourlyPercentiles = $derived(
     basalAnalysisResource.current?.hourlyPercentiles ?? []
