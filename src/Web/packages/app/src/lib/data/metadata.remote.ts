@@ -6,6 +6,7 @@ import { error } from "@sveltejs/kit";
 import type {
   WidgetDefinitionsMetadata,
   WidgetDefinition,
+  ExternalUrls,
 } from "$lib/api/generated/nocturne-api-client";
 
 /**
@@ -37,5 +38,21 @@ export const fetchWidgetDefinitionsMetadata = query(async (): Promise<WidgetDefi
   } catch (err) {
     console.error("Error fetching widget definitions metadata:", err);
     throw error(500, "Failed to fetch widget definitions metadata");
+  }
+});
+
+/**
+ * Fetch external URLs from the backend.
+ * This is the single source of truth for documentation and website URLs.
+ */
+export const fetchExternalUrls = query(async (): Promise<ExternalUrls> => {
+  const { locals } = getRequestEvent();
+  const { apiClient } = locals;
+
+  try {
+    return await apiClient.metadata.getExternalUrls();
+  } catch (err) {
+    console.error("Error fetching external URLs:", err);
+    throw error(500, "Failed to fetch external URLs");
   }
 });

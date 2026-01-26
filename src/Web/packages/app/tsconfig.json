@@ -38,7 +38,11 @@
   ],
   "exclude": [
     "src/lib/api/generated",
-    "src/lib/components/ui/**"
+    "src/lib/components/ui/**",
+    "../../locales",
+    "../../locales/**",
+    "../../locales/.wuchale",
+    "../../locales/.wuchale/**"
   ],
   "extends": "./.svelte-kit/tsconfig.json"
 }

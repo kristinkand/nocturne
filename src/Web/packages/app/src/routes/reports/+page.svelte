@@ -56,7 +56,6 @@
   import { cn } from "$lib/utils";
   import {
     TrendingUp,
-    Target,
     BarChart3,
     Clock,
     Calendar,
@@ -66,7 +65,6 @@
     Moon,
     Utensils,
     Dumbbell,
-    ChartColumn,
     Heart,
     Stethoscope,
     ArrowRight,
@@ -80,7 +78,7 @@
   import { AmbulatoryGlucoseProfile } from "$lib/components/ambulatory-glucose-profile";
   import type { ScoreCardStatus } from "$lib/components/reports/GlucoseScoreCard.svelte";
   import { getReportsData } from "$lib/data/reports.remote";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import { glucoseUnits } from "$lib/stores/appearance-store.svelte";
   import {
     formatGlucoseValue,
@@ -93,8 +91,8 @@
   import { fly, fade, scale } from "svelte/transition";
   import { cubicOut, elasticOut } from "svelte/easing";
 
-  // Get date range params
-  const reportsParams = useDateParams();
+  // Get shared date params from context (set by reports layout)
+  const reportsParams = requireDateParamsContext();
 
   // Use resource for controlled reactivity
   const reportsResource = resource(

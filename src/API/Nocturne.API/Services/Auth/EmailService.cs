@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
-using Nocturne.API.Configuration;
 using Nocturne.Core.Contracts;
+using Nocturne.Core.Models.Configuration;
 
 namespace Nocturne.API.Services.Auth;
 

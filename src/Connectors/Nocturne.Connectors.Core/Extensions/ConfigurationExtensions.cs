@@ -98,6 +98,11 @@ namespace Nocturne.Connectors.Core.Extensions
 
             // Override with environment variables (these take precedence)
             // Common base configuration properties
+            if (bool.TryParse(configuration["Enabled"], out var enabled))
+            {
+                config.Enabled = enabled;
+            }
+
             if (bool.TryParse(configuration["SaveRawData"], out var saveRawData))
             {
                 config.SaveRawData = saveRawData;
@@ -139,24 +144,6 @@ namespace Nocturne.Connectors.Core.Extensions
             if (int.TryParse(configuration["SyncIntervalMinutes"], out var syncIntervalMinutes))
             {
                 config.SyncIntervalMinutes = syncIntervalMinutes;
-            }
-
-            var nightscoutUrl = configuration["NightscoutUrl"];
-            if (!string.IsNullOrEmpty(nightscoutUrl))
-            {
-                config.NightscoutUrl = nightscoutUrl;
-            }
-
-            var nightscoutApiSecret = configuration["NightscoutApiSecret"];
-            if (!string.IsNullOrEmpty(nightscoutApiSecret))
-            {
-                config.NightscoutApiSecret = nightscoutApiSecret;
-            }
-
-            var apiSecret = configuration["ApiSecret"];
-            if (!string.IsNullOrEmpty(apiSecret))
-            {
-                config.ApiSecret = apiSecret;
             }
 
             // Bind TimezoneOffset from environment variable (set by Aspire)

@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Nocturne.API.Attributes;
-using Nocturne.API.Configuration;
 using Nocturne.API.Extensions;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models.Authorization;
-using SameSiteMode = Nocturne.API.Configuration.SameSiteMode;
+using Nocturne.Core.Models.Configuration;
+using SameSiteMode = Nocturne.Core.Models.Configuration.SameSiteMode;
 
 namespace Nocturne.API.Controllers;
 

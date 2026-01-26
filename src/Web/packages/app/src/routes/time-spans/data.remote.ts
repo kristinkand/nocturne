@@ -2,6 +2,7 @@
  * Remote functions for Time Spans page data
  * Fetches all state span categories for visualization
  */
+import { randomUUID } from "$lib/utils";
 import { getRequestEvent, query } from "$app/server";
 import { z } from "zod";
 import { StateSpanCategory, type StateSpan, type Entry } from "$lib/api";
@@ -128,7 +129,7 @@ function processSpans(
       return spanEnd > rangeStart && spanStart < rangeEnd;
     })
     .map((span) => ({
-      id: span.id ?? crypto.randomUUID(),
+      id: span.id ?? randomUUID(),
       category: span.category ?? StateSpanCategory.PumpMode,
       state: span.state ?? "Unknown",
       startTime: new Date(Math.max(span.startMills ?? 0, rangeStart)),
@@ -227,7 +228,7 @@ export const getTimeSpansData = query(
             return spanEnd > startTime && spanStart < endTime;
           })
           .map((span) => ({
-            id: span.id ?? crypto.randomUUID(),
+            id: span.id ?? randomUUID(),
             category: span.category ?? StateSpanCategory.Sleep,
             state: span.state ?? "Unknown",
             startTime: new Date(Math.max(span.startMills ?? 0, startTime)),

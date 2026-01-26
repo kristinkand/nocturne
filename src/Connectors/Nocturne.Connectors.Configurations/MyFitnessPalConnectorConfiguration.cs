@@ -36,12 +36,14 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("CONNECT_MFP_USERNAME")]
         [AspireParameter("mfp-username", "Username", secret: false, description: "MyFitnessPal username")]
+        [RuntimeConfigurable("Username", "Connection")]
         public string MyFitnessPalUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// MyFitnessPal password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("CONNECT_MFP_PASSWORD")]
         [AspireParameter("mfp-password", "Password", secret: true, description: "MyFitnessPal password")]
         public string MyFitnessPalPassword { get; set; } = string.Empty;
@@ -49,6 +51,7 @@ namespace Nocturne.Connectors.Configurations
         /// <summary>
         /// MyFitnessPal API key (if available)
         /// </summary>
+        [Secret]
         [EnvironmentVariable("CONNECT_MFP_API_KEY")]
         [AspireParameter("mfp-api-key", "ApiKey", secret: true, description: "MyFitnessPal API Key (optional)", defaultValue: "")]
         public string MyFitnessPalApiKey { get; set; } = string.Empty;
@@ -57,6 +60,8 @@ namespace Nocturne.Connectors.Configurations
         /// Number of days to sync from MyFitnessPal (defaults to 7)
         /// </summary>
         [AspireParameter("mfp-sync-days", "SyncDays", secret: false, description: "Number of days to sync", defaultValue: "7")]
+        [RuntimeConfigurable("Sync Days", "Sync")]
+        [ConfigSchema(Minimum = 1, Maximum = 90)]
         public int SyncDays { get; set; } = 7;
 
         protected override void ValidateSourceSpecificConfiguration()

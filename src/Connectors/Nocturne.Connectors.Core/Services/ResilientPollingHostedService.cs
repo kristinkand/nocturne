@@ -15,6 +15,7 @@ namespace Nocturne.Connectors.Core.Services;
 /// - Tracks last successful sync timestamp for backfill on reconnection
 /// - Automatic backfill when connection is restored after disruption
 /// - Exponential backoff after extended failures to avoid overwhelming APIs
+/// - Graceful self-disabling when Enabled flag is set to false
 /// </summary>
 /// <typeparam name="TConnector">The connector service type</typeparam>
 /// <typeparam name="TConfig">The connector configuration type</typeparam>
@@ -24,7 +25,7 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
 {
     protected readonly IServiceProvider ServiceProvider;
     protected readonly ILogger Logger;
-    protected readonly TConfig Config;
+    protected TConfig Config;
 
     /// <summary>
     /// Normal polling interval from configuration (e.g., 5 minutes)
@@ -48,6 +49,12 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
     protected virtual TimeSpan MaxBackoffInterval => TimeSpan.FromMinutes(5);
 
     /// <summary>
+    /// Interval to check for configuration changes while in standby mode.
+    /// Default: 30 seconds.
+    /// </summary>
+    protected virtual TimeSpan StandbyCheckInterval => TimeSpan.FromSeconds(30);
+
+    /// <summary>
     /// Connector name for logging
     /// </summary>
     protected abstract string ConnectorName { get; }
@@ -57,6 +64,10 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
     private bool _wasDisconnected;
     private int _consecutiveFailures;
 
+    // Standby state
+    private bool _isInStandby;
+    private readonly SemaphoreSlim _configChangeLock = new(1, 1);
+
     protected ResilientPollingHostedService(
         IServiceProvider serviceProvider,
         ILogger logger,
@@ -65,6 +76,41 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
         ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         Config = config ?? throw new ArgumentNullException(nameof(config));
+    }
+
+    /// <summary>
+    /// Called when configuration is updated externally.
+    /// Override to handle runtime configuration changes.
+    /// </summary>
+    /// <param name="newConfig">The new configuration</param>
+    public virtual void OnConfigurationChanged(TConfig newConfig)
+    {
+        _configChangeLock.Wait();
+        try
+        {
+            Config = newConfig;
+            Logger.LogInformation("{ConnectorName} Configuration updated at runtime", ConnectorName);
+        }
+        finally
+        {
+            _configChangeLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Check if the connector is currently enabled.
+    /// </summary>
+    protected virtual bool IsEnabled()
+    {
+        _configChangeLock.Wait();
+        try
+        {
+            return Config.Enabled;
+        }
+        finally
+        {
+            _configChangeLock.Release();
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -77,11 +123,30 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
 
         try
         {
+            // Check initial enabled state
+            if (!IsEnabled())
+            {
+                Logger.LogInformation("{ConnectorName} Connector is disabled, entering standby mode", ConnectorName);
+                _isInStandby = true;
+                await WaitForEnableAsync(stoppingToken);
+            }
+
             // Initial sync
             await PerformSyncCycleAsync(stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                // Check if we've been disabled
+                if (!IsEnabled())
+                {
+                    Logger.LogInformation("{ConnectorName} Connector has been disabled, entering standby mode", ConnectorName);
+                    _isInStandby = true;
+                    await WaitForEnableAsync(stoppingToken);
+                    Logger.LogInformation("{ConnectorName} Connector re-enabled, resuming polling", ConnectorName);
+                    _isInStandby = false;
+                    continue;
+                }
+
                 var delay = CalculateNextPollInterval();
 
                 Logger.LogDebug(
@@ -116,6 +181,33 @@ public abstract class ResilientPollingHostedService<TConnector, TConfig> : Backg
             Logger.LogInformation("{ConnectorName} Resilient Polling Service stopped", ConnectorName);
         }
     }
+
+    /// <summary>
+    /// Wait for the connector to be enabled.
+    /// Polls the configuration at the standby check interval.
+    /// </summary>
+    private async Task WaitForEnableAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested && !IsEnabled())
+        {
+            try
+            {
+                await Task.Delay(StandbyCheckInterval, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            // Log periodically to show we're still alive
+            Logger.LogDebug("{ConnectorName} Standby mode - waiting for enable signal", ConnectorName);
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the connector is currently in standby mode (disabled).
+    /// </summary>
+    public bool IsInStandby => _isInStandby;
 
     /// <summary>
     /// Performs a single sync cycle with the connector.

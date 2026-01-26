@@ -22,13 +22,13 @@
   } from "lucide-svelte";
   import BasalRatePercentileChart from "$lib/components/reports/BasalRatePercentileChart.svelte";
   import InsulinDeliveryChart from "$lib/components/reports/InsulinDeliveryChart.svelte";
-  import type { Treatment } from "$lib/api";
   import { getReportsData } from "$lib/data/reports.remote";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { getBasalAnalysis } from "$lib/data/statistics.remote";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import { resource } from "runed";
 
-  // Build date range input from URL parameters - default to 30 days for basal analysis
-  const reportsParams = useDateParams(30);
+  // Get shared date params from context (set by reports layout)
+  const reportsParams = requireDateParamsContext();
 
   // Use resource for controlled reactivity - prevents excessive re-fetches
   const reportsResource = resource(
@@ -59,77 +59,40 @@
     )
   );
 
-  // Calculate basal statistics
-  const basalStats = $derived.by(() => {
-    const basalTreatments = treatments.filter((t: Treatment) => {
-      const eventType = t.eventType?.toLowerCase() || "";
-      return (
-        eventType.includes("basal") ||
-        eventType === "tempbasal" ||
-        eventType === "temp basal" ||
-        t.rate !== undefined ||
-        t.absolute !== undefined
-      );
-    });
+  // Fetch basal analysis from backend
+  const basalAnalysisResource = resource(
+    () => ({ from: dateRange.from, to: dateRange.to }),
+    async ({ from, to }) => {
+      return await getBasalAnalysis({
+        startDate: new Date(from).toISOString(),
+        endDate: new Date(to).toISOString(),
+      });
+    },
+    { debounce: 100 }
+  );
 
-    const rates = basalTreatments
-      .map((t: Treatment) => t.rate ?? t.absolute ?? 0)
-      .filter((r: number) => r > 0);
-
-    if (rates.length === 0) {
-      return {
-        count: 0,
-        avgRate: 0,
-        minRate: 0,
-        maxRate: 0,
-        totalDelivered: 0,
-      };
-    }
-
-    const totalDelivered = basalTreatments.reduce(
-      (sum: number, t: Treatment) => {
-        const rate = t.rate ?? t.absolute ?? 0;
-        const duration = t.duration ?? 0;
-        return sum + (rate * duration) / 60;
-      },
-      0
-    );
-
-    return {
-      count: basalTreatments.length,
-      avgRate: rates.reduce((a: number, b: number) => a + b, 0) / rates.length,
-      minRate: Math.min(...rates),
-      maxRate: Math.max(...rates),
-      totalDelivered,
-    };
+  // Get stats and tempBasalInfo from backend response with explicit defaults
+  const basalStats = $derived({
+    count: basalAnalysisResource.current?.stats?.count ?? 0,
+    avgRate: basalAnalysisResource.current?.stats?.avgRate ?? 0,
+    minRate: basalAnalysisResource.current?.stats?.minRate ?? 0,
+    maxRate: basalAnalysisResource.current?.stats?.maxRate ?? 0,
+    totalDelivered: basalAnalysisResource.current?.stats?.totalDelivered ?? 0,
   });
 
-  // Calculate temp basal frequency
-  const tempBasalInfo = $derived.by(() => {
-    const tempBasals = treatments.filter((t: Treatment) => {
-      const eventType = t.eventType?.toLowerCase() || "";
-      return eventType.includes("temp") || eventType === "tempbasal";
-    });
-
-    const highTemps = tempBasals.filter(
-      (t: Treatment) => (t.percent ?? 100) > 100
-    );
-    const lowTemps = tempBasals.filter(
-      (t: Treatment) => (t.percent ?? 100) < 100
-    );
-    const zeroTemps = tempBasals.filter(
-      (t: Treatment) =>
-        (t.rate ?? t.absolute ?? 0) === 0 || (t.percent ?? 100) === 0
-    );
-
-    return {
-      total: tempBasals.length,
-      perDay: tempBasals.length / Math.max(1, dayCount),
-      highTemps: highTemps.length,
-      lowTemps: lowTemps.length,
-      zeroTemps: zeroTemps.length,
-    };
+  const tempBasalInfo = $derived({
+    total: basalAnalysisResource.current?.tempBasalInfo?.total ?? 0,
+    perDay: basalAnalysisResource.current?.tempBasalInfo?.perDay ?? 0,
+    highTemps: basalAnalysisResource.current?.tempBasalInfo?.highTemps ?? 0,
+    lowTemps: basalAnalysisResource.current?.tempBasalInfo?.lowTemps ?? 0,
+    zeroTemps: basalAnalysisResource.current?.tempBasalInfo?.zeroTemps ?? 0,
   });
+
+  const hourlyPercentiles = $derived(
+    basalAnalysisResource.current?.hourlyPercentiles ?? []
+  );
+
+  const isLoading = $derived(basalAnalysisResource.loading);
 </script>
 
 <svelte:head>
@@ -282,7 +245,7 @@
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <BasalRatePercentileChart {treatments} />
+      <BasalRatePercentileChart data={hourlyPercentiles} loading={isLoading} />
     </CardContent>
   </Card>
 

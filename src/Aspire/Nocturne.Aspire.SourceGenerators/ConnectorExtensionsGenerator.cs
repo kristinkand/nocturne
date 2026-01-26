@@ -301,7 +301,9 @@ namespace Nocturne.Aspire.SourceGenerators
                 $"            var enabled = connectors.GetValue<bool>(\"{connector.ConnectorName}:Enabled\", false);"
             );
             sb.AppendLine();
-            sb.AppendLine("            if (!enabled) return builder;");
+            sb.AppendLine("            // In development, skip disabled connectors entirely for faster startup");
+            sb.AppendLine("            // In publish mode, include all connectors - they self-disable at runtime based on env var");
+            sb.AppendLine("            if (!enabled && builder.ExecutionContext.IsRunMode) return builder;");
             sb.AppendLine();
 
             // Generate parameter declarations
@@ -393,6 +395,10 @@ namespace Nocturne.Aspire.SourceGenerators
             );
             sb.AppendLine(
                 $"            connector.WithEnvironment(\"TimezoneOffset\", timezoneOffset);"
+            );
+            // Pass the enabled flag so connectors can self-disable at runtime
+            sb.AppendLine(
+                $"            connector.WithEnvironment(\"Parameters__Connectors__{connector.ConnectorName}__Enabled\", enabled.ToString().ToLower());"
             );
             sb.AppendLine();
 

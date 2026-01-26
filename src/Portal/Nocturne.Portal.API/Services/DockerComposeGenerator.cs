@@ -18,7 +18,8 @@ public class DockerComposeGenerator
     public DockerComposeGenerator(
         ILogger<DockerComposeGenerator> logger,
         IConfiguration configuration,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment
+    )
     {
         _logger = logger;
         _configuration = configuration;
@@ -42,8 +43,11 @@ public class DockerComposeGenerator
             // Get path to the main Nocturne Aspire Host project
             var aspireHostPath = GetAspireHostPath();
 
-            _logger.LogInformation("Running aspire publish from {AspireHostPath} to {OutputDir}",
-                aspireHostPath, tempDir);
+            _logger.LogInformation(
+                "Running aspire publish from {AspireHostPath} to {OutputDir}",
+                aspireHostPath,
+                tempDir
+            );
 
             // Invoke aspire publish with the docker-compose publisher
             var result = await RunAspirePublishAsync(aspireHostPath, tempDir, configFile);
@@ -51,7 +55,9 @@ public class DockerComposeGenerator
             if (!result.Success)
             {
                 _logger.LogError("Aspire publish failed: {Error}", result.Error);
-                throw new InvalidOperationException($"Failed to generate configuration: {result.Error}");
+                throw new InvalidOperationException(
+                    $"Failed to generate configuration: {result.Error}"
+                );
             }
 
             // Read the generated files
@@ -61,10 +67,14 @@ public class DockerComposeGenerator
             if (!File.Exists(dockerComposePath))
             {
                 // Try alternate location - aspire might put it in a subdirectory
-                var files = Directory.GetFiles(tempDir, "docker-compose.yaml", SearchOption.AllDirectories)
+                var files = Directory
+                    .GetFiles(tempDir, "docker-compose.yaml", SearchOption.AllDirectories)
                     .ToArray();
-                dockerComposePath = files.FirstOrDefault()
-                    ?? throw new InvalidOperationException("docker-compose.yml not found in output");
+                dockerComposePath =
+                    files.FirstOrDefault()
+                    ?? throw new InvalidOperationException(
+                        "docker-compose.yml not found in output"
+                    );
 
                 envPath = Path.Combine(Path.GetDirectoryName(dockerComposePath)!, ".env");
             }
@@ -101,7 +111,9 @@ public class DockerComposeGenerator
             return basePath;
 
         // Default: go up from Portal API to solution root, then to Aspire Host
-        var solutionRoot = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "..", "..", ".."));
+        var solutionRoot = Path.GetFullPath(
+            Path.Combine(_environment.ContentRootPath, "..", "..", "..")
+        );
         return Path.Combine(solutionRoot, "src", "Aspire", "Nocturne.Aspire.Host");
     }
 
@@ -112,13 +124,26 @@ public class DockerComposeGenerator
         var config = new Dictionary<string, object>
         {
             ["PostgreSql:UseRemoteDatabase"] = !request.Postgres.UseContainer,
-            // Dashboard and Scalar options
-            ["Parameters:IncludeDashboard"] = request.OptionalServices.IncludeDashboard,
-            ["Parameters:IncludeScalar"] = request.OptionalServices.IncludeScalar
+            // Optional services
+            ["Parameters:OptionalServices:AspireDashboard:Enabled"] = request
+                .OptionalServices
+                .AspireDashboard
+                .Enabled,
+            ["Parameters:OptionalServices:Scalar:Enabled"] = request
+                .OptionalServices
+                .Scalar
+                .Enabled,
+            ["Parameters:OptionalServices:Watchtower:Enabled"] = request
+                .OptionalServices
+                .Watchtower
+                .Enabled,
         };
 
         // Add connection string if using external database
-        if (!request.Postgres.UseContainer && !string.IsNullOrEmpty(request.Postgres.ConnectionString))
+        if (
+            !request.Postgres.UseContainer
+            && !string.IsNullOrEmpty(request.Postgres.ConnectionString)
+        )
         {
             config["ConnectionStrings:nocturne-db"] = request.Postgres.ConnectionString;
         }
@@ -142,27 +167,43 @@ public class DockerComposeGenerator
         if (request.SetupType == "compatibility-proxy" && request.CompatibilityProxy != null)
         {
             config["Parameters:CompatibilityProxy:Enabled"] = true;
-            config["Parameters:CompatibilityProxy:NightscoutUrl"] = request.CompatibilityProxy.NightscoutUrl;
-            config["Parameters:CompatibilityProxy:NightscoutApiSecret"] = request.CompatibilityProxy.NightscoutApiSecret;
-            config["Parameters:CompatibilityProxy:EnableDetailedLogging"] = request.CompatibilityProxy.EnableDetailedLogging;
+            config["Parameters:CompatibilityProxy:NightscoutUrl"] = request
+                .CompatibilityProxy
+                .NightscoutUrl;
+            config["Parameters:CompatibilityProxy:NightscoutApiSecret"] = request
+                .CompatibilityProxy
+                .NightscoutApiSecret;
+            config["Parameters:CompatibilityProxy:EnableDetailedLogging"] = request
+                .CompatibilityProxy
+                .EnableDetailedLogging;
         }
 
         // Migration settings - enable Nightscout connector
         if (request.SetupType == "migrate" && request.Migration != null)
         {
             config["Parameters:Connectors:Nightscout:Enabled"] = true;
-            config["Parameters:Connectors:Nightscout:SourceEndpoint"] = request.Migration.NightscoutUrl;
-            config["Parameters:Connectors:Nightscout:SourceApiSecret"] = request.Migration.NightscoutApiSecret;
+            config["Parameters:Connectors:Nightscout:SourceEndpoint"] = request
+                .Migration
+                .NightscoutUrl ?? string.Empty;
+            config["Parameters:Connectors:Nightscout:SourceApiSecret"] = request
+                .Migration
+                .NightscoutApiSecret ?? string.Empty;
         }
 
-        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(
+            config,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         await File.WriteAllTextAsync(configPath, json);
 
         return configPath;
     }
 
     private async Task<(bool Success, string Error)> RunAspirePublishAsync(
-        string aspireHostPath, string outputDir, string configFile)
+        string aspireHostPath,
+        string outputDir,
+        string configFile
+    )
     {
         var startInfo = new ProcessStartInfo
         {
@@ -185,8 +226,16 @@ public class DockerComposeGenerator
         var output = new StringBuilder();
         var error = new StringBuilder();
 
-        process.OutputDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
-        process.ErrorDataReceived += (_, e) => { if (e.Data != null) error.AppendLine(e.Data); };
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                output.AppendLine(e.Data);
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                error.AppendLine(e.Data);
+        };
 
         try
         {
@@ -214,26 +263,40 @@ public class DockerComposeGenerator
             }
 
             // Check if the pipeline actually succeeded (look for success indicator)
-            var pipelineSucceeded = outputText.Contains("PIPELINE SUCCEEDED", StringComparison.OrdinalIgnoreCase);
+            var pipelineSucceeded = outputText.Contains(
+                "PIPELINE SUCCEEDED",
+                StringComparison.OrdinalIgnoreCase
+            );
 
             // Check if output files were generated - log what we find for debugging
             var filesInOutput = Directory.Exists(outputDir)
                 ? Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories)
                 : Array.Empty<string>();
 
-            _logger.LogInformation("Files in output directory {OutputDir}: {Files}",
+            _logger.LogInformation(
+                "Files in output directory {OutputDir}: {Files}",
                 outputDir,
-                filesInOutput.Length > 0 ? string.Join(", ", filesInOutput.Select(Path.GetFileName)) : "(none)");
+                filesInOutput.Length > 0
+                    ? string.Join(", ", filesInOutput.Select(Path.GetFileName))
+                    : "(none)"
+            );
 
-            var dockerComposeExists = filesInOutput.Any(f => Path.GetFileName(f).Equals("docker-compose.yml", StringComparison.OrdinalIgnoreCase));
+            var dockerComposeExists = filesInOutput.Any(f =>
+                Path.GetFileName(f).Equals("docker-compose.yml", StringComparison.OrdinalIgnoreCase)
+            );
 
             // If pipeline succeeded AND files exist, treat as success even if there's a console error
             // (The "handle is invalid" error is a known Windows console issue with aspire CLI/Spectre.Console)
             if (pipelineSucceeded && dockerComposeExists)
             {
-                if (outputText.Contains("❌") || outputText.Contains("handle is invalid", StringComparison.OrdinalIgnoreCase))
+                if (
+                    outputText.Contains("❌")
+                    || outputText.Contains("handle is invalid", StringComparison.OrdinalIgnoreCase)
+                )
                 {
-                    _logger.LogWarning("Aspire publish had a console error but files were generated successfully. Ignoring console error.");
+                    _logger.LogWarning(
+                        "Aspire publish had a console error but files were generated successfully. Ignoring console error."
+                    );
                 }
                 _logger.LogInformation("Aspire publish completed successfully");
                 return (true, string.Empty);
@@ -317,9 +380,7 @@ public class DockerComposeGenerator
         }
 
         // Add any values that weren't in the original file
-        var missingKeys = valuesToInject.Keys
-            .Where(k => !processedKeys.Contains(k))
-            .ToList();
+        var missingKeys = valuesToInject.Keys.Where(k => !processedKeys.Contains(k)).ToList();
 
         if (missingKeys.Count > 0)
         {
@@ -355,7 +416,8 @@ public class DockerComposeGenerator
             var servicePrefix = connector.Type.ToUpperInvariant().Replace("-", "_");
             var imageEnvVar = $"{servicePrefix}_CONNECTOR_IMAGE";
             var portEnvVar = $"{servicePrefix}_CONNECTOR_PORT";
-            var imageName = $"ghcr.io/nightscout/nocturne/{connector.Type.ToLowerInvariant()}-connector:latest";
+            var imageName =
+                $"ghcr.io/nightscout/nocturne/{connector.Type.ToLowerInvariant()}-connector:latest";
 
             values[imageEnvVar] = imageName;
             values[portEnvVar] = "8080";
@@ -367,7 +429,8 @@ public class DockerComposeGenerator
             var password = GenerateSecurePassword();
             values["POSTGRES_USERNAME"] = "nocturne";
             values["POSTGRES_PASSWORD"] = password;
-            values["NOCTURNE_POSTGRES"] = $"Host=nocturne-postgres-server;Port=5432;Username=nocturne;Password={password};Database=nocturne";
+            values["NOCTURNE_POSTGRES"] =
+                $"Host=nocturne-postgres-server;Port=5432;Username=nocturne;Password={password};Database=nocturne";
         }
         else if (!string.IsNullOrEmpty(request.Postgres.ConnectionString))
         {
@@ -402,26 +465,35 @@ public class DockerComposeGenerator
             }
             else // MongoDb mode
             {
-                values["MIGRATION_MONGO_CONNECTION_STRING"] = request.Migration.MongoConnectionString ?? "";
+                values["MIGRATION_MONGO_CONNECTION_STRING"] =
+                    request.Migration.MongoConnectionString ?? "";
                 values["MIGRATION_MONGO_DATABASE_NAME"] = request.Migration.MongoDatabaseName ?? "";
             }
 
             // Also set connector env vars for ongoing sync (API mode only)
-            if (request.Migration.Mode == "Api" && !string.IsNullOrEmpty(request.Migration.NightscoutUrl))
+            if (
+                request.Migration.Mode == "Api"
+                && !string.IsNullOrEmpty(request.Migration.NightscoutUrl)
+            )
             {
                 values["CONNECT_NS_URL"] = request.Migration.NightscoutUrl;
                 values["CONNECT_NS_API_SECRET"] = request.Migration.NightscoutApiSecret ?? "";
             }
         }
 
-
         // Compatibility proxy configuration
         if (request.SetupType == "compatibility-proxy" && request.CompatibilityProxy != null)
         {
             values["COMPAT_PROXY_ENABLED"] = "true";
             values["COMPAT_PROXY_NIGHTSCOUT_URL"] = request.CompatibilityProxy.NightscoutUrl;
-            values["COMPAT_PROXY_NIGHTSCOUT_SECRET"] = request.CompatibilityProxy.NightscoutApiSecret;
-            values["COMPAT_PROXY_DETAILED_LOGGING"] = request.CompatibilityProxy.EnableDetailedLogging ? "true" : "false";
+            values["COMPAT_PROXY_NIGHTSCOUT_SECRET"] = request
+                .CompatibilityProxy
+                .NightscoutApiSecret;
+            values["COMPAT_PROXY_DETAILED_LOGGING"] = request
+                .CompatibilityProxy
+                .EnableDetailedLogging
+                ? "true"
+                : "false";
         }
 
         return values;
@@ -441,7 +513,9 @@ public class DockerComposeGenerator
             sb.AppendLine("# PostgreSQL Configuration");
             sb.AppendLine("POSTGRES_USER=nocturne");
             sb.AppendLine($"POSTGRES_PASSWORD={password}");
-            sb.AppendLine($"CONNECTION_STRING=Host=postgres;Port=5432;Username=nocturne;Password={password};Database=nocturne");
+            sb.AppendLine(
+                $"CONNECTION_STRING=Host=postgres;Port=5432;Username=nocturne;Password={password};Database=nocturne"
+            );
         }
         else
         {

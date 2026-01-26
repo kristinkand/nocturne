@@ -1,10 +1,4 @@
-export { default as GeneralSettings } from './GeneralSettings.svelte';
-export { default as BGTargetSettings } from './BGTargetSettings.svelte';
-export { default as AlarmSettings } from './AlarmSettings.svelte';
-export { default as DisplaySettings } from './DisplaySettings.svelte';
-export { default as PluginSettings } from './PluginSettings.svelte';
 export { default as AlarmProfileDialog } from './AlarmProfileDialog.svelte';
 export { default as AlarmPreview } from './AlarmPreview.svelte';
 export { default as CustomSoundUpload } from './CustomSoundUpload.svelte';
 export * from './constants.js';
-export * from './types.js';

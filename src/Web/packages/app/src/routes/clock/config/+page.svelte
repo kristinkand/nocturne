@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { randomUUID } from "$lib/utils";
   import { goto } from "$app/navigation";
   import { browser } from "$app/environment";
   import * as Card from "$lib/components/ui/card";
@@ -96,12 +97,12 @@
 
   // LIFO element stack - elements are added/removed from the end
   let elements = $state<ClockElement[]>([
-    { id: crypto.randomUUID(), type: "sg", size: 40 },
-    { id: crypto.randomUUID(), type: "dt", size: 14 },
-    { id: crypto.randomUUID(), type: "nl", size: 0 },
-    { id: crypto.randomUUID(), type: "ar", size: 25 },
-    { id: crypto.randomUUID(), type: "nl", size: 0 },
-    { id: crypto.randomUUID(), type: "ag", size: 10 },
+    { id: randomUUID(), type: "sg", size: 40 },
+    { id: randomUUID(), type: "dt", size: 14 },
+    { id: randomUUID(), type: "nl", size: 0 },
+    { id: randomUUID(), type: "ar", size: 25 },
+    { id: randomUUID(), type: "nl", size: 0 },
+    { id: randomUUID(), type: "ag", size: 10 },
   ]);
 
   // Element to add selector
@@ -172,7 +173,7 @@
     elements = [
       ...elements,
       {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         type: selectedElementType,
         size: info.defaultSize,
       },
@@ -207,12 +208,12 @@
     alwaysShowTime = false;
     staleMinutes = 13;
     elements = [
-      { id: crypto.randomUUID(), type: "sg", size: 40 },
-      { id: crypto.randomUUID(), type: "dt", size: 14 },
-      { id: crypto.randomUUID(), type: "nl", size: 0 },
-      { id: crypto.randomUUID(), type: "ar", size: 25 },
-      { id: crypto.randomUUID(), type: "nl", size: 0 },
-      { id: crypto.randomUUID(), type: "ag", size: 10 },
+      { id: randomUUID(), type: "sg", size: 40 },
+      { id: randomUUID(), type: "dt", size: 14 },
+      { id: randomUUID(), type: "nl", size: 0 },
+      { id: randomUUID(), type: "ar", size: 25 },
+      { id: randomUUID(), type: "nl", size: 0 },
+      { id: randomUUID(), type: "ag", size: 10 },
     ];
   }
 
@@ -588,7 +589,7 @@
                   alwaysShowTime = false;
                   staleMinutes = 0;
                   elements = [
-                    { id: crypto.randomUUID(), type: "sg", size: 60 },
+                    { id: randomUUID(), type: "sg", size: 60 },
                   ];
                 }}
               >
@@ -601,12 +602,12 @@
                   alwaysShowTime = false;
                   staleMinutes = 13;
                   elements = [
-                    { id: crypto.randomUUID(), type: "sg", size: 35 },
-                    { id: crypto.randomUUID(), type: "dt", size: 14 },
-                    { id: crypto.randomUUID(), type: "nl", size: 0 },
-                    { id: crypto.randomUUID(), type: "ar", size: 25 },
-                    { id: crypto.randomUUID(), type: "nl", size: 0 },
-                    { id: crypto.randomUUID(), type: "ag", size: 6 },
+                    { id: randomUUID(), type: "sg", size: 35 },
+                    { id: randomUUID(), type: "dt", size: 14 },
+                    { id: randomUUID(), type: "nl", size: 0 },
+                    { id: randomUUID(), type: "ar", size: 25 },
+                    { id: randomUUID(), type: "nl", size: 0 },
+                    { id: randomUUID(), type: "ag", size: 6 },
                   ];
                 }}
               >
@@ -619,9 +620,9 @@
                   alwaysShowTime = false;
                   staleMinutes = 0;
                   elements = [
-                    { id: crypto.randomUUID(), type: "sg", size: 80 },
-                    { id: crypto.randomUUID(), type: "nl", size: 0 },
-                    { id: crypto.randomUUID(), type: "time", size: 30 },
+                    { id: randomUUID(), type: "sg", size: 80 },
+                    { id: randomUUID(), type: "nl", size: 0 },
+                    { id: randomUUID(), type: "time", size: 30 },
                   ];
                 }}
               >
@@ -634,8 +635,8 @@
                   alwaysShowTime = false;
                   staleMinutes = 13;
                   elements = [
-                    { id: crypto.randomUUID(), type: "sg", size: 50 },
-                    { id: crypto.randomUUID(), type: "ar", size: 30 },
+                    { id: randomUUID(), type: "sg", size: 50 },
+                    { id: randomUUID(), type: "ar", size: 30 },
                   ];
                 }}
               >

@@ -6,11 +6,15 @@
  * 1. Using stable string representations for date range input (not new objects)
  * 2. Using $state.snapshot for memoization
  * 3. Carefully guarding effect execution with initialization flags
+ *
+ * USAGE: In reports, use context-based sharing via:
+ * - `setDateParamsContext(params)` in the reports layout to provide the shared instance
+ * - `getDateParamsContext()` in child components to consume the shared instance
  */
 import { useSearchParams } from "runed/kit";
 import { z } from "zod";
 import { getLocalTimeZone, today, parseDate } from "@internationalized/date";
-import { untrack } from "svelte";
+import { getContext, setContext, untrack } from "svelte";
 
 /**
  * Zod schema for reports URL parameters.
@@ -251,3 +255,45 @@ export function useDateParams(defaultDays = 7) {
 }
 
 export type ReportsParamsReturn = ReturnType<typeof useDateParams>;
+
+/**
+ * Context key for shared date params instance.
+ */
+const DATE_PARAMS_CONTEXT_KEY = Symbol("date-params");
+
+/**
+ * Set the date params instance in Svelte context.
+ * Call this in the reports layout to provide a shared instance to all children.
+ *
+ * @param params - The useDateParams instance to share
+ */
+export function setDateParamsContext(params: ReportsParamsReturn): void {
+  setContext(DATE_PARAMS_CONTEXT_KEY, params);
+}
+
+/**
+ * Get the shared date params instance from Svelte context.
+ * Use this in report pages and the filter sidebar to access the shared instance.
+ *
+ * @returns The shared useDateParams instance, or undefined if not in context
+ */
+export function getDateParamsContext(): ReportsParamsReturn | undefined {
+  return getContext<ReportsParamsReturn | undefined>(DATE_PARAMS_CONTEXT_KEY);
+}
+
+/**
+ * Get the shared date params from context, throwing if not available.
+ * Use this when you're certain the context has been set (e.g., in report pages).
+ *
+ * @returns The shared useDateParams instance
+ * @throws Error if context is not set
+ */
+export function requireDateParamsContext(): ReportsParamsReturn {
+  const params = getDateParamsContext();
+  if (!params) {
+    throw new Error(
+      "Date params context not found. Ensure setDateParamsContext is called in a parent component."
+    );
+  }
+  return params;
+}

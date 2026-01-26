@@ -2,8 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Nocturne.API.Configuration;
-using Nocturne.API.Services.Auth;
+using Nocturne.Core.Models.Configuration;
 
 namespace Nocturne.API.Controllers;
 

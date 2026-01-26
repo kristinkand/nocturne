@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import * as Sheet from "$lib/components/ui/sheet";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
@@ -8,7 +7,7 @@
   import { Switch } from "$lib/components/ui/switch";
   import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
   import type { DateRange } from "bits-ui";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import RangeCalendar from "$lib/components/ui/range-calendar/range-calendar.svelte";
   import { Calendar, Filter, RotateCcw } from "lucide-svelte";
 
@@ -19,10 +18,8 @@
 
   let { open = $bindable(false), onOpenChange }: Props = $props();
 
-  // Use centralized reports params hook
-  const params = useDateParams();
-
-  let value = $state<DateRange | undefined>();
+  // Get shared date params from context (set by reports layout)
+  const params = requireDateParamsContext();
 
   // Quick day presets
   const dayPresets = [
@@ -34,63 +31,98 @@
     { label: "90 Days", days: 90 },
   ];
 
-  // Derived state for selected days (for UI highlighting)
-  const selectedDays = $derived(params.days);
+  // === DRAFT STATE ===
+  // These represent the user's pending selections before clicking "Apply Filters"
+  let draftDays = $state<number | undefined>(undefined);
+  let draftCalendarValue = $state<DateRange | undefined>(undefined);
 
-  // Initialize state from URL on mount (not in $effect to avoid read/write cycle)
-  onMount(() => {
-    initializeFromURL();
+  // Track whether user selected a preset or used the calendar
+  let draftMode = $state<"preset" | "calendar">("preset");
+
+  // Initialize draft state when sidebar opens
+  $effect(() => {
+    if (open) {
+      // Reset draft to current params when opening
+      draftDays = params.days;
+      draftMode = params.days ? "preset" : "calendar";
+
+      if (params.from && params.to) {
+        try {
+          const startDate = parseDate(params.from);
+          const endDate = parseDate(params.to);
+          draftCalendarValue = { start: startDate, end: endDate };
+        } catch {
+          // Fall through to days-based calculation
+          if (params.days) {
+            const endDate = today(getLocalTimeZone());
+            const startDate = endDate.subtract({ days: params.days - 1 });
+            draftCalendarValue = { start: startDate, end: endDate };
+          }
+        }
+      } else if (params.days) {
+        const endDate = today(getLocalTimeZone());
+        const startDate = endDate.subtract({ days: params.days - 1 });
+        draftCalendarValue = { start: startDate, end: endDate };
+      }
+    }
   });
 
-  function initializeFromURL() {
-    if (params.days) {
-      const endDate = today(getLocalTimeZone());
-      const startDate = endDate.subtract({ days: params.days - 1 });
-      value = { start: startDate, end: endDate };
-    } else if (params.from && params.to) {
-      try {
-        const startDate = parseDate(params.from);
-        const endDate = parseDate(params.to);
-        value = { start: startDate, end: endDate };
-      } catch (error) {
-        console.warn("Failed to parse date range from URL:", error);
-        params.setDayRange(7);
-      }
-    } else {
-      params.setDayRange(7);
-    }
-  }
+  // Derived state for selected days (for UI highlighting in draft mode)
+  const selectedDays = $derived(draftMode === "preset" ? draftDays : undefined);
 
-  function setDayRange(daysCount: number) {
+  function selectPreset(daysCount: number) {
+    draftDays = daysCount;
+    draftMode = "preset";
+
+    // Also update calendar to show the preset range
     const endDate = today(getLocalTimeZone());
     const startDate = endDate.subtract({ days: daysCount - 1 });
-    value = { start: startDate, end: endDate };
-    params.setDayRange(daysCount);
+    draftCalendarValue = { start: startDate, end: endDate };
   }
 
   function handleCalendarChange(newValue: DateRange | undefined) {
     if (newValue?.start && newValue?.end) {
-      params.setCustomRange(newValue.start.toString(), newValue.end.toString());
+      draftCalendarValue = newValue;
+      draftMode = "calendar";
+      draftDays = undefined; // Clear preset selection
     }
   }
 
   function resetFilters() {
-    params.reset();
+    // Reset draft to default 7 days
+    draftDays = 7;
+    draftMode = "preset";
+
     const endDate = today(getLocalTimeZone());
-    const startDate = endDate.subtract({ days: 7 - 1 });
-    value = { start: startDate, end: endDate };
+    const startDate = endDate.subtract({ days: 6 });
+    draftCalendarValue = { start: startDate, end: endDate };
   }
 
-  function closeSheet() {
+  function applyFilters() {
+    // Commit draft state to URL params
+    if (draftMode === "preset" && draftDays) {
+      params.setDayRange(draftDays);
+    } else if (
+      draftMode === "calendar" &&
+      draftCalendarValue?.start &&
+      draftCalendarValue?.end
+    ) {
+      params.setCustomRange(
+        draftCalendarValue.start.toString(),
+        draftCalendarValue.end.toString()
+      );
+    }
+
+    // Close the sidebar
     open = false;
     onOpenChange?.(false);
   }
 
   // Get formatted date range for display
   const dateRangeText = $derived(() => {
-    if (value?.start && value?.end) {
-      const start = value.start.toDate(getLocalTimeZone());
-      const end = value.end.toDate(getLocalTimeZone());
+    if (draftCalendarValue?.start && draftCalendarValue?.end) {
+      const start = draftCalendarValue.start.toDate(getLocalTimeZone());
+      const end = draftCalendarValue.end.toDate(getLocalTimeZone());
       return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
     }
     return "Select dates";
@@ -121,7 +153,7 @@
               <Button
                 variant={selectedDays === preset.days ? "default" : "outline"}
                 size="sm"
-                onclick={() => setDayRange(preset.days)}
+                onclick={() => selectPreset(preset.days)}
                 class="text-xs"
               >
                 {preset.label}
@@ -143,7 +175,7 @@
           </div>
           <div class="border border-border rounded-lg overflow-hidden">
             <RangeCalendar
-              bind:value
+              bind:value={draftCalendarValue}
               captionLayout="dropdown"
               onValueChange={handleCalendarChange}
               class="p-0"
@@ -185,7 +217,7 @@
           <RotateCcw class="h-4 w-4 mr-2" />
           Reset
         </Button>
-        <Button class="flex-1" onclick={closeSheet}>Apply Filters</Button>
+        <Button class="flex-1" onclick={applyFilters}>Apply Filters</Button>
       </div>
     </div>
   </Sheet.Content>

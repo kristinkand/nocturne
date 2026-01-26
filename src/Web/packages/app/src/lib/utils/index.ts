@@ -255,3 +255,22 @@ export interface DateRange {
   /** ISO 8601 */
   end: string;
 }
+
+/**
+ * Generate a UUID v4 string
+ * Uses crypto.randomUUID() if available, otherwise falls back to a polyfill
+ */
+export function randomUUID(): string {
+  // Use native crypto.randomUUID() if available (Node.js 15.6+, modern browsers)
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // Fallback polyfill for environments without crypto.randomUUID()
+  // Generate a UUID v4 compliant string
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}

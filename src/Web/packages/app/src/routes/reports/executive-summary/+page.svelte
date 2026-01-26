@@ -27,11 +27,11 @@
   import ClinicalInsights from "$lib/components/reports/ClinicalInsights.svelte";
   import ReportsSkeleton from "$lib/components/reports/ReportsSkeleton.svelte";
   import { getReportsData } from "$lib/data/reports.remote";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import { resource } from "runed";
 
-  // Build date range input from URL parameters - default to 14 days for executive summary
-  const reportsParams = useDateParams(14);
+  // Get shared date params from context (set by reports layout)
+  const reportsParams = requireDateParamsContext();
 
   // Use resource for controlled reactivity - prevents excessive re-fetches
   const reportsResource = resource(

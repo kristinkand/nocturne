@@ -41,12 +41,14 @@ namespace Nocturne.Connectors.Configurations
             description: "LibreLinkUp account username"
         )]
         [EnvironmentVariable("CONNECT_LIBRE_USERNAME")]
+        [RuntimeConfigurable("Username", "Connection")]
         public string LibreUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// LibreLinkUp password
         /// </summary>
         [Required]
+        [Secret]
         [AspireParameter(
             "librelinkup-password",
             "Password",
@@ -67,6 +69,8 @@ namespace Nocturne.Connectors.Configurations
             defaultValue: "EU"
         )]
         [EnvironmentVariable("CONNECT_LIBRE_REGION")]
+        [RuntimeConfigurable("Region", "Connection")]
+        [ConfigSchema(Enum = new[] { "EU", "US", "AE", "AP", "AU", "CA", "DE", "FR", "JP" })]
         public string LibreRegion { get; set; } = "EU";
 
         /// <summary>
@@ -79,6 +83,8 @@ namespace Nocturne.Connectors.Configurations
             description: "Custom server URL (optional)",
             defaultValue: ""
         )]
+        [RuntimeConfigurable("Server URL", "Connection")]
+        [ConfigSchema(Format = "uri")]
         public string LibreServer { get; set; } = string.Empty;
 
         /// <summary>
@@ -92,6 +98,7 @@ namespace Nocturne.Connectors.Configurations
             defaultValue: ""
         )]
         [EnvironmentVariable("CONNECT_LIBRE_PATIENT_ID")]
+        [RuntimeConfigurable("Patient ID", "Connection")]
         public string LibrePatientId { get; set; } = string.Empty;
 
         protected override void ValidateSourceSpecificConfiguration()

@@ -22,11 +22,11 @@
   import SiteChangeIcon from "$lib/components/icons/SiteChangeIcon.svelte";
   import SiteChangeImpactChart from "$lib/components/reports/SiteChangeImpactChart.svelte";
   import { getSiteChangeImpact } from "$lib/data/reports.remote";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import { resource } from "runed";
 
-  // Build date range input from URL parameters - default to 90 days for site change analysis
-  const reportsParams = useDateParams(90);
+  // Get shared date params from context (set by reports layout)
+  const reportsParams = requireDateParamsContext();
 
   // Use resource for controlled reactivity - prevents flickering by avoiding query recreation
   const siteChangeResource = resource(

@@ -564,18 +564,6 @@ namespace Nocturne.Connectors.Core.Services
                 // Add a small overlap to ensure we don't miss any data due to clock drift
                 var sinceWithOverlap = latestTimestamp.Value.AddMinutes(-5);
 
-                // Maximum 7 days for safety to avoid overwhelming the source API
-                var maxLookback = DateTime.UtcNow.AddDays(-7);
-                if (sinceWithOverlap < maxLookback)
-                {
-                    _logger?.LogInformation(
-                        "Last {DataType} sync was more than 7 days ago, limiting lookback to 7 days for {ConnectorSource}",
-                        dataType,
-                        ConnectorSource
-                    );
-                    return maxLookback;
-                }
-
                 _logger?.LogInformation(
                     "Starting catch-up sync for {DataType} from {ConnectorSource} since {Since:yyyy-MM-dd HH:mm:ss} UTC",
                     dataType,
@@ -585,8 +573,8 @@ namespace Nocturne.Connectors.Core.Services
                 return sinceWithOverlap;
             }
 
-            // Fallback to 24 hours if no existing data found (first sync)
-            var fallbackSince = DateTime.UtcNow.AddHours(-24);
+            // Fallback to 6 months for initial sync if no existing data found
+            var fallbackSince = DateTime.UtcNow.AddMonths(-6);
             _logger?.LogInformation(
                 "No existing {DataType} found for {ConnectorSource}, performing initial sync from {Since:yyyy-MM-dd HH:mm:ss} UTC",
                 dataType,

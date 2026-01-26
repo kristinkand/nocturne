@@ -194,6 +194,7 @@ public class StateSpansController : ControllerBase
     /// Create a new state span (manual entry)
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(StateSpan), StatusCodes.Status201Created)]
     public async Task<ActionResult<StateSpan>> CreateStateSpan(
         [FromBody] CreateStateSpanRequest request,
         CancellationToken cancellationToken = default)

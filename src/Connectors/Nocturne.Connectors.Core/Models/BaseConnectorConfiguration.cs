@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 
 #nullable enable
@@ -18,8 +19,14 @@ namespace Nocturne.Connectors.Core.Models
         [Required]
         public ConnectSource ConnectSource { get; set; }
 
+        [RuntimeConfigurable("Save Raw Data", "Advanced")]
         public bool SaveRawData { get; set; } = false;
 
+        /// <summary>
+        /// Whether the connector is enabled and should sync data.
+        /// When disabled, the connector enters standby mode.
+        /// </summary>
+        [RuntimeConfigurable("Enabled", "General")]
         public bool Enabled { get; set; } = true;
 
         /// <summary>
@@ -43,18 +50,24 @@ namespace Nocturne.Connectors.Core.Models
             set => _contentRootPath = value;
         }
 
+        [RuntimeConfigurable("Load From File", "Advanced")]
         public bool LoadFromFile { get; set; } = false;
 
         public string? LoadFilePath { get; set; }
 
+        [RuntimeConfigurable("Delete After Upload", "Advanced")]
         public bool DeleteAfterUpload { get; set; } = false;
 
         public bool UseAsyncProcessing { get; set; } = true;
 
         public TimeSpan MessageTimeout { get; set; } = TimeSpan.FromMinutes(5);
 
+        [RuntimeConfigurable("Max Retry Attempts", "Advanced")]
+        [ConfigSchema(Minimum = 0, Maximum = 10)]
         public int MaxRetryAttempts { get; set; } = 3;
 
+        [RuntimeConfigurable("Batch Size", "Advanced")]
+        [ConfigSchema(Minimum = 1, Maximum = 500)]
         public int BatchSize { get; set; } = 50;
 
         /// <summary>
@@ -62,19 +75,15 @@ namespace Nocturne.Connectors.Core.Models
         /// Can be set via environment variable: CONNECT_{CONNECTORNAME}_TIMEZONE_OFFSET
         /// or appsettings: {Configuration}:TimezoneOffset
         /// </summary>
+        [RuntimeConfigurable("Timezone Offset", "General")]
+        [ConfigSchema(Minimum = -12, Maximum = 14)]
         public double TimezoneOffset { get; set; } = 0;
 
         public string? RoutingKeyPrefix { get; set; }
 
+        [RuntimeConfigurable("Sync Interval (Minutes)", "Sync")]
+        [ConfigSchema(Minimum = 1, Maximum = 60)]
         public int SyncIntervalMinutes { get; set; } = 5;
-
-        public ConnectorMode Mode { get; set; } = ConnectorMode.Nocturne;
-
-        public string NightscoutUrl { get; set; } = string.Empty;
-
-        public string NightscoutApiSecret { get; set; } = string.Empty;
-
-        public string ApiSecret { get; set; } = string.Empty;
 
         public virtual void Validate()
         {

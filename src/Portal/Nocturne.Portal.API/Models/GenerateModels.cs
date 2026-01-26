@@ -88,19 +88,27 @@ public class PostgresConfig
 public class OptionalServicesConfig
 {
     /// <summary>
-    /// Enable Watchtower for auto-updates
+    /// Aspire Dashboard for telemetry visualization
     /// </summary>
-    public bool Watchtower { get; set; }
+    public OptionalServiceConfig AspireDashboard { get; set; } = new() { Enabled = true };
 
     /// <summary>
-    /// Include Aspire Dashboard for telemetry visualization (default: true)
+    /// Scalar API reference documentation
     /// </summary>
-    public bool IncludeDashboard { get; set; } = true;
+    public OptionalServiceConfig Scalar { get; set; } = new() { Enabled = true };
 
     /// <summary>
-    /// Include Scalar API reference documentation (default: true)
+    /// Watchtower for automatic container updates
     /// </summary>
-    public bool IncludeScalar { get; set; } = true;
+    public OptionalServiceConfig Watchtower { get; set; } = new();
+}
+
+public class OptionalServiceConfig
+{
+    /// <summary>
+    /// Whether the service is enabled
+    /// </summary>
+    public bool Enabled { get; set; }
 }
 
 public class ConnectorConfig

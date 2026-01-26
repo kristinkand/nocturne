@@ -76,6 +76,23 @@ public class MetadataController : ControllerBase
     }
 
     /// <summary>
+    /// Get statistics metadata for type generation
+    /// This endpoint exists primarily to ensure NSwag generates TypeScript types for statistics models
+    /// </summary>
+    /// <returns>Statistics types metadata</returns>
+    [HttpGet("statistics-types")]
+    [ProducesResponseType(typeof(StatisticsTypesMetadata), 200)]
+    public ActionResult<StatisticsTypesMetadata> GetStatisticsTypes()
+    {
+        return Ok(
+            new StatisticsTypesMetadata
+            {
+                Description = "Statistics types for insulin delivery reports",
+            }
+        );
+    }
+
+    /// <summary>
     /// Get widget definitions metadata
     /// This endpoint provides all available dashboard widget definitions for frontend configuration
     /// </summary>
@@ -103,7 +120,7 @@ public class MetadataController : ControllerBase
         {
             Id = WidgetId.BgDelta,
             Name = "BG Delta",
-            Description = "Blood glucose change since last reading",
+            Description = "Blood glucose change with connection status and last updated time",
             DefaultEnabled = true,
             Icon = "TrendingUp",
             UICategory = WidgetUICategory.Glucose,
@@ -166,6 +183,26 @@ public class MetadataController : ControllerBase
             Description = "Today's glucose statistics overview",
             DefaultEnabled = false,
             Icon = "CalendarDays",
+            UICategory = WidgetUICategory.Glucose,
+            Placement = WidgetPlacement.Top,
+        },
+        new()
+        {
+            Id = WidgetId.Clock,
+            Name = "Clock",
+            Description = "Current time and date display",
+            DefaultEnabled = false,
+            Icon = "Clock",
+            UICategory = WidgetUICategory.Status,
+            Placement = WidgetPlacement.Top,
+        },
+        new()
+        {
+            Id = WidgetId.Tdd,
+            Name = "Total Daily Dose",
+            Description = "Today's insulin with basal/bolus breakdown",
+            DefaultEnabled = true,
+            Icon = "PieChart",
             UICategory = WidgetUICategory.Glucose,
             Placement = WidgetPlacement.Top,
         },
@@ -309,5 +346,41 @@ public class WidgetDefinitionsMetadata
     /// Description of the widget definitions
     /// </summary>
     public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Metadata about statistics types for NSwag generation
+/// </summary>
+public class StatisticsTypesMetadata
+{
+    /// <summary>
+    /// Description of the statistics types
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Sample basal analysis response (for type generation)
+    /// </summary>
+    public BasalAnalysisResponse? SampleBasalAnalysis { get; set; }
+
+    /// <summary>
+    /// Sample daily basal/bolus ratio response (for type generation)
+    /// </summary>
+    public DailyBasalBolusRatioResponse? SampleDailyBasalBolusRatio { get; set; }
+
+    /// <summary>
+    /// Sample hourly basal percentile data (for type generation)
+    /// </summary>
+    public HourlyBasalPercentileData? SampleHourlyPercentile { get; set; }
+
+    /// <summary>
+    /// Sample daily basal/bolus ratio data (for type generation)
+    /// </summary>
+    public DailyBasalBolusRatioData? SampleDailyData { get; set; }
+
+    /// <summary>
+    /// Sample insulin delivery statistics (for type generation)
+    /// </summary>
+    public InsulinDeliveryStatistics? SampleInsulinDelivery { get; set; }
 }
 

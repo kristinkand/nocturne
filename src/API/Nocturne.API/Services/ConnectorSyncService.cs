@@ -1,12 +1,11 @@
 using System.Net.Http.Json;
 using Nocturne.Connectors.Core.Services;
-using Nocturne.Core.Constants;
-using Nocturne.Core.Models.Services;
 
 namespace Nocturne.API.Services;
 
 /// <summary>
-/// Service for triggering manual data synchronization via connector sidecar services
+/// Service for triggering manual data synchronization via connector sidecar services.
+/// Determines connector availability by querying the connector's health endpoint directly.
 /// </summary>
 public class ConnectorSyncService : IConnectorSyncService
 {
@@ -18,31 +17,22 @@ public class ConnectorSyncService : IConnectorSyncService
 
     private readonly ILogger<ConnectorSyncService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
 
     public ConnectorSyncService(
         ILogger<ConnectorSyncService> logger,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration
+        IHttpClientFactory httpClientFactory
     )
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
     }
 
     /// <inheritdoc />
     public bool HasEnabledConnectors()
     {
-        var connectors = ConnectorMetadataService.GetAll();
-        foreach (var connector in connectors)
-        {
-            if (IsConnectorConfiguredInternal(connector.ConnectorName))
-            {
-                return true;
-            }
-        }
-        return false;
+        // This is a synchronous check - we'll assume connectors exist if metadata exists
+        // The actual availability is checked when triggering sync
+        return ConnectorMetadataService.GetAll().Any();
     }
 
     /// <inheritdoc />
@@ -53,20 +43,54 @@ public class ConnectorSyncService : IConnectorSyncService
             return false;
         }
 
-        return IsConnectorConfiguredInternal(connectorId);
+        // Check if connector metadata exists
+        var connector = ConnectorMetadataService
+            .GetAll()
+            .FirstOrDefault(c =>
+                c.ConnectorName.Equals(connectorId, StringComparison.OrdinalIgnoreCase)
+                || c.ServiceName.Equals(connectorId, StringComparison.OrdinalIgnoreCase)
+            );
+
+        return connector != null;
     }
 
-    private bool IsConnectorConfiguredInternal(string connectorName)
+    /// <summary>
+    /// Checks if a connector is reachable and enabled by querying its health endpoint.
+    /// </summary>
+    private async Task<(bool IsAvailable, string? ErrorMessage)> CheckConnectorAvailabilityAsync(
+        string serviceName,
+        string displayName,
+        CancellationToken cancellationToken
+    )
     {
-        var section = _configuration.GetSection($"Parameters:Connectors:{connectorName}");
-
-        if (!section.Exists())
+        try
         {
-            return false;
-        }
+            var client = _httpClientFactory.CreateClient(HttpClientName);
+            var healthUrl = $"http://{serviceName}/health";
 
-        // Check if explicitly enabled (defaults to true in BaseConnectorConfiguration)
-        return section.GetValue("Enabled", true);
+            _logger.LogDebug("Checking connector availability at {Url}", healthUrl);
+
+            var response = await client.GetAsync(healthUrl, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (false, $"Connector '{displayName}' health check failed with status {response.StatusCode}");
+            }
+
+            // Connector is reachable and healthy - it's available for sync
+            _logger.LogDebug("Connector {DisplayName} is available", displayName);
+            return (true, null);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to reach connector {DisplayName} at {ServiceName}", displayName, serviceName);
+            return (false, $"Connector '{displayName}' is not reachable: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error checking connector {DisplayName} availability", displayName);
+            return (false, $"Error checking connector '{displayName}': {ex.Message}");
+        }
     }
 
     /// <inheritdoc />
@@ -93,12 +117,19 @@ public class ConnectorSyncService : IConnectorSyncService
             };
         }
 
-        if (!IsConnectorConfiguredInternal(connector.ConnectorName))
+        // Check if connector is actually reachable by querying its health endpoint
+        var (isAvailable, errorMessage) = await CheckConnectorAvailabilityAsync(
+            connector.ServiceName,
+            connector.DisplayName,
+            cancellationToken
+        );
+
+        if (!isAvailable)
         {
             return new Nocturne.Connectors.Core.Models.SyncResult
             {
                 Success = false,
-                Message = $"Connector '{connector.DisplayName}' is not configured or enabled",
+                Message = errorMessage ?? $"Connector '{connector.DisplayName}' is not available",
             };
         }
 

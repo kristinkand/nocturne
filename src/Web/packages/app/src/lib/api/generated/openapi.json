@@ -1335,6 +1335,27 @@
         }
       }
     },
+    "/api/Metadata/statistics-types": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Get statistics metadata for type generation\nThis endpoint exists primarily to ensure NSwag generates TypeScript types for statistics models",
+        "operationId": "Metadata_GetStatisticsTypes",
+        "responses": {
+          "200": {
+            "description": "Statistics types metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTypesMetadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Metadata/widget-definitions": {
       "get": {
         "tags": [
@@ -2450,6 +2471,135 @@
         }
       }
     },
+    "/api/v1/Statistics/daily-basal-bolus-ratios": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Calculate daily basal/bolus ratio statistics for a date range",
+        "operationId": "Statistics_GetDailyBasalBolusRatios",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily basal/bolus ratio breakdown with averages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBasalBolusRatioResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Statistics/insulin-delivery-stats": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Calculate comprehensive insulin delivery statistics for a date range",
+        "operationId": "Statistics_GetInsulinDeliveryStatistics",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comprehensive insulin delivery statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsulinDeliveryStatistics"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Statistics/basal-analysis": {
+      "get": {
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Calculate comprehensive basal analysis statistics for a date range",
+        "operationId": "Statistics_GetBasalAnalysis",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date of the analysis period",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comprehensive basal analysis with stats, temp basal info, and hourly percentiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasalAnalysisResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Versions": {
       "get": {
         "tags": [
@@ -3397,6 +3547,70 @@
         }
       }
     },
+    "/api/v4/debug/test/inappnotification": {
+      "post": {
+        "tags": [
+          "V4 Debug"
+        ],
+        "summary": "Test endpoint for creating in-app notifications (development only)\nCreates a test notification for the current user to verify the notification system",
+        "operationId": "Debug_CreateTestNotification",
+        "requestBody": {
+          "x-name": "request",
+          "description": "The test notification parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestNotificationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "Notification created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InAppNotificationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Endpoint only available in development",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v4/admin/deduplication/run": {
       "post": {
         "tags": [
@@ -4176,7 +4390,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Registered device information",
             "content": {
               "application/json": {
@@ -4759,6 +4973,157 @@
         }
       }
     },
+    "/api/v4/meal-matching/food-entries/{id}": {
+      "get": {
+        "tags": [
+          "V4 Meal Matching"
+        ],
+        "summary": "Get a food entry for review",
+        "operationId": "MealMatching_GetFoodEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorFoodEntry"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/meal-matching/suggestions": {
+      "get": {
+        "tags": [
+          "V4 Meal Matching"
+        ],
+        "summary": "Get suggested meal matches for a date range",
+        "operationId": "MealMatching_GetSuggestions",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestedMealMatch"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/meal-matching/accept": {
+      "post": {
+        "tags": [
+          "V4 Meal Matching"
+        ],
+        "summary": "Accept a meal match",
+        "operationId": "MealMatching_AcceptMatch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptMatchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/meal-matching/dismiss": {
+      "post": {
+        "tags": [
+          "V4 Meal Matching"
+        ],
+        "summary": "Dismiss a meal match",
+        "operationId": "MealMatching_DismissMatch",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DismissMatchRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v4/migration/test": {
       "post": {
         "tags": [
@@ -5038,6 +5403,144 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MyFitnessPalMatchingSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/notifications": {
+      "get": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Get all active notifications for the current user",
+        "operationId": "Notifications_GetNotifications",
+        "responses": {
+          "200": {
+            "description": "List of active notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InAppNotificationDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/notifications/{id}/actions/{actionId}": {
+      "post": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Execute an action on a notification",
+        "operationId": "Notifications_ExecuteAction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The notification ID",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "The action ID to execute",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content if successful"
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/notifications/{id}": {
+      "delete": {
+        "tags": [
+          "V4 Notifications"
+        ],
+        "summary": "Dismiss a notification (archive with dismissed reason)",
+        "operationId": "Notifications_DismissNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The notification ID to dismiss",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content if successful"
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -6009,7 +6512,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -6754,7 +7257,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -6878,28 +7381,6 @@
         }
       }
     },
-    "/api/v4/trackers/seed": {
-      "post": {
-        "tags": [
-          "V4 Trackers"
-        ],
-        "summary": "Seed default tracker definitions for the current user",
-        "operationId": "Trackers_SeedDefaults",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v4/trackers/definitions": {
       "get": {
         "tags": [
@@ -6961,7 +7442,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -7124,7 +7605,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -7386,7 +7867,7 @@
           "x-position": 1
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -7693,6 +8174,140 @@
                   "items": {
                     "$ref": "#/components/schemas/MealTreatment"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments": {
+      "post": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Create a treatment with tracker integration.\nIf the treatment's event type matches a tracker's trigger event types,\nthe tracker instance will be automatically started/restarted.",
+        "operationId": "Treatments_CreateTreatment",
+        "requestBody": {
+          "x-name": "treatment",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Treatment"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments/bulk": {
+      "post": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Create multiple treatments with tracker integration.",
+        "operationId": "Treatments_CreateTreatments",
+        "requestBody": {
+          "x-name": "treatments",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Treatment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v4/treatments/{id}": {
+      "get": {
+        "tags": [
+          "V4 Treatments"
+        ],
+        "summary": "Get a specific treatment by ID",
+        "operationId": "Treatments_GetTreatment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Treatment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -9444,7 +10059,7 @@
           "Treatments"
         ],
         "summary": "Create a new treatment via V3 API",
-        "operationId": "Treatments_CreateTreatment",
+        "operationId": "Treatments_CreateTreatment2",
         "requestBody": {
           "x-name": "treatment",
           "description": "Treatment to create",
@@ -9491,7 +10106,7 @@
           "Treatments"
         ],
         "summary": "Get a specific treatment by ID with V3 format",
-        "operationId": "Treatments_GetTreatment",
+        "operationId": "Treatments_GetTreatment2",
         "parameters": [
           {
             "name": "id",
@@ -9641,7 +10256,7 @@
           "Treatments"
         ],
         "summary": "Create multiple treatments via V3 API (bulk operation)",
-        "operationId": "Treatments_CreateTreatments",
+        "operationId": "Treatments_CreateTreatments2",
         "requestBody": {
           "x-name": "treatments",
           "description": "Treatments to create",
@@ -13334,7 +13949,7 @@
           "Treatments"
         ],
         "summary": "Create new treatments",
-        "operationId": "Treatments_CreateTreatments2",
+        "operationId": "Treatments_CreateTreatments22",
         "requestBody": {
           "x-name": "treatments",
           "description": "Treatments to create (can be single object or array)",
@@ -13571,6 +14186,322 @@
             }
           },
           "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets the configuration for a specific connector.\nReturns runtime configuration only (secrets are not included).",
+        "operationId": "Configuration_GetConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name (e.g., \"Dexcom\", \"Glooko\")",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration response or 404 if not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorConfigurationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Saves or updates runtime configuration for a connector.\nOnly properties marked with [RuntimeConfigurable] are accepted.\nValidates the configuration against the connector's schema before saving.",
+        "operationId": "Configuration_SaveConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "configuration",
+          "description": "Configuration values as JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonDocument"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "The saved configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Deletes all configuration and secrets for a connector.",
+        "operationId": "Configuration_DeleteConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/schema": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets the JSON Schema for a connector's configuration.\nSchema is generated from the connector's configuration class attributes.\nThis endpoint is public since schema is just metadata, not sensitive data.",
+        "operationId": "Configuration_GetSchema",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON Schema document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonDocument"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/effective": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets the effective configuration from a running connector.\nThis returns the actual runtime values including those resolved from environment variables.\nThis endpoint is public since it only exposes non-secret configuration values.",
+        "operationId": "Configuration_GetEffectiveConfiguration",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dictionary of property names to effective values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "503": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/secrets": {
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Saves encrypted secrets for a connector.\nSecrets are encrypted using AES-256-GCM before storage.",
+        "operationId": "Configuration_SaveSecrets",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "secrets",
+          "description": "Dictionary of secret property names to plaintext values",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Gets status information for all registered connectors.",
+        "operationId": "Configuration_GetAllConnectorStatus",
+        "responses": {
+          "200": {
+            "description": "List of connector status information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorStatusInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/config/{connectorName}/active": {
+      "patch": {
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Enables or disables a connector.",
+        "operationId": "Configuration_SetActive",
+        "parameters": [
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "description": "The connector name",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "request",
+          "description": "Request containing the active state",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
             "description": ""
           }
         }
@@ -14647,6 +15578,316 @@
           }
         }
       },
+      "StatisticsTypesMetadata": {
+        "type": "object",
+        "description": "Metadata about statistics types for NSwag generation",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description of the statistics types"
+          },
+          "sampleBasalAnalysis": {
+            "description": "Sample basal analysis response (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BasalAnalysisResponse"
+              }
+            ]
+          },
+          "sampleDailyBasalBolusRatio": {
+            "description": "Sample daily basal/bolus ratio response (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DailyBasalBolusRatioResponse"
+              }
+            ]
+          },
+          "sampleHourlyPercentile": {
+            "description": "Sample hourly basal percentile data (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/HourlyBasalPercentileData"
+              }
+            ]
+          },
+          "sampleDailyData": {
+            "description": "Sample daily basal/bolus ratio data (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DailyBasalBolusRatioData"
+              }
+            ]
+          },
+          "sampleInsulinDelivery": {
+            "description": "Sample insulin delivery statistics (for type generation)",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InsulinDeliveryStatistics"
+              }
+            ]
+          }
+        }
+      },
+      "BasalAnalysisResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "stats": {
+            "$ref": "#/components/schemas/BasalStats"
+          },
+          "tempBasalInfo": {
+            "$ref": "#/components/schemas/TempBasalInfo"
+          },
+          "hourlyPercentiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HourlyBasalPercentileData"
+            }
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          }
+        }
+      },
+      "BasalStats": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "avgRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "minRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalDelivered": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "TempBasalInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "perDay": {
+            "type": "number",
+            "format": "double"
+          },
+          "highTemps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowTemps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "zeroTemps": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HourlyBasalPercentileData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "p10": {
+            "type": "number",
+            "format": "double"
+          },
+          "p25": {
+            "type": "number",
+            "format": "double"
+          },
+          "median": {
+            "type": "number",
+            "format": "double"
+          },
+          "p75": {
+            "type": "number",
+            "format": "double"
+          },
+          "p90": {
+            "type": "number",
+            "format": "double"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DailyBasalBolusRatioResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "dailyData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyBasalBolusRatioData"
+            }
+          },
+          "averageBasalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageBolusPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageTdd": {
+            "type": "number",
+            "format": "double"
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DailyBasalBolusRatioData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "displayDate": {
+            "type": "string"
+          },
+          "basal": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "basalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusPercent": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "InsulinDeliveryStatistics": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalBolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalBasal": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalInsulin": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalCarbs": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "basalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "basalPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "tdd": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgBolus": {
+            "type": "number",
+            "format": "double"
+          },
+          "mealBoluses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correctionBoluses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "icRatio": {
+            "type": "number",
+            "format": "double"
+          },
+          "bolusesPerDay": {
+            "type": "number",
+            "format": "double"
+          },
+          "dayCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "carbCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carbBolusCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "WidgetDefinitionsMetadata": {
         "type": "object",
         "description": "Metadata about available widget definitions",
@@ -14724,6 +15965,8 @@
           "Trackers",
           "TirChart",
           "DailySummary",
+          "Clock",
+          "Tdd",
           "GlucoseChart",
           "Statistics",
           "Treatments",
@@ -14740,6 +15983,8 @@
           "Trackers",
           "TirChart",
           "DailySummary",
+          "Clock",
+          "Tdd",
           "GlucoseChart",
           "Statistics",
           "Treatments",
@@ -16215,6 +17460,11 @@
                 "format": "guid",
                 "nullable": true
               },
+              "dbId": {
+                "type": "string",
+                "format": "guid",
+                "nullable": true
+              },
               "sources": {
                 "type": "array",
                 "nullable": true,
@@ -17305,6 +18555,14 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/TreatmentSummary"
+              }
+            ]
+          },
+          "insulinDelivery": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InsulinDeliveryStatistics"
               }
             ]
           },
@@ -18925,6 +20183,213 @@
           }
         }
       },
+      "InAppNotificationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/InAppNotificationType"
+          },
+          "urgency": {
+            "$ref": "#/components/schemas/NotificationUrgency"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationActionDto"
+            }
+          }
+        }
+      },
+      "InAppNotificationType": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "PasswordResetRequest",
+          "UnconfiguredTracker",
+          "TrackerAlert",
+          "StatisticsSummary",
+          "HelpResponse",
+          "AnonymousLoginRequest",
+          "PredictedLow",
+          "SuggestedMealMatch"
+        ],
+        "enum": [
+          "PasswordResetRequest",
+          "UnconfiguredTracker",
+          "TrackerAlert",
+          "StatisticsSummary",
+          "HelpResponse",
+          "AnonymousLoginRequest",
+          "PredictedLow",
+          "SuggestedMealMatch"
+        ]
+      },
+      "NotificationUrgency": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Info",
+          "Warn",
+          "Hazard",
+          "Urgent"
+        ],
+        "enum": [
+          "Info",
+          "Warn",
+          "Hazard",
+          "Urgent"
+        ]
+      },
+      "NotificationActionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "actionId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "variant": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TestNotificationRequest": {
+        "type": "object",
+        "description": "Request model for creating test notifications",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "description": "Type of notification to create",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InAppNotificationType"
+              }
+            ]
+          },
+          "urgency": {
+            "description": "Urgency level for the notification",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NotificationUrgency"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Optional title (defaults to \"Test {Type} Notification\")",
+            "nullable": true
+          },
+          "subtitle": {
+            "type": "string",
+            "description": "Optional subtitle",
+            "nullable": true
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "Optional source ID for grouping",
+            "nullable": true
+          },
+          "actions": {
+            "type": "array",
+            "description": "Optional actions for the notification",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/NotificationActionDto"
+            }
+          },
+          "resolutionConditions": {
+            "description": "Optional resolution conditions",
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ResolutionConditions"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional metadata",
+            "nullable": true,
+            "additionalProperties": {}
+          }
+        }
+      },
+      "ResolutionConditions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sourceDeletedType": {
+            "type": "string",
+            "nullable": true
+          },
+          "glucose": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GlucoseCondition"
+              }
+            ]
+          }
+        }
+      },
+      "GlucoseCondition": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "aboveMgDl": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "belowMgDl": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sustainedMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
       "DeduplicationJobResponse": {
         "type": "object",
         "description": "Response for starting a deduplication job",
@@ -19803,6 +21268,83 @@
           }
         }
       },
+      "SuggestedMealMatch": {
+        "type": "object",
+        "description": "A suggested meal match between a food entry and treatment",
+        "additionalProperties": false,
+        "properties": {
+          "foodEntryId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "foodName": {
+            "type": "string",
+            "nullable": true
+          },
+          "mealName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "consumedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "treatmentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "treatmentCarbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "treatmentMills": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "matchScore": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AcceptMatchRequest": {
+        "type": "object",
+        "description": "Request to accept a meal match",
+        "additionalProperties": false,
+        "properties": {
+          "foodEntryId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "treatmentId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "carbs": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "timeOffsetMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DismissMatchRequest": {
+        "type": "object",
+        "description": "Request to dismiss a meal match",
+        "additionalProperties": false,
+        "properties": {
+          "foodEntryId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
       "TestMigrationConnectionResult": {
         "type": "object",
         "description": "Result of testing a migration connection",
@@ -20164,34 +21706,10 @@
             "type": "integer",
             "format": "int32"
           },
-          "unmatchedTimeoutHours": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unmatchedBehavior": {
-            "$ref": "#/components/schemas/UnmatchedBehavior"
-          },
           "enableMatchNotifications": {
-            "type": "boolean"
-          },
-          "enableUnmatchedNotifications": {
             "type": "boolean"
           }
         }
-      },
-      "UnmatchedBehavior": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Prompt",
-          "AutoStandalone",
-          "AutoDelete"
-        ],
-        "enum": [
-          "Prompt",
-          "AutoStandalone",
-          "AutoDelete"
-        ]
       },
       "GlucosePredictionResponse": {
         "type": "object",
@@ -21500,22 +23018,6 @@
             "type": "boolean"
           }
         }
-      },
-      "NotificationUrgency": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Info",
-          "Warn",
-          "Hazard",
-          "Urgent"
-        ],
-        "enum": [
-          "Info",
-          "Warn",
-          "Hazard",
-          "Urgent"
-        ]
       },
       "TrackerDefinitionDto": {
         "type": "object",
@@ -25905,6 +27407,75 @@
           "query": {
             "type": "object",
             "additionalProperties": {}
+          }
+        }
+      },
+      "ConnectorConfigurationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectorName": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/JsonDocument"
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "JsonDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isDisposable": {
+            "type": "boolean"
+          },
+          "rootElement": {}
+        }
+      },
+      "ConnectorStatusInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectorName": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "hasDatabaseConfig": {
+            "type": "boolean"
+          },
+          "hasSecrets": {
+            "type": "boolean"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SetActiveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "isActive": {
+            "type": "boolean"
           }
         }
       }

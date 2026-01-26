@@ -236,7 +236,7 @@
               {
                 key: "total",
                 value: (d: HourlyInsulinData) => d.total,
-                color: "hsl(var(--primary))",
+                color: "var(--chart-1)",
                 label: "Total Insulin",
               },
             ]}

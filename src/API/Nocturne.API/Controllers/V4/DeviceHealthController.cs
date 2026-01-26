@@ -67,6 +67,7 @@ public class DeviceHealthController : ControllerBase
     /// <param name="request">Device registration request</param>
     /// <returns>Registered device information</returns>
     [HttpPost]
+    [ProducesResponseType(typeof(DeviceHealth), StatusCodes.Status201Created)]
     public async Task<ActionResult<DeviceHealth>> RegisterDevice(
         [FromBody] DeviceRegistrationRequest request
     )

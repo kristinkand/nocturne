@@ -23,7 +23,7 @@ class Program
         // This enables 'aspire publish' to generate docker-compose.yml files
         // Using GitHub Container Registry for nightscout/nocturne
         var includeDashboard = builder.Configuration.GetValue<bool>(
-            "Parameters:IncludeDashboard",
+            "Parameters:OptionalServices:AspireDashboard:Enabled",
             true
         );
         var compose = builder.AddDockerComposeEnvironment("compose");
@@ -47,6 +47,12 @@ class Program
             Path.Combine(solutionRoot, $"appsettings.{builder.Environment.EnvironmentName}.json"),
             optional: true,
             reloadOnChange: true
+        );
+        // Load publish-specific configuration (used during aspire publish)
+        builder.Configuration.AddJsonFile(
+            Path.Combine(solutionRoot, "appsettings.publish.json"),
+            optional: true,
+            reloadOnChange: false
         );
 
         // Add PostgreSQL database - use remote database connection or local container
@@ -141,26 +147,38 @@ class Program
             remoteDatabase = builder.AddConnectionString(ServiceNames.PostgreSql);
         }
 
-        // Build the oref Rust library to WebAssembly
-        // Note: AddRustApp uses 'cargo run' which requires a binary target.
-        // Since oref is a library, we use AddExecutable with 'cargo build' instead.
-        var orefPath = Path.Combine(solutionRoot, "src", "Core", "oref");
-        Console.WriteLine("[Aspire] Adding oref Rust/WASM build task...");
+        // Build the oref Rust library to WebAssembly (optional - pre-built WASM is downloaded by default)
+        // Set Parameters:Oref:CompileFromSource to true to compile from source (requires Rust toolchain)
+        var compileOrefFromSource = builder.Configuration.GetValue<bool>(
+            "Parameters:Oref:CompileFromSource",
+            false
+        );
 
-        var oref = builder
-            .AddExecutable(
-                "oref-wasm-build",
-                "cargo",
-                orefPath,
-                "build",
-                "--lib",
-                "--release",
-                "--features",
-                "wasm",
-                "--target",
-                "wasm32-unknown-unknown"
-            )
-            .ExcludeFromManifest();
+        IResourceBuilder<ExecutableResource>? oref = null;
+        if (compileOrefFromSource)
+        {
+            var orefPath = Path.Combine(solutionRoot, "src", "Core", "oref");
+            Console.WriteLine("[Aspire] Compiling oref Rust/WASM from source...");
+
+            oref = builder
+                .AddExecutable(
+                    "oref-wasm-build",
+                    "cargo",
+                    orefPath,
+                    "build",
+                    "--lib",
+                    "--release",
+                    "--features",
+                    "wasm",
+                    "--target",
+                    "wasm32-unknown-unknown"
+                )
+                .ExcludeFromManifest();
+        }
+        else
+        {
+            Console.WriteLine("[Aspire] Using pre-built oref WASM (downloaded during build)");
+        }
 
         // Add the Nocturne API service (without embedded connectors)
         // Aspire will auto-generate a Dockerfile during publish
@@ -168,7 +186,6 @@ class Program
 #pragma warning disable ASPIRECERTIFICATES001
         var api = builder
             .AddProject<Projects.Nocturne_API>(ServiceNames.NocturneApi, launchProfileName: null)
-            .WaitFor(oref)
             .WithHttpsEndpoint(port: 1613, name: "api")
             .WithHttpsDeveloperCertificate()
             .PublishAsDockerComposeService((_, _) => { })
@@ -176,7 +193,12 @@ class Program
             .WithRemoteImageTag("latest");
 #pragma warning restore ASPIRECERTIFICATES001
 
-        oref.WithParentRelationship(api);
+        // If compiling oref from source, wait for it and set parent relationship
+        if (oref != null)
+        {
+            api.WaitFor(oref);
+            oref.WithParentRelationship(api);
+        }
         // Configure database connection based on mode
         if (managedDatabase != null)
         {
@@ -319,7 +341,10 @@ class Program
         bridge.WithParentRelationship(web);
         // Add Scalar API Reference for unified API documentation
         // This provides a single documentation interface for all services in the Aspire dashboard
-        var includeScalar = builder.Configuration.GetValue<bool>("Parameters:IncludeScalar", true);
+        var includeScalar = builder.Configuration.GetValue<bool>(
+            "Parameters:OptionalServices:Scalar:Enabled",
+            true
+        );
         if (includeScalar)
         {
             builder
@@ -336,6 +361,24 @@ class Program
                             .WithOpenApiRoutePattern("/openapi/{documentName}.json");
                     }
                 );
+        }
+
+        // Add Watchtower for automatic container updates (optional)
+        var enableWatchtower = builder.Configuration.GetValue<bool>(
+            "Parameters:OptionalServices:Watchtower:Enabled",
+            false
+        );
+        if (enableWatchtower)
+        {
+            Console.WriteLine("[Aspire] Adding Watchtower for automatic container updates");
+            builder
+                .AddContainer("watchtower", "ghcr.io/nicholas-fedor/watchtower", "latest")
+                .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock")
+                .WithEnvironment("WATCHTOWER_CLEANUP", "true")
+                .WithEnvironment("WATCHTOWER_POLL_INTERVAL", "86400")
+                .WithEnvironment("WATCHTOWER_INCLUDE_STOPPED", "false")
+                .WithEnvironment("WATCHTOWER_REVIVE_STOPPED", "false")
+                .PublishAsDockerComposeService((_, _) => { });
         }
 
         // Add conditional notification services (if configured in appsettings.json)

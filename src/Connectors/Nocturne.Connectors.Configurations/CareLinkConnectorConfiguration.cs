@@ -36,12 +36,14 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("CONNECT_CARE_LINK_USERNAME")]
         [AspireParameter("carelink-username", "Username", secret: false, description: "CareLink account username")]
+        [RuntimeConfigurable("Username", "Connection")]
         public string CareLinkUsername { get; set; } = string.Empty;
 
         /// <summary>
         /// CareLink password
         /// </summary>
         [Required]
+        [Secret]
         [EnvironmentVariable("CONNECT_CARE_LINK_PASSWORD")]
         [AspireParameter("carelink-password", "Password", secret: true, description: "CareLink account password")]
         public string CareLinkPassword { get; set; } = string.Empty;
@@ -52,6 +54,7 @@ namespace Nocturne.Connectors.Configurations
         [Required]
         [EnvironmentVariable("CONNECT_CARE_LINK_COUNTRY")]
         [AspireParameter("carelink-country", "CountryCode", secret: false, description: "CareLink country code (e.g., US, GB)", defaultValue: "US")]
+        [RuntimeConfigurable("Country", "Connection")]
         public string CareLinkCountry { get; set; } = "US";
 
         /// <summary>
@@ -59,6 +62,7 @@ namespace Nocturne.Connectors.Configurations
         /// </summary>
         [EnvironmentVariable("CONNECT_CARE_LINK_PATIENT_USERNAME")]
         [AspireParameter("carelink-patient-username", "PatientUsername", secret: false, description: "Patient username (if different from account)", defaultValue: "")]
+        [RuntimeConfigurable("Patient Username", "Connection")]
         public string CareLinkPatientUsername { get; set; } = string.Empty;
 
         protected override void ValidateSourceSpecificConfiguration()

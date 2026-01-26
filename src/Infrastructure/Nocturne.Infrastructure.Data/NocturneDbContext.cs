@@ -204,6 +204,20 @@ public class NocturneDbContext : DbContext
     /// </summary>
     public DbSet<LinkedRecordEntity> LinkedRecords { get; set; }
 
+    // Connector Configuration entities
+
+    /// <summary>
+    /// Gets or sets the ConnectorConfigurations table for connector runtime configuration and encrypted secrets
+    /// </summary>
+    public DbSet<ConnectorConfigurationEntity> ConnectorConfigurations { get; set; }
+
+    // In-App Notification entities
+
+    /// <summary>
+    /// Gets or sets the InAppNotifications table for unified in-app notifications
+    /// </summary>
+    public DbSet<InAppNotificationEntity> InAppNotifications { get; set; }
+
 
     /// <summary>
     /// Configure the database model and relationships
@@ -992,6 +1006,50 @@ public class NocturneDbContext : DbContext
             .HasIndex(l => new { l.RecordType, l.SourceTimestamp })
             .HasDatabaseName("ix_linked_records_type_timestamp");
 
+        // ConnectorConfiguration indexes - optimized for connector lookups
+        modelBuilder
+            .Entity<ConnectorConfigurationEntity>()
+            .HasIndex(c => c.ConnectorName)
+            .HasDatabaseName("ix_connector_configurations_connector_name")
+            .IsUnique();
+
+        // InAppNotification indexes - optimized for user notification queries
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => n.UserId)
+            .HasDatabaseName("ix_in_app_notifications_user_id");
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => n.Type)
+            .HasDatabaseName("ix_in_app_notifications_type");
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => n.IsArchived)
+            .HasDatabaseName("ix_in_app_notifications_is_archived");
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => n.CreatedAt)
+            .HasDatabaseName("ix_in_app_notifications_created_at")
+            .IsDescending();
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => new { n.UserId, n.IsArchived })
+            .HasDatabaseName("ix_in_app_notifications_user_archived");
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => new { n.UserId, n.Type, n.IsArchived })
+            .HasDatabaseName("ix_in_app_notifications_user_type_archived");
+
+        modelBuilder
+            .Entity<InAppNotificationEntity>()
+            .HasIndex(n => n.SourceId)
+            .HasDatabaseName("ix_in_app_notifications_source_id")
+            .HasFilter("source_id IS NOT NULL");
     }
 
     private static void ConfigureEntities(ModelBuilder modelBuilder)
@@ -1119,6 +1177,11 @@ public class NocturneDbContext : DbContext
         modelBuilder
             .Entity<LinkedRecordEntity>()
             .Property(l => l.Id)
+            .HasValueGenerator<GuidV7ValueGenerator>();
+
+        modelBuilder
+            .Entity<ConnectorConfigurationEntity>()
+            .Property(c => c.Id)
             .HasValueGenerator<GuidV7ValueGenerator>();
 
         modelBuilder
@@ -1603,6 +1666,19 @@ public class NocturneDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        // Configure InAppNotification entity
+        modelBuilder.Entity<InAppNotificationEntity>(entity =>
+        {
+            entity.Property(e => e.Id).HasValueGenerator<GuidV7ValueGenerator>();
+            entity.Property(e => e.IsArchived).HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Store enums as strings in the database
+            entity.Property(e => e.Type).HasConversion<string>();
+            entity.Property(e => e.Urgency).HasConversion<string>();
+            entity.Property(e => e.ArchiveReason).HasConversion<string>();
+        });
+
     }
 
     /// <summary>
@@ -1800,6 +1876,15 @@ public class NocturneDbContext : DbContext
                 {
                     linkedRecordEntity.SysCreatedAt = utcNow;
                 }
+            }
+            else if (entry.Entity is ConnectorConfigurationEntity connectorConfigEntity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    connectorConfigEntity.SysCreatedAt = utcNow;
+                    connectorConfigEntity.LastModified = DateTimeOffset.UtcNow;
+                }
+                connectorConfigEntity.SysUpdatedAt = utcNow;
             }
         }
     }

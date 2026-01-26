@@ -1,3 +1,5 @@
+import { randomUUID } from "$lib/utils";
+
 /**
  * xDrip+-inspired Alarm Profile Types
  *
@@ -328,7 +330,7 @@ export function createDefaultAlarmProfile(
   const defaults = getDefaultsForType(type);
 
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     name: name ?? defaults.name,
     description: defaults.description,
     enabled: true,

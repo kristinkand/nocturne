@@ -2,11 +2,11 @@
   import GlucoseChartCard from "$lib/components/dashboard/GlucoseChartCard.svelte";
   import ReportsSkeleton from "$lib/components/reports/ReportsSkeleton.svelte";
   import { getReportsData } from "$lib/data/reports.remote";
-  import { useDateParams } from "$lib/hooks/date-params.svelte";
+  import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";
   import { resource } from "runed";
 
-  // Build date range input from URL parameters
-  const reportsParams = useDateParams();
+  // Get shared date params from context (set by reports layout)
+  const reportsParams = requireDateParamsContext();
 
   // Use resource for controlled reactivity - prevents excessive re-fetches
   const reportsResource = resource(

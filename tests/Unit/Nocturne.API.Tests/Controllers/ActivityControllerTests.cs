@@ -67,7 +67,9 @@ public class ActivityControllerTests
         };
 
         _mockStateSpanService
-            .Setup(x => x.GetActivitiesAsync(null, 10, 0, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetActivitiesAsync(It.IsAny<string?>(), 10, 0, It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(expectedActivities);
 
         // Act
@@ -85,7 +87,9 @@ public class ActivityControllerTests
     {
         // Arrange
         _mockStateSpanService
-            .Setup(x => x.GetActivitiesAsync(null, 10, 0, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetActivitiesAsync(It.IsAny<string?>(), 10, 0, It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(new List<Activity>());
 
         // Act
@@ -108,7 +112,14 @@ public class ActivityControllerTests
         var expectedActivities = new List<Activity>();
 
         _mockStateSpanService
-            .Setup(x => x.GetActivitiesAsync(null, count, skip, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetActivitiesAsync(
+                    It.IsAny<string?>(),
+                    count,
+                    skip,
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(expectedActivities);
 
         // Act
@@ -116,7 +127,13 @@ public class ActivityControllerTests
 
         // Assert
         _mockStateSpanService.Verify(
-            x => x.GetActivitiesAsync(null, count, skip, It.IsAny<CancellationToken>()),
+            x =>
+                x.GetActivitiesAsync(
+                    It.IsAny<string?>(),
+                    count,
+                    skip,
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
     }

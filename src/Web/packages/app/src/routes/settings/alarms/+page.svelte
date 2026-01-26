@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { randomUUID } from "$lib/utils";
   import { getSettingsStore } from "$lib/stores/settings-store.svelte";
   import {
     Card,
@@ -157,7 +158,7 @@
     const copy = JSON.parse(
       JSON.stringify(profile)
     ) as AlarmProfileConfiguration;
-    copy.id = crypto.randomUUID();
+    copy.id = randomUUID();
     copy.name = `${profile.name} (Copy)`;
     copy.displayOrder = store.alarmConfiguration.profiles.length;
     copy.createdAt = new Date().toISOString();
@@ -184,7 +185,7 @@
     store.alarmConfiguration.emergencyContacts = [
       ...store.alarmConfiguration.emergencyContacts,
       {
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         name: "",
         phone: "",
         email: "",

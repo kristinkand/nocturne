@@ -89,19 +89,19 @@
       {
         key: "p10",
         value: [(d) => d.percentiles?.p25, (d) => d.percentiles?.p10],
-        color: "var(--chart-3)",
+        color: "oklch(from var(--chart-1) l c h / 0.2)",
         label: "P10",
       },
       {
         key: "p25",
         value: [(d) => d.median, (d) => d.percentiles?.p25],
-        color: "var(--chart-2)",
+        color: "oklch(from var(--chart-1) l c h / 0.4)",
         label: "P25",
       },
       {
         key: "median",
         value: [(d) => d.median, (d) => d.median],
-        color: "black",
+        color: "var(--chart-1)",
         props: {
           line: { strokeWidth: 1.75 },
         },
@@ -110,13 +110,13 @@
       {
         key: "percentiles.p75",
         value: [(d) => d.median, (d) => d.percentiles?.p75],
-        color: "var(--chart-2)",
+        color: "oklch(from var(--chart-1) l c h / 0.4)",
         label: "P75",
       },
       {
         key: "p90",
         value: [(d) => d.percentiles?.p75, (d) => d.percentiles?.p90],
-        color: "var(--chart-3)",
+        color: "oklch(from var(--chart-1) l c h / 0.2)",
         label: "P90",
       },
     ]}

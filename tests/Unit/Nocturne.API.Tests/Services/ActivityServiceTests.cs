@@ -60,7 +60,9 @@ public class ActivityServiceTests
         };
 
         _mockStateSpanService
-            .Setup(x => x.GetActivitiesAsync(It.IsAny<string?>(), 10, 0, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetActivitiesAsync(It.IsAny<string?>(), 10, 0, It.IsAny<CancellationToken>())
+            )
             .ReturnsAsync(expectedActivities);
 
         // Act
@@ -96,7 +98,14 @@ public class ActivityServiceTests
         };
 
         _mockStateSpanService
-            .Setup(x => x.GetActivitiesAsync(find, count, skip, It.IsAny<CancellationToken>()))
+            .Setup(x =>
+                x.GetActivitiesAsync(
+                    It.IsAny<string?>(),
+                    count,
+                    skip,
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(expectedActivities);
 
         // Act

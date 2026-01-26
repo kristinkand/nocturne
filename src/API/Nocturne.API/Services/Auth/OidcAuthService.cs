@@ -3,8 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Nocturne.API.Configuration;
 using Nocturne.Core.Contracts;
+using Nocturne.Core.Models.Configuration;
 using Nocturne.Core.Models.Authorization;
 
 namespace Nocturne.API.Services.Auth;

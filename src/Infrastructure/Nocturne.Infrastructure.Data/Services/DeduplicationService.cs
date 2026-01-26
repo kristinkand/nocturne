@@ -26,6 +26,27 @@ public class DeduplicationService : IDeduplicationService
     private static readonly ConcurrentDictionary<Guid, DeduplicationJobStatus> _runningJobs = new();
     private static readonly ConcurrentDictionary<Guid, CancellationTokenSource> _jobCancellations = new();
 
+    /// <summary>
+    /// Event types that should be grouped together for deduplication.
+    /// When a Basal and Temp Basal occur at the same time, they represent
+    /// the same underlying event and should be deduplicated together.
+    /// </summary>
+    private static readonly HashSet<string> BasalRelatedTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Basal",
+        "Temp Basal"
+    };
+
+    /// <summary>
+    /// Priority order for basal-related types. Higher priority types
+    /// are preferred when merging duplicates.
+    /// </summary>
+    private static readonly Dictionary<string, int> BasalTypePriority = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "Temp Basal", 1 },  // Highest priority - most specific
+        { "Basal", 0 }       // Lower priority - generic
+    };
+
     public DeduplicationService(
         NocturneDbContext context,
         IServiceScopeFactory scopeFactory,
@@ -671,10 +692,10 @@ public class DeduplicationService : IDeduplicationService
 
         var treatments = await _context.Treatments
             .OrderBy(t => t.Mills)
-            .Select(t => new { t.Id, t.Mills, t.EventType, t.Insulin, t.Carbs, t.DataSource })
+            .Select(t => new { t.Id, t.Mills, t.EventType, t.Insulin, t.Carbs, t.Rate, t.DataSource })
             .ToListAsync(cancellationToken);
 
-        var groupedByTime = new Dictionary<long, List<(Guid Id, string? EventType, double? Insulin, double? Carbs, string? DataSource)>>();
+        var groupedByTime = new Dictionary<long, List<(Guid Id, string? EventType, double? Insulin, double? Carbs, double? Rate, string? DataSource)>>();
 
         foreach (var treatment in treatments)
         {
@@ -683,32 +704,51 @@ public class DeduplicationService : IDeduplicationService
             if (!groupedByTime.ContainsKey(windowKey))
                 groupedByTime[windowKey] = new();
 
-            groupedByTime[windowKey].Add((treatment.Id, treatment.EventType, treatment.Insulin, treatment.Carbs, treatment.DataSource));
+            groupedByTime[windowKey].Add((treatment.Id, treatment.EventType, treatment.Insulin, treatment.Carbs, treatment.Rate, treatment.DataSource));
         }
 
         foreach (var (windowKey, windowTreatments) in groupedByTime)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Group by event type within the window
+            // Group by event type within the window, but treat basal-related types as a single group
             var eventTypeGroups = windowTreatments
-                .GroupBy(t => t.EventType ?? "unknown")
+                .GroupBy(t => GetDeduplicationGroupKey(t.EventType))
                 .Where(g => g.Count() > 0);
 
             foreach (var eventGroup in eventTypeGroups)
             {
-                // Further group by similar insulin/carbs values
+                // Check if this is a basal-related group
+                var isBasalGroup = eventGroup.Key == "__basal_group__";
+
+                // Further group by similar values
+                // For basal-related types, we only use Rate (not Insulin, since Insulin is calculated from Rate*Duration)
+                // For other types, we use Insulin and Carbs
                 var valueGroups = eventGroup
                     .GroupBy(t =>
                     {
-                        var insulinKey = t.Insulin.HasValue ? Math.Round(t.Insulin.Value * 20) / 20 : 0; // ±0.05 units
-                        var carbsKey = t.Carbs.HasValue ? Math.Round(t.Carbs.Value) : 0; // ±1g
-                        return (insulinKey, carbsKey);
+                        if (isBasalGroup)
+                        {
+                            // For basals, only group by rate (ignore calculated Insulin)
+                            var rateKey = t.Rate.HasValue ? Math.Round(t.Rate.Value * 20) / 20 : 0; // ±0.05 u/hr
+                            return (0.0, 0.0, rateKey);
+                        }
+                        else
+                        {
+                            // For non-basals, group by insulin and carbs
+                            var insulinKey = t.Insulin.HasValue ? Math.Round(t.Insulin.Value * 20) / 20 : 0; // ±0.05 units
+                            var carbsKey = t.Carbs.HasValue ? Math.Round(t.Carbs.Value) : 0; // ±1g
+                            return (insulinKey, carbsKey, 0.0);
+                        }
                     });
 
                 foreach (var valueGroup in valueGroups)
                 {
-                    var groupTreatments = valueGroup.ToList();
+                    // Sort by priority so higher priority types (e.g., Temp Basal) come first
+                    var groupTreatments = valueGroup
+                        .OrderByDescending(t => GetBasalTypePriority(t.EventType))
+                        .ThenBy(t => t.Id) // Stable sort for non-basal types
+                        .ToList();
 
                     if (groupTreatments.Count > 1)
                     {
@@ -921,13 +961,16 @@ public class DeduplicationService : IDeduplicationService
         if (treatments.Count == 0)
             throw new ArgumentException("Cannot merge empty list of treatments");
 
+        // For basal-related treatments, prefer the highest priority type (e.g., Temp Basal over Basal)
         var primary = treatments[0];
+        var preferredEventType = GetPreferredEventType(treatments);
+
         var merged = new Treatment
         {
             Id = primary.Id,
             Mills = primary.Mills,
             Created_at = primary.Created_at,
-            EventType = primary.EventType,
+            EventType = preferredEventType,
             Insulin = primary.Insulin,
             Carbs = primary.Carbs,
             Protein = primary.Protein,
@@ -959,6 +1002,13 @@ public class DeduplicationService : IDeduplicationService
             merged.Profile ??= treatment.Profile;
             merged.Protein ??= treatment.Protein;
             merged.Fat ??= treatment.Fat;
+
+            // Enrich basal-related fields
+            merged.Duration ??= treatment.Duration;
+            merged.Percent ??= treatment.Percent;
+            merged.Rate ??= treatment.Rate;
+            merged.Carbs ??= treatment.Carbs;
+            merged.Insulin ??= treatment.Insulin;
 
             // Merge additional properties
             if (treatment.AdditionalProperties != null)
@@ -1015,5 +1065,64 @@ public class DeduplicationService : IDeduplicationService
         }
 
         return merged;
+    }
+
+    /// <summary>
+    /// Gets the deduplication group key for an event type.
+    /// Basal-related types are grouped together under a common key.
+    /// </summary>
+    private static string GetDeduplicationGroupKey(string? eventType)
+    {
+        if (string.IsNullOrEmpty(eventType))
+            return "unknown";
+
+        // Group all basal-related types together
+        if (BasalRelatedTypes.Contains(eventType))
+            return "__basal_group__";
+
+        return eventType;
+    }
+
+    /// <summary>
+    /// Gets the priority for a basal-related type.
+    /// Higher values indicate higher priority (preferred when deduplicating).
+    /// </summary>
+    private static int GetBasalTypePriority(string? eventType)
+    {
+        if (string.IsNullOrEmpty(eventType))
+            return -1;
+
+        return BasalTypePriority.TryGetValue(eventType, out var priority) ? priority : -1;
+    }
+
+    /// <summary>
+    /// Gets the preferred event type when merging treatments.
+    /// For basal-related types, returns the highest priority type among all treatments.
+    /// For other types, returns the primary treatment's event type.
+    /// </summary>
+    private static string? GetPreferredEventType(List<Treatment> treatments)
+    {
+        if (treatments.Count == 0)
+            return null;
+
+        var primary = treatments[0];
+
+        // Check if any treatment is a basal-related type
+        var basalTypes = treatments
+            .Where(t => !string.IsNullOrEmpty(t.EventType) && BasalRelatedTypes.Contains(t.EventType))
+            .Select(t => t.EventType!)
+            .Distinct()
+            .ToList();
+
+        if (basalTypes.Count == 0)
+        {
+            // No basal-related types, use primary's event type
+            return primary.EventType;
+        }
+
+        // Return the highest priority basal type
+        return basalTypes
+            .OrderByDescending(GetBasalTypePriority)
+            .First();
     }
 }

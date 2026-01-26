@@ -18,6 +18,7 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        if (!builder.Configuration.IsConnectorEnabled("Tidepool")) return;
 
         // Add service defaults
         builder.AddServiceDefaults();

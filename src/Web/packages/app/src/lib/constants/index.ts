@@ -1,35 +1,9 @@
 /** Central exports for all constants */
 
-import type { ExternalUrls } from "$lib/api";
-
-/**
- * External URLs from the backend - single source of truth
- * These values match UrlConstants.External in the backend.
- * The types are generated from the API via NSwag.
- */
-export const EXTERNAL_URLS: ExternalUrls = {
-  website: "https://nightscoutfoundation.org/nocturne",
-  docsBase: "https://nightscoutfoundation.org/nocturne/docs",
-  connectorDocs: {
-    dexcom: "https://nightscoutfoundation.org/nocturne/docs/connectors/dexcom",
-    libre: "https://nightscoutfoundation.org/nocturne/docs/connectors/libre",
-    careLink: "https://nightscoutfoundation.org/nocturne/docs/connectors/carelink",
-    nightscout: "https://nightscoutfoundation.org/nocturne/docs/connectors/nightscout",
-    glooko: "https://nightscoutfoundation.org/nocturne/docs/connectors/glooko",
-  },
-};
-
 // Re-export meal time constants
 export * from './meal-times';
 
 import type { GlycemicThresholds } from "../api";
-
-export interface CompressionLowConfig {
-  enabled: boolean;
-  threshold: number;
-  duration: number;
-  recovery: number;
-}
 
 export const DEFAULT_THRESHOLDS: GlycemicThresholds = {
   low: 55,
@@ -40,21 +14,6 @@ export const DEFAULT_THRESHOLDS: GlycemicThresholds = {
   high: 180,
   severeLow: 40,
   severeHigh: 250,
-};
-
-export const DEFAULT_COMPRESSION_CONFIG: CompressionLowConfig = {
-  enabled: true,
-  threshold: 40,
-  duration: 15,
-  recovery: 70,
-};
-
-export const DEFAULT_CONFIG = {
-  thresholds: DEFAULT_THRESHOLDS,
-  sensorType: "GENERIC_5MIN",
-  compressionLowConfig: DEFAULT_COMPRESSION_CONFIG,
-  includeLoopingMetrics: false,
-  units: "mg/dl",
 };
 
 export const chartConfig = {

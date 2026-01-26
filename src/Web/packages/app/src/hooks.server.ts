@@ -1,4 +1,5 @@
 import type { Handle } from "@sveltejs/kit";
+import { randomUUID } from "$lib/utils";
 import { ApiClient } from "$lib/api/api-client";
 import type { HandleServerError } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
@@ -229,7 +230,7 @@ const apiClientHandle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleServerError = async ({ error, event }) => {
-  const errorId = crypto.randomUUID();
+  const errorId = randomUUID();
   console.error(`Error ID: ${errorId}`, error);
   console.log(
     `Error occurred during request: ${event.request.method} ${event.request.url}`

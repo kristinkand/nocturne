@@ -1,3 +1,5 @@
+import { randomUUID } from "$lib/utils";
+
 /**
  * Alarm Sound Generator and Player
  *
@@ -806,7 +808,7 @@ export async function uploadCustomSound(file: File, name?: string): Promise<Cust
   await validateAudioFile(dataUrl);
 
   const sound: CustomAlarmSound = {
-    id: `custom-${crypto.randomUUID()}`,
+    id: `custom-${randomUUID()}`,
     name: name || file.name.replace(/\.[^.]+$/, ''), // Remove extension for display name
     fileName: file.name,
     mimeType: file.type,

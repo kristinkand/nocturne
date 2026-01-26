@@ -261,12 +261,13 @@ public class TreatmentsController : BaseV3Controller<Treatment>
                 cancellationToken
             );
 
+            var createdArray = createdTreatments.ToArray();
             _logger.LogDebug(
                 "Successfully created {Count} V3 treatments via bulk operation",
-                createdTreatments.Count()
+                createdArray.Length
             );
 
-            return StatusCode(201, createdTreatments.ToArray());
+            return StatusCode(201, createdArray);
         }
         catch (ArgumentException ex)
         {

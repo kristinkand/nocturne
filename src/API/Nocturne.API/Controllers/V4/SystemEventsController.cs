@@ -57,6 +57,7 @@ public class SystemEventsController : ControllerBase
     /// Create a new system event (manual entry or import)
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(SystemEvent), StatusCodes.Status201Created)]
     public async Task<ActionResult<SystemEvent>> CreateSystemEvent(
         [FromBody] CreateSystemEventRequest request,
         CancellationToken cancellationToken = default)
