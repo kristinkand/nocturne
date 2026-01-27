@@ -17752,11 +17752,7 @@ export interface ProcessableDocumentBase {
 
 export interface Entry extends ProcessableDocumentBase {
     _id?: string | undefined;
-    identifier?: string | undefined;
-    srvModified?: number | undefined;
-    srvCreated?: number | undefined;
     mills?: number;
-    date?: number;
     dateString?: string | undefined;
     mgdl?: number;
     mbg?: number | undefined;

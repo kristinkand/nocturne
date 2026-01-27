@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nocturne.API.Attributes;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Extensions;
 
 namespace Nocturne.API.Controllers.V1;
 
@@ -107,8 +108,8 @@ public class EntriesController : ControllerBase
                 currentEntry.Sgv ?? currentEntry.Mgdl
             );
 
-            // Return as array to match legacy API format
-            return Ok(new[] { currentEntry });
+            // Return as array to match legacy API format with V1 response structure
+            return Ok(new[] { currentEntry }.ToV1Responses());
         }
         catch (Exception ex)
         {
@@ -178,7 +179,7 @@ public class EntriesController : ControllerBase
                 var lastModified = DateTimeOffset.FromUnixTimeMilliseconds(entry.Mills);
                 Response.Headers["Last-Modified"] = lastModified.ToString("R");
 
-                return Ok(new[] { entry });
+                return Ok(new[] { entry }.ToV1Responses());
             }
             else
             {
@@ -240,7 +241,7 @@ public class EntriesController : ControllerBase
                     entriesArray.Length,
                     spec
                 );
-                return Ok(entriesArray);
+                return Ok(entriesArray.ToV1Responses());
             }
         }
         catch (Exception ex)
@@ -332,7 +333,10 @@ public class EntriesController : ControllerBase
             string? entryType = null;
 
             // Check if find query contains type filter
-            if (!string.IsNullOrEmpty(findQuery) && (findQuery.Contains("find[type]") || findQuery.Contains("find%5Btype%5D")))
+            if (
+                !string.IsNullOrEmpty(findQuery)
+                && (findQuery.Contains("find[type]") || findQuery.Contains("find%5Btype%5D"))
+            )
             {
                 // Type filtering will be handled by the find query parser
                 entryType = null;
@@ -415,7 +419,10 @@ public class EntriesController : ControllerBase
 
             // Determine format from format parameter or Accept header (content negotiation)
             var effectiveFormat = format;
-            if (string.IsNullOrEmpty(effectiveFormat) || effectiveFormat.Equals("json", StringComparison.OrdinalIgnoreCase))
+            if (
+                string.IsNullOrEmpty(effectiveFormat)
+                || effectiveFormat.Equals("json", StringComparison.OrdinalIgnoreCase)
+            )
             {
                 // Check Accept header for content negotiation (Nightscout compatibility)
                 var acceptHeader = Request.Headers.Accept.ToString().ToLowerInvariant();
@@ -427,7 +434,10 @@ public class EntriesController : ControllerBase
                 {
                     effectiveFormat = "csv";
                 }
-                else if (acceptHeader.Contains("text/plain") && !acceptHeader.Contains("application/json"))
+                else if (
+                    acceptHeader.Contains("text/plain")
+                    && !acceptHeader.Contains("application/json")
+                )
                 {
                     // text/plain returns TSV for Nightscout compatibility
                     effectiveFormat = "tsv";
@@ -442,13 +452,20 @@ public class EntriesController : ControllerBase
             {
                 try
                 {
-                    var formattedData = _dataFormatService.FormatEntries(entriesArray, effectiveFormat);
+                    var formattedData = _dataFormatService.FormatEntries(
+                        entriesArray,
+                        effectiveFormat
+                    );
                     var contentType = _dataFormatService.GetContentType(effectiveFormat);
                     return Content(formattedData, contentType);
                 }
                 catch (ArgumentException ex)
                 {
-                    _logger.LogWarning(ex, "Unsupported format requested: {Format}", effectiveFormat);
+                    _logger.LogWarning(
+                        ex,
+                        "Unsupported format requested: {Format}",
+                        effectiveFormat
+                    );
                     return BadRequest(
                         new
                         {
@@ -460,7 +477,7 @@ public class EntriesController : ControllerBase
                 }
             }
 
-            return Ok(entriesArray);
+            return Ok(entriesArray.ToV1Responses());
         }
         catch (Exception ex)
         {
@@ -656,9 +673,10 @@ public class EntriesController : ControllerBase
                 if (entry.Mills == 0 && entry.Date.HasValue)
                 {
                     var dateValue = entry.Date.Value;
-                    var dateOffset = dateValue.Kind == DateTimeKind.Unspecified
-                        ? new DateTimeOffset(dateValue, TimeSpan.Zero)
-                        : new DateTimeOffset(dateValue);
+                    var dateOffset =
+                        dateValue.Kind == DateTimeKind.Unspecified
+                            ? new DateTimeOffset(dateValue, TimeSpan.Zero)
+                            : new DateTimeOffset(dateValue);
                     entry.Mills = dateOffset.ToUnixTimeMilliseconds();
                 }
 
@@ -678,9 +696,7 @@ public class EntriesController : ControllerBase
             }
 
             // Process entries for sanitization and timestamp conversion
-            var processedEntries = _documentProcessingService.ProcessDocuments(
-                validEntries
-            );
+            var processedEntries = _documentProcessingService.ProcessDocuments(validEntries);
             var processedArray = processedEntries.ToArray();
 
             // Filter out duplicates using database-backed detection
@@ -726,8 +742,7 @@ public class EntriesController : ControllerBase
 
             _logger.LogDebug("Created {Count} entries", createdArray.Length);
 
-            // Nightscout returns 200 OK for POST /api/v1/entries
-            return Ok(createdArray);
+            return StatusCode(201, createdArray.ToV1Responses());
         }
         catch (JsonException ex)
         {
@@ -828,7 +843,7 @@ public class EntriesController : ControllerBase
             }
 
             _logger.LogDebug("Successfully updated entry with ID: {Id}", id);
-            return Ok(updatedEntry);
+            return Ok(updatedEntry.ToV1Response());
         }
         catch (Exception ex)
         {
@@ -1223,9 +1238,7 @@ public class EntriesController : ControllerBase
             }
 
             // Process entries for sanitization and timestamp conversion
-            var processedEntries = _documentProcessingService.ProcessDocuments(
-                validEntries
-            );
+            var processedEntries = _documentProcessingService.ProcessDocuments(validEntries);
             var processedArray = processedEntries.ToArray();
 
             // Filter out duplicates using database-backed detection

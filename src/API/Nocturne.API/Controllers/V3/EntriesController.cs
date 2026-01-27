@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nocturne.API.Attributes;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Extensions;
 using Nocturne.Infrastructure.Data.Abstractions;
 
 namespace Nocturne.API.Controllers.V3;
@@ -48,7 +49,8 @@ public class EntriesController : BaseV3Controller<Entry>
             var type = ExtractTypeFromFilter(parameters.Filter);
 
             // Convert V3 filter criteria (field$op=value) to MongoDB-style JSON query
-            var findQuery = ConvertFilterCriteriaToFindQuery(parameters.FilterCriteria)
+            var findQuery =
+                ConvertFilterCriteriaToFindQuery(parameters.FilterCriteria)
                 ?? ConvertV3FilterToV1Find(parameters.Filter);
 
             // Determine sort direction from sort$desc query parameter
@@ -79,13 +81,16 @@ public class EntriesController : BaseV3Controller<Entry>
                 return StatusCode(304);
             }
 
+            // Transform entries to V3 response format with computed fields
+            var v3Entries = entriesList.ToV3Responses().ToList();
+
             _logger.LogDebug(
                 "Successfully returned {Count} entries with V3 format",
                 entriesList.Count
             );
 
-            // Return Nightscout V3-compatible response: {"status": 200, "result": [...]}
-            return CreateV3SuccessResponse(entriesList);
+            // Return Nightscout V3-compatible response with transformed V3 entries
+            return CreateV3SuccessResponse(v3Entries);
         }
         catch (ArgumentException ex)
         {
@@ -135,8 +140,7 @@ public class EntriesController : BaseV3Controller<Entry>
             Response.Headers["ETag"] = $"\"{etag}\"";
             Response.Headers["Cache-Control"] = "public, max-age=60";
 
-            // Return Nightscout V3-compatible response: {"status": 200, "result": entry}
-            return CreateV3SuccessResponse(entry);
+            return Ok(entry.ToV3Response());
         }
         catch (Exception ex)
         {
@@ -196,7 +200,11 @@ public class EntriesController : BaseV3Controller<Entry>
             // Set location header for created resource
             Response.Headers["Location"] = $"/api/v3/entries/{createdEntry.Id}";
 
-            return CreatedAtAction(nameof(GetEntry), new { id = createdEntry.Id }, createdEntry);
+            return CreatedAtAction(
+                nameof(GetEntry),
+                new { id = createdEntry.Id },
+                createdEntry.ToV3Response()
+            );
         }
         catch (ArgumentException ex)
         {
@@ -268,7 +276,7 @@ public class EntriesController : BaseV3Controller<Entry>
                 createdEntries.Count()
             );
 
-            return StatusCode(201, createdEntries.ToArray());
+            return StatusCode(201, createdEntries.ToV3Responses());
         }
         catch (ArgumentException ex)
         {
@@ -338,7 +346,7 @@ public class EntriesController : BaseV3Controller<Entry>
 
             _logger.LogDebug("Successfully updated V3 entry {Id}", id);
 
-            return Ok(updatedEntry);
+            return Ok(updatedEntry.ToV3Response());
         }
         catch (ArgumentException ex)
         {
@@ -483,7 +491,7 @@ public class EntriesController : BaseV3Controller<Entry>
                 "in" => "$in",
                 "nin" => "$nin",
                 "re" => "$regex",
-                _ => null
+                _ => null,
             };
 
             if (mongoOp == null && criteria.Operator == "eq")
@@ -496,7 +504,7 @@ public class EntriesController : BaseV3Controller<Entry>
                 // Operator form: { "field": { "$op": "value" } }
                 conditions[criteria.Field] = new Dictionary<string, object?>
                 {
-                    [mongoOp] = criteria.Value
+                    [mongoOp] = criteria.Value,
                 };
             }
         }

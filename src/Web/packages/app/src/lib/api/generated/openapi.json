@@ -16435,25 +16435,7 @@
                 "type": "string",
                 "nullable": true
               },
-              "identifier": {
-                "type": "string",
-                "nullable": true
-              },
-              "srvModified": {
-                "type": "integer",
-                "format": "int64",
-                "nullable": true
-              },
-              "srvCreated": {
-                "type": "integer",
-                "format": "int64",
-                "nullable": true
-              },
               "mills": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "date": {
                 "type": "integer",
                 "format": "int64"
               },

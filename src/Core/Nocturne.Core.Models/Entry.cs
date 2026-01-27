@@ -16,27 +16,6 @@ public class Entry : ProcessableDocumentBase
     public override string? Id { get; set; }
 
     /// <summary>
-    /// Gets the V3 API identifier - alias for Id for Nightscout V3 compatibility.
-    /// Nightscout V3 API returns both _id and identifier fields with the same value.
-    /// </summary>
-    [JsonPropertyName("identifier")]
-    public string? Identifier => Id;
-
-    /// <summary>
-    /// Gets the server-modified timestamp for V3 compatibility.
-    /// Returns Mills as Nightscout V3 uses this to track server-side modifications.
-    /// </summary>
-    [JsonPropertyName("srvModified")]
-    public long? SrvModified => Mills > 0 ? Mills : null;
-
-    /// <summary>
-    /// Gets the server-created timestamp for V3 compatibility.
-    /// Returns Mills as Nightscout V3 uses this to track server-side creation time.
-    /// </summary>
-    [JsonPropertyName("srvCreated")]
-    public long? SrvCreated => Mills > 0 ? Mills : null;
-
-    /// <summary>
     /// Gets or sets the time in milliseconds since the Unix epoch
     /// If not set but DateString is available, will be calculated from DateString
     /// Nightscout returns both "date" and "mills" on GET requests (same value).
@@ -103,13 +82,6 @@ public class Entry : ProcessableDocumentBase
         set => _date = value;
     }
     private DateTime? _date;
-
-    /// <summary>
-    /// Gets the date as Unix milliseconds for JSON serialization.
-    /// Nightscout returns both "date" (Unix ms) and "mills" - this is the "date" field.
-    /// </summary>
-    [JsonPropertyName("date")]
-    public long DateAsMillis => Mills;
 
     /// <summary>
     /// Gets or sets the date and time as an ISO 8601 string
@@ -256,15 +228,9 @@ public class Entry : ProcessableDocumentBase
 
     /// <summary>
     /// Gets or sets the system time when the entry was processed.
-    /// Defaults to DateString for Nightscout compatibility.
     /// </summary>
     [JsonPropertyName("sysTime")]
-    public string? SysTime
-    {
-        get => _sysTime ?? DateString;
-        set => _sysTime = value;
-    }
-    private string? _sysTime;
+    public string? SysTime { get; set; }
 
     /// <summary>
     /// Gets or sets UTC offset information
