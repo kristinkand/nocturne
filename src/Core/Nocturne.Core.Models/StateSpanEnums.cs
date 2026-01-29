@@ -34,6 +34,11 @@ public enum StateSpanCategory
     TempBasal,
 
     /// <summary>
+    /// Pump-confirmed basal delivery rate
+    /// </summary>
+    BasalDelivery,
+
+    /// <summary>
     /// User-annotated sleep period
     /// </summary>
     Sleep,
@@ -177,4 +182,43 @@ public enum TempBasalState
     /// Temp basal was cancelled early
     /// </summary>
     Cancelled
+}
+
+/// <summary>
+/// Basal delivery states
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<BasalDeliveryState>))]
+public enum BasalDeliveryState
+{
+    /// <summary>
+    /// Basal rate is being delivered
+    /// </summary>
+    Active
+}
+
+/// <summary>
+/// What initiated the basal delivery rate
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<BasalDeliveryOrigin>))]
+public enum BasalDeliveryOrigin
+{
+    /// <summary>
+    /// Closed-loop algorithm adjusted (CamAPS, Control-IQ, Loop)
+    /// </summary>
+    Algorithm,
+
+    /// <summary>
+    /// Pump's programmed basal schedule
+    /// </summary>
+    Scheduled,
+
+    /// <summary>
+    /// User-initiated temporary rate
+    /// </summary>
+    Manual,
+
+    /// <summary>
+    /// Delivery suspended (rate = 0)
+    /// </summary>
+    Suspended
 }
