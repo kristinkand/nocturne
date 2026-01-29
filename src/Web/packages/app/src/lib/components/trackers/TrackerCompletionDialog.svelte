@@ -22,6 +22,8 @@
     definitionId?: string;
     /** Event type to create on completion */
     completionEventType?: string;
+    /** Default date/time for completion (Date object or YYYY-MM-DD string). If not provided, defaults to now. */
+    defaultCompletedAt?: Date | string;
     onClose: () => void;
     onComplete?: () => void;
   }
@@ -33,6 +35,7 @@
     category,
     definitionId,
     completionEventType,
+    defaultCompletedAt,
     onClose,
     onComplete,
   }: TrackerCompletionDialogProps = $props();
@@ -134,12 +137,21 @@
   // Reactive list of available reasons based on category
   let availableReasons = $derived(getReasonsForCategory(category));
 
+  // Get default date for completion
+  function getDefaultDate(): Date {
+    if (!defaultCompletedAt) return new Date();
+    if (defaultCompletedAt instanceof Date) return defaultCompletedAt;
+    // If it's a YYYY-MM-DD string, parse it and set time to noon to avoid timezone issues
+    const parsed = new Date(defaultCompletedAt + "T12:00:00");
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
   // Reset form when dialog opens
   $effect(() => {
     if (open) {
       completionReason = getDefaultReasonForCategory(category);
       completionNotes = "";
-      completedAt = formatDateTimeLocal(new Date());
+      completedAt = formatDateTimeLocal(getDefaultDate());
       startAnother = false;
     }
   });

@@ -382,6 +382,7 @@ msgstr "Basal Value"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/treatments/TreatmentEditDialog.svelte
 #: src/lib/components/treatments/TreatmentsDataTable.svelte
+#: src/routes/calendar/+page.svelte
 #: src/routes/settings/profile/+page.svelte
 #: src/routes/settings/profile/+page.svelte
 msgid "Profile"
@@ -744,7 +745,7 @@ msgstr "Carbs:"
 #. placeholder {0}: unspecifiedCarbs
 #. placeholder {0}: totalCarbs.toFixed(0)
 #. placeholder {0}: day.totalCarbs.toFixed(0)
-#. placeholder {0}: monthSummary.carbs.toFixed(0)
+#. placeholder {0}: monthSummary.avgCarbs.toFixed(0)
 #. placeholder {0}: food.carbs
 #. placeholder {0}: formatMacro(scaledCarbs)
 #. placeholder {0}: dayTotalCarbs
@@ -799,7 +800,7 @@ msgstr "Insulin:"
 #. placeholder {0}: formatInsulinDisplay(averages.avgTotalDaily)
 #. placeholder {0}: totalInsulin.toFixed(1)
 #. placeholder {0}: day.totalInsulin.toFixed(1)
-#. placeholder {0}: monthSummary.insulin.toFixed(1)
+#. placeholder {0}: monthSummary.avgInsulin.toFixed(1)
 #. placeholder {0}: dayTotalInsulin.toFixed(1)
 #. placeholder {0}: meal.treatment.insulin.toFixed(1)
 #. placeholder {0}: treatmentStats.totalBolus.toFixed(1)
@@ -840,37 +841,30 @@ msgstr "Avg Glucose:"
 msgid "Click to view full day report"
 msgstr "Click to view full day report"
 
-#: src/routes/calendar/+page.svelte
-msgid "Partial Data"
-msgstr "Partial Data"
+#~ msgid "Partial Data"
+#~ msgstr "Partial Data"
 
-#. placeholder {0}: day.totalReadings
-#: src/routes/calendar/+page.svelte
-msgid "{0} of ~288 readings"
-msgstr "{0} of ~288 readings"
+#~ msgid "{0} of ~288 readings"
+#~ msgstr "{0} of ~288 readings"
 
 #: src/lib/components/dashboard/widgets/TirChartWidget.svelte
 #: src/lib/components/reports/DailyStatistics.svelte
 #: src/lib/components/reports/DailySummaryTable.svelte
-#: src/routes/calendar/+page.svelte
 #: src/routes/reports/+page.svelte
 #: src/routes/reports/agp/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Time in Range"
 msgstr "Time in Range"
 
-#: src/routes/calendar/+page.svelte
-msgid "Total Readings"
-msgstr "Total Readings"
+#~ msgid "Total Readings"
+#~ msgstr "Total Readings"
 
-#: src/routes/calendar/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 msgid "Total Carbs"
 msgstr "Total Carbs"
 
 #: src/lib/components/reports/InsulinDeliveryChart.svelte
-#: src/routes/calendar/+page.svelte
 msgid "Total Insulin"
 msgstr "Total Insulin"
 
@@ -4398,6 +4392,7 @@ msgstr "Go to end"
 msgid "<0/> Status at {0}"
 msgstr "<0/> Status at {0}"
 
+#: src/lib/components/calendar/DayGlucoseProfile.svelte
 #: src/lib/components/reports/RetrospectiveStats.svelte
 #: src/lib/components/reports/RetrospectiveStats.svelte
 #: src/lib/components/reports/RetrospectiveStats.svelte
@@ -5541,6 +5536,9 @@ msgid "Start another {0} after completion"
 msgstr "Start another {0} after completion"
 
 #: src/lib/components/trackers/TrackerCompletionDialog.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
+#: src/routes/calendar/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "<0/> Complete"
 msgstr "<0/> Complete"
@@ -7882,6 +7880,7 @@ msgstr ""
 "Avoidance"
 
 #: src/lib/components/dashboard/widgets/DailySummaryWidget.svelte
+#: src/routes/calendar/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "TIR"
 msgstr "TIR"
@@ -11871,3 +11870,27 @@ msgstr "No Source <0/>"
 #: src/routes/reports/week-to-week/+page.svelte
 msgid "Reset"
 msgstr "Reset"
+
+#: src/routes/calendar/+page.svelte
+msgid "Daily glucose profile"
+msgstr "Daily glucose profile"
+
+#: src/routes/calendar/+page.svelte
+msgid "Gray band = target range"
+msgstr "Gray band = target range"
+
+#: src/routes/calendar/+page.svelte
+msgid "Avg TIR"
+msgstr "Avg TIR"
+
+#: src/routes/calendar/+page.svelte
+msgid "Avg Glucose"
+msgstr "Avg Glucose"
+
+#: src/routes/calendar/+page.svelte
+msgid "Avg Daily Carbs"
+msgstr "Avg Daily Carbs"
+
+#: src/routes/calendar/+page.svelte
+msgid "Avg Daily Insulin"
+msgstr "Avg Daily Insulin"
