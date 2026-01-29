@@ -5,7 +5,6 @@
     getUploaderSetup,
     deleteDemoData as deleteDemoDataRemote,
     deleteDataSourceData as deleteDataSourceDataRemote,
-    deleteConnectorData as deleteConnectorDataRemote,
     getConnectorStatuses,
     startDeduplicationJob,
     getDeduplicationJobStatus,
@@ -139,15 +138,6 @@
   let selectedConnector = $state<ConnectorStatusWithDescription | null>(null);
   let showConnectorDialog = $state(false);
 
-  // Connector deletion state
-  let showConnectorDeleteConfirmDialog = $state(false);
-  let isDeletingConnector = $state(false);
-  let connectorDeleteResult = $state<{
-    success: boolean;
-    entriesDeleted?: number;
-    error?: string;
-  } | null>(null);
-
   // Deduplication state
   let showDeduplicationDialog = $state(false);
   let isDeduplicating = $state(false);
@@ -191,40 +181,6 @@
       connectorStatuses = [];
     } finally {
       isLoadingConnectorStatuses = false;
-    }
-  }
-
-  function openConnectorDeleteConfirmation() {
-    showConnectorDialog = false;
-    showConnectorDeleteConfirmDialog = true;
-    deleteConfirmText = "";
-    connectorDeleteResult = null;
-  }
-
-  async function deleteConnector() {
-    if (!selectedConnector) return;
-
-    isDeletingConnector = true;
-    connectorDeleteResult = null;
-    try {
-      const result = await deleteConnectorDataRemote(selectedConnector.id!);
-      connectorDeleteResult = {
-        success: result.success ?? false,
-        entriesDeleted: result.entriesDeleted,
-        error: result.error ?? undefined,
-      };
-      if (result.success) {
-        // Refresh both connector statuses and services overview
-        await Promise.all([loadConnectorStatuses(), loadServices()]);
-      }
-    } catch (e) {
-      connectorDeleteResult = {
-        success: false,
-        error:
-          e instanceof Error ? e.message : "Failed to delete connector data",
-      };
-    } finally {
-      isDeletingConnector = false;
     }
   }
 
@@ -2361,130 +2317,10 @@
           <Wrench class="h-4 w-4" />
           Configure
         </Button>
-        {#if selectedConnector.totalEntries || selectedConnector.state === "Offline" || selectedConnector.state === "Disabled" || selectedConnector.isHealthy}
-          <Button
-            variant="outline"
-            class="gap-2"
-            onclick={openConnectorDeleteConfirmation}
-          >
-            <Trash2 class="h-4 w-4" />
-            Delete Data...
-          </Button>
-        {/if}
       </Dialog.Footer>
     {/if}
   </Dialog.Content>
 </Dialog.Root>
-
-<!-- Connector Delete Confirmation Dialog -->
-<AlertDialog.Root bind:open={showConnectorDeleteConfirmDialog}>
-  <AlertDialog.Content>
-    <AlertDialog.Header>
-      <AlertDialog.Title class="flex items-center gap-2 text-destructive">
-        <AlertTriangle class="h-5 w-5" />
-        Permanently Delete Connector Data
-      </AlertDialog.Title>
-      <AlertDialog.Description class="space-y-4">
-        {#if selectedConnector}
-          <div
-            class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4 mt-4"
-          >
-            <p class="text-sm font-semibold text-red-800 dark:text-red-200">
-              ⚠️ THIS ACTION CANNOT BE UNDONE
-            </p>
-            <p class="text-sm text-red-700 dark:text-red-300 mt-2">
-              You are about to permanently delete <strong>all data</strong>
-              synchronized by
-              <strong>{selectedConnector.name}</strong>
-              . This includes:
-            </p>
-            <ul
-              class="text-sm text-red-700 dark:text-red-300 list-disc list-inside mt-2 space-y-1"
-            >
-              <li>
-                All glucose records ({selectedConnector.totalEntries?.toLocaleString() ??
-                  0} records)
-              </li>
-              <li>
-                Any treatments and device status records from this connector
-              </li>
-            </ul>
-          </div>
-
-          {#if connectorDeleteResult}
-            {#if connectorDeleteResult.success}
-              <div
-                class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-4"
-              >
-                <div
-                  class="flex items-center gap-2 text-green-800 dark:text-green-200"
-                >
-                  <CheckCircle class="h-5 w-5" />
-                  <span class="font-medium">Data deleted successfully</span>
-                </div>
-                <p class="text-sm text-green-700 dark:text-green-300 mt-1">
-                  Deleted {connectorDeleteResult.entriesDeleted?.toLocaleString() ??
-                    0} records
-                </p>
-              </div>
-            {:else}
-              <div
-                class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4"
-              >
-                <div
-                  class="flex items-center gap-2 text-red-800 dark:text-red-200"
-                >
-                  <AlertCircle class="h-5 w-5" />
-                  <span class="font-medium">Failed to delete data</span>
-                </div>
-                <p class="text-sm text-red-700 dark:text-red-300 mt-1">
-                  {connectorDeleteResult.error}
-                </p>
-              </div>
-            {/if}
-          {:else}
-            <div class="space-y-2 mt-4">
-              <label for="connector-confirm-delete" class="text-sm font-medium">
-                Type <strong>DELETE</strong>
-                to confirm:
-              </label>
-              <input
-                id="connector-confirm-delete"
-                type="text"
-                bind:value={deleteConfirmText}
-                class="w-full px-3 py-2 rounded-md border bg-background text-sm"
-                placeholder="Type DELETE"
-              />
-            </div>
-          {/if}
-        {/if}
-      </AlertDialog.Description>
-    </AlertDialog.Header>
-    <AlertDialog.Footer>
-      <AlertDialog.Cancel
-        onclick={() => (showConnectorDeleteConfirmDialog = false)}
-      >
-        Cancel
-      </AlertDialog.Cancel>
-      {#if !connectorDeleteResult?.success}
-        <Button
-          variant="destructive"
-          onclick={deleteConnector}
-          disabled={isDeletingConnector || deleteConfirmText !== "DELETE"}
-          class="gap-2"
-        >
-          {#if isDeletingConnector}
-            <Loader2 class="h-4 w-4 animate-spin" />
-            Deleting...
-          {:else}
-            <Trash2 class="h-4 w-4" />
-            Delete All Data
-          {/if}
-        </Button>
-      {/if}
-    </AlertDialog.Footer>
-  </AlertDialog.Content>
-</AlertDialog.Root>
 
 <!-- Deduplication Dialog -->
 <Dialog.Root bind:open={showDeduplicationDialog} onOpenChange={(open) => !open && closeDeduplicationDialog()}>

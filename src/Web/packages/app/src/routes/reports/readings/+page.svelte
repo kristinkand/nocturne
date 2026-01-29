@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GlucoseChartCard from "$lib/components/dashboard/GlucoseChartCard.svelte";
+  import { GlucoseChartCard } from "$lib/components/dashboard/glucose-chart";
   import ReportsSkeleton from "$lib/components/reports/ReportsSkeleton.svelte";
   import { getReportsData } from "$lib/data/reports.remote";
   import { requireDateParamsContext } from "$lib/hooks/date-params.svelte";

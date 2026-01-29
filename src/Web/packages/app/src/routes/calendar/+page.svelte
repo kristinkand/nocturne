@@ -297,7 +297,8 @@
       dayCount,
       avgCarbs: dayCount > 0 ? totals.carbs / dayCount : 0,
       avgInsulin: dayCount > 0 ? totals.insulin / dayCount : 0,
-      avgGlucose: totals.glucoseDays > 0 ? totals.glucose / totals.glucoseDays : 0,
+      avgGlucose:
+        totals.glucoseDays > 0 ? totals.glucose / totals.glucoseDays : 0,
       inRangePercent:
         totals.readings > 0 ? (totals.inRange / totals.readings) * 100 : 0,
       lowPercent:
@@ -561,7 +562,7 @@
       <div class="flex-1 p-4">
         <Card.Root class="h-full">
           <Card.Content class="p-4 h-full flex items-center justify-center">
-            <div class="text-muted-foreground">Loading tracker data...</div>
+            <div class="text-muted-foreground">Loading data...</div>
           </Card.Content>
         </Card.Root>
       </div>
@@ -740,7 +741,10 @@
                           <Tooltip.Trigger>
                             {#snippet child({ props })}
                               {#if viewMode === "tir"}
-                                <div {...props} class="absolute inset-0 p-2 pt-6">
+                                <div
+                                  {...props}
+                                  class="absolute inset-0 p-2 pt-6"
+                                >
                                   <DayStackedBar
                                     lowPercent={day.lowPercent}
                                     inRangePercent={day.inRangePercent}
@@ -1085,9 +1089,9 @@
                 <div class="text-center">
                   <div class="text-2xl font-bold">
                     {formatGlucoseValue(monthSummary.avgGlucose, units)}
-                    <span class="text-sm font-normal text-muted-foreground"
-                      >{unitLabel}</span
-                    >
+                    <span class="text-sm font-normal text-muted-foreground">
+                      {unitLabel}
+                    </span>
                   </div>
                   <div class="text-sm text-muted-foreground">Avg Glucose</div>
                 </div>
@@ -1095,13 +1099,17 @@
                   <div class="text-2xl font-bold">
                     {monthSummary.avgCarbs.toFixed(0)}g
                   </div>
-                  <div class="text-sm text-muted-foreground">Avg Daily Carbs</div>
+                  <div class="text-sm text-muted-foreground">
+                    Avg Daily Carbs
+                  </div>
                 </div>
                 <div class="text-center">
                   <div class="text-2xl font-bold">
                     {monthSummary.avgInsulin.toFixed(1)}U
                   </div>
-                  <div class="text-sm text-muted-foreground">Avg Daily Insulin</div>
+                  <div class="text-sm text-muted-foreground">
+                    Avg Daily Insulin
+                  </div>
                 </div>
               </div>
             {/if}

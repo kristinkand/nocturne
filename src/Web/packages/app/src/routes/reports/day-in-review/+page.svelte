@@ -30,7 +30,7 @@
   import { TreatmentEditDialog } from "$lib/components/treatments";
   import { getEventTypeStyle } from "$lib/constants/treatment-categories";
   import InsulinDonutChart from "$lib/components/reports/InsulinDonutChart.svelte";
-  import GlucoseChartCard from "$lib/components/dashboard/GlucoseChartCard.svelte";
+  import { GlucoseChartCard } from "$lib/components/dashboard/glucose-chart";
 
   // Get date from URL search params
   const dateParam = $derived(

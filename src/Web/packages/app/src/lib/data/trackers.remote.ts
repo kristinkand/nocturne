@@ -284,7 +284,7 @@ export const getPresets = query(async () => {
 		return await apiClient.trackers.getPresets();
 	} catch (err) {
 		console.error('Error loading tracker presets:', err);
-		throw error(500, 'Failed to load tracker presets');
+		return [];
 	}
 });
 
