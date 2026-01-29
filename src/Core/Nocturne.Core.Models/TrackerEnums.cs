@@ -255,7 +255,12 @@ public enum InAppNotificationType
     /// <summary>
     /// Suggested meal match from connector food entries
     /// </summary>
-    SuggestedMealMatch
+    SuggestedMealMatch,
+
+    /// <summary>
+    /// Suggested tracker reset based on detected events (Site Change treatment or sensor warmup)
+    /// </summary>
+    SuggestedTrackerMatch
 }
 
 /// <summary>

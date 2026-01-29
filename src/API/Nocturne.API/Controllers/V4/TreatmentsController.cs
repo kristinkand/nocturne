@@ -22,6 +22,7 @@ public class TreatmentsController : ControllerBase
     private readonly TreatmentRepository _repository;
     private readonly IDocumentProcessingService _documentProcessingService;
     private readonly ITrackerTriggerService _trackerTriggerService;
+    private readonly ITrackerSuggestionService _trackerSuggestionService;
     private readonly ISignalRBroadcastService _broadcast;
     private readonly ILogger<TreatmentsController> _logger;
 
@@ -29,6 +30,7 @@ public class TreatmentsController : ControllerBase
         TreatmentRepository repository,
         IDocumentProcessingService documentProcessingService,
         ITrackerTriggerService trackerTriggerService,
+        ITrackerSuggestionService trackerSuggestionService,
         ISignalRBroadcastService broadcast,
         ILogger<TreatmentsController> logger
     )
@@ -36,6 +38,7 @@ public class TreatmentsController : ControllerBase
         _repository = repository;
         _documentProcessingService = documentProcessingService;
         _trackerTriggerService = trackerTriggerService;
+        _trackerSuggestionService = trackerSuggestionService;
         _broadcast = broadcast;
         _logger = logger;
     }
@@ -76,6 +79,9 @@ public class TreatmentsController : ControllerBase
 
         // Trigger any matching trackers
         await _trackerTriggerService.ProcessTreatmentAsync(created, userId, cancellationToken);
+
+        // Evaluate for tracker suggestions (e.g., Site Change -> suggest resetting Cannula tracker)
+        await _trackerSuggestionService.EvaluateTreatmentForTrackerSuggestionAsync(created, userId, cancellationToken);
 
         // Broadcast via SignalR
         await _broadcast.BroadcastStorageCreateAsync("treatments", created);
@@ -126,6 +132,12 @@ public class TreatmentsController : ControllerBase
             userId,
             cancellationToken
         );
+
+        // Evaluate for tracker suggestions (e.g., Site Change -> suggest resetting Cannula tracker)
+        foreach (var treatment in createdArray)
+        {
+            await _trackerSuggestionService.EvaluateTreatmentForTrackerSuggestionAsync(treatment, userId, cancellationToken);
+        }
 
         // Broadcast via SignalR
         foreach (var treatment in createdArray)

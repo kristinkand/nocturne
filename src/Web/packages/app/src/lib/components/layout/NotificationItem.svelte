@@ -10,6 +10,7 @@
     TrendingDown,
     HelpCircle,
     User,
+    RefreshCw,
   } from "lucide-svelte";
   import { cn } from "$lib/utils";
   import {
@@ -44,6 +45,8 @@
         return TrendingDown;
       case InAppNotificationType.SuggestedMealMatch:
         return Utensils;
+      case InAppNotificationType.SuggestedTrackerMatch:
+        return RefreshCw;
       default:
         return Bell;
     }

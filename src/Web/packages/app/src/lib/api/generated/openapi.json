@@ -20181,7 +20181,8 @@
           "HelpResponse",
           "AnonymousLoginRequest",
           "PredictedLow",
-          "SuggestedMealMatch"
+          "SuggestedMealMatch",
+          "SuggestedTrackerMatch"
         ],
         "enum": [
           "PasswordResetRequest",
@@ -20191,7 +20192,8 @@
           "HelpResponse",
           "AnonymousLoginRequest",
           "PredictedLow",
-          "SuggestedMealMatch"
+          "SuggestedMealMatch",
+          "SuggestedTrackerMatch"
         ]
       },
       "NotificationUrgency": {

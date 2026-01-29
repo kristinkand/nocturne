@@ -370,6 +370,9 @@ builder.Services.AddScoped<ITrackerTriggerService, TrackerTriggerService>();
 // Register tracker alert service for evaluating tracker thresholds and generating alerts
 builder.Services.AddScoped<ITrackerAlertService, TrackerAlertService>();
 
+// Register tracker suggestion service for suggesting tracker resets based on treatments/sensor gaps
+builder.Services.AddScoped<ITrackerSuggestionService, TrackerSuggestionService>();
+
 // Register in-app notification repository and service
 builder.Services.AddScoped<InAppNotificationRepository>();
 builder.Services.AddScoped<IInAppNotificationService, InAppNotificationService>();

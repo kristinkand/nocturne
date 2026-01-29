@@ -13,6 +13,7 @@ public class InAppNotificationService : IInAppNotificationService
     private readonly InAppNotificationRepository _repository;
     private readonly ISignalRBroadcastService _broadcastService;
     private readonly IConnectorFoodEntryRepository _foodEntryRepository;
+    private readonly ITrackerSuggestionService _trackerSuggestionService;
     private readonly ILogger<InAppNotificationService> _logger;
 
     /// <summary>
@@ -21,17 +22,20 @@ public class InAppNotificationService : IInAppNotificationService
     /// <param name="repository">The notification repository</param>
     /// <param name="broadcastService">The SignalR broadcast service</param>
     /// <param name="foodEntryRepository">The food entry repository for meal matching dismiss</param>
+    /// <param name="trackerSuggestionService">The tracker suggestion service for tracker match actions</param>
     /// <param name="logger">The logger</param>
     public InAppNotificationService(
         InAppNotificationRepository repository,
         ISignalRBroadcastService broadcastService,
         IConnectorFoodEntryRepository foodEntryRepository,
+        ITrackerSuggestionService trackerSuggestionService,
         ILogger<InAppNotificationService> logger
     )
     {
         _repository = repository;
         _broadcastService = broadcastService;
         _foodEntryRepository = foodEntryRepository;
+        _trackerSuggestionService = trackerSuggestionService;
         _logger = logger;
     }
 
@@ -228,6 +232,27 @@ public class InAppNotificationService : IInAppNotificationService
                         case "review":
                             // Review opens a dialog client-side, just return true
                             return true;
+                    }
+                }
+
+                // Handle tracker suggestion actions
+                if (notification.Type == InAppNotificationType.SuggestedTrackerMatch)
+                {
+                    switch (actionId.ToLowerInvariant())
+                    {
+                        case "accept":
+                            // Accept resets the tracker (completes current instance, starts new one)
+                            return await _trackerSuggestionService.AcceptSuggestionAsync(
+                                notificationId,
+                                userId,
+                                cancellationToken);
+
+                        case "dismiss":
+                            // Dismiss just archives the notification
+                            return await _trackerSuggestionService.DismissSuggestionAsync(
+                                notificationId,
+                                userId,
+                                cancellationToken);
                     }
                 }
 

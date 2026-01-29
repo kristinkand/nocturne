@@ -18879,6 +18879,7 @@ export enum InAppNotificationType {
     AnonymousLoginRequest = "AnonymousLoginRequest",
     PredictedLow = "PredictedLow",
     SuggestedMealMatch = "SuggestedMealMatch",
+    SuggestedTrackerMatch = "SuggestedTrackerMatch",
 }
 
 export enum NotificationUrgency {
