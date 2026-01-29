@@ -89,9 +89,9 @@
                         : params.connectionString ?? undefined,
                 },
                 optionalServices: {
-                    watchtower: params.watchtower,
-                    includeDashboard: params.includeDashboard,
-                    includeScalar: params.includeScalar,
+                    watchtower: { enabled: params.watchtower },
+                    aspireDashboard: { enabled: params.includeDashboard },
+                    scalar: { enabled: params.includeScalar },
                 },
                 connectors: selectedConnectors.map((type) => ({
                     type,
