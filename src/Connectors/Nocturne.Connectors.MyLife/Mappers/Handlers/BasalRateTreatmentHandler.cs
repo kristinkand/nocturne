@@ -9,49 +9,10 @@ namespace Nocturne.Connectors.MyLife.Mappers.Handlers;
 /// Handler for MyLife BasalRate events (event ID 17) - Pump program basal rate changes.
 /// These events report the current basal rate being delivered by the pump.
 /// The IsTempBasalRate flag indicates if this is an algorithm-adjusted rate (CamAPS).
-/// Produces both Treatment records (for backward compatibility) and BasalDelivery StateSpans.
+/// Produces BasalDelivery StateSpans only - basal treatments are synthesized on-demand from v1-v3 endpoints.
 /// </summary>
-internal sealed class BasalRateTreatmentHandler : IMyLifeTreatmentHandler, IMyLifeStateSpanHandler
+internal sealed class BasalRateTreatmentHandler : IMyLifeStateSpanHandler
 {
-    public bool CanHandle(MyLifeEvent ev)
-    {
-        return ev.EventTypeId == MyLifeEventTypeIds.BasalRate;
-    }
-
-    public IEnumerable<Treatment> Handle(MyLifeEvent ev, MyLifeTreatmentContext context)
-    {
-        var info = MyLifeMapperHelpers.ParseInfo(ev.InformationFromDevice);
-        if (!MyLifeMapperHelpers.TryGetInfoDouble(info, MyLifeJsonKeys.BasalRate, out var rate))
-        {
-            return [];
-        }
-
-        var isTemp = MyLifeMapperHelpers.TryGetInfoBool(info, MyLifeJsonKeys.IsTempBasalRate);
-        var treatment = MyLifeTreatmentFactory.Create(ev, MyLifeTreatmentTypes.Basal);
-        if (isTemp)
-        {
-            treatment.EventType = MyLifeTreatmentTypes.TempBasal;
-        }
-        treatment.Rate = rate;
-
-        if (!isTemp)
-        {
-            return [treatment];
-        }
-
-        if (context.ShouldSuppressTempBasalRate(treatment.Mills))
-        {
-            return [];
-        }
-
-        if (!context.TryRegisterTempBasal(treatment.Mills))
-        {
-            return [];
-        }
-
-        return [treatment];
-    }
-
     public bool CanHandleStateSpan(MyLifeEvent ev)
     {
         return ev.EventTypeId == MyLifeEventTypeIds.BasalRate;

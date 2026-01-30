@@ -8,30 +8,10 @@ namespace Nocturne.Connectors.MyLife.Mappers.Handlers;
 /// <summary>
 /// Handler for MyLife Basal events (event ID 22) - Basal insulin amount delivered.
 /// These events report actual insulin delivery amounts, typically from non-loop pumps.
-/// Produces both Treatment records (for backward compatibility) and BasalDelivery StateSpans.
+/// Produces BasalDelivery StateSpans only - basal treatments are synthesized on-demand from v1-v3 endpoints.
 /// </summary>
-internal sealed class BasalAmountTreatmentHandler : IMyLifeTreatmentHandler, IMyLifeStateSpanHandler
+internal sealed class BasalAmountTreatmentHandler : IMyLifeStateSpanHandler
 {
-    public bool CanHandle(MyLifeEvent ev)
-    {
-        return ev.EventTypeId == MyLifeEventTypeIds.Basal;
-    }
-
-    public IEnumerable<Treatment> Handle(MyLifeEvent ev, MyLifeTreatmentContext context)
-    {
-        if (!MyLifeMapperHelpers.TryParseDouble(ev.Value, out var insulin))
-        {
-            return [];
-        }
-
-        var treatment = MyLifeTreatmentFactory.Create(ev, MyLifeTreatmentTypes.Basal);
-        treatment.Insulin = insulin;
-        return
-        [
-            treatment
-        ];
-    }
-
     public bool CanHandleStateSpan(MyLifeEvent ev)
     {
         return ev.EventTypeId == MyLifeEventTypeIds.Basal;
