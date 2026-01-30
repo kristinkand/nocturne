@@ -7,7 +7,7 @@ using SameSiteMode = Nocturne.Core.Models.Configuration.SameSiteMode;
 namespace Nocturne.API.Middleware.Handlers;
 
 /// <summary>
-/// Authentication handler for session cookies set by OidcController.
+/// Authentication handler for session cookies set by OidcController or LocalAuthController.
 /// Validates the access token JWT stored in the session cookie.
 /// Falls back to refresh token if access token is expired.
 /// </summary>
@@ -27,6 +27,7 @@ public class SessionCookieHandler : IAuthHandler
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<SessionCookieHandler> _logger;
     private readonly OidcOptions _options;
+    private readonly LocalIdentityOptions _localIdentityOptions;
 
     /// <summary>
     /// Creates a new instance of SessionCookieHandler
@@ -34,22 +35,23 @@ public class SessionCookieHandler : IAuthHandler
     public SessionCookieHandler(
         IServiceScopeFactory scopeFactory,
         ILogger<SessionCookieHandler> logger,
-        IOptions<OidcOptions> options
+        IOptions<OidcOptions> options,
+        IOptions<LocalIdentityOptions> localIdentityOptions
     )
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
         _options = options.Value;
+        _localIdentityOptions = localIdentityOptions.Value;
     }
 
     /// <inheritdoc />
     public async Task<AuthResult> AuthenticateAsync(HttpContext context)
     {
-
-
-        if (!_options.Enabled)
+        // Skip if neither OIDC nor LocalIdentity is enabled
+        if (!_options.Enabled && !_localIdentityOptions.Enabled)
         {
-            _logger.LogInformation("[SessionCookieHandler] OIDC is disabled, skipping");
+            _logger.LogInformation("[SessionCookieHandler] Both OIDC and LocalIdentity are disabled, skipping");
             return AuthResult.Skip();
         }
 
