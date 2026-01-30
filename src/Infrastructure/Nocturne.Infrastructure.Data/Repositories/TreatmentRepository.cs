@@ -110,6 +110,24 @@ public class TreatmentRepository
     }
 
     /// <summary>
+    /// Get all treatments within a time range
+    /// </summary>
+    public async Task<IEnumerable<Treatment>> GetTreatmentsByTimeRangeAsync(
+        long startMills,
+        long endMills,
+        int count = 10000,
+        CancellationToken cancellationToken = default)
+    {
+        var entities = await _context.Treatments
+            .Where(t => t.Mills >= startMills && t.Mills <= endMills)
+            .OrderByDescending(t => t.Mills)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(TreatmentMapper.ToDomainModel);
+    }
+
+    /// <summary>
     /// Create a single treatment and link to canonical groups for deduplication
     /// </summary>
     public async Task<Treatment?> CreateTreatmentAsync(

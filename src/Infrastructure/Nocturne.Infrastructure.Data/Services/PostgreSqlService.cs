@@ -458,6 +458,18 @@ public class PostgreSqlService : IPostgreSqlService
         return await _treatmentRepository.GetTreatmentsAsync(null, count, skip, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<Treatment>> GetTreatmentsByTimeRangeAsync(
+        long startMills,
+        long endMills,
+        int count = 10000,
+        CancellationToken cancellationToken = default
+    )
+    {
+        _logger.LogDebug("Getting treatments by time range: {Start} to {End}", startMills, endMills);
+        return await _treatmentRepository.GetTreatmentsByTimeRangeAsync(startMills, endMills, count, cancellationToken);
+    }
+
     /// <summary>
     /// Create a single treatment
     /// </summary>

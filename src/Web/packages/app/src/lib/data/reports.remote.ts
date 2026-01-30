@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { DiabetesPopulationSchema } from '$lib/api/generated/schemas';
 import { getRequestEvent, query } from '$app/server';
 import { error } from '@sveltejs/kit';
-import { DiabetesPopulation } from '$lib/api';
+import { DiabetesPopulation, type BasalPoint } from '$lib/api';
 
 /**
  * Input schema for date range queries.
@@ -214,8 +214,8 @@ export const getReportsData = query(
 		const treatments = allTreatments;
 		const population = DiabetesPopulation.Type1Adult; // TODO: Get from user settings
 
-		// Get summary, analysis, and averaged stats in parallel
-		const [summary, analysis, averagedStats] = await Promise.all([
+		// Get summary, analysis, averaged stats, and basal data in parallel
+		const [summary, analysis, averagedStats, chartData] = await Promise.all([
 			apiClient.statistics.getMultiPeriodStatistics(),
 			apiClient.statistics.analyzeGlucoseDataExtended({
 				entries,
@@ -223,6 +223,11 @@ export const getReportsData = query(
 				population,
 			}),
 			apiClient.statistics.calculateAveragedStats(entries),
+			apiClient.chartData.getDashboardChartData(
+				startDate.getTime(),
+				endDate.getTime(),
+				5 // 5-minute intervals
+			),
 		]);
 
 		return {
@@ -231,6 +236,7 @@ export const getReportsData = query(
 			summary,
 			analysis,
 			averagedStats,
+			basalSeries: chartData.basalSeries ?? [] as BasalPoint[],
 			dateRange: {
 				from: startDate.toISOString(),
 				to: endDate.toISOString(),

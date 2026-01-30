@@ -39,6 +39,7 @@
 
   // Derived data from reportsResource
   const treatments = $derived(reportsResource.current?.treatments ?? []);
+  const basalSeries = $derived(reportsResource.current?.basalSeries ?? []);
   const dateRange = $derived(
     reportsResource.current?.dateRange ?? {
       from: new Date().toISOString(),
@@ -258,7 +259,7 @@
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <InsulinDeliveryChart {treatments} showStacked={false} />
+      <InsulinDeliveryChart {treatments} {basalSeries} showStacked={false} />
     </CardContent>
   </Card>
 

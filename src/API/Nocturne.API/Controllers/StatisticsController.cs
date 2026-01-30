@@ -19,18 +19,21 @@ public class StatisticsController : ControllerBase
     private readonly ICacheService _cacheService;
     private readonly IPostgreSqlService _postgreSqlService;
     private readonly IProfileService _profileService;
+    private readonly IStateSpanService _stateSpanService;
 
     public StatisticsController(
         IStatisticsService statisticsService,
         ICacheService cacheService,
         IPostgreSqlService postgreSqlService,
-        IProfileService profileService
+        IProfileService profileService,
+        IStateSpanService stateSpanService
     )
     {
         _statisticsService = statisticsService;
         _cacheService = cacheService;
         _postgreSqlService = postgreSqlService;
         _profileService = profileService;
+        _stateSpanService = stateSpanService;
     }
 
     /// <summary>
@@ -784,22 +787,28 @@ public class StatisticsController : ControllerBase
     {
         try
         {
-            // Convert to ISO date strings for the MongoDB-style query
-            var startIso = startDate.ToString("O");
-            var endIso = endDate.ToString("O");
+            var startMills = new DateTimeOffset(startDate).ToUnixTimeMilliseconds();
+            var endMills = new DateTimeOffset(endDate).ToUnixTimeMilliseconds();
 
-            // Build a MongoDB-style find query for the date range
-            var findQuery = $"{{\"created_at\":{{\"$gte\":\"{startIso}\",\"$lte\":\"{endIso}\"}}}}";
-
-            // Fetch treatments from the database for the specified date range
-            var treatments = await _postgreSqlService.GetTreatmentsWithAdvancedFilterAsync(
-                count: 10000, // Large limit to get all treatments in range
-                skip: 0,
-                findQuery: findQuery,
-                reverseResults: false
+            // Fetch treatments (for bolus) and basal StateSpans sequentially
+            // (DbContext is not thread-safe, can't use Task.WhenAll)
+            var treatments = await _postgreSqlService.GetTreatmentsByTimeRangeAsync(
+                startMills,
+                endMills,
+                count: 10000
             );
 
-            var result = _statisticsService.CalculateDailyBasalBolusRatios(treatments);
+            var basalSpans = await _stateSpanService.GetStateSpansAsync(
+                category: StateSpanCategory.BasalDelivery,
+                from: startMills,
+                to: endMills,
+                count: 10000
+            );
+
+            var result = _statisticsService.CalculateDailyBasalBolusRatios(
+                treatments,
+                basalSpans
+            );
             return Ok(result);
         }
         catch (Exception ex)
@@ -822,21 +831,19 @@ public class StatisticsController : ControllerBase
     {
         try
         {
-            // Convert to ISO date strings for the MongoDB-style query
-            var startIso = startDate.ToString("O");
-            var endIso = endDate.ToString("O");
+            var startMills = new DateTimeOffset(startDate).ToUnixTimeMilliseconds();
+            var endMills = new DateTimeOffset(endDate).ToUnixTimeMilliseconds();
 
-            // Build a MongoDB-style find query for the date range
-            var findQuery = $"{{\"created_at\":{{\"$gte\":\"{startIso}\",\"$lte\":\"{endIso}\"}}}}";
-
-            // Fetch treatments from the database for the specified date range
+            // Fetch treatments from database
             var treatments = await _postgreSqlService.GetTreatmentsWithAdvancedFilterAsync(
-                count: 10000, // Large limit to get all treatments in range
+                count: 10000,
                 skip: 0,
-                findQuery: findQuery,
+                findQuery: $"{{\"mills\":{{\"$gte\":{startMills},\"$lte\":{endMills}}}}}",
                 reverseResults: false
             );
 
+            // Note: This still uses the treatment-based calculation
+            // For full StateSpan support, would need to update CalculateInsulinDeliveryStatistics
             var result = _statisticsService.CalculateInsulinDeliveryStatistics(
                 treatments,
                 startDate,
@@ -864,23 +871,19 @@ public class StatisticsController : ControllerBase
     {
         try
         {
-            // Convert to ISO date strings for the MongoDB-style query
-            var startIso = startDate.ToString("O");
-            var endIso = endDate.ToString("O");
+            var startMills = new DateTimeOffset(startDate).ToUnixTimeMilliseconds();
+            var endMills = new DateTimeOffset(endDate).ToUnixTimeMilliseconds();
 
-            // Build a MongoDB-style find query for the date range
-            var findQuery = $"{{\"created_at\":{{\"$gte\":\"{startIso}\",\"$lte\":\"{endIso}\"}}}}";
-
-            // Fetch treatments from the database for the specified date range
-            var treatments = await _postgreSqlService.GetTreatmentsWithAdvancedFilterAsync(
-                count: 10000, // Large limit to get all treatments in range
-                skip: 0,
-                findQuery: findQuery,
-                reverseResults: false
+            // Fetch basal StateSpans directly
+            var basalSpans = await _stateSpanService.GetStateSpansAsync(
+                category: StateSpanCategory.BasalDelivery,
+                from: startMills,
+                to: endMills,
+                count: 10000
             );
 
             var result = _statisticsService.CalculateBasalAnalysis(
-                treatments,
+                basalSpans,
                 startDate,
                 endDate
             );
