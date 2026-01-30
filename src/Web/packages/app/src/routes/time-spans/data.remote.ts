@@ -5,7 +5,7 @@
 import { randomUUID } from "$lib/utils";
 import { getRequestEvent, query } from "$app/server";
 import { z } from "zod";
-import { StateSpanCategory, type StateSpan, type Entry } from "$lib/api";
+import { StateSpanCategory, type StateSpan } from "$lib/api";
 
 /**
  * Input schema for time spans data queries - supports date range
@@ -45,7 +45,6 @@ export interface TimeSpansPageData {
   tempBasalSpans: ProcessedSpan[];
   overrideSpans: ProcessedSpan[];
   activitySpans: ProcessedSpan[];
-  entries: Entry[];
   dateRange: { from: Date; to: Date };
 }
 
@@ -179,21 +178,13 @@ export const getTimeSpansData = query(
 
     try {
       // Fetch all state span categories in parallel
-      const [pumpModeSpans, profileSpans, tempBasalSpans, overrideSpans, activitySpans, entries] =
+      const [pumpModeSpans, profileSpans, tempBasalSpans, overrideSpans, activitySpans] =
         await Promise.all([
           apiClient.stateSpans.getPumpModes(startTime, endTime),
           apiClient.stateSpans.getProfiles(startTime, endTime),
-          apiClient.stateSpans.getTempBasals(startTime, endTime),
+          apiClient.stateSpans.getBasalDelivery(startTime, endTime),
           apiClient.stateSpans.getOverrides(startTime, endTime),
           apiClient.stateSpans.getActivities(startTime, endTime),
-          apiClient.entries.getEntries2(
-            JSON.stringify({
-              date: {
-                $gte: startOfRange.toISOString(),
-                $lte: endOfRange.toISOString(),
-              },
-            })
-          ),
         ]);
 
       return {
@@ -222,12 +213,12 @@ export const getTimeSpansData = query(
           getOverrideColor
         ),
         activitySpans: (activitySpans ?? [])
-          .filter((span) => {
+          .filter((span: StateSpan) => {
             const spanStart = span.startMills ?? 0;
             const spanEnd = span.endMills ?? endTime;
             return spanEnd > startTime && spanStart < endTime;
           })
-          .map((span) => ({
+          .map((span: StateSpan) => ({
             id: span.id ?? randomUUID(),
             category: span.category ?? StateSpanCategory.Sleep,
             state: span.state ?? "Unknown",
@@ -239,7 +230,6 @@ export const getTimeSpansData = query(
             percent: null,
             profileName: null,
           })),
-        entries: Array.isArray(entries) ? entries : [],
         dateRange: { from: startOfRange, to: endOfRange },
       };
     } catch (err) {
@@ -251,7 +241,6 @@ export const getTimeSpansData = query(
         tempBasalSpans: [],
         overrideSpans: [],
         activitySpans: [],
-        entries: [],
         dateRange: { from: startOfRange, to: endOfRange },
       };
     }

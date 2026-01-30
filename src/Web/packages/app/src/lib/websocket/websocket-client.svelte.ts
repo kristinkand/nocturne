@@ -249,7 +249,7 @@ export class WebSocketClient {
     event: K,
     handler: WebSocketEventHandlers[K]
   ): void {
-    this.eventHandlers[event] = handler;
+    (this.eventHandlers as WebSocketEventHandlers)[event] = handler;
   }
 
   /** Remove event handlers */

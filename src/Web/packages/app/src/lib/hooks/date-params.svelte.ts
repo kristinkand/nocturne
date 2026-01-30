@@ -125,9 +125,9 @@ export function useDateParams(defaultDays = 7) {
       // Params already set - just mark as initialized and sync memoized input
       initialized = true;
       memoizedInput = {
-        days: currentDays,
-        from: currentFrom,
-        to: currentTo,
+        days: currentDays ?? undefined,
+        from: currentFrom ?? undefined,
+        to: currentTo ?? undefined,
       };
     }
   });
@@ -148,9 +148,9 @@ export function useDateParams(defaultDays = 7) {
       memoizedInput.to !== currentTo
     ) {
       memoizedInput = {
-        days: currentDays,
-        from: currentFrom,
-        to: currentTo,
+        days: currentDays ?? undefined,
+        from: currentFrom ?? undefined,
+        to: currentTo ?? undefined,
       };
     }
   });

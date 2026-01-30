@@ -15,7 +15,7 @@
 
   const maxRate = $derived.by(() => {
     if (chartData.length === 0) return 3;
-    const allRates = chartData.flatMap((d) => [d.p90, d.median]);
+    const allRates = chartData.flatMap((d) => [d.p90, d.median]).filter((v): v is number => v !== undefined);
     return Math.max(3, Math.ceil(Math.max(...allRates) * 1.2));
   });
 
@@ -38,7 +38,7 @@
         <p class="mt-2 font-medium">Loading basal data...</p>
       </div>
     </div>
-  {:else if chartData.length > 0 && chartData.some((d) => d.count > 0)}
+  {:else if chartData.length > 0 && chartData.some((d) => (d.count ?? 0) > 0)}
     <div class="h-[400px] w-full">
       <AreaChart
         data={chartData}

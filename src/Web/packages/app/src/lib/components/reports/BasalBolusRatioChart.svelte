@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { BarChart } from "layerchart";
-  import type { DailyBasalBolusRatioResponse, DailyBasalBolusRatioData } from "$lib/api";
+  import type { DailyBasalBolusRatioResponse } from "$lib/api";
   import { getDailyBasalBolusRatios } from "$lib/data/statistics.remote";
   import { PieChart } from "lucide-svelte";
   import { resource } from "runed";
@@ -11,11 +10,9 @@
     startDate: string | Date;
     /** End date for fetching data (ISO string or Date) */
     endDate: string | Date;
-    /** When true, clicking a bar navigates to the day-in-review page for that date */
-    navigateOnClick?: boolean;
   }
 
-  let { startDate, endDate, navigateOnClick = false }: Props = $props();
+  let { startDate, endDate }: Props = $props();
 
   // Normalize dates to ISO strings
   const startDateString = $derived(
@@ -41,12 +38,6 @@
   const averageBolusPercent = $derived(ratioData?.averageBolusPercent ?? 0);
   const averageTdd = $derived(ratioData?.averageTdd ?? 0);
   const dayCount = $derived(ratioData?.dayCount ?? 0);
-
-  function handleBarClick(data: DailyBasalBolusRatioData) {
-    if (navigateOnClick && data.date) {
-      goto(`/reports/day-in-review?date=${data.date}`);
-    }
-  }
 </script>
 
 <div class="w-full">
@@ -59,7 +50,7 @@
         <p class="mt-2 font-medium">Loading data...</p>
       </div>
     </div>
-  {:else if chartData.length > 0 && chartData.some((d) => d.total > 0)}
+  {:else if chartData.length > 0 && chartData.some((d) => (d.total ?? 0) > 0)}
     <!-- Summary Cards -->
     <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
       <div class="rounded-lg border bg-card p-4 text-center">
@@ -87,7 +78,7 @@
     </div>
 
     <!-- Stacked Bar Chart -->
-    <div class="h-[300px] w-full" class:cursor-pointer={navigateOnClick}>
+    <div class="h-[300px] w-full">
       <BarChart
         data={chartData}
         x="displayDate"
@@ -117,17 +108,8 @@
           },
         }}
         padding={{ top: 20, right: 20, bottom: 50, left: 50 }}
-        onbarclick={navigateOnClick
-          ? (e, { data }) => handleBarClick(data as DailyBasalBolusRatioData)
-          : undefined}
       />
     </div>
-
-    {#if navigateOnClick}
-      <p class="mt-2 text-center text-xs text-muted-foreground">
-        Click on a bar to view the day in detail
-      </p>
-    {/if}
 
     <!-- Ideal ratio guidance -->
     <div class="mt-4 rounded-lg border border-dashed bg-muted/30 p-3">

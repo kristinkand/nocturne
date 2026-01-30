@@ -6,7 +6,7 @@
    * Fills the entire calendar cell.
    * Uses LayerChart for rendering.
    */
-  import { Chart, Svg, Spline, Rule, Area, Threshold, AnnotationRange } from "layerchart";
+  import { Chart, Svg, Spline, Area, Threshold, AnnotationRange } from "layerchart";
   import { curveMonotoneX } from "d3-shape";
 
   // Glucose range thresholds (mg/dL)
@@ -75,20 +75,20 @@
         />
           <!-- Threshold fills for out-of-range areas -->
           <Threshold curve={curveMonotoneX}>
-            {#snippet above({ curve })}
+            {#snippet above()}
               <!-- High area (above the line, clipped to show only where data exceeds high threshold) -->
               <Area
                 y0={HIGH_THRESHOLD}
-                {curve}
+                curve={curveMonotoneX}
                 class="fill-red-500"
                 line={{ class: "stroke-none" }}
               />
             {/snippet}
-            {#snippet below({ curve })}
+            {#snippet below()}
               <!-- Low area (below the line, clipped to show only where data is below low threshold) -->
               <Area
                 y0={LOW_THRESHOLD}
-                {curve}
+                curve={curveMonotoneX}
                 class="fill-glucose-low opacity-50"
                 line={{ class: "stroke-none" }}
               />

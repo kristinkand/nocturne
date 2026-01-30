@@ -349,7 +349,9 @@
         <div class="space-y-2">
           <Label>Display language</Label>
           <LanguageSelector
-            onLanguageChange={page.data.isAuthenticated ? updateLanguagePreference : undefined}
+            onLanguageChange={page.data.isAuthenticated
+              ? (locale: string) => updateLanguagePreference({ preferredLanguage: locale })
+              : undefined}
           />
         </div>
         <p class="text-xs text-muted-foreground">

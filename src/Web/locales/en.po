@@ -2675,6 +2675,7 @@ msgstr "Last pump sync"
 #: src/lib/components/charts/BasalRateTrack.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/tracks/BasalTrack.svelte
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
 #: src/lib/components/reports/BasalRateChart.svelte
 msgid "BASAL"
 msgstr "BASAL"
@@ -11807,8 +11808,9 @@ msgstr "Total Daily Dose"
 #~ msgid "{0}U <0/>"
 #~ msgstr "{0}U <0/>"
 
-#~ msgid "<0/> Basal"
-#~ msgstr "<0/> Basal"
+#: src/routes/time-spans/+page.svelte
+msgid "<0/> Basal"
+msgstr "<0/> Basal"
 
 #~ msgid "No insulin data today"
 #~ msgstr "No insulin data today"
@@ -12130,3 +12132,86 @@ msgstr "<0/> Processing..."
 
 #~ msgid "({0}h DIA)"
 #~ msgstr "({0}h DIA)"
+
+#: src/routes/time-spans/+page.svelte
+msgid "State Spans Timeline"
+msgstr "State Spans Timeline"
+
+#: src/routes/time-spans/+page.svelte
+msgid "View pump modes, profiles, temp basals, overrides, and activities over time"
+msgstr "View pump modes, profiles, temp basals, overrides, and activities over time"
+
+#: src/routes/time-spans/+page.svelte
+msgid "Toggle pump modes"
+msgstr "Toggle pump modes"
+
+#: src/routes/time-spans/+page.svelte
+msgid "<0/> Pump Modes"
+msgstr "<0/> Pump Modes"
+
+#: src/routes/time-spans/+page.svelte
+msgid "Toggle profiles"
+msgstr "Toggle profiles"
+
+#: src/routes/time-spans/+page.svelte
+msgid "<0/> Profiles"
+msgstr "<0/> Profiles"
+
+#~ msgid "Toggle temp basals"
+#~ msgstr "Toggle temp basals"
+
+#~ msgid "<0/> Temp Basals"
+#~ msgstr "<0/> Temp Basals"
+
+#: src/routes/time-spans/+page.svelte
+msgid "Toggle overrides"
+msgstr "Toggle overrides"
+
+#: src/routes/time-spans/+page.svelte
+msgid "<0/> Overrides"
+msgstr "<0/> Overrides"
+
+#: src/routes/time-spans/+page.svelte
+msgid "Toggle activities"
+msgstr "Toggle activities"
+
+#: src/routes/time-spans/+page.svelte
+msgid "<0/> Activities"
+msgstr "<0/> Activities"
+
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "No tracks selected. Enable at least one category above."
+msgstr "No tracks selected. Enable at least one category above."
+
+#. placeholder {0}: formatDuration(hoveredSpan.startTime, hoveredSpan.endTime)
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "Duration: {0}"
+msgstr "Duration: {0}"
+
+#. placeholder {0}: hoveredSpan.rate.toFixed(2)
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "Rate: {0} U/hr"
+msgstr "Rate: {0} U/hr"
+
+#. placeholder {0}: hoveredSpan.percent
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "Percent: {0}%"
+msgstr "Percent: {0}%"
+
+#. placeholder {0}: hoveredSpan.profileName
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "Profile: {0}"
+msgstr "Profile: {0}"
+
+#. placeholder {0}: maxBasalRate.toFixed(1)
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "{0} U/h"
+msgstr "{0} U/h"
+
+#: src/lib/components/dashboard/state-spans-timeline/state-spans-timeline.svelte
+msgid "No basal data"
+msgstr "No basal data"
+
+#: src/routes/time-spans/+page.svelte
+msgid "Toggle basal delivery"
+msgstr "Toggle basal delivery"

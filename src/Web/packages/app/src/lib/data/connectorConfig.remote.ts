@@ -4,10 +4,6 @@
 import { getRequestEvent, query, command } from '$app/server';
 import { z } from 'zod';
 import { error } from '@sveltejs/kit';
-import type {
-	ConnectorConfigurationResponse,
-	ConnectorStatusInfo,
-} from '$lib/api/generated/nocturne-api-client';
 
 /**
  * JSON Schema types for connector configuration

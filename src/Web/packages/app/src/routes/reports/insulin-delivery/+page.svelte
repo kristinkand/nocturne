@@ -307,7 +307,7 @@
       <CardDescription>See how your insulin was split each day</CardDescription>
     </CardHeader>
     <CardContent>
-      <BasalBolusRatioChart startDate={dateRange.from} endDate={dateRange.to} navigateOnClick />
+      <BasalBolusRatioChart startDate={dateRange.from} endDate={dateRange.to} />
     </CardContent>
   </Card>
 

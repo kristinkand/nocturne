@@ -69,7 +69,7 @@
     }
   });
 
-  const communityLinks = [
+  const communityLinks = $derived([
     {
       name: "GitHub Repository",
       description: "Source code, issues, and feature requests",
@@ -97,7 +97,7 @@
       href: "https://www.nightscoutfoundation.org/",
       badge: "501(c)(3)",
     },
-  ];
+  ]);
 
   const supportOptions = [
     {

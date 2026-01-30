@@ -40,7 +40,7 @@
 
 <div class="@container grid grid-cols-1 @md:grid-cols-3 gap-2 @md:gap-4">
   {#each displayWidgets as widgetId (widgetId)}
-    {@const WidgetComponent = widgetComponents[widgetId]}
+    {@const WidgetComponent = widgetComponents[widgetId] as typeof BgDeltaWidget | undefined}
     {#if WidgetComponent}
       <WidgetComponent />
     {/if}

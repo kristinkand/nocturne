@@ -326,7 +326,9 @@
       {#if !hasLanguagePreference()}
         <Sidebar.MenuItem class="group-data-[collapsible=icon]:hidden">
           <LanguageSelector
-            onLanguageChange={user ? updateLanguagePreference : undefined}
+            onLanguageChange={user
+              ? (locale: string) => updateLanguagePreference({ preferredLanguage: locale })
+              : undefined}
           />
         </Sidebar.MenuItem>
       {/if}
