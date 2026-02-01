@@ -55,8 +55,12 @@ public class DexcomEntryMapper(ILogger logger, string connectorSource)
                 Direction.NotComputable
             );
 
+            // Generate deterministic ID based on device + timestamp for deduplication
+            var id = $"dexcom_{dexcomEntry.Wt}";
+
             return new Entry
             {
+                Id = id,
                 Date = timestamp,
                 Sgv = dexcomEntry.Value,
                 Direction = direction.ToString(),

@@ -233,7 +233,22 @@ public class LibreConnectorService(
 
         var measurements = graphResponse.Data.GraphData.ToList();
         var latestMeasurement = graphResponse.Data.Connection.GlucoseMeasurement;
-        measurements.Add(latestMeasurement);
+
+        // Only add latest measurement if not already in GraphData (avoid duplicates)
+        var latestTimestamp = latestMeasurement.FactoryTimestamp;
+        if (!measurements.Any(m => m.FactoryTimestamp == latestTimestamp))
+        {
+            measurements.Add(latestMeasurement);
+        }
+        else
+        {
+            // Update existing entry with trend arrow from latest measurement
+            var existing = measurements.First(m => m.FactoryTimestamp == latestTimestamp);
+            if (existing.TrendArrow == 0 && latestMeasurement.TrendArrow != 0)
+            {
+                existing.TrendArrow = latestMeasurement.TrendArrow;
+            }
+        }
 
         var glucoseEntries = measurements
             .Where(measurement => measurement.ValueInMgPerDl > 0)

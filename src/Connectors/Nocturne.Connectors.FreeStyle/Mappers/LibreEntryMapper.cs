@@ -34,8 +34,13 @@ public class LibreEntryMapper
                 measurement.TrendArrow,
                 Direction.NotComputable
             );
+
+            // Generate deterministic ID based on device + timestamp for deduplication
+            var id = $"libre_{measurement.FactoryTimestamp}";
+
             return new Entry
             {
+                Id = id,
                 Date = timestamp,
                 Sgv = measurement.ValueInMgPerDl,
                 Direction = direction.ToString(),
