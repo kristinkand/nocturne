@@ -4,8 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nocturne.Connectors.Glooko.Configurations;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Glooko.Configurations;
 
 namespace Nocturne.Connectors.Glooko.Services;
 
@@ -41,15 +41,15 @@ public class GlookoAuthTokenProvider : AuthTokenProviderBase<GlookoConnectorConf
     {
         try
         {
-            _logger.LogInformation("Authenticating with Glooko server: {Server}", _config.GlookoServer);
+            _logger.LogInformation("Authenticating with Glooko server: {Server}", _config.Server);
 
             // Setup headers to mimic browser behavior
             var loginData = new
             {
                 userLogin = new
                 {
-                    email = _config.GlookoUsername,
-                    password = _config.GlookoPassword
+                    email = _config.Email,
+                    password = _config.Password
                 },
                 deviceInformation = new
                 {

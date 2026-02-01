@@ -21,7 +21,9 @@ public class DexcomEntryMapper(ILogger logger, string connectorSource)
         { 9, Direction.RateOutOfRange }
     };
 
-    private readonly string _connectorSource = connectorSource ?? throw new ArgumentNullException(nameof(connectorSource));
+    private readonly string _connectorSource =
+        connectorSource ?? throw new ArgumentNullException(nameof(connectorSource));
+
     private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public IEnumerable<Entry> TransformBatchDataToEntries(DexcomEntry[]? batchData)

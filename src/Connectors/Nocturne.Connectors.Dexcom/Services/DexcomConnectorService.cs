@@ -1,9 +1,9 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Nocturne.Connectors.Dexcom.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
+using Nocturne.Connectors.Dexcom.Configurations;
 using Nocturne.Connectors.Dexcom.Mappers;
 using Nocturne.Connectors.Dexcom.Models;
 using Nocturne.Core.Constants;
@@ -98,22 +98,15 @@ public class DexcomConnectorService : BaseConnectorService<DexcomConnectorConfig
             {
                 _tokenProvider.InvalidateToken();
                 var newToken = await _tokenProvider.GetValidTokenAsync();
-                if (string.IsNullOrEmpty(newToken))
-                {
-                    return false;
-                }
+                if (string.IsNullOrEmpty(newToken)) return false;
                 sessionId = newToken;
                 return true;
-
             },
             operationName: "FetchDexcomData"
         );
 
         // Log batch data summary
-        if (result == null)
-        {
-            return result;
-        }
+        if (result == null) return result;
         var validEntries = result.Where(e => e.Value > 0).ToArray();
         var minDate = validEntries.Length > 0 ? validEntries.Min(e => e.Wt) : "N/A";
         var maxDate = validEntries.Length > 0 ? validEntries.Max(e => e.Wt) : "N/A";

@@ -11,7 +11,6 @@ namespace Nocturne.Connectors.MyLife.Services;
 
 public class MyLifeSoapClient(HttpClient httpClient, ILogger<MyLifeSoapClient> logger)
 {
-
     public async Task<MyLifeLocation?> GetUserLocationAsync(string login, CancellationToken cancellationToken)
     {
         var body =

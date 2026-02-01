@@ -11,100 +11,116 @@ namespace Nocturne.Connectors.Core.Extensions;
 /// </summary>
 public static class HttpClientExtensions
 {
+    /// <summary>
+    ///     Default User-Agent for Nocturne connectors
+    /// </summary>
+    private const string DefaultUserAgent = "Nocturne-Connect/1.0";
+
     extension(IHttpClientBuilder builder)
     {
         /// <summary>
-        ///     Configures standard headers for Dexcom Share API
+        ///     Generic connector client configuration with sensible defaults.
+        ///     Use this for new connectors instead of creating connector-specific extensions.
         /// </summary>
-        public IHttpClientBuilder ConfigureDexcomClient(string server
-        )
+        /// <param name="baseUrl">Base URL for the API (e.g., "api.example.com" or "https://api.example.com")</param>
+        /// <param name="additionalHeaders">Optional additional headers to include in all requests</param>
+        /// <param name="userAgent">Custom User-Agent string (defaults to "Nocturne-Connect/1.0")</param>
+        /// <param name="timeout">Request timeout (defaults to 2 minutes)</param>
+        /// <param name="connectTimeout">Connection timeout (defaults to 5 seconds)</param>
+        /// <param name="addResilience">Whether to add resilience policies (retry, circuit breaker)</param>
+        public IHttpClientBuilder ConfigureConnectorClient(
+            string baseUrl,
+            Dictionary<string, string>? additionalHeaders = null,
+            string? userAgent = null,
+            TimeSpan? timeout = null,
+            TimeSpan? connectTimeout = null,
+            bool addResilience = false)
         {
-            return builder
+            var effectiveTimeout = timeout ?? TimeSpan.FromMinutes(2);
+            var effectiveConnectTimeout = connectTimeout ?? TimeSpan.FromSeconds(5);
+            var effectiveUserAgent = userAgent ?? DefaultUserAgent;
+
+            // Ensure URL has scheme
+            var url = baseUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? baseUrl
+                : $"https://{baseUrl}";
+
+            builder
                 .ConfigureHttpClient(client =>
                 {
-                    client.BaseAddress = new Uri($"https://{server}");
+                    client.BaseAddress = new Uri(url);
                     client.DefaultRequestHeaders.Accept.Clear();
                     client.DefaultRequestHeaders.Accept.Add(
                         new MediaTypeWithQualityHeaderValue("application/json")
                     );
-                    client.DefaultRequestHeaders.Add("User-Agent", "Nocturne-Connect/1.0");
-                    client.Timeout = TimeSpan.FromMinutes(2);
+                    client.DefaultRequestHeaders.Add("User-Agent", effectiveUserAgent);
+                    client.Timeout = effectiveTimeout;
+
+                    // Add any additional headers
+                    if (additionalHeaders != null)
+                    {
+                        foreach (var header in additionalHeaders)
+                        {
+                            client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+                        }
+                    }
                 })
                 .ConfigurePrimaryHttpMessageHandler(() =>
                     new SocketsHttpHandler
                     {
                         AutomaticDecompression = DecompressionMethods.All,
-                        ConnectTimeout = TimeSpan.FromSeconds(5),
-                        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+                        ConnectTimeout = effectiveConnectTimeout,
+                        PooledConnectionLifetime = effectiveTimeout
                     }
                 );
+
+            if (addResilience)
+            {
+                builder.ConfigureConnectorResilience();
+            }
+
+            return builder;
+        }
+
+        /// <summary>
+        ///     Configures standard headers for Dexcom Share API
+        /// </summary>
+        public IHttpClientBuilder ConfigureDexcomClient(string server)
+        {
+            return builder.ConfigureConnectorClient(server);
         }
 
         /// <summary>
         ///     Configures standard headers for LibreLinkUp API
         /// </summary>
-        public IHttpClientBuilder ConfigureLibreLinkUpClient(string server
-        )
+        public IHttpClientBuilder ConfigureLibreLinkUpClient(string server)
         {
-            return builder
-                .ConfigureHttpClient(client =>
+            return builder.ConfigureConnectorClient(
+                server,
+                additionalHeaders: new Dictionary<string, string>
                 {
-                    client.BaseAddress = new Uri($"https://{server}");
-                    client.DefaultRequestHeaders.Accept.Clear();
-                    client.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue("application/json")
-                    );
-                    client.DefaultRequestHeaders.Add("User-Agent", "Nocturne-Connect/1.0");
-                    client.DefaultRequestHeaders.Add("Version", "4.16.0");
-                    client.DefaultRequestHeaders.Add("Product", "llu.android");
-                    client.Timeout = TimeSpan.FromMinutes(2);
-                })
-                .ConfigurePrimaryHttpMessageHandler(() =>
-                    new SocketsHttpHandler
-                    {
-                        AutomaticDecompression = DecompressionMethods.All,
-                        ConnectTimeout = TimeSpan.FromSeconds(5),
-                        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-                    }
-                );
+                    ["Version"] = "4.16.0",
+                    ["Product"] = "llu.android"
+                }
+            );
         }
 
         /// <summary>
         ///     Configures standard headers for Glooko API
         /// </summary>
-        public IHttpClientBuilder ConfigureGlookoClient(string server
-        )
+        public IHttpClientBuilder ConfigureGlookoClient(string server)
         {
-            return builder
-                .ConfigureHttpClient(client =>
+            return builder.ConfigureConnectorClient(
+                server,
+                additionalHeaders: new Dictionary<string, string>
                 {
-                    client.BaseAddress = new Uri($"https://{server}");
-                    client.DefaultRequestHeaders.Accept.Clear();
-                    client.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue("application/json")
-                    );
-                    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-                    client.DefaultRequestHeaders.Add(
-                        "User-Agent",
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
-                    );
-                    client.Timeout = TimeSpan.FromMinutes(5);
-                })
-                .ConfigurePrimaryHttpMessageHandler(() =>
-                    new SocketsHttpHandler
-                    {
-                        AutomaticDecompression = DecompressionMethods.All,
-                        ConnectTimeout = TimeSpan.FromSeconds(15),
-                        PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-                    }
-                )
-                // Configure connector-specific resilience with timeouts
-                // Per-attempt timeout resets after each successful API response
-                // Total timeout should be less than the minimum sync interval (5 min)
-                .ConfigureConnectorResilience(
-                    TimeSpan.FromMinutes(2),
-                    TimeSpan.FromMinutes(5)
-                );
+                    ["Accept-Encoding"] = "gzip, deflate, br"
+                },
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+                timeout: TimeSpan.FromMinutes(5),
+                connectTimeout: TimeSpan.FromSeconds(15),
+                addResilience: true
+            );
         }
 
         /// <summary>

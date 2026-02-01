@@ -77,7 +77,6 @@ public class ConfigSchemaAttribute : Attribute
     /// <summary>
     ///     Sentinel value indicating "not set" for numeric constraints.
     /// </summary>
-
     /// <summary>
     ///     Minimum value for numeric properties. Use NotSet (-2147483648) if not applicable.
     /// </summary>

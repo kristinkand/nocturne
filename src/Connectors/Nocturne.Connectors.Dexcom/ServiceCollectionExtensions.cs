@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Dexcom.Configurations;
@@ -24,14 +23,14 @@ public static class ServiceCollectionExtensions
             return;
 
         var serverUrl = ConnectorServerResolver.Resolve(
-            dexcomConfig.DexcomServer,
+            dexcomConfig.Server,
             new Dictionary<string, string>
             {
                 ["US"] = DexcomConstants.Servers.Us,
                 ["EU"] = DexcomConstants.Servers.Ous,
                 ["OUS"] = DexcomConstants.Servers.Ous
             },
-            dexcomConfig.DexcomServer
+            dexcomConfig.Server
         );
 
         services.AddHttpClient<DexcomConnectorService>().ConfigureDexcomClient(serverUrl);

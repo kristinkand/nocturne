@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 
@@ -9,6 +10,19 @@ namespace Nocturne.Connectors.Core.Models;
 /// </summary>
 public abstract class BaseConnectorConfiguration : IConnectorConfiguration
 {
+    /// <summary>
+    ///     Gets the connector name from the ConnectorRegistration attribute.
+    ///     Used for error messages and logging.
+    /// </summary>
+    protected string ConnectorName =>
+        GetType().GetCustomAttribute<ConnectorRegistrationAttribute>()?.ConnectorName
+        ?? GetType().Name.Replace("Configuration", "");
+
+    /// <summary>
+    ///     Gets the environment variable prefix from the ConnectorRegistration attribute.
+    /// </summary>
+    protected string? EnvPrefix =>
+        GetType().GetCustomAttribute<ConnectorRegistrationAttribute>()?.EnvironmentPrefix;
     /// <summary>
     ///     Timezone offset in hours (default 0).
     ///     Can be set via environment variable: CONNECT_{CONNECTORNAME}_TIMEZONE_OFFSET
@@ -50,13 +64,75 @@ public abstract class BaseConnectorConfiguration : IConnectorConfiguration
         if (BatchSize <= 0)
             throw new ArgumentException("BatchSize must be greater than zero");
 
+        // Validate properties marked with [Required] or [ConnectorProperty(Required = true)]
+        ValidateRequiredProperties();
+
+        // Allow derived classes to add additional validation
         ValidateSourceSpecificConfiguration();
     }
 
     /// <summary>
-    ///     Override this method to validate connector-specific configuration
+    ///     Validates all properties marked with [Required] attribute or
+    ///     [ConnectorProperty(Required = true)].
+    ///     Throws ArgumentException if any required string property is null or empty.
     /// </summary>
-    protected abstract void ValidateSourceSpecificConfiguration();
+    protected void ValidateRequiredProperties()
+    {
+        var properties = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-    
+        foreach (var property in properties)
+        {
+            var isRequired = false;
+            string? displayName = null;
+
+            // Check for [Required] attribute
+            if (property.GetCustomAttribute<RequiredAttribute>() != null)
+            {
+                isRequired = true;
+                displayName = property.Name;
+            }
+
+            // Check for [ConnectorProperty(Required = true)]
+            var connectorProp = property.GetCustomAttribute<ConnectorPropertyAttribute>();
+            if (connectorProp is { Required: true })
+            {
+                isRequired = true;
+                displayName = connectorProp.GetDisplayName();
+            }
+
+            if (!isRequired)
+                continue;
+
+            var value = property.GetValue(this);
+
+            // For string properties, check for null or whitespace
+            if (property.PropertyType == typeof(string))
+            {
+                if (string.IsNullOrWhiteSpace(value as string))
+                {
+                    var envVarHint = connectorProp != null && EnvPrefix != null
+                        ? $" (set via {connectorProp.GetFullEnvVarName(EnvPrefix)} or configuration)"
+                        : "";
+                    throw new ArgumentException(
+                        $"{ConnectorName}: {displayName} is required{envVarHint}");
+                }
+            }
+            // For nullable value types, check for null
+            else if (Nullable.GetUnderlyingType(property.PropertyType) != null && value == null)
+            {
+                throw new ArgumentException(
+                    $"{ConnectorName}: {displayName} is required");
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Override this method to add connector-specific validation beyond [Required] properties.
+    ///     The base implementation does nothing - derived classes can add custom validation rules.
+    /// </summary>
+    protected virtual void ValidateSourceSpecificConfiguration()
+    {
+        // Default implementation: no additional validation needed
+        // Derived classes can override to add custom validation
+    }
 }

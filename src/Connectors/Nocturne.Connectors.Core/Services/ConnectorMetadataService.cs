@@ -92,11 +92,10 @@ public static class ConnectorMetadataService
                 "Nocturne.Connectors.Dexcom",
                 "Nocturne.Connectors.Glooko",
                 "Nocturne.Connectors.FreeStyle",
-                "Nocturne.Connectors.MyLife",
+                "Nocturne.Connectors.MyLife"
             };
 
             foreach (var name in connectorAssemblies)
-            {
                 try
                 {
                     Assembly.Load(name);
@@ -105,7 +104,6 @@ public static class ConnectorMetadataService
                 {
                     // Assembly may not be available in all contexts
                 }
-            }
 
             // Scan all loaded assemblies for ConnectorRegistration attributes
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()

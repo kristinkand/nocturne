@@ -40,7 +40,7 @@ public class DexcomAuthTokenProvider(
             {
                 _logger.LogInformation(
                     "Authenticating with Dexcom Share for account: {Username} (attempt {Attempt}/{MaxRetries})",
-                    _config.DexcomUsername,
+                    _config.Username,
                     attempt + 1,
                     maxRetries);
 
@@ -75,9 +75,9 @@ public class DexcomAuthTokenProvider(
     {
         var authPayload = new
         {
-            password = _config.DexcomPassword,
+            password = _config.Password,
             applicationId = DexcomApplicationId,
-            accountName = _config.DexcomUsername
+            accountName = _config.Username
         };
 
         var json = JsonSerializer.Serialize(authPayload);
@@ -111,20 +111,16 @@ public class DexcomAuthTokenProvider(
         var accountId = await response.Content.ReadAsStringAsync(cancellationToken);
         accountId = accountId.Trim('"');
 
-        if (!string.IsNullOrEmpty(accountId))
-        {
-            return accountId;
-        }
+        if (!string.IsNullOrEmpty(accountId)) return accountId;
         _logger.LogError("Dexcom authentication returned empty account ID");
         return null;
-
     }
 
     private async Task<string?> LoginPublisherAccountAsync(string accountId, CancellationToken cancellationToken)
     {
         var sessionPayload = new
         {
-            password = _config.DexcomPassword,
+            password = _config.Password,
             applicationId = DexcomApplicationId,
             accountId
         };
@@ -160,12 +156,8 @@ public class DexcomAuthTokenProvider(
         var sessionId = await response.Content.ReadAsStringAsync(cancellationToken);
         sessionId = sessionId.Trim('"');
 
-        if (!string.IsNullOrEmpty(sessionId))
-        {
-            return sessionId;
-        }
+        if (!string.IsNullOrEmpty(sessionId)) return sessionId;
         _logger.LogError("Dexcom session creation returned empty session ID");
         return null;
-
     }
 }

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Core.Constants;
@@ -12,7 +11,7 @@ namespace Nocturne.Connectors.FreeStyle.Configurations;
     "LibreLinkUp",
     "Nocturne_Connectors_FreeStyle",
     ServiceNames.LibreConnector,
-    ServiceNames.ConnectorEnvironment.FreeStylePrefix,
+    "LIBRE",
     "ConnectSource.LibreLinkUp",
     "libre-connector",
     "libre",
@@ -30,70 +29,40 @@ public class LibreLinkUpConnectorConfiguration : BaseConnectorConfiguration
     /// <summary>
     ///     LibreLinkUp username
     /// </summary>
-    [Required]
-    [AspireParameter(
-        "librelinkup-username",
-        "Username",
-        true,
-        "LibreLinkUp account username"
-    )]
-    [EnvironmentVariable("CONNECT_LIBRE_USERNAME")]
-    [RuntimeConfigurable("Username", "Connection")]
-    public string LibreUsername { get; set; } = string.Empty;
+    [ConnectorProperty("Username",
+        Required = true,
+        Secret = true,
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "LibreLinkUp account username")]
+    public string Username { get; set; } = string.Empty;
 
     /// <summary>
     ///     LibreLinkUp password
     /// </summary>
-    [Required]
-    [Secret]
-    [AspireParameter(
-        "librelinkup-password",
-        "Password",
-        true,
-        "LibreLinkUp account password"
-    )]
-    [EnvironmentVariable("CONNECT_LIBRE_PASSWORD")]
-    public string LibrePassword { get; set; } = string.Empty;
+    [ConnectorProperty("Password",
+        Required = true,
+        Secret = true,
+        Description = "LibreLinkUp account password")]
+    public string Password { get; set; } = string.Empty;
 
     /// <summary>
     ///     LibreLinkUp region
     /// </summary>
-    [AspireParameter(
-        "librelinkup-region",
-        "Region",
-        false,
-        "LibreLinkUp region (EU, US, etc.)",
-        "EU"
-    )]
-    [EnvironmentVariable("CONNECT_LIBRE_REGION")]
-    [RuntimeConfigurable("Region", "Connection")]
-    [ConfigSchema(Enum = new[] { "EU", "US", "AE", "AP", "AU", "CA", "DE", "FR", "JP" })]
-    public string LibreRegion { get; set; } = "EU";
+    [ConnectorProperty("Region",
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "LibreLinkUp region (EU, US, etc.)",
+        DefaultValue = "EU",
+        AllowedValues = ["EU", "US", "AE", "AP", "AU", "CA", "DE", "FR", "JP"])]
+    public string Region { get; set; } = "EU";
 
     /// <summary>
     ///     Patient ID for LibreLinkUp (for caregiver accounts)
     /// </summary>
-    [AspireParameter(
-        "librelinkup-patient-id",
-        "PatientId",
-        false,
-        "Patient ID for caregiver accounts",
-        ""
-    )]
-    [EnvironmentVariable("CONNECT_LIBRE_PATIENT_ID")]
-    [RuntimeConfigurable("Patient ID", "Connection")]
-    public string LibrePatientId { get; set; } = string.Empty;
-
-    protected override void ValidateSourceSpecificConfiguration()
-    {
-        if (string.IsNullOrWhiteSpace(LibreUsername))
-            throw new ArgumentException(
-                "CONNECT_LINK_UP_USERNAME is required when using LibreLinkUp source"
-            );
-
-        if (string.IsNullOrWhiteSpace(LibrePassword))
-            throw new ArgumentException(
-                "CONNECT_LINK_UP_PASSWORD is required when using LibreLinkUp source"
-            );
-    }
+    [ConnectorProperty("PatientId",
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "Patient ID for caregiver accounts")]
+    public string PatientId { get; set; } = string.Empty;
 }

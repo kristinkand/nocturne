@@ -19,5 +19,4 @@ public interface ITreatmentClassificationService
     ///     - Carbs ≤ 0 AND Insulin > 0 → Correction Bolus
     /// </remarks>
     string ClassifyTreatment(double? carbs, double? insulin);
-
 }

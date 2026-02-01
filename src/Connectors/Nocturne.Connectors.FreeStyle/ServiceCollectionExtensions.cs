@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.FreeStyle.Configurations;
@@ -24,7 +23,7 @@ public static class ServiceCollectionExtensions
             return;
 
         var server = ConnectorServerResolver.Resolve(
-            libreConfig.LibreRegion,
+            libreConfig.Region,
             new Dictionary<string, string>
             {
                 ["AE"] = LibreLinkUpConstants.Endpoints.Ae,

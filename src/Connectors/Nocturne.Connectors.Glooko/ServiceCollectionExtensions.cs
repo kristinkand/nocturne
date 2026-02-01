@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Glooko.Configurations;
@@ -26,7 +25,7 @@ public static class ServiceCollectionExtensions
             return;
 
         var server = ConnectorServerResolver.Resolve(
-            glookoConfig.GlookoServer,
+            glookoConfig.Server,
             new Dictionary<string, string>
             {
                 ["US"] = GlookoConstants.Servers.Us,
@@ -45,6 +44,5 @@ public static class ServiceCollectionExtensions
             var logger = sp.GetRequiredService<ILogger<GlookoAuthTokenProvider>>();
             return new GlookoAuthTokenProvider(config, httpClient, logger);
         });
-
     }
 }

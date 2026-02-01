@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Core.Constants;
@@ -12,7 +11,7 @@ namespace Nocturne.Connectors.Dexcom.Configurations;
     "Dexcom",
     "Nocturne_Connectors_Dexcom",
     ServiceNames.DexcomConnector,
-    ServiceNames.ConnectorEnvironment.DexcomPrefix,
+    "DEXCOM",
     "ConnectSource.Dexcom",
     "dexcom-connector",
     "dexcom",
@@ -30,40 +29,30 @@ public class DexcomConnectorConfiguration : BaseConnectorConfiguration
     /// <summary>
     ///     Dexcom Share username
     /// </summary>
-    [Required]
-    [EnvironmentVariable("CONNECT_DEXCOM_USERNAME")]
-    [AspireParameter("dexcom-username", "Username", false, "Dexcom account username")]
-    [RuntimeConfigurable("Username", "Connection")]
-    public string DexcomUsername { get; init; } = string.Empty;
+    [ConnectorProperty("Username",
+        Required = true,
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "Dexcom account username")]
+    public string Username { get; init; } = string.Empty;
 
     /// <summary>
     ///     Dexcom Share password
     /// </summary>
-    [Required]
-    [Secret]
-    [EnvironmentVariable("CONNECT_DEXCOM_PASSWORD")]
-    [AspireParameter("dexcom-password", "Password", true, "Dexcom account password")]
-    public string DexcomPassword { get; init; } = string.Empty;
+    [ConnectorProperty("Password",
+        Required = true,
+        Secret = true,
+        Description = "Dexcom account password")]
+    public string Password { get; init; } = string.Empty;
 
     /// <summary>
     ///     Dexcom server region (US or EU)
     /// </summary>
-    [EnvironmentVariable("CONNECT_DEXCOM_SERVER")]
-    [AspireParameter("dexcom-server", "Server", false, "Dexcom server (US or EU)", "US")]
-    [RuntimeConfigurable("Server", "Connection")]
-    [ConfigSchema(Enum = ["US", "EU"])]
-    public string DexcomServer { get; init; } = "US";
-
-    protected override void ValidateSourceSpecificConfiguration()
-    {
-        if (string.IsNullOrWhiteSpace(DexcomUsername))
-            throw new ArgumentException(
-                "CONNECT_DEXCOM_USERNAME is required when using Dexcom Share source"
-            );
-
-        if (string.IsNullOrWhiteSpace(DexcomPassword))
-            throw new ArgumentException(
-                "CONNECT_DEXCOM_PASSWORD is required when using Dexcom Share source"
-            );
-    }
+    [ConnectorProperty("Server",
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "Dexcom server (US or EU)",
+        DefaultValue = "US",
+        AllowedValues = ["US", "EU"])]
+    public string Server { get; init; } = "US";
 }

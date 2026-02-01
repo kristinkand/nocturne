@@ -1,11 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nocturne.Connectors.FreeStyle.Configurations;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Core.Utilities;
+using Nocturne.Connectors.FreeStyle.Configurations;
 using Nocturne.Connectors.FreeStyle.Configurations.Constants;
 using Nocturne.Connectors.FreeStyle.Mappers;
 using Nocturne.Connectors.FreeStyle.Models;
@@ -141,9 +141,9 @@ public class LibreConnectorService(
             }
 
             // Select the specified patient or the first available connection
-            if (!string.IsNullOrEmpty(_config.LibrePatientId))
+            if (!string.IsNullOrEmpty(_config.PatientId))
                 _selectedConnection = connectionsResponse.Data.FirstOrDefault(c =>
-                    c.PatientId == _config.LibrePatientId
+                    c.PatientId == _config.PatientId
                 );
 
             if (_selectedConnection == null)
@@ -173,7 +173,7 @@ public class LibreConnectorService(
             if (!await AuthenticateAsync())
             {
                 _logger.LogError("Failed to authenticate with LibreLinkUp");
-                return Enumerable.Empty<Entry>();
+                return [];
             }
         }
 
@@ -181,7 +181,7 @@ public class LibreConnectorService(
         {
             _logger.LogError("Invalid LibreLinkUp patient id");
             TrackFailedRequest("Invalid patient id");
-            return Enumerable.Empty<Entry>();
+            return [];
         }
 
         var url = string.Format(
@@ -234,12 +234,12 @@ public class LibreConnectorService(
 
         var measurements = graphResponse.Data.GraphData.ToList();
         var latestMeasurement = graphResponse.Data.Connection.GlucoseMeasurement;
-        if (latestMeasurement != null) measurements.Add(latestMeasurement);
+        measurements.Add(latestMeasurement);
 
         var glucoseEntries = measurements
-            .Where(measurement => measurement != null && measurement.ValueInMgPerDl > 0)
+            .Where(measurement => measurement.ValueInMgPerDl > 0)
             .Select(_entryMapper.ConvertLibreEntry)
-            .Where(entry => entry != null && (!since.HasValue || entry.Date > since.Value))
+            .Where(entry => !since.HasValue || entry.Date > since.Value)
             .OrderBy(entry => entry.Date)
             .ToList();
 
