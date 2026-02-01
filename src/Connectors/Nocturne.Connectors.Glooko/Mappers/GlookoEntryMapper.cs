@@ -49,11 +49,8 @@ public class GlookoEntryMapper
             .Concat(series.CgmLow ?? Array.Empty<GlookoV3GlucoseDataPoint>())
             .OrderBy(p => p.X);
 
-        foreach (var reading in allCgm)
+        foreach (var reading in allCgm.Where(reading => !reading.Calculated))
         {
-            if (reading.Calculated)
-                continue;
-
             var timestamp = GetCorrectedGlookoTime(reading.X);
             var sgvMgdl = ConvertToMgdl(reading.Y, meterUnits);
 
