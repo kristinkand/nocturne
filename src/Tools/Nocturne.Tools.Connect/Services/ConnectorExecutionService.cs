@@ -352,31 +352,31 @@ public class ConnectorExecutionService(
                 "glooko" => new GlookoConnectorConfiguration
                 {
                     ConnectSource = ConnectSource.Glooko,
-                    GlookoUsername = config.GlookoEmail ?? string.Empty,
-                    GlookoPassword = config.GlookoPassword ?? string.Empty,
-                    GlookoServer = config.GlookoServer,
+                    Email = config.GlookoEmail ?? string.Empty,
+                    Password = config.GlookoPassword ?? string.Empty,
+                    Server = config.GlookoServer,
                     TimezoneOffset = config.GlookoTimezoneOffset,
                 },
                 "dexcomshare" or "dexcom" => new DexcomConnectorConfiguration
                 {
                     ConnectSource = ConnectSource.Dexcom,
-                    DexcomUsername = config.DexcomUsername ?? string.Empty,
-                    DexcomPassword = config.DexcomPassword ?? string.Empty,
-                    DexcomServer = config.DexcomRegion ?? "US",
+                    Username = config.DexcomUsername ?? string.Empty,
+                    Password = config.DexcomPassword ?? string.Empty,
+                    Server = config.DexcomRegion ?? "US",
                 },
                 "linkup" or "librelinkup" => new LibreLinkUpConnectorConfiguration
                 {
                     ConnectSource = ConnectSource.LibreLinkUp,
-                    LibreUsername = config.LibreUsername ?? string.Empty,
-                    LibrePassword = config.LibrePassword ?? string.Empty,
-                    LibreRegion = config.LibreRegion,
+                    Username = config.LibreUsername ?? string.Empty,
+                    Password = config.LibrePassword ?? string.Empty,
+                    Region = config.LibreRegion,
                 },
                 "mylife" => new MyLifeConnectorConfiguration
                 {
                     ConnectSource = ConnectSource.MyLife,
-                    MyLifeUsername = config.MyLifeUsername ?? string.Empty,
-                    MyLifePassword = config.MyLifePassword ?? string.Empty,
-                    MyLifePatientId = config.MyLifePatientId ?? string.Empty,
+                    Username = config.MyLifeUsername ?? string.Empty,
+                    Password = config.MyLifePassword ?? string.Empty,
+                    PatientId = config.MyLifePatientId ?? string.Empty,
                     EnableGlucoseSync = config.MyLifeEnableGlucoseSync,
                     EnableManualBgSync = config.MyLifeEnableManualBgSync,
                     EnableMealCarbConsolidation = config.MyLifeEnableMealCarbConsolidation,

@@ -6,7 +6,6 @@ using Nocturne.Connectors.Core.Models;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.FreeStyle.Configurations;
-using Nocturne.Connectors.FreeStyle.Configurations.Constants;
 using Nocturne.Connectors.FreeStyle.Mappers;
 using Nocturne.Connectors.FreeStyle.Models;
 using Nocturne.Core.Constants;

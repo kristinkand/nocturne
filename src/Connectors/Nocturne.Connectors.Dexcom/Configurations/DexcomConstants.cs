@@ -1,4 +1,4 @@
-namespace Nocturne.Connectors.Dexcom.Configurations.Constants;
+namespace Nocturne.Connectors.Dexcom.Configurations;
 
 /// <summary>
 ///     Constants specific to Dexcom Share connector

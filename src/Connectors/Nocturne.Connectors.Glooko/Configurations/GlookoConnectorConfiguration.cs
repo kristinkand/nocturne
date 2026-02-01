@@ -9,7 +9,6 @@ namespace Nocturne.Connectors.Glooko.Configurations;
 /// </summary>
 [ConnectorRegistration(
     "Glooko",
-    "Nocturne_Connectors_Glooko",
     ServiceNames.GlookoConnector,
     "GLOOKO",
     "ConnectSource.Glooko",
@@ -17,7 +16,10 @@ namespace Nocturne.Connectors.Glooko.Configurations;
     "glooko",
     ConnectorCategory.Sync,
     "Import data from Glooko platform",
-    "Glooko"
+    "Glooko",
+    SupportsHistoricalSync = true,
+    SupportsManualSync = true,
+    SupportedDataTypes = [SyncDataType.Glucose, SyncDataType.Treatments]
 )]
 public class GlookoConnectorConfiguration : BaseConnectorConfiguration
 {

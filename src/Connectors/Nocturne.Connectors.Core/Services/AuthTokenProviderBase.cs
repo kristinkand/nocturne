@@ -41,13 +41,19 @@ public abstract class AuthTokenProviderBase<TConfig>(
     public async Task<string?> GetValidTokenAsync(CancellationToken cancellationToken = default)
     {
         // Fast path: return cached token if still valid
-        if (!IsTokenExpired) return _token;
+        if (!IsTokenExpired)
+        {
+            return _token;
+        }
 
         await _tokenLock.WaitAsync(cancellationToken);
         try
         {
             // Double-check after acquiring lock
-            if (!IsTokenExpired) return _token;
+            if (!IsTokenExpired)
+            {
+                return _token;
+            }
 
             _logger.LogDebug("Token expired or missing, acquiring new token for {ProviderName}", GetType().Name);
 
@@ -62,17 +68,16 @@ public abstract class AuthTokenProviderBase<TConfig>(
                     "Successfully acquired token for {ProviderName}, expires at {ExpiresAt}",
                     GetType().Name,
                     _tokenExpiresAt);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to acquire token for {ProviderName}", GetType().Name);
+
+                return _token;
             }
 
+            _logger.LogWarning("Failed to acquire token for {ProviderName}", GetType().Name);
             return _token;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error acquiring token for {ProviderName}", GetType().Name);
+            _logger.LogError(ex, "Error acquiring token for {ProviderName} {ex}", GetType().Name, ex);
             return null;
         }
         finally
@@ -153,7 +158,7 @@ public abstract class AuthTokenProviderBase<TConfig>(
         return null;
     }
 
-    protected virtual void Dispose(bool disposing)
+    protected void Dispose(bool disposing)
     {
         if (_disposed) return;
         if (disposing) _tokenLock.Dispose();

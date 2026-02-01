@@ -56,7 +56,7 @@ public class MyLifeConnectorService(
         var actualSince = await CalculateSinceTimestampAsync(_config, since);
         var events = await eventsCache.GetEventsAsync(
             actualSince,
-            _config.SyncMonths,
+            DateTime.UtcNow,
             CancellationToken.None
         );
 
@@ -70,9 +70,10 @@ public class MyLifeConnectorService(
     )
     {
         var actualSince = await CalculateTreatmentSinceTimestampAsync(_config, from);
+        var actualUntil = to ?? DateTime.UtcNow;
         var events = await eventsCache.GetEventsAsync(
             actualSince,
-            _config.SyncMonths,
+            actualUntil,
             CancellationToken.None
         );
 
@@ -95,9 +96,10 @@ public class MyLifeConnectorService(
     )
     {
         var actualSince = await CalculateTreatmentSinceTimestampAsync(_config, from);
+        var actualUntil = to ?? DateTime.UtcNow;
         var events = await eventsCache.GetEventsAsync(
             actualSince,
-            _config.SyncMonths,
+            actualUntil,
             CancellationToken.None
         );
 

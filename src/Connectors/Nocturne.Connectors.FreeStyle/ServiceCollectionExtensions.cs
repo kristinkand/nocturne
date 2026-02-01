@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Extensions;
+using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.FreeStyle.Configurations;
-using Nocturne.Connectors.FreeStyle.Configurations.Constants;
 using Nocturne.Connectors.FreeStyle.Services;
 
 namespace Nocturne.Connectors.FreeStyle;
@@ -42,5 +44,16 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<LibreConnectorService>().ConfigureLibreLinkUpClient(server);
         services.AddHttpClient<LibreLinkAuthTokenProvider>().ConfigureLibreLinkUpClient(server);
+
+        // Register as Singleton to preserve token cache across requests
+        services.AddSingleton(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(nameof(LibreLinkAuthTokenProvider));
+            var config = sp.GetRequiredService<IOptions<LibreLinkUpConnectorConfiguration>>();
+            var logger = sp.GetRequiredService<ILogger<LibreLinkAuthTokenProvider>>();
+            var retryStrategy = sp.GetRequiredService<IRetryDelayStrategy>();
+            return new LibreLinkAuthTokenProvider(config, httpClient, logger, retryStrategy);
+        });
     }
 }

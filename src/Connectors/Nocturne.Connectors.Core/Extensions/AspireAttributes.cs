@@ -7,7 +7,7 @@ namespace Nocturne.Connectors.Core.Extensions;
 ///     Used by source generators to generate connector extension methods.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class AspireParameterAttribute(
+public abstract class AspireParameterAttribute(
     string parameterName,
     string configPath,
     bool secret = false,
@@ -49,7 +49,6 @@ public class AspireParameterAttribute(
 [AttributeUsage(AttributeTargets.Class)]
 public class ConnectorRegistrationAttribute(
     string connectorName,
-    string projectTypeName,
     string serviceName,
     string environmentPrefix,
     string connectSourceName,
@@ -57,21 +56,14 @@ public class ConnectorRegistrationAttribute(
     string icon = "",
     ConnectorCategory category = ConnectorCategory.Other,
     string description = "",
-    string displayName = "",
-    ConnectorType type = ConnectorType.CSharpProject,
-    string? scriptPath = null)
-    : Attribute
+    string displayName = ""
+) : Attribute
 {
     /// <summary>
     ///     Connector name used in configuration paths (e.g., "LibreLinkUp")
     /// </summary>
     public string ConnectorName { get; } = connectorName;
-
-    /// <summary>
-    ///     Project type name from generated Projects class (e.g., "Nocturne_Connectors_FreeStyle")
-    /// </summary>
-    public string ProjectTypeName { get; } = projectTypeName;
-
+    
     /// <summary>
     ///     Service name constant (e.g., "ServiceNames.LibreConnector")
     /// </summary>
@@ -115,12 +107,22 @@ public class ConnectorRegistrationAttribute(
     public string DisplayName { get; } = string.IsNullOrEmpty(displayName) ? connectorName : displayName;
 
     /// <summary>
-    ///     Type of connector project (e.g., "CSharpProject", "PythonApp")
+    ///     Whether the connector supports historical sync (date range).
     /// </summary>
-    public ConnectorType Type { get; } = type;
+    public bool SupportsHistoricalSync { get; set; } = true;
 
     /// <summary>
-    ///     Path to script or app directory (referenced from solution root) for non-C# projects
+    ///     Maximum historical days allowed for sync. 0 means unlimited.
     /// </summary>
-    public string? ScriptPath { get; } = scriptPath;
+    public int MaxHistoricalDays { get; set; }
+
+    /// <summary>
+    ///     Whether the connector supports manual sync triggers.
+    /// </summary>
+    public bool SupportsManualSync { get; set; } = true;
+
+    /// <summary>
+    ///     Supported data types for this connector.
+    /// </summary>
+    public SyncDataType[] SupportedDataTypes { get; set; } = [SyncDataType.Glucose];
 }

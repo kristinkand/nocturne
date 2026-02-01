@@ -58,9 +58,9 @@ public class ConnectorTestService
             var glookoConfig = new GlookoConnectorConfiguration
             {
                 ConnectSource = ConnectSource.Glooko,
-                GlookoUsername = config.GlookoEmail,
-                GlookoPassword = config.GlookoPassword,
-                GlookoServer = config.GlookoServer,
+                Email = config.GlookoEmail,
+                Password = config.GlookoPassword,
+                Server = config.GlookoServer,
             };
 
             var httpClient = new HttpClient();
@@ -142,9 +142,9 @@ public class ConnectorTestService
             var dexcomConfig = new DexcomConnectorConfiguration
             {
                 ConnectSource = ConnectSource.Dexcom,
-                DexcomUsername = config.DexcomUsername,
-                DexcomPassword = config.DexcomPassword,
-                DexcomServer = config.DexcomRegion,
+                Username = config.DexcomUsername,
+                Password = config.DexcomPassword,
+                Server = config.DexcomRegion,
             };
 
             var dexcomHttpClient = new HttpClient();
@@ -225,9 +225,9 @@ public class ConnectorTestService
             var libreConfig = new LibreLinkUpConnectorConfiguration
             {
                 ConnectSource = ConnectSource.LibreLinkUp,
-                LibreUsername = config.LibreUsername,
-                LibrePassword = config.LibrePassword,
-                LibreRegion = config.LibreRegion,
+                Username = config.LibreUsername,
+                Password = config.LibrePassword,
+                Region = config.LibreRegion,
             };
 
             var libreHttpClient = new HttpClient();

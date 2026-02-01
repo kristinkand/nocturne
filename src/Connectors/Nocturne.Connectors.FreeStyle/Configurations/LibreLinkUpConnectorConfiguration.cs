@@ -9,7 +9,6 @@ namespace Nocturne.Connectors.FreeStyle.Configurations;
 /// </summary>
 [ConnectorRegistration(
     "LibreLinkUp",
-    "Nocturne_Connectors_FreeStyle",
     ServiceNames.LibreConnector,
     "LIBRE",
     "ConnectSource.LibreLinkUp",
@@ -17,7 +16,11 @@ namespace Nocturne.Connectors.FreeStyle.Configurations;
     "libre",
     ConnectorCategory.Cgm,
     "Connect to LibreView for CGM data",
-    "FreeStyle Libre"
+    "FreeStyle Libre",
+    SupportsHistoricalSync = false,
+    MaxHistoricalDays = 7,
+    SupportsManualSync = true,
+    SupportedDataTypes = [SyncDataType.Glucose]
 )]
 public class LibreLinkUpConnectorConfiguration : BaseConnectorConfiguration
 {

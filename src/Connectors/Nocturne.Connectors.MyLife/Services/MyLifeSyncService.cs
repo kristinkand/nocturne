@@ -1,25 +1,28 @@
+using Microsoft.Extensions.Logging;
 using Nocturne.Connectors.MyLife.Models;
 
 namespace Nocturne.Connectors.MyLife.Services;
 
-public class MyLifeSyncService(
-    MyLifeSoapClient soapClient,
-    MyLifeArchiveReader archiveReader)
+public class MyLifeSyncService(MyLifeSoapClient soapClient, ILogger<MyLifeSyncService> logger)
 {
     public async Task<IReadOnlyList<MyLifeEvent>> FetchEventsAsync(
         string serviceUrl,
         string authToken,
         string patientId,
         DateTime since,
-        int maxMonths,
+        DateTime until,
         CancellationToken cancellationToken)
     {
-        var months = BuildMonths(since, DateTime.UtcNow);
-        if (maxMonths > 0 && months.Count > maxMonths) months = months.Skip(months.Count - maxMonths).ToList();
+        var months = BuildMonths(since, until);
+        logger.LogInformation(
+            "MyLife fetching months: [{Months}] (since={Since:yyyy-MM-dd}, until={Until:yyyy-MM-dd})",
+            string.Join(", ", months), since, until);
 
         var results = new List<MyLifeEvent>();
         foreach (var month in months)
         {
+            logger.LogDebug("MyLife fetching month {Month}", month);
+
             var encrypted = await soapClient.SyncEventsAsync(
                 serviceUrl,
                 patientId,
@@ -28,15 +31,25 @@ public class MyLifeSyncService(
                 cancellationToken
             );
 
-            if (string.IsNullOrWhiteSpace(encrypted)) continue;
+            if (string.IsNullOrWhiteSpace(encrypted))
+            {
+                logger.LogDebug("MyLife month {Month} returned empty", month);
+                continue;
+            }
 
             var decrypted = MyLifeDecryptor.Decrypt(encrypted);
-            if (!IsZip(decrypted)) continue;
+            if (!IsZip(decrypted))
+            {
+                logger.LogWarning("MyLife month {Month} decrypted data is not a ZIP", month);
+                continue;
+            }
 
-            var events = archiveReader.ReadEvents(decrypted);
+            var events = MyLifeArchiveReader.ReadEvents(decrypted);
+            logger.LogInformation("MyLife month {Month} returned {Count} events", month, events.Count);
             results.AddRange(events);
         }
 
+        logger.LogInformation("MyLife total events fetched: {Count}", results.Count);
         return results;
     }
 

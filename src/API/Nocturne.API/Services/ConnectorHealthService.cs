@@ -1,85 +1,43 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Nocturne.API.Models;
-using Nocturne.Core.Constants;
+using Nocturne.Connectors.Core.Services;
 using Nocturne.Core.Contracts;
 using Nocturne.Infrastructure.Data.Abstractions;
 
 namespace Nocturne.API.Services;
 
-public class ConnectorHealthService : IConnectorHealthService
+public class ConnectorHealthService(
+    IConfiguration configuration,
+    IPostgreSqlService postgreSqlService,
+    IConnectorConfigurationService connectorConfigService,
+    ILogger<ConnectorHealthService> logger)
+    : IConnectorHealthService
 {
-    private readonly IConfiguration _configuration;
-    private readonly IPostgreSqlService _postgreSqlService;
-    private readonly IConnectorConfigurationService _connectorConfigService;
-    private readonly ILogger<ConnectorHealthService> _logger;
-
     private record ConnectorDefinition(
         string Id, // Matches AvailableConnector.Id and health check name
         string ConfigKey,
         string DataSourceId
     ); // Maps to DataSources constant (e.g., "glooko-connector")
 
-    private static readonly ConnectorDefinition[] AllConnectors = new[]
+    private static IReadOnlyList<ConnectorDefinition> GetConnectorDefinitions()
     {
-        new ConnectorDefinition(
-            "nightscout",
-            "Nightscout",
-            DataSources.NightscoutConnector
-        ),
-        new ConnectorDefinition(
-            "dexcom",
-            "Dexcom",
-            DataSources.DexcomConnector
-        ),
-        new ConnectorDefinition(
-            "libre",
-            "FreeStyle",
-            DataSources.LibreConnector
-        ),
-        new ConnectorDefinition(
-            "glooko",
-            "Glooko",
-            DataSources.GlookoConnector
-        ),
-        new ConnectorDefinition(
-            "carelink",
-            "MiniMed",
-            DataSources.MiniMedConnector
-        ),
-        new ConnectorDefinition(
-            "myfitnesspal",
-            "MyFitnessPal",
-            DataSources.MyFitnessPalConnector
-        ),
-        new ConnectorDefinition(
-            "mylife",
-            "MyLife",
-            DataSources.MyLifeConnector
-        ),
-    };
-
-    public ConnectorHealthService(
-        IConfiguration configuration,
-        IPostgreSqlService postgreSqlService,
-        IConnectorConfigurationService connectorConfigService,
-        ILogger<ConnectorHealthService> logger
-    )
-    {
-        _configuration = configuration;
-        _postgreSqlService = postgreSqlService;
-        _connectorConfigService = connectorConfigService;
-        _logger = logger;
+        return ConnectorMetadataService.GetAll()
+            .Select(connector => new ConnectorDefinition(
+                connector.ConnectorName.ToLowerInvariant(),
+                connector.ConnectorName,
+                connector.DataSourceId
+            ))
+            .ToList();
     }
 
     public async Task<IEnumerable<ConnectorStatusDto>> GetConnectorStatusesAsync(
         CancellationToken cancellationToken = default
     )
     {
-        _logger.LogDebug("Getting status for all {Count} connectors", AllConnectors.Length);
+        var connectors = GetConnectorDefinitions();
+        logger.LogDebug("Getting status for all {Count} connectors", connectors.Count);
 
         var results = new List<ConnectorStatusDto>();
-        foreach (var connector in AllConnectors)
+        foreach (var connector in connectors)
         {
             var status = await GetConnectorStatusWithDbStatsAsync(connector, cancellationToken);
             results.Add(status);
@@ -105,12 +63,12 @@ public class ConnectorHealthService : IConnectorHealthService
         var enabledConfig = await GetConnectorEnabledConfigAsync(connector.Id, connector.ConfigKey, cancellationToken);
 
         // Always get database stats for historical data (entries + treatments)
-        var dbStats = await _postgreSqlService.GetEntryStatsBySourceAsync(
+        var dbStats = await postgreSqlService.GetEntryStatsBySourceAsync(
             connector.DataSourceId,
             cancellationToken
         );
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Connector {Id}: EnabledConfig={EnabledConfig}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}",
             connector.Id,
             enabledConfig?.ToString() ?? "not configured",
@@ -144,13 +102,12 @@ public class ConnectorHealthService : IConnectorHealthService
             Status = enabledConfig == true ? "Running" : "Not Configured",
             IsHealthy = enabledConfig == true,
             State = enabledConfig == true ? "Running" : "Not Configured",
+            // ALWAYS use database stats for entry counts - sidecar stats may be stale/cached
+            // DB is the single source of truth for how much data exists
+            TotalEntries = dbStats.TotalItems,
+            LastEntryTime = dbStats.LastItemTime,
+            EntriesLast24Hours = dbStats.ItemsLast24Hours
         };
-
-        // ALWAYS use database stats for entry counts - sidecar stats may be stale/cached
-        // DB is the single source of truth for how much data exists
-        liveStatus.TotalEntries = dbStats.TotalItems;
-        liveStatus.LastEntryTime = dbStats.LastItemTime;
-        liveStatus.EntriesLast24Hours = dbStats.ItemsLast24Hours;
 
         return liveStatus;
     }
@@ -166,7 +123,7 @@ public class ConnectorHealthService : IConnectorHealthService
     {
         // First check environment configuration: Parameters:Connectors:{ConfigKey}:Enabled
         // This determines if the connector is even available/running in Aspire
-        var envEnabled = _configuration.GetValue<bool?>($"Parameters:Connectors:{configKey}:Enabled");
+        var envEnabled = configuration.GetValue<bool?>($"Parameters:Connectors:{configKey}:Enabled");
 
         // If environment config explicitly disables the connector, it's not running in Aspire
         // so we shouldn't try to reach it regardless of DB config
@@ -177,16 +134,8 @@ public class ConnectorHealthService : IConnectorHealthService
 
         // Now check database-stored runtime configuration
         // This is where the UI stores the enabled state
-        var dbConfig = await _connectorConfigService.GetConfigurationAsync(connectorId, cancellationToken);
-        if (dbConfig != null)
-        {
-            // If we have a database config, use its IsActive state
-            // But only if the connector is available in the environment (envEnabled != false)
-            return dbConfig.IsActive;
-        }
-
-        // Fall back to environment configuration
-        return envEnabled;
+        var dbConfig = await connectorConfigService.GetConfigurationAsync(connectorId, cancellationToken);
+        return dbConfig?.IsActive ?? envEnabled;
     }
 
 }

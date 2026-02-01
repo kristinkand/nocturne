@@ -1,4 +1,4 @@
-namespace Nocturne.Connectors.MyLife.Configurations.Constants;
+namespace Nocturne.Connectors.MyLife.Mappers.Constants;
 
 internal static class MyLifeBolusTypes
 {

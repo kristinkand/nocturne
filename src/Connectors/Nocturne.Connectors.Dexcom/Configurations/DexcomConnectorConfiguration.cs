@@ -9,7 +9,6 @@ namespace Nocturne.Connectors.Dexcom.Configurations;
 /// </summary>
 [ConnectorRegistration(
     "Dexcom",
-    "Nocturne_Connectors_Dexcom",
     ServiceNames.DexcomConnector,
     "DEXCOM",
     "ConnectSource.Dexcom",
@@ -17,7 +16,11 @@ namespace Nocturne.Connectors.Dexcom.Configurations;
     "dexcom",
     ConnectorCategory.Cgm,
     "Connect to Dexcom Share or Clarity",
-    "Dexcom"
+    "Dexcom",
+    SupportsHistoricalSync = true,
+    MaxHistoricalDays = 90,
+    SupportsManualSync = true,
+    SupportedDataTypes = [SyncDataType.Glucose]
 )]
 public class DexcomConnectorConfiguration : BaseConnectorConfiguration
 {

@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Extensions;
+using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Dexcom.Configurations;
-using Nocturne.Connectors.Dexcom.Configurations.Constants;
 using Nocturne.Connectors.Dexcom.Services;
 
 namespace Nocturne.Connectors.Dexcom;
@@ -35,5 +37,16 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<DexcomConnectorService>().ConfigureDexcomClient(serverUrl);
         services.AddHttpClient<DexcomAuthTokenProvider>().ConfigureDexcomClient(serverUrl);
+
+        // Register as Singleton to preserve token cache across requests
+        services.AddSingleton(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(nameof(DexcomAuthTokenProvider));
+            var config = sp.GetRequiredService<IOptions<DexcomConnectorConfiguration>>();
+            var logger = sp.GetRequiredService<ILogger<DexcomAuthTokenProvider>>();
+            var retryStrategy = sp.GetRequiredService<IRetryDelayStrategy>();
+            return new DexcomAuthTokenProvider(config, httpClient, logger, retryStrategy);
+        });
     }
 }

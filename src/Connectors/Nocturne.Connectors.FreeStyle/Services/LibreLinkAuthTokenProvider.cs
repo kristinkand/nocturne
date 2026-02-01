@@ -6,7 +6,6 @@ using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Core.Services;
 using Nocturne.Connectors.FreeStyle.Configurations;
-using Nocturne.Connectors.FreeStyle.Configurations.Constants;
 
 namespace Nocturne.Connectors.FreeStyle.Services;
 

@@ -1,4 +1,4 @@
-namespace Nocturne.Connectors.Glooko.Configurations.Constants;
+namespace Nocturne.Connectors.Glooko.Configurations;
 
 /// <summary>
 ///     Constants specific to Glooko connector

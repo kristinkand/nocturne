@@ -1,4 +1,4 @@
-namespace Nocturne.Connectors.FreeStyle.Configurations.Constants;
+namespace Nocturne.Connectors.FreeStyle.Configurations;
 
 /// <summary>
 ///     Constants specific to LibreLinkUp/FreeStyle connector

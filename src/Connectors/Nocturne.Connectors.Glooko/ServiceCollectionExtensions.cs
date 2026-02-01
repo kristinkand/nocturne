@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Utilities;
 using Nocturne.Connectors.Glooko.Configurations;
-using Nocturne.Connectors.Glooko.Configurations.Constants;
 using Nocturne.Connectors.Glooko.Services;
 
 namespace Nocturne.Connectors.Glooko;

@@ -146,6 +146,27 @@ public class ServicesController : ControllerBase
     }
 
     /// <summary>
+    /// Get capabilities for a specific connector.
+    /// </summary>
+    /// <param name="id">The connector ID (e.g., "dexcom", "libre")</param>
+    /// <returns>Connector capabilities</returns>
+    [HttpGet("connectors/{id}/capabilities")]
+    [ProducesResponseType(typeof(ConnectorCapabilities), 200)]
+    [ProducesResponseType(404)]
+    public ActionResult<ConnectorCapabilities> GetConnectorCapabilities(string id)
+    {
+        _logger.LogDebug("Getting connector capabilities for: {Id}", id);
+
+        var capabilities = _dataSourceService.GetConnectorCapabilities(id);
+        if (capabilities == null)
+        {
+            return NotFound(new { error = $"Connector not found: {id}" });
+        }
+
+        return Ok(capabilities);
+    }
+
+    /// <summary>
     /// Get uploader apps that can push data to Nocturne with setup instructions.
     /// </summary>
     /// <returns>List of uploader apps with setup instructions</returns>

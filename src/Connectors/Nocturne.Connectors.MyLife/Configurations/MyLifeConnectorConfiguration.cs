@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.Core.Models;
 using Nocturne.Core.Constants;
@@ -7,15 +6,17 @@ namespace Nocturne.Connectors.MyLife.Configurations;
 
 [ConnectorRegistration(
     "MyLife",
-    "Nocturne_Connectors_MyLife",
-    ServiceNames.MyLifeConnector,
-    ServiceNames.ConnectorEnvironment.MyLifePrefix,
+    "MYLIFE",
+    "MYLIFE",
     "ConnectSource.MyLife",
     "mylife-connector",
     "mylife",
     ConnectorCategory.Pump,
     "Connect to MyLife for pump data",
-    "MyLife"
+    "MyLife",
+    SupportsHistoricalSync = true,
+    SupportsManualSync = true,
+    SupportedDataTypes = [SyncDataType.Glucose, SyncDataType.Treatments]
 )]
 public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
 {
@@ -24,145 +25,78 @@ public class MyLifeConnectorConfiguration : BaseConnectorConfiguration
         ConnectSource = ConnectSource.MyLife;
     }
 
-    [Required]
-    [AspireParameter(
-        "mylife-username",
-        "Username",
-        true,
-        "MyLife account username"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeUsername)]
-    [RuntimeConfigurable("Username", "Connection")]
-    public string MyLifeUsername { get; set; } = string.Empty;
+    [ConnectorProperty("Username",
+        Required = true,
+        Secret = true,
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "MyLife account username")]
+    public string Username { get; set; } = string.Empty;
 
-    [Required]
-    [Secret]
-    [AspireParameter(
-        "mylife-password",
-        "Password",
-        true,
-        "MyLife account password"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifePassword)]
-    public string MyLifePassword { get; set; } = string.Empty;
+    [ConnectorProperty("Password",
+        Required = true,
+        Secret = true,
+        Description = "MyLife account password")]
+    public string Password { get; set; } = string.Empty;
 
-    [AspireParameter(
-        "mylife-patient-id",
-        "PatientId",
-        false,
-        "Patient id for MyLife",
-        ""
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifePatientId)]
-    [RuntimeConfigurable("Patient ID", "Connection")]
-    public string MyLifePatientId { get; set; } = string.Empty;
+    [ConnectorProperty("PatientId",
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "Patient id for MyLife")]
+    public string PatientId { get; set; } = string.Empty;
 
-    [AspireParameter(
-        "mylife-service-url",
-        "ServiceUrl",
-        false,
-        "Override MyLife service url",
-        ""
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeServiceUrl)]
-    [RuntimeConfigurable("Service URL", "Connection")]
-    [ConfigSchema(Format = "uri")]
-    public string MyLifeServiceUrl { get; set; } = string.Empty;
+    [ConnectorProperty("ServiceUrl",
+        RuntimeConfigurable = true,
+        Category = "Connection",
+        Description = "Override MyLife service url",
+        Format = "uri")]
+    public string ServiceUrl { get; set; } = string.Empty;
 
-    [AspireParameter(
-        "mylife-enable-glucose-sync",
-        "EnableGlucoseSync",
-        false,
-        "Enable CGM glucose sync",
-        "true"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableGlucoseSync)]
-    [RuntimeConfigurable("Enable Glucose Sync", "Sync")]
+    [ConnectorProperty("EnableGlucoseSync",
+        RuntimeConfigurable = true,
+        Category = "Sync",
+        Description = "Enable CGM glucose sync",
+        DefaultValue = "true")]
     public bool EnableGlucoseSync { get; set; } = true;
 
-    [AspireParameter(
-        "mylife-enable-manual-bg-sync",
-        "EnableManualBgSync",
-        false,
-        "Enable manual BG sync",
-        "true"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableManualBgSync)]
-    [RuntimeConfigurable("Enable Manual BG Sync", "Sync")]
+    [ConnectorProperty("EnableManualBgSync",
+        RuntimeConfigurable = true,
+        Category = "Sync",
+        Description = "Enable manual BG sync",
+        DefaultValue = "true")]
     public bool EnableManualBgSync { get; set; } = true;
 
-    [AspireParameter(
-        "mylife-enable-meal-carb-consolidation",
-        "EnableMealCarbConsolidation",
-        false,
-        "Enable meal carb and bolus consolidation",
-        "true"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableMealCarbConsolidation)]
-    [RuntimeConfigurable("Meal Carb Consolidation", "Advanced")]
+    [ConnectorProperty("EnableMealCarbConsolidation",
+        RuntimeConfigurable = true,
+        Category = "Advanced",
+        Description = "Enable meal carb and bolus consolidation",
+        DefaultValue = "true")]
     public bool EnableMealCarbConsolidation { get; set; } = true;
 
-    [AspireParameter(
-        "mylife-enable-temp-basal-consolidation",
-        "EnableTempBasalConsolidation",
-        false,
-        "Enable temp basal consolidation",
-        "true"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeEnableTempBasalConsolidation)]
-    [RuntimeConfigurable("Temp Basal Consolidation", "Advanced")]
+    [ConnectorProperty("EnableTempBasalConsolidation",
+        RuntimeConfigurable = true,
+        Category = "Advanced",
+        Description = "Enable temp basal consolidation",
+        DefaultValue = "true")]
     public bool EnableTempBasalConsolidation { get; set; } = true;
 
-    [AspireParameter(
-        "mylife-temp-basal-consolidation-window-minutes",
-        "TempBasalConsolidationWindowMinutes",
-        false,
-        "Temp basal consolidation window in minutes",
-        "5"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeTempBasalConsolidationWindowMinutes)]
-    [RuntimeConfigurable("Consolidation Window (min)", "Advanced")]
-    [ConfigSchema(Minimum = 1, Maximum = 30)]
+    [ConnectorProperty("TempBasalConsolidationWindowMinutes",
+        RuntimeConfigurable = true,
+        Category = "Advanced",
+        Description = "Temp basal consolidation window in minutes",
+        DefaultValue = "5",
+        MinValue = 1,
+        MaxValue = 30)]
     public int TempBasalConsolidationWindowMinutes { get; set; } = 5;
 
-    [AspireParameter(
-        "mylife-app-platform",
-        "AppPlatform",
-        false,
-        "MyLife app platform",
-        "2"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeAppPlatform)]
+    [ConnectorProperty("AppPlatform",
+        Description = "MyLife app platform",
+        DefaultValue = "2")]
     public int AppPlatform { get; set; } = 2;
 
-    [AspireParameter(
-        "mylife-app-version",
-        "AppVersion",
-        false,
-        "MyLife app version",
-        "20403"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeAppVersion)]
+    [ConnectorProperty("AppVersion",
+        Description = "MyLife app version",
+        DefaultValue = "20403")]
     public int AppVersion { get; set; } = 20403;
 
-    [AspireParameter(
-        "mylife-sync-months",
-        "SyncMonths",
-        false,
-        "Maximum months to sync",
-        "6"
-    )]
-    [EnvironmentVariable(ConnectorEnvironmentVariables.MyLifeSyncMonths)]
-    [RuntimeConfigurable("Sync Months", "Sync")]
-    [ConfigSchema(Minimum = 1, Maximum = 24)]
-    public int SyncMonths { get; set; } = 6;
-
-    protected override void ValidateSourceSpecificConfiguration()
-    {
-        if (string.IsNullOrWhiteSpace(MyLifeUsername))
-            throw new ArgumentException("CONNECT_MYLIFE_USERNAME is required");
-
-        if (string.IsNullOrWhiteSpace(MyLifePassword))
-            throw new ArgumentException("CONNECT_MYLIFE_PASSWORD is required");
-    }
 }

@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nocturne.Connectors.Core.Extensions;
 using Nocturne.Connectors.MyLife.Configurations;
 using Nocturne.Connectors.MyLife.Mappers;
@@ -25,10 +27,19 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<MyLifeAuthTokenProvider>();
         services.AddHttpClient<MyLifeConnectorService>();
         services.AddSingleton<MyLifeSessionStore>();
-        services.AddSingleton<MyLifeAuthTokenProvider>();
 
-        services.AddSingleton<MyLifeDecryptor>();
-        services.AddSingleton<MyLifeArchiveReader>();
+        // Register as Singleton to preserve token cache across requests
+        services.AddSingleton(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(nameof(MyLifeAuthTokenProvider));
+            var options = sp.GetRequiredService<IOptions<MyLifeConnectorConfiguration>>();
+            var soapClient = sp.GetRequiredService<MyLifeSoapClient>();
+            var sessionStore = sp.GetRequiredService<MyLifeSessionStore>();
+            var logger = sp.GetRequiredService<ILogger<MyLifeAuthTokenProvider>>();
+            return new MyLifeAuthTokenProvider(options, httpClient, soapClient, sessionStore, logger);
+        });
+
         services.AddSingleton<MyLifeSyncService>();
         services.AddSingleton<MyLifeEventProcessor>();
         services.AddSingleton<MyLifeEventsCache>();

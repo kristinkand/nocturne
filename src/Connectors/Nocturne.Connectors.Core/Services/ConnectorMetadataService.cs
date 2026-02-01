@@ -11,6 +11,7 @@ namespace Nocturne.Connectors.Core.Services;
 public static class ConnectorMetadataService
 {
     private static readonly Dictionary<string, ConnectorDisplayInfo> _connectorsByDataSourceId = new();
+    private static readonly Dictionary<string, ConnectorRegistrationAttribute> _registrationsByConnectorId = new();
     private static bool _initialized;
     private static readonly object _lock = new();
 
@@ -43,6 +44,20 @@ public static class ConnectorMetadataService
         return _connectorsByDataSourceId.Values.FirstOrDefault(c =>
             c.ConnectorName.Equals(connectorId, StringComparison.OrdinalIgnoreCase)
         );
+    }
+
+    /// <summary>
+    ///     Gets connector registration info by Connector ID (name) (e.g., "dexcom").
+    /// </summary>
+    public static ConnectorRegistrationAttribute? GetRegistrationByConnectorId(string? connectorId)
+    {
+        if (string.IsNullOrEmpty(connectorId))
+            return null;
+
+        EnsureInitialized();
+
+        _registrationsByConnectorId.TryGetValue(connectorId.ToLowerInvariant(), out var registration);
+        return registration;
     }
 
     /// <summary>
@@ -130,6 +145,9 @@ public static class ConnectorMetadataService
                             };
 
                             _connectorsByDataSourceId[attr.DataSourceId] = info;
+
+                            var connectorId = attr.ConnectorName.ToLowerInvariant();
+                            _registrationsByConnectorId[connectorId] = attr;
                         }
                     }
                 }
@@ -150,6 +168,7 @@ public static class ConnectorMetadataService
         lock (_lock)
         {
             _connectorsByDataSourceId.Clear();
+            _registrationsByConnectorId.Clear();
             _initialized = false;
         }
     }
