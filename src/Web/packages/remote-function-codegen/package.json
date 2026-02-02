@@ -1,0 +1,23 @@
+{
+  "name": "@nocturne/remote-function-codegen",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Generates SvelteKit remote functions from OpenAPI spec",
+  "main": "dist/index.js",
+  "bin": {
+    "generate-remote": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "generate": "node --loader ts-node/esm src/index.ts",
+    "dev": "node --loader ts-node/esm src/index.ts --watch"
+  },
+  "dependencies": {
+    "openapi-types": "^12.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
