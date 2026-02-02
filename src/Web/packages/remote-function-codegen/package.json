@@ -9,15 +9,15 @@
   },
   "scripts": {
     "build": "tsc",
-    "generate": "node --loader ts-node/esm src/index.ts",
-    "dev": "node --loader ts-node/esm src/index.ts --watch"
+    "generate": "node --import tsx src/index.ts",
+    "dev": "node --import tsx src/index.ts --watch"
   },
   "dependencies": {
     "openapi-types": "^12.1.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.19.0",
     "typescript": "^5.8.3"
   }
 }

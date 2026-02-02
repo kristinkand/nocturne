@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { readFileSync, existsSync } from 'fs';
 import { defaultConfig } from './config.js';
+import { parseOpenApiSpec } from './parser.js';
 
 async function main() {
   console.log('Remote Function Generator');
   console.log('=========================\n');
 
-  // Verify OpenAPI spec exists
   if (!existsSync(defaultConfig.openApiPath)) {
     console.error(`OpenAPI spec not found: ${defaultConfig.openApiPath}`);
     console.error('Run "aspire run" first to generate the OpenAPI spec.');
@@ -16,19 +16,24 @@ async function main() {
   const spec = JSON.parse(readFileSync(defaultConfig.openApiPath, 'utf-8'));
   console.log(`Loaded OpenAPI spec: ${spec.info.title} v${spec.info.version}`);
 
-  // Count operations with remote annotations
-  let queryCount = 0;
-  let commandCount = 0;
+  const parsed = parseOpenApiSpec(spec);
 
-  for (const [path, methods] of Object.entries(spec.paths)) {
-    for (const [method, operation] of Object.entries(methods as Record<string, any>)) {
-      if (operation['x-remote-type'] === 'query') queryCount++;
-      if (operation['x-remote-type'] === 'command') commandCount++;
-    }
+  console.log(`\nFound ${parsed.operations.length} annotated operations across ${parsed.tags.length} tags:`);
+
+  const byTag = new Map<string, typeof parsed.operations>();
+  for (const op of parsed.operations) {
+    const existing = byTag.get(op.tag) ?? [];
+    existing.push(op);
+    byTag.set(op.tag, existing);
   }
 
-  console.log(`Found ${queryCount} queries and ${commandCount} commands with remote annotations.`);
-  console.log('\nGenerator scaffold ready. Implementation coming next.');
+  for (const [tag, ops] of byTag) {
+    const queries = ops.filter(o => o.remoteType === 'query').length;
+    const commands = ops.filter(o => o.remoteType === 'command').length;
+    console.log(`  - ${tag}: ${queries} queries, ${commands} commands`);
+  }
+
+  console.log('\nParser ready. Code generation coming next.');
 }
 
 main().catch(console.error);
