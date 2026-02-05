@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
 using Nocturne.Infrastructure.Data.Mappers;
 
@@ -7,7 +8,7 @@ namespace Nocturne.Infrastructure.Data.Repositories;
 /// <summary>
 /// Repository for compression low suggestion operations
 /// </summary>
-public class CompressionLowRepository
+public class CompressionLowRepository : ICompressionLowRepository
 {
     private readonly NocturneDbContext _context;
 
@@ -96,14 +97,17 @@ public class CompressionLowRepository
     }
 
     /// <summary>
-    /// Check if suggestions already exist for a night
+    /// Check if active (Pending or Accepted) suggestions exist for a night.
+    /// Dismissed suggestions do not block re-detection.
     /// </summary>
-    public async Task<bool> SuggestionsExistForNightAsync(
+    public async Task<bool> ActiveSuggestionsExistForNightAsync(
         DateOnly nightOf,
         CancellationToken cancellationToken = default)
     {
         return await _context.CompressionLowSuggestions
-            .AnyAsync(s => s.NightOf == nightOf, cancellationToken);
+            .AnyAsync(s => s.NightOf == nightOf
+                && (s.Status == "Pending" || s.Status == "Accepted"),
+                cancellationToken);
     }
 
     /// <summary>

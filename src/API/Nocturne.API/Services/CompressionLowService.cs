@@ -1,8 +1,6 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
-using Nocturne.Infrastructure.Data.Repositories;
 
 namespace Nocturne.API.Services;
 
@@ -11,7 +9,7 @@ namespace Nocturne.API.Services;
 /// </summary>
 public class CompressionLowService : ICompressionLowService
 {
-    private readonly CompressionLowRepository _repository;
+    private readonly ICompressionLowRepository _repository;
     private readonly IStateSpanService _stateSpanService;
     private readonly IEntryService _entryService;
     private readonly ITreatmentService _treatmentService;
@@ -20,12 +18,8 @@ public class CompressionLowService : ICompressionLowService
     private readonly IUISettingsService _uiSettingsService;
     private readonly ILogger<CompressionLowService> _logger;
 
-    // Default overnight window
-    private const int DefaultBedtimeHour = 23;
-    private const int DefaultWakeTimeHour = 7;
-
     public CompressionLowService(
-        CompressionLowRepository repository,
+        ICompressionLowRepository repository,
         IStateSpanService stateSpanService,
         IEntryService entryService,
         ITreatmentService treatmentService,
@@ -68,7 +62,7 @@ public class CompressionLowService : ICompressionLowService
         var userTimeZone = await GetUserTimeZoneForNightAsync(suggestion.NightOf, cancellationToken);
 
         // Get overnight window for entries in user's local time
-        var (windowStart, windowEnd) = GetOvernightWindow(
+        var (windowStart, windowEnd) = TimeZoneHelper.GetOvernightWindow(
             suggestion.NightOf,
             userTimeZone,
             sleepSchedule.BedtimeHour,
@@ -88,18 +82,7 @@ public class CompressionLowService : ICompressionLowService
 
         return new CompressionLowSuggestionWithEntries
         {
-            Id = suggestion.Id,
-            StartMills = suggestion.StartMills,
-            EndMills = suggestion.EndMills,
-            Confidence = suggestion.Confidence,
-            Status = suggestion.Status,
-            NightOf = suggestion.NightOf,
-            CreatedAt = suggestion.CreatedAt,
-            ReviewedAt = suggestion.ReviewedAt,
-            StateSpanId = suggestion.StateSpanId,
-            LowestGlucose = suggestion.LowestGlucose,
-            DropRate = suggestion.DropRate,
-            RecoveryMinutes = suggestion.RecoveryMinutes,
+            Suggestion = suggestion,
             Entries = entries.OrderBy(e => e.Mills),
             Treatments = treatments.OrderBy(t => t.Mills)
         };
@@ -215,10 +198,8 @@ public class CompressionLowService : ICompressionLowService
         var pendingCount = await _repository.CountPendingForNightAsync(nightOf, cancellationToken);
         if (pendingCount == 0)
         {
-            // Archive the notification - use nightOf as sourceId
             try
             {
-                // TODO: Get userId from context when multi-user is implemented
                 await _notificationService.ArchiveBySourceAsync(
                     userId: "default",
                     type: InAppNotificationType.CompressionLowReview,
@@ -233,33 +214,12 @@ public class CompressionLowService : ICompressionLowService
         }
     }
 
-    private static (long windowStart, long windowEnd) GetOvernightWindow(
-        DateOnly nightOf,
-        TimeZoneInfo userTimeZone,
-        int bedtimeHour = DefaultBedtimeHour,
-        int wakeTimeHour = DefaultWakeTimeHour)
-    {
-        // Night of 2026-02-01 means bedtime on Feb 1 to wake time on Feb 2 in user's local time
-        var startLocalDateTime = nightOf.ToDateTime(new TimeOnly(bedtimeHour, 0));
-        var endLocalDateTime = nightOf.AddDays(1).ToDateTime(new TimeOnly(wakeTimeHour, 0));
-
-        // Convert local times to UTC for querying
-        var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocalDateTime, userTimeZone);
-        var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocalDateTime, userTimeZone);
-
-        var windowStart = new DateTimeOffset(startUtc, TimeSpan.Zero).ToUnixTimeMilliseconds();
-        var windowEnd = new DateTimeOffset(endUtc, TimeSpan.Zero).ToUnixTimeMilliseconds();
-
-        return (windowStart, windowEnd);
-    }
-
     private async Task<TimeZoneInfo> GetUserTimeZoneForNightAsync(
         DateOnly nightOf,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Get the timestamp for 2am on the night in question (middle of the night)
             var approximateNightTime = nightOf.ToDateTime(new TimeOnly(2, 0));
             var approximateMills = new DateTimeOffset(approximateNightTime, TimeSpan.Zero).ToUnixTimeMilliseconds();
 
@@ -267,9 +227,7 @@ public class CompressionLowService : ICompressionLowService
             var timezoneId = profile?.Store?.Values.FirstOrDefault()?.Timezone;
 
             if (!string.IsNullOrEmpty(timezoneId))
-            {
-                return GetTimeZoneInfoFromId(timezoneId);
-            }
+                return TimeZoneHelper.GetTimeZoneInfoFromId(timezoneId);
         }
         catch (Exception ex)
         {
@@ -277,62 +235,5 @@ public class CompressionLowService : ICompressionLowService
         }
 
         return TimeZoneInfo.Utc;
-    }
-
-    private TimeZoneInfo GetTimeZoneInfoFromId(string timezoneId)
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            // IANA to Windows timezone mapping for common timezones
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var windowsId = TryConvertIanaToWindows(timezoneId);
-                if (windowsId != null)
-                {
-                    try
-                    {
-                        return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
-                    }
-                    catch (TimeZoneNotFoundException)
-                    {
-                        _logger.LogWarning("Could not find Windows timezone {WindowsId} converted from {IanaId}", windowsId, timezoneId);
-                    }
-                }
-            }
-
-            _logger.LogWarning("Could not find timezone {TimezoneId}, using UTC", timezoneId);
-            return TimeZoneInfo.Utc;
-        }
-    }
-
-    private static string? TryConvertIanaToWindows(string ianaId)
-    {
-        var mapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["America/New_York"] = "Eastern Standard Time",
-            ["America/Chicago"] = "Central Standard Time",
-            ["America/Denver"] = "Mountain Standard Time",
-            ["America/Los_Angeles"] = "Pacific Standard Time",
-            ["America/Anchorage"] = "Alaskan Standard Time",
-            ["Pacific/Honolulu"] = "Hawaiian Standard Time",
-            ["America/Phoenix"] = "US Mountain Standard Time",
-            ["Europe/London"] = "GMT Standard Time",
-            ["Europe/Paris"] = "Romance Standard Time",
-            ["Europe/Berlin"] = "W. Europe Standard Time",
-            ["Europe/Moscow"] = "Russian Standard Time",
-            ["Asia/Tokyo"] = "Tokyo Standard Time",
-            ["Asia/Shanghai"] = "China Standard Time",
-            ["Asia/Kolkata"] = "India Standard Time",
-            ["Australia/Sydney"] = "AUS Eastern Standard Time",
-            ["Australia/Perth"] = "W. Australia Standard Time",
-            ["Etc/UTC"] = "UTC",
-            ["UTC"] = "UTC"
-        };
-
-        return mapping.GetValueOrDefault(ianaId);
     }
 }

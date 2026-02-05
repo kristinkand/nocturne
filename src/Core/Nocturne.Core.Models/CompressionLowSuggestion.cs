@@ -81,10 +81,17 @@ public class CompressionLowSuggestion
 }
 
 /// <summary>
-/// Compression low suggestion with associated glucose entries for charting
+/// Compression low suggestion with associated glucose entries for charting.
+/// Uses composition to wrap a suggestion with additional chart data.
 /// </summary>
-public class CompressionLowSuggestionWithEntries : CompressionLowSuggestion
+public class CompressionLowSuggestionWithEntries
 {
+    /// <summary>
+    /// The compression low suggestion
+    /// </summary>
+    [JsonPropertyName("suggestion")]
+    public CompressionLowSuggestion Suggestion { get; set; } = new();
+
     /// <summary>
     /// Glucose entries for the overnight window
     /// </summary>

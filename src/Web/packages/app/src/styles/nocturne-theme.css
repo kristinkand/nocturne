@@ -67,6 +67,10 @@
   --iob-basal: rgba(60, 160, 255, 0.8);
   --iob-bolus: rgba(30, 150, 252, 1);
   --iob-temporary: rgba(100, 180, 255, 0.85);
+
+  /* Data Exclusion - Dark Mode - slightly higher opacity for visibility on dark backgrounds */
+  --data-exclusion-compression-low: rgba(255, 165, 0, 0.2);
+  --data-exclusion-sensor-error: rgba(255, 0, 0, 0.15);
 }
 
 /* Tailwind theme integration */

@@ -248,7 +248,7 @@ builder.Services.AddHttpClient(
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 // Compression low detection services
-builder.Services.AddScoped<CompressionLowRepository>();
+builder.Services.AddScoped<ICompressionLowRepository, CompressionLowRepository>();
 builder.Services.AddScoped<ICompressionLowService, CompressionLowService>();
 builder.Services.AddSingleton<CompressionLowDetectionService>();
 builder.Services.AddSingleton<ICompressionLowDetectionService>(sp =>

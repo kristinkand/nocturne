@@ -822,8 +822,8 @@ msgstr ""
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/profile/+page.svelte
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
@@ -845,8 +845,8 @@ msgstr ""
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/calendar/+page.svelte
 #: src/routes/profile/+page.svelte
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
@@ -1197,9 +1197,9 @@ msgstr ""
 #: src/routes/download/+page.svelte
 #: src/routes/reports/battery/+page.svelte
 #: src/routes/reports/battery/+page.svelte
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/treatments/+page.svelte
@@ -1457,8 +1457,8 @@ msgstr ""
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/meals/+page.svelte
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "All"
@@ -6099,8 +6099,8 @@ msgstr ""
 
 #: src/lib/components/clock-builder/TextStyleControls.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Medium"
 msgstr ""
@@ -8373,7 +8373,7 @@ msgstr ""
 msgid "Average (mg/dL)"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Lowest (mg/dL)"
@@ -10264,8 +10264,8 @@ msgstr ""
 msgid "Failed to cancel migration"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
-#: src/routes/reports/compression-lows/review/+page.server.ts
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 msgid "Pending"
@@ -10361,7 +10361,7 @@ msgid ""
 "partial data."
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 msgid "Start Date"
@@ -15041,7 +15041,7 @@ msgstr ""
 msgid "Send Test"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "MMM d"
 msgstr ""
 
@@ -15049,71 +15049,71 @@ msgstr ""
 #. placeholder {1}: format(nextDay, 'd, yyyy')
 #. placeholder {0}: dateStr
 #. placeholder {1}: nextDayStr
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Night of {0}-{1}"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Compression Low Review"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Review and confirm detected compression lows"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "No pending suggestions"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "There are no compression lows waiting for review."
 msgstr ""
 
 #~ msgid "Select date to test"
 #~ msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "<0/> Run Detection"
 msgstr ""
 
 #. placeholder {0}: suggestion.lowestGlucose.toFixed(0)
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Low: {0} mg/dL"
 msgstr ""
 
 #. placeholder {0}: suggestion.recoveryMinutes
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Recovery: {0}min"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Drop Rate (mg/dL/min)"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Recovery (min)"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Selected Range"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Drag the handles on the chart to adjust"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "<0/> Accept"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "<0/> Dismiss"
 msgstr ""
@@ -15126,7 +15126,7 @@ msgstr ""
 msgid "<0/> Add URL"
 msgstr ""
 
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "End Date (optional)"
 msgstr ""
@@ -15135,7 +15135,7 @@ msgstr ""
 #. placeholder {1}: detectionResult.nightsProcessed
 #. placeholder {0}: detectionResult.totalSuggestionsCreated
 #. placeholder {1}: detectionResult.nightsProcessed
-#: src/routes/reports/compression-lows/review/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Found {0} compression low(s) across {1} night(s)"
 msgstr ""
@@ -15198,38 +15198,38 @@ msgid ""
 "detected, you'll be notified to review and confirm them."
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "MMM d, yyyy"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Compression Low History - Nocturne"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Compression Low History"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "View past compression low detections and their outcomes"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "<0/> Review Pending"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Status:"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Accepted"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Dismissed"
@@ -15237,41 +15237,41 @@ msgstr ""
 
 #. placeholder {0}: filteredSuggestions().length
 #. placeholder {1}: filteredSuggestions().length !== 1 ? 's' : ''
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "{0} result{1}"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "No compression lows detected yet"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "When compression lows are detected during your sleep, they'll appear here."
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "No matching results"
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Try changing your filter criteria."
 msgstr ""
 
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Unknown date"
 msgstr ""
 
 #. placeholder {0}: suggestion.lowestGlucose ?? '—'
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Lowest: {0} mg/dL"
 msgstr ""
 
 #. placeholder {0}: getConfidenceLabel(suggestion.confidence ?? 0)
-#: src/routes/reports/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Confidence: {0}"
 msgstr ""
 

@@ -1,10 +1,8 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Models;
-using Nocturne.Infrastructure.Data.Repositories;
 
 namespace Nocturne.API.Services.BackgroundServices;
 
@@ -17,16 +15,14 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
     private readonly ILogger<CompressionLowDetectionService> _logger;
 
     // Detection configuration - sleep hours are now read from settings
-    private const int DefaultBedtimeHour = 23;
-    private const int DefaultWakeTimeHour = 7;
     private const int DetectionDelayMinutes = 15;
-    private const double MinDropRateMgDlPerMin = 2.0;
-    private const int MinDropDurationMinutes = 10;
-    private const double NadirThresholdMgDl = 70.0;
-    private const double RecoveryPercentage = 0.20;
-    private const int MaxRecoveryMinutes = 60;
-    private const double MinConfidenceThreshold = 0.5;
-    private const int StartTrimMinutes = 5; // Trim leadup window to avoid capturing too many good readings
+    internal const double MinDropRateMgDlPerMin = 2.0;
+    internal const int MinDropDurationMinutes = 10;
+    internal const double NadirThresholdMgDl = 70.0;
+    internal const double RecoveryPercentage = 0.20;
+    internal const int MaxRecoveryMinutes = 60;
+    internal const double MinConfidenceThreshold = 0.5;
+    private const int StartTrimMinutes = 5;
 
     public CompressionLowDetectionService(
         IServiceProvider serviceProvider,
@@ -44,29 +40,39 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         {
             try
             {
-                // Get wake time from settings to schedule detection
+                // Get wake time and user timezone from settings to schedule detection
                 int wakeTimeHour;
+                TimeZoneInfo userTimeZone;
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var uiSettingsService = scope.ServiceProvider.GetRequiredService<IUISettingsService>();
+                    var profileDataService = scope.ServiceProvider.GetRequiredService<IProfileDataService>();
                     var settings = await uiSettingsService.GetSettingsAsync(stoppingToken);
                     wakeTimeHour = settings.DataQuality.SleepSchedule.WakeTimeHour;
+
+                    // Resolve user timezone so we schedule in their local time
+                    userTimeZone = await GetUserTimeZoneAsync(profileDataService, stoppingToken);
                 }
 
-                // Calculate next run time (wake time + delay)
-                var now = DateTime.UtcNow;
-                var nextRun = now.Date.AddHours(wakeTimeHour).AddMinutes(DetectionDelayMinutes);
+                // Calculate next run time in user's local time, then convert to UTC for delay
+                var nowUtc = DateTime.UtcNow;
+                var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, userTimeZone);
+                var nextRunLocal = nowLocal.Date.AddHours(wakeTimeHour).AddMinutes(DetectionDelayMinutes);
 
-                if (now >= nextRun)
-                    nextRun = nextRun.AddDays(1);
+                if (nowLocal >= nextRunLocal)
+                    nextRunLocal = nextRunLocal.AddDays(1);
 
-                var delay = nextRun - now;
-                _logger.LogDebug("Next compression low detection scheduled for {NextRun}", nextRun);
+                var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(nextRunLocal, userTimeZone);
+                var delay = nextRunUtc - nowUtc;
+                _logger.LogDebug(
+                    "Next compression low detection scheduled for {NextRunLocal} ({Timezone})",
+                    nextRunLocal, userTimeZone.Id);
 
                 await Task.Delay(delay, stoppingToken);
 
-                // Run detection for last night
-                var lastNight = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+                // Determine "last night" in the user's local timezone
+                var detectionTimeLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+                var lastNight = DateOnly.FromDateTime(detectionTimeLocal.AddDays(-1));
                 await DetectForNightAsync(lastNight, stoppingToken);
             }
             catch (OperationCanceledException)
@@ -76,7 +82,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in compression low detection cycle");
-                // Wait before retrying
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
@@ -89,7 +94,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         CancellationToken cancellationToken = default)
     {
         using var scope = _serviceProvider.CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<CompressionLowRepository>();
+        var repository = scope.ServiceProvider.GetRequiredService<ICompressionLowRepository>();
         var entryService = scope.ServiceProvider.GetRequiredService<IEntryService>();
         var treatmentService = scope.ServiceProvider.GetRequiredService<ITreatmentService>();
         var notificationService = scope.ServiceProvider.GetRequiredService<IInAppNotificationService>();
@@ -109,8 +114,8 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         var bedtimeHour = sleepSchedule.BedtimeHour;
         var wakeTimeHour = sleepSchedule.WakeTimeHour;
 
-        // Check if already processed
-        if (await repository.SuggestionsExistForNightAsync(nightOf, cancellationToken))
+        // Check if already processed (only active suggestions block re-detection)
+        if (await repository.ActiveSuggestionsExistForNightAsync(nightOf, cancellationToken))
         {
             _logger.LogDebug("Already processed night of {NightOf}", nightOf);
             return 0;
@@ -120,7 +125,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         var userTimeZone = await GetUserTimeZoneForNightAsync(profileDataService, nightOf, cancellationToken);
 
         // Get overnight window in user's local time
-        var (windowStart, windowEnd) = GetOvernightWindow(nightOf, userTimeZone, bedtimeHour, wakeTimeHour);
+        var (windowStart, windowEnd) = TimeZoneHelper.GetOvernightWindow(nightOf, userTimeZone, bedtimeHour, wakeTimeHour);
 
         // Get entries
         var entries = (await entryService.GetEntriesAsync(
@@ -154,7 +159,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             var confidence = ScoreCandidate(candidate, treatments, userTimeZone);
             if (confidence >= MinConfidenceThreshold)
             {
-                // Trim the start by 5 minutes to avoid capturing too many good readings before the drop
                 var trimmedStartMills = candidate.StartMills + (StartTrimMinutes * 60 * 1000);
                 suggestions.Add(new CompressionLowSuggestion
                 {
@@ -178,7 +182,8 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             await repository.CreateAsync(suggestion, cancellationToken);
         }
 
-        // Create notification if any suggestions
+        // Create notification if any suggestions found.
+        // Notification uses i18n keys so the frontend can render localized text.
         if (suggestions.Count > 0)
         {
             await CreateNotificationAsync(nightOf, suggestions.Count, notificationService, cancellationToken);
@@ -191,7 +196,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         return suggestions.Count;
     }
 
-    private record VShapeCandidate(
+    internal record VShapeCandidate(
         long StartMills,
         long EndMills,
         double LowestGlucose,
@@ -200,7 +205,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         int RecoveryMinutes,
         DateTime NadirTime);
 
-    private List<VShapeCandidate> DetectVShapeCandidates(List<Entry> entries)
+    internal List<VShapeCandidate> DetectVShapeCandidates(List<Entry> entries)
     {
         var candidates = new List<VShapeCandidate>();
 
@@ -208,16 +213,13 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         {
             var current = entries[i];
 
-            // Check if this could be a nadir
             if (!current.Sgv.HasValue || current.Sgv.Value >= NadirThresholdMgDl)
                 continue;
 
-            // Look for drop leading to this point
             var dropInfo = FindDrop(entries, i);
             if (dropInfo == null)
                 continue;
 
-            // Look for recovery after this point
             var recoveryInfo = FindRecovery(entries, i, dropInfo.Value.preDropValue);
             if (recoveryInfo == null)
                 continue;
@@ -233,11 +235,10 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             ));
         }
 
-        // Merge overlapping candidates
         return MergeOverlappingCandidates(candidates);
     }
 
-    private (int startIndex, double preDropValue, double maxDropRate)? FindDrop(
+    internal (int startIndex, double preDropValue, double maxDropRate)? FindDrop(
         List<Entry> entries, int nadirIndex)
     {
         var nadir = entries[nadirIndex];
@@ -263,7 +264,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             }
             else if (dropDurationMinutes > 0)
             {
-                // Drop rate dropped below threshold - this is where the drop started
                 if (dropDurationMinutes >= MinDropDurationMinutes)
                 {
                     return (i + 1, entries[i + 1].Sgv!.Value, maxDropRate);
@@ -275,7 +275,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         return null;
     }
 
-    private (int endIndex, int recoveryMinutes)? FindRecovery(
+    internal (int endIndex, int recoveryMinutes)? FindRecovery(
         List<Entry> entries, int nadirIndex, double preDropValue)
     {
         var nadir = entries[nadirIndex];
@@ -301,7 +301,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         return null;
     }
 
-    private List<VShapeCandidate> MergeOverlappingCandidates(List<VShapeCandidate> candidates)
+    internal List<VShapeCandidate> MergeOverlappingCandidates(List<VShapeCandidate> candidates)
     {
         if (candidates.Count <= 1)
             return candidates;
@@ -314,7 +314,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             var last = merged[^1];
             if (candidate.StartMills <= last.EndMills)
             {
-                // Merge - keep the one with lower nadir
                 if (candidate.LowestGlucose < last.LowestGlucose)
                 {
                     merged[^1] = candidate with
@@ -340,18 +339,15 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         return merged;
     }
 
-    private double ScoreCandidate(VShapeCandidate candidate, List<Treatment> treatments, TimeZoneInfo userTimeZone)
+    internal double ScoreCandidate(VShapeCandidate candidate, List<Treatment> treatments, TimeZoneInfo userTimeZone)
     {
         var score = 0.4; // Base score
 
         // V-shape clarity (0-0.3)
-        // Sharp drop and recovery = cleaner V
-        var sharpness = candidate.MaxDropRate / 5.0; // Normalize to ~0-1 range
+        var sharpness = candidate.MaxDropRate / 5.0;
         score += Math.Min(0.3, sharpness * 0.3);
 
         // Time of night (0-0.25)
-        // 2am-5am = full points, 11pm-1am or after 6am = reduced
-        // IMPORTANT: Convert nadir time to user's local time for correct scoring
         var nadirTimeLocal = TimeZoneInfo.ConvertTimeFromUtc(candidate.NadirTime, userTimeZone);
         var nadirHour = nadirTimeLocal.Hour;
         if (nadirHour >= 2 && nadirHour <= 5)
@@ -362,7 +358,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             score += 0.10;
 
         // Recovery completeness (0-0.2)
-        // Fast recovery = higher score
         var recoveryScore = 1.0 - (candidate.RecoveryMinutes / (double)MaxRecoveryMinutes);
         score += recoveryScore * 0.2;
 
@@ -379,25 +374,21 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
 
     private double CalculateIobPenalty(long dropStartMills, List<Treatment> treatments)
     {
-        // Check for insulin in the 2 hours before drop
         var windowStart = dropStartMills - (2 * 60 * 60 * 1000);
         var recentInsulin = treatments
             .Where(t => t.Mills >= windowStart && t.Mills <= dropStartMills)
             .Sum(t => t.Insulin ?? 0);
 
-        // More than 2u = max penalty
         return Math.Min(0.2, recentInsulin * 0.1);
     }
 
     private double CalculateCarbPenalty(long dropStartMills, List<Treatment> treatments)
     {
-        // Check for carbs in the 2 hours before drop
         var windowStart = dropStartMills - (2 * 60 * 60 * 1000);
         var recentCarbs = treatments
             .Where(t => t.Mills >= windowStart && t.Mills <= dropStartMills)
             .Sum(t => t.Carbs ?? 0);
 
-        // More than 30g = max penalty
         return Math.Min(0.15, recentCarbs / 200.0);
     }
 
@@ -407,23 +398,21 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         IInAppNotificationService notificationService,
         CancellationToken cancellationToken)
     {
-        var subtitle = count == 1
-            ? "1 potential compression low found last night"
-            : $"{count} potential compression lows found last night";
-
+        // Use i18n keys for title/subtitle so the frontend renders localized text.
+        // The metadata contains the count and nightOf for interpolation.
         await notificationService.CreateNotificationAsync(
             userId: "default", // TODO: Multi-user support
             type: InAppNotificationType.CompressionLowReview,
             urgency: NotificationUrgency.Info,
-            title: "Compression lows detected",
-            subtitle: subtitle,
+            title: "compression_low_detected",
+            subtitle: "compression_low_detected_subtitle",
             sourceId: nightOf.ToString("yyyy-MM-dd"),
             actions: new List<NotificationActionDto>
             {
                 new()
                 {
                     ActionId = "review",
-                    Label = "Review",
+                    Label = "review",
                     Icon = "eye",
                     Variant = "default"
                 }
@@ -436,24 +425,25 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             cancellationToken: cancellationToken);
     }
 
-    private static (long windowStart, long windowEnd) GetOvernightWindow(
-        DateOnly nightOf,
-        TimeZoneInfo userTimeZone,
-        int bedtimeHour = DefaultBedtimeHour,
-        int wakeTimeHour = DefaultWakeTimeHour)
+    private async Task<TimeZoneInfo> GetUserTimeZoneAsync(
+        IProfileDataService profileDataService,
+        CancellationToken cancellationToken)
     {
-        // Create local times for the overnight window
-        var startLocalDateTime = nightOf.ToDateTime(new TimeOnly(bedtimeHour, 0));
-        var endLocalDateTime = nightOf.AddDays(1).ToDateTime(new TimeOnly(wakeTimeHour, 0));
+        try
+        {
+            var profile = await profileDataService.GetProfileAtTimestampAsync(
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), cancellationToken);
+            var timezoneId = profile?.Store?.Values.FirstOrDefault()?.Timezone;
 
-        // Convert local times to UTC for querying
-        var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocalDateTime, userTimeZone);
-        var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocalDateTime, userTimeZone);
+            if (!string.IsNullOrEmpty(timezoneId))
+                return TimeZoneHelper.GetTimeZoneInfoFromId(timezoneId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get user timezone, using UTC");
+        }
 
-        var windowStart = new DateTimeOffset(startUtc, TimeSpan.Zero).ToUnixTimeMilliseconds();
-        var windowEnd = new DateTimeOffset(endUtc, TimeSpan.Zero).ToUnixTimeMilliseconds();
-
-        return (windowStart, windowEnd);
+        return TimeZoneInfo.Utc;
     }
 
     private async Task<TimeZoneInfo> GetUserTimeZoneForNightAsync(
@@ -463,8 +453,6 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
     {
         try
         {
-            // Get the timestamp for 2am on the night in question (middle of the night)
-            // First try with UTC, then we'll refine
             var approximateNightTime = nightOf.ToDateTime(new TimeOnly(2, 0));
             var approximateMills = new DateTimeOffset(approximateNightTime, TimeSpan.Zero).ToUnixTimeMilliseconds();
 
@@ -472,9 +460,7 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
             var timezoneId = profile?.Store?.Values.FirstOrDefault()?.Timezone;
 
             if (!string.IsNullOrEmpty(timezoneId))
-            {
-                return GetTimeZoneInfoFromId(timezoneId);
-            }
+                return TimeZoneHelper.GetTimeZoneInfoFromId(timezoneId);
         }
         catch (Exception ex)
         {
@@ -482,65 +468,5 @@ public class CompressionLowDetectionService : BackgroundService, ICompressionLow
         }
 
         return TimeZoneInfo.Utc;
-    }
-
-    private TimeZoneInfo GetTimeZoneInfoFromId(string timezoneId)
-    {
-        try
-        {
-            // Try direct lookup first
-            return TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            // IANA to Windows timezone mapping for common timezones
-            // This handles cases where the profile has IANA IDs but we're on Windows
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var windowsId = TryConvertIanaToWindows(timezoneId);
-                if (windowsId != null)
-                {
-                    try
-                    {
-                        return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
-                    }
-                    catch (TimeZoneNotFoundException)
-                    {
-                        _logger.LogWarning("Could not find Windows timezone {WindowsId} converted from {IanaId}", windowsId, timezoneId);
-                    }
-                }
-            }
-
-            _logger.LogWarning("Could not find timezone {TimezoneId}, using UTC", timezoneId);
-            return TimeZoneInfo.Utc;
-        }
-    }
-
-    private static string? TryConvertIanaToWindows(string ianaId)
-    {
-        // Common IANA to Windows timezone mappings
-        var mapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["America/New_York"] = "Eastern Standard Time",
-            ["America/Chicago"] = "Central Standard Time",
-            ["America/Denver"] = "Mountain Standard Time",
-            ["America/Los_Angeles"] = "Pacific Standard Time",
-            ["America/Anchorage"] = "Alaskan Standard Time",
-            ["Pacific/Honolulu"] = "Hawaiian Standard Time",
-            ["America/Phoenix"] = "US Mountain Standard Time",
-            ["Europe/London"] = "GMT Standard Time",
-            ["Europe/Paris"] = "Romance Standard Time",
-            ["Europe/Berlin"] = "W. Europe Standard Time",
-            ["Europe/Moscow"] = "Russian Standard Time",
-            ["Asia/Tokyo"] = "Tokyo Standard Time",
-            ["Asia/Shanghai"] = "China Standard Time",
-            ["Asia/Kolkata"] = "India Standard Time",
-            ["Australia/Sydney"] = "AUS Eastern Standard Time",
-            ["Australia/Perth"] = "W. Australia Standard Time",
-            ["Etc/UTC"] = "UTC",
-            ["UTC"] = "UTC"
-        };
-
-        return mapping.GetValueOrDefault(ianaId);
     }
 }
