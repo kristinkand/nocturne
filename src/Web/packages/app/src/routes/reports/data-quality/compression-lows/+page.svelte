@@ -394,8 +394,6 @@
 								{#if suggestionDetail?.entries && suggestionDetail.entries.length > 0 && chartDateRange}
 									<div class="mb-6 h-64">
 										<GlucoseChartCard
-											entries={suggestionDetail.entries}
-											treatments={suggestionDetail.treatments ?? []}
 											dateRange={chartDateRange}
 											compact={true}
 											heightClass="h-64"
