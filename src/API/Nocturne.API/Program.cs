@@ -251,6 +251,15 @@ builder.Services.AddHttpClient(
 // Statistics service for analytics and calculations
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
+// Compression low detection services
+builder.Services.AddScoped<ICompressionLowRepository, CompressionLowRepository>();
+builder.Services.AddScoped<ICompressionLowService, CompressionLowService>();
+builder.Services.AddSingleton<CompressionLowDetectionService>();
+builder.Services.AddSingleton<ICompressionLowDetectionService>(sp =>
+    sp.GetRequiredService<CompressionLowDetectionService>());
+builder.Services.AddHostedService(sp =>
+    sp.GetRequiredService<CompressionLowDetectionService>());
+
 // Data source service for services/connectors management
 builder.Services.AddScoped<IDataSourceService, DataSourceService>();
 
@@ -416,6 +425,7 @@ builder.Services.AddScoped<
     MyFitnessPalMatchingSettingsService
 >();
 builder.Services.AddScoped<IClockFaceService, ClockFaceService>();
+builder.Services.AddScoped<IChartDataService, ChartDataService>();
 
 // Note: Processing status service is registered by AddNocturneMemoryCache
 
