@@ -6,8 +6,8 @@ using NSwag.Generation.Processors.Contexts;
 namespace Nocturne.API.OpenApi;
 
 /// <summary>
-/// NSwag operation processor that emits x-remote-type and x-remote-invalidates
-/// extensions based on RemoteQuery/RemoteCommand attributes.
+/// NSwag operation processor that emits x-remote-type, x-remote-invalidates,
+/// and x-client-property extensions based on Remote* and ClientPropertyName attributes.
 /// </summary>
 public class RemoteFunctionOperationProcessor : IOperationProcessor
 {
@@ -32,6 +32,13 @@ public class RemoteFunctionOperationProcessor : IOperationProcessor
             {
                 context.OperationDescription.Operation.ExtensionData["x-remote-invalidates"] = commandAttr.Invalidates;
             }
+        }
+
+        var clientPropertyAttr = methodInfo.DeclaringType?.GetCustomAttribute<ClientPropertyNameAttribute>();
+        if (clientPropertyAttr != null)
+        {
+            context.OperationDescription.Operation.ExtensionData ??= new Dictionary<string, object?>();
+            context.OperationDescription.Operation.ExtensionData["x-client-property"] = clientPropertyAttr.PropertyName;
         }
 
         return true;

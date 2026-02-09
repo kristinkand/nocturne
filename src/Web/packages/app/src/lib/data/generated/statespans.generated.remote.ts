@@ -56,7 +56,7 @@ export const updateStateSpan = command(z.object({ id: z.string(), request: Updat
     const result = await apiClient.stateSpans.updateStateSpan(id, request as UpdateStateSpanRequest);
     await Promise.all([
       getStateSpans(undefined).refresh(),
-      getStateSpan(undefined).refresh()
+      getStateSpan(id).refresh()
     ]);
     return result;
   } catch (err) {

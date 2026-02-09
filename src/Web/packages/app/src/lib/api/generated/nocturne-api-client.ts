@@ -20033,13 +20033,25 @@ export enum CompressionLowStatus {
     Dismissed = "Dismissed",
 }
 
-export interface CompressionLowSuggestionWithEntries extends CompressionLowSuggestion {
+export interface CompressionLowSuggestionWithEntries {
+    suggestion?: CompressionLowSuggestion;
     entries?: Entry[];
     treatments?: Treatment[];
 }
 
-export function isCompressionLowSuggestionWithEntries(object: any): object is CompressionLowSuggestionWithEntries {
-    return object && object[''] === 'CompressionLowSuggestionWithEntries';
+export interface StateSpan {
+    id?: string | undefined;
+    category?: StateSpanCategory;
+    state?: string | undefined;
+    startMills?: number;
+    endMills?: number | undefined;
+    source?: string | undefined;
+    metadata?: { [key: string]: any; } | undefined;
+    originalId?: string | undefined;
+    createdAt?: Date | undefined;
+    updatedAt?: Date | undefined;
+    canonicalId?: string | undefined;
+    sources?: string[] | undefined;
 }
 
 export interface AcceptSuggestionRequest {
@@ -20047,26 +20059,20 @@ export interface AcceptSuggestionRequest {
     endMills?: number;
 }
 
-/** Result of compression low detection */
 export interface DetectionResult {
     totalSuggestionsCreated?: number;
     nightsProcessed?: number;
     results?: NightDetectionResult[];
 }
 
-/** Result of detection for a single night */
 export interface NightDetectionResult {
     nightOf?: string;
     suggestionsCreated?: number;
 }
 
-/** Request to trigger compression low detection */
 export interface TriggerDetectionRequest {
-    /** Single night to process (use this OR startDate/endDate) */
     nightOf?: string | undefined;
-    /** Start of date range (inclusive) */
     startDate?: string | undefined;
-    /** End of date range (inclusive) */
     endDate?: string | undefined;
 }
 
@@ -21007,21 +21013,6 @@ export interface ConnectorSyncStatus {
     isHealthy?: boolean;
     /** When this status was queried */
     queriedAt?: Date;
-}
-
-export interface StateSpan {
-    id?: string | undefined;
-    category?: StateSpanCategory;
-    state?: string | undefined;
-    startMills?: number;
-    endMills?: number | undefined;
-    source?: string | undefined;
-    metadata?: { [key: string]: any; } | undefined;
-    originalId?: string | undefined;
-    createdAt?: Date | undefined;
-    updatedAt?: Date | undefined;
-    canonicalId?: string | undefined;
-    sources?: string[] | undefined;
 }
 
 export interface CreateStateSpanRequest {

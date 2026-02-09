@@ -17,10 +17,12 @@ export interface OperationInfo {
   invalidates: string[];
   parameters: ParameterInfo[];
   requestBodySchema?: string;
+  requestBodyRequired?: boolean;
   isArrayBody?: boolean;
   responseSchema?: string;
   isVoidResponse: boolean;
   summary?: string;
+  clientPropertyName?: string;
 }
 
 export interface ParsedSpec {

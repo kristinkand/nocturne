@@ -26,6 +26,7 @@ public class StateSpansController : ControllerBase
     /// </summary>
     [HttpGet]
     [RemoteQuery]
+    [ProducesResponseType(typeof(IEnumerable<StateSpan>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<StateSpan>>> GetStateSpans(
         [FromQuery] StateSpanCategory? category = null,
         [FromQuery] string? state = null,
@@ -185,6 +186,7 @@ public class StateSpansController : ControllerBase
     /// </summary>
     [HttpGet("{id}")]
     [RemoteQuery]
+    [ProducesResponseType(typeof(StateSpan), StatusCodes.Status200OK)]
     public async Task<ActionResult<StateSpan>> GetStateSpan(string id, CancellationToken cancellationToken = default)
     {
         var span = await _stateSpanService.GetStateSpanByIdAsync(id, cancellationToken);
@@ -223,6 +225,7 @@ public class StateSpansController : ControllerBase
     /// </summary>
     [HttpPut("{id}")]
     [RemoteCommand(Invalidates = ["GetStateSpans", "GetStateSpan"])]
+    [ProducesResponseType(typeof(StateSpan), StatusCodes.Status200OK)]
     public async Task<ActionResult<StateSpan>> UpdateStateSpan(
         string id,
         [FromBody] UpdateStateSpanRequest request,

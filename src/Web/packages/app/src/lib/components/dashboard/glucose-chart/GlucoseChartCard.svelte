@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Treatment } from "$lib/api";
+  import { type Treatment, type BasalPoint } from "$lib/api";
   import { TreatmentEditDialog } from "$lib/components/treatments";
   import { updateTreatment } from "$lib/data/treatments.remote";
   import { toast } from "svelte-sonner";
@@ -1036,7 +1036,7 @@
 
       <ChartTooltip
         {context}
-        findBasalValue={(time) => findBasalValue(basalData, time)}
+        findBasalValue={(time) => findBasalValue(basalData, time) as BasalPoint | undefined}
         findIobValue={(time) => findSeriesValue(iobData, time)}
         findCobValue={(time) => findSeriesValue(cobData, time)}
         {findNearbyBolus}

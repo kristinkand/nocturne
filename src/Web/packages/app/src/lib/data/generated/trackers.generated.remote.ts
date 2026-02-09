@@ -212,11 +212,11 @@ export const createPreset = command(CreateTrackerPresetRequestSchema, async (req
 });
 
 /** Apply a preset (starts a new instance) */
-export const applyPreset = command(z.object({ id: z.string(), request: ApplyPresetRequestSchema }), async ({ id, request }) => {
+export const applyPreset = command(z.object({ id: z.string(), request: ApplyPresetRequestSchema.optional() }), async ({ id, request }) => {
   const { locals } = getRequestEvent();
   const { apiClient } = locals;
   try {
-    const result = await apiClient.trackers.applyPreset(id, request as ApplyPresetRequest);
+    const result = await apiClient.trackers.applyPreset(id, (request ?? {}) as ApplyPresetRequest);
     await Promise.all([
       getActiveInstances(undefined).refresh()
     ]);

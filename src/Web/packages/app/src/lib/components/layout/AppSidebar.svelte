@@ -39,7 +39,6 @@
     Palette,
     Timer,
     Layers,
-    Bug,
     ShieldCheck,
   } from "lucide-svelte";
   import type { AuthUser } from "$lib/stores/auth-store.svelte";

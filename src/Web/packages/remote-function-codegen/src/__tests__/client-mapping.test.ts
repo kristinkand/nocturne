@@ -9,32 +9,26 @@ describe('getClientPropertyName', () => {
     expect(getClientPropertyName('StateSpans')).toBe('stateSpans');
   });
 
-  it('strips version prefix', () => {
+  it('strips version prefix and camelCases', () => {
     expect(getClientPropertyName('V4 Trackers')).toBe('trackers');
-    expect(getClientPropertyName('V2 Notifications')).toBe('v2Notifications');
+    expect(getClientPropertyName('V2 Notifications')).toBe('notifications');
     expect(getClientPropertyName('V1 Entries')).toBe('entries');
   });
 
-  it('maps non-standard Foods tag', () => {
-    expect(getClientPropertyName('Foods')).toBe('foodsV4');
+  it('strips spaces from multi-word tags', () => {
+    expect(getClientPropertyName('Loop Notifications')).toBe('loopNotifications');
+    expect(getClientPropertyName('Chart Data')).toBe('chartData');
+    expect(getClientPropertyName('V4 Device Age')).toBe('deviceAge');
+    expect(getClientPropertyName('V4 Connector Settings')).toBe('connectorSettings');
   });
 
-  it('maps non-standard DData tag', () => {
-    expect(getClientPropertyName('DData')).toBe('v2DData');
-  });
-
-  it('maps non-standard Loop tag', () => {
-    expect(getClientPropertyName('Loop')).toBe('loopNotifications');
-  });
-
-  it('maps non-standard Prediction tag', () => {
-    expect(getClientPropertyName('Prediction')).toBe('predictions');
-  });
-
-  it('maps non-standard versioned tags', () => {
-    expect(getClientPropertyName('Notifications')).toBe('v2Notifications');
-    expect(getClientPropertyName('Properties')).toBe('v2Properties');
-    expect(getClientPropertyName('Summary')).toBe('v2Summary');
+  it('applies pure camelCase without overrides', () => {
+    // These tags now rely on [ClientPropertyName] for non-standard names
+    expect(getClientPropertyName('Foods')).toBe('foods');
+    expect(getClientPropertyName('DData')).toBe('dData');
+    expect(getClientPropertyName('Prediction')).toBe('prediction');
+    expect(getClientPropertyName('IOB')).toBe('iOB');
+    expect(getClientPropertyName('UI Settings')).toBe('uISettings');
   });
 
   it('falls back to camelCase for unknown tags', () => {

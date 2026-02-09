@@ -5,6 +5,7 @@ import type { OperationInfo, ParsedSpec, ParameterInfo, RemoteType } from './typ
 type OperationWithExtensions = OpenAPIV3.OperationObject & {
   'x-remote-type'?: RemoteType;
   'x-remote-invalidates'?: string[];
+  'x-client-property'?: string;
 };
 
 export function parseOpenApiSpec(spec: OpenAPIV3.Document): ParsedSpec {
@@ -55,10 +56,12 @@ export function parseOpenApiSpec(spec: OpenAPIV3.Document): ParsedSpec {
         invalidates,
         parameters,
         requestBodySchema,
+        requestBodyRequired: requestBodyResult?.required,
         isArrayBody,
         responseSchema,
         isVoidResponse,
         summary: operation.summary,
+        clientPropertyName: operation['x-client-property'],
       });
     }
   }
@@ -168,13 +171,14 @@ function findEnumName(
   return undefined;
 }
 
-function parseRequestBody(body: OpenAPIV3.RequestBodyObject | undefined): { schema: string; isArray: boolean } | undefined {
+function parseRequestBody(body: OpenAPIV3.RequestBodyObject | undefined): { schema: string; isArray: boolean; required: boolean } | undefined {
   if (!body?.content?.['application/json']?.schema) return undefined;
 
+  const required = body.required ?? false;
   const schema = body.content['application/json'].schema;
   if ('$ref' in schema) {
     const refName = schema.$ref.split('/').pop();
-    return refName ? { schema: `${refName}Schema`, isArray: false } : undefined;
+    return refName ? { schema: `${refName}Schema`, isArray: false, required } : undefined;
   }
 
   // Handle array request bodies (e.g., Treatment[])
@@ -183,7 +187,7 @@ function parseRequestBody(body: OpenAPIV3.RequestBodyObject | undefined): { sche
     const items = schemaObj.items as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
     if ('$ref' in items) {
       const itemName = items.$ref.split('/').pop();
-      return itemName ? { schema: `${itemName}Schema`, isArray: true } : undefined;
+      return itemName ? { schema: `${itemName}Schema`, isArray: true, required } : undefined;
     }
   }
 

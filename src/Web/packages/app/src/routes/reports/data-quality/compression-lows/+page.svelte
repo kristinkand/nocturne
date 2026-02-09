@@ -75,8 +75,8 @@
 	async function loadSuggestionDetail(id: string) {
 		selectedSuggestion = id;
 		suggestionDetail = await getCompressionLowSuggestion(id);
-		if (suggestionDetail && suggestionDetail.startMills && suggestionDetail.endMills) {
-			brushDomain = [new Date(suggestionDetail.startMills), new Date(suggestionDetail.endMills)];
+		if (suggestionDetail && suggestionDetail.suggestion?.startMills && suggestionDetail.suggestion?.endMills) {
+			brushDomain = [new Date(suggestionDetail.suggestion.startMills), new Date(suggestionDetail.suggestion.endMills)];
 		}
 	}
 
@@ -216,8 +216,8 @@
 		brushDomain = domain;
 	}
 
-	const isPending = $derived(suggestionDetail?.status?.toLowerCase() === 'pending');
-	const DetailStatusIcon = $derived(getStatusIcon(suggestionDetail?.status));
+	const isPending = $derived(suggestionDetail?.suggestion?.status?.toLowerCase() === 'pending');
+	const DetailStatusIcon = $derived(getStatusIcon(suggestionDetail?.suggestion?.status));
 </script>
 
 <svelte:head>
@@ -376,13 +376,13 @@
 							<CardHeader>
 								<div class="flex items-center justify-between">
 									<CardTitle>
-										{suggestionDetail.nightOf
-											? formatNightOf(suggestionDetail.nightOf)
+										{suggestionDetail.suggestion?.nightOf
+											? formatNightOf(suggestionDetail.suggestion.nightOf)
 											: 'Unknown'}
 									</CardTitle>
 									<div
 										class="flex h-8 w-8 items-center justify-center rounded-full {getStatusColor(
-											suggestionDetail.status
+											suggestionDetail.suggestion?.status
 										)}"
 									>
 										<DetailStatusIcon class="h-4 w-4" />
@@ -416,18 +416,18 @@
 								<div class="mb-6 grid grid-cols-3 gap-4 text-center">
 									<div>
 										<p class="text-2xl font-bold">
-											{suggestionDetail.lowestGlucose?.toFixed(0) ?? '-'}
+											{suggestionDetail.suggestion?.lowestGlucose?.toFixed(0) ?? '-'}
 										</p>
 										<p class="text-sm text-muted-foreground">Lowest (mg/dL)</p>
 									</div>
 									<div>
 										<p class="text-2xl font-bold">
-											{suggestionDetail.dropRate?.toFixed(1) ?? '-'}
+											{suggestionDetail.suggestion?.dropRate?.toFixed(1) ?? '-'}
 										</p>
 										<p class="text-sm text-muted-foreground">Drop Rate (mg/dL/min)</p>
 									</div>
 									<div>
-										<p class="text-2xl font-bold">{suggestionDetail.recoveryMinutes ?? '-'}</p>
+										<p class="text-2xl font-bold">{suggestionDetail.suggestion?.recoveryMinutes ?? '-'}</p>
 										<p class="text-sm text-muted-foreground">Recovery (min)</p>
 									</div>
 								</div>

@@ -423,6 +423,45 @@ describe('parseOpenApiSpec', () => {
     expect(result.operations[0].isArrayBody).toBe(false);
   });
 
+  it('parses x-client-property from operations', () => {
+    const spec = createSpec({
+      paths: {
+        '/api/v4/foods': {
+          get: {
+            tags: ['V4 Foods'],
+            operationId: 'Foods_GetFavorites',
+            'x-remote-type': 'query',
+            'x-client-property': 'foodsV4',
+            parameters: [],
+            responses: { '200': { description: 'OK' } },
+          } as any,
+        },
+      },
+    });
+
+    const result = parseOpenApiSpec(spec);
+    expect(result.operations[0].clientPropertyName).toBe('foodsV4');
+  });
+
+  it('sets clientPropertyName to undefined when x-client-property is absent', () => {
+    const spec = createSpec({
+      paths: {
+        '/api/v4/trackers': {
+          get: {
+            tags: ['V4 Trackers'],
+            operationId: 'Trackers_GetDefinitions',
+            'x-remote-type': 'query',
+            parameters: [],
+            responses: { '200': { description: 'OK' } },
+          } as any,
+        },
+      },
+    });
+
+    const result = parseOpenApiSpec(spec);
+    expect(result.operations[0].clientPropertyName).toBeUndefined();
+  });
+
   it('does not include schemas property in ParsedSpec', () => {
     const spec = createSpec({
       components: { schemas: { Foo: { type: 'object' } as any } },

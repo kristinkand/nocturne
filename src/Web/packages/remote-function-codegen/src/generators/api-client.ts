@@ -2,11 +2,6 @@
 import type { OpenAPIV3 } from 'openapi-types';
 import { getClientPropertyName } from '../utils/client-mapping.js';
 
-interface ClientInfo {
-  className: string;
-  propertyName: string;
-}
-
 /**
  * Generate the ApiClient wrapper class.
  *
@@ -14,23 +9,42 @@ interface ClientInfo {
  * has custom property names and should be maintained manually.
  */
 export function generateApiClient(spec: OpenAPIV3.Document): string {
-  // Extract all unique tags (which map to NSwag client classes)
-  const tags = new Set<string>();
+  // Map each tag to its NSwag client class name and optional client property override
+  type TagInfo = { prefix: string; clientProperty?: string };
+  const tagInfo = new Map<string, TagInfo>();
 
   for (const pathItem of Object.values(spec.paths ?? {})) {
     if (!pathItem) continue;
 
     for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
-      const operation = pathItem[method] as OpenAPIV3.OperationObject | undefined;
-      if (operation?.tags?.[0]) {
-        tags.add(operation.tags[0]);
+      const operation = pathItem[method] as (OpenAPIV3.OperationObject & { 'x-client-property'?: string }) | undefined;
+      if (operation?.tags?.[0] && operation.operationId) {
+        const tag = operation.tags[0];
+        if (!tagInfo.has(tag)) {
+          const prefix = operation.operationId.split('_')[0];
+          tagInfo.set(tag, {
+            prefix,
+            clientProperty: operation['x-client-property'],
+          });
+        }
       }
     }
   }
 
-  const clients = Array.from(tags).map(tagToClientInfo).sort((a, b) =>
-    a.propertyName.localeCompare(b.propertyName)
-  );
+  // Deduplicate by className (NSwag merges tags like "Treatments" and "V4 Treatments"
+  // into a single TreatmentsClient)
+  const seen = new Set<string>();
+  const clients = Array.from(tagInfo.entries())
+    .map(([tag, info]) => ({
+      className: `${info.prefix}Client`,
+      propertyName: info.clientProperty ?? getClientPropertyName(tag),
+    }))
+    .filter(c => {
+      if (seen.has(c.className)) return false;
+      seen.add(c.className);
+      return true;
+    })
+    .sort((a, b) => a.propertyName.localeCompare(b.propertyName));
 
   const imports = clients.map(c => c.className).join(',\n  ');
   const properties = clients.map(c => `  public readonly ${c.propertyName}: ${c.className};`).join('\n');
@@ -73,15 +87,3 @@ export * from "./generated/nocturne-api-client";
 `;
 }
 
-/**
- * Convert a tag name to client info (class name and property name).
- * NSwag generates class names like "TrackersClient", "EntriesClient".
- * Property names use the shared tag-to-property mapping.
- */
-function tagToClientInfo(tag: string): ClientInfo {
-  const cleaned = tag.replace(/^V\d+\s*/i, '');
-  return {
-    className: `${cleaned}Client`,
-    propertyName: getClientPropertyName(tag),
-  };
-}

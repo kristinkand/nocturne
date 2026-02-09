@@ -305,7 +305,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v2/authorization/permissions/trie": {
@@ -326,7 +327,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v2/authorization/subjects": {
@@ -370,7 +372,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       },
       "post": {
         "tags": [
@@ -432,7 +435,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllSubjects"
+        ]
       },
       "put": {
         "tags": [
@@ -504,7 +511,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllSubjects"
+        ]
       }
     },
     "/api/v2/authorization/subjects/{id}": {
@@ -560,7 +571,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllSubjects"
+        ]
       }
     },
     "/api/v2/authorization/roles": {
@@ -604,7 +619,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       },
       "post": {
         "tags": [
@@ -666,7 +682,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllRoles"
+        ]
       },
       "put": {
         "tags": [
@@ -738,7 +758,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllRoles"
+        ]
       }
     },
     "/api/v2/authorization/roles/{id}": {
@@ -794,7 +818,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetAllRoles"
+        ]
       }
     },
     "/api/v1/connectors/status": {
@@ -824,7 +852,7 @@
     "/auth/local/config": {
       "get": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Get local identity provider configuration",
         "operationId": "LocalAuth_GetConfig",
@@ -845,7 +873,7 @@
     "/auth/local/register": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Register a new user account",
         "operationId": "LocalAuth_Register",
@@ -888,7 +916,7 @@
     "/auth/local/login": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Log in with email and password",
         "operationId": "LocalAuth_Login",
@@ -941,7 +969,7 @@
     "/auth/local/verify-email": {
       "get": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Verify email address",
         "operationId": "LocalAuth_VerifyEmail",
@@ -975,7 +1003,7 @@
     "/auth/local/forgot-password": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Request password reset",
         "operationId": "LocalAuth_ForgotPassword",
@@ -1008,7 +1036,7 @@
     "/auth/local/reset-password": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Reset password with token",
         "operationId": "LocalAuth_ResetPassword",
@@ -1051,7 +1079,7 @@
     "/auth/local/change-password": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Change password for authenticated user",
         "operationId": "LocalAuth_ChangePassword",
@@ -1104,7 +1132,7 @@
     "/auth/local/check-email": {
       "get": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Check if email is allowed to register (for form validation)",
         "operationId": "LocalAuth_CheckEmail",
@@ -1135,7 +1163,7 @@
     "/auth/local/resend-verification": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Resend email verification",
         "operationId": "LocalAuth_ResendVerification",
@@ -1168,7 +1196,7 @@
     "/auth/local/admin/password-resets": {
       "get": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Get pending password reset requests (admin only)",
         "operationId": "LocalAuth_GetPendingPasswordResets",
@@ -1183,13 +1211,14 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/auth/local/admin/set-temporary-password": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Set a temporary password for a user (admin only)",
         "operationId": "LocalAuth_SetTemporaryPassword",
@@ -1226,13 +1255,17 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetPendingPasswordResets"
+        ]
       }
     },
     "/auth/local/admin/handle-password-reset/{requestId}": {
       "post": {
         "tags": [
-          "Authentication"
+          "LocalAuth"
         ],
         "summary": "Handle a password reset request by generating a reset link (admin only)",
         "operationId": "LocalAuth_HandlePasswordReset",
@@ -1269,7 +1302,11 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command",
+        "x-remote-invalidates": [
+          "GetPendingPasswordResets"
+        ]
       }
     },
     "/api/Metadata/websocket-events": {
@@ -1401,7 +1438,7 @@
     "/auth/providers": {
       "get": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Get available OIDC providers for login",
         "operationId": "Oidc_GetProviders",
@@ -1425,7 +1462,7 @@
     "/auth/login": {
       "get": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Initiate OIDC login flow\nRedirects to the OIDC provider's authorization endpoint",
         "operationId": "Oidc_Login",
@@ -1472,7 +1509,7 @@
     "/auth/callback": {
       "get": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Handle OIDC callback from provider\nExchanges authorization code for tokens and creates session",
         "operationId": "Oidc_Callback",
@@ -1538,7 +1575,7 @@
     "/auth/refresh": {
       "post": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Refresh the session tokens\nUses the refresh token to get a new access token",
         "operationId": "Oidc_Refresh",
@@ -1569,7 +1606,7 @@
     "/auth/logout": {
       "post": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Logout and revoke the session",
         "operationId": "Oidc_Logout",
@@ -1597,13 +1634,14 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command"
       }
     },
     "/auth/userinfo": {
       "get": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Get current user information",
         "operationId": "Oidc_GetUserInfo",
@@ -1634,7 +1672,7 @@
     "/auth/session": {
       "get": {
         "tags": [
-          "Authentication"
+          "Oidc"
         ],
         "summary": "Get current session information",
         "operationId": "Oidc_GetSession",
@@ -1799,7 +1837,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v1/Statistics/glucose-distribution": {
@@ -1876,7 +1915,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v1/Statistics/treatment-summary": {
@@ -2455,7 +2495,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v1/Statistics/site-change-impact": {
@@ -2532,7 +2573,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v1/Statistics/insulin-delivery-stats": {
@@ -2575,7 +2617,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v1/Statistics/basal-analysis": {
@@ -2618,7 +2661,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/Versions": {
@@ -2660,7 +2704,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "oidcDiscovery"
       }
     },
     "/.well-known/jwks.json": {
@@ -2681,7 +2726,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "oidcDiscovery"
       }
     },
     "/.well-known/oauth-authorization-server": {
@@ -2702,7 +2748,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "oidcDiscovery"
       }
     },
     "/api/v4/Battery/current": {
@@ -5414,7 +5461,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "foodsV4"
       }
     },
     "/api/v4/foods/{foodId}/favorite": {
@@ -5447,7 +5495,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "foodsV4"
       },
       "delete": {
         "tags": [
@@ -5478,7 +5527,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "foodsV4"
       }
     },
     "/api/v4/foods/recent": {
@@ -5514,7 +5564,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "foodsV4"
       }
     },
     "/api/v4/meal-matching/food-entries/{id}": {
@@ -5708,7 +5759,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command"
       }
     },
     "/api/v4/migration/start": {
@@ -5751,7 +5803,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command"
       }
     },
     "/api/v4/migration/{jobId}/status": {
@@ -5794,7 +5847,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/migration/{jobId}/cancel": {
@@ -5830,7 +5884,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "command"
       }
     },
     "/api/v4/migration/history": {
@@ -5854,7 +5909,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/migration/pending-config": {
@@ -5875,7 +5931,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/migration/sources": {
@@ -5899,7 +5956,8 @@
               }
             }
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/connectors/myfitnesspal/settings": {
@@ -6142,7 +6200,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "predictions"
       }
     },
     "/api/v4/predictions/status": {
@@ -6163,7 +6222,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "predictions"
       }
     },
     "/api/v4/processing/status/{correlationId}": {
@@ -6326,7 +6386,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/Retrospective/timeline": {
@@ -6382,7 +6443,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/Retrospective/basal-timeline": {
@@ -6438,7 +6500,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-remote-type": "query"
       }
     },
     "/api/v4/services": {
@@ -9120,7 +9183,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       },
       "put": {
         "tags": [
@@ -9165,7 +9229,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/ui-settings/{section}": {
@@ -9204,7 +9269,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/ui-settings/notifications": {
@@ -9251,7 +9317,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/ui-settings/notifications/alarms": {
@@ -9275,7 +9342,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       },
       "put": {
         "tags": [
@@ -9320,7 +9388,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/ui-settings/notifications/alarms/profiles": {
@@ -9367,7 +9436,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/ui-settings/notifications/alarms/profiles/{profileId}": {
@@ -9413,7 +9483,8 @@
           "500": {
             "description": ""
           }
-        }
+        },
+        "x-client-property": "uiSettings"
       }
     },
     "/api/v4/user/preferences": {
@@ -11240,7 +11311,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2DData"
       }
     },
     "/api/v2/ddata/at/{timestamp}": {
@@ -11286,7 +11358,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2DData"
       }
     },
     "/api/v2/ddata/raw": {
@@ -11332,7 +11405,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2DData"
       }
     },
     "/api/v2/loop/send": {
@@ -11459,7 +11533,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "v2Notifications"
       }
     },
     "/api/v2/notifications": {
@@ -11513,7 +11588,8 @@
               }
             }
           }
-        }
+        },
+        "x-client-property": "v2Notifications"
       }
     },
     "/api/v2/notifications/status": {
@@ -11535,7 +11611,8 @@
           "500": {
             "description": "Internal server error"
           }
-        }
+        },
+        "x-client-property": "v2Notifications"
       }
     },
     "/api/v2/properties": {
@@ -11572,7 +11649,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2Properties"
       }
     },
     "/api/v2/properties/{propertyPath}": {
@@ -11629,7 +11707,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2Properties"
       }
     },
     "/api/v2/summary": {
@@ -11676,7 +11755,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "v2Summary"
       }
     },
     "/api/v1/Activity": {
@@ -13367,7 +13447,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "iob"
       }
     },
     "/api/v1/Iob/treatments": {
@@ -13404,7 +13485,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "iob"
       }
     },
     "/api/v1/Iob/hourly": {
@@ -13473,7 +13555,8 @@
           "500": {
             "description": "If there was an internal server error"
           }
-        }
+        },
+        "x-client-property": "iob"
       }
     },
     "/api/v1/notifications/ack": {
@@ -21629,29 +21712,86 @@
         ]
       },
       "CompressionLowSuggestionWithEntries": {
-        "allOf": [
-          {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "suggestion": {
             "$ref": "#/components/schemas/CompressionLowSuggestion"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "entries": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Entry"
-                }
-              },
-              "treatments": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Treatment"
-                }
-              }
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Entry"
+            }
+          },
+          "treatments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Treatment"
             }
           }
-        ]
+        }
+      },
+      "StateSpan": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/StateSpanCategory"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "startMills": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "endMills": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
+          },
+          "originalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "canonicalId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "sources": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "AcceptSuggestionRequest": {
         "type": "object",
@@ -21669,7 +21809,6 @@
       },
       "DetectionResult": {
         "type": "object",
-        "description": "Result of compression low detection",
         "additionalProperties": false,
         "properties": {
           "totalSuggestionsCreated": {
@@ -21690,7 +21829,6 @@
       },
       "NightDetectionResult": {
         "type": "object",
-        "description": "Result of detection for a single night",
         "additionalProperties": false,
         "properties": {
           "nightOf": {
@@ -21704,22 +21842,18 @@
       },
       "TriggerDetectionRequest": {
         "type": "object",
-        "description": "Request to trigger compression low detection",
         "additionalProperties": false,
         "properties": {
           "nightOf": {
             "type": "string",
-            "description": "Single night to process (use this OR startDate/endDate)",
             "nullable": true
           },
           "startDate": {
             "type": "string",
-            "description": "Start of date range (inclusive)",
             "nullable": true
           },
           "endDate": {
             "type": "string",
-            "description": "End of date range (inclusive)",
             "nullable": true
           }
         }
@@ -24575,67 +24709,6 @@
             "type": "string",
             "description": "When this status was queried",
             "format": "date-time"
-          }
-        }
-      },
-      "StateSpan": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "category": {
-            "$ref": "#/components/schemas/StateSpanCategory"
-          },
-          "state": {
-            "type": "string",
-            "nullable": true
-          },
-          "startMills": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "endMills": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "source": {
-            "type": "string",
-            "nullable": true
-          },
-          "metadata": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {}
-          },
-          "originalId": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "canonicalId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "sources": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
