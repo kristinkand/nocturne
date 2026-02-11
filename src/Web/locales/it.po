@@ -2728,8 +2728,10 @@ msgstr ""
 #~ msgid "Measures how much your glucose swings up and down. <0>Goal: 33% or lower</0>"
 #~ msgstr ""
 
-#~ msgid "Data Quality"
-#~ msgstr ""
+#: src/lib/components/layout/AppSidebar.svelte
+#: src/lib/components/layout/AppSidebar.svelte
+msgid "Data Quality"
+msgstr ""
 
 #~ msgid "How much of the time your CGM was actively providing readings. <0>Goal: 90%+</0>"
 #~ msgstr ""

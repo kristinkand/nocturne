@@ -6,15 +6,16 @@ using Nocturne.API.Extensions;
 using Nocturne.API.Hubs;
 using Nocturne.API.Middleware;
 using Nocturne.API.Middleware.Handlers;
+using Nocturne.API.OpenApi;
 using Nocturne.API.Services;
-using Nocturne.API.Services.ConnectorPublishing;
 using Nocturne.API.Services.Alerts;
 using Nocturne.API.Services.Alerts.Notifiers;
 using Nocturne.API.Services.Alerts.Webhooks;
 using Nocturne.API.Services.Auth;
 using Nocturne.API.Services.BackgroundServices;
-using Nocturne.Connectors.Core.Interfaces;
+using Nocturne.API.Services.ConnectorPublishing;
 using Nocturne.Connectors.Core.Extensions;
+using Nocturne.Connectors.Core.Interfaces;
 using Nocturne.Connectors.Dexcom;
 using Nocturne.Connectors.FreeStyle;
 using Nocturne.Connectors.Glooko;
@@ -23,6 +24,7 @@ using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Contracts.Alerts;
 using Nocturne.Core.Models;
+using Nocturne.Core.Models.Configuration;
 using Nocturne.Infrastructure.Cache.Extensions;
 using Nocturne.Infrastructure.Data.Abstractions;
 using Nocturne.Infrastructure.Data.Extensions;
@@ -156,6 +158,9 @@ builder.Services.AddOpenApi();
 // Add OpenAPI document generation with NSwag
 builder.Services.AddOpenApiDocument(config =>
 {
+    // Add remote function metadata processor
+    config.OperationProcessors.Add(new RemoteFunctionOperationProcessor());
+
     config.PostProcess = document =>
     {
         document.Info.Version = "v1";
@@ -255,6 +260,15 @@ builder.Services.AddHttpClient(
 // Statistics service for analytics and calculations
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
+// Compression low detection services
+builder.Services.AddScoped<ICompressionLowRepository, CompressionLowRepository>();
+builder.Services.AddScoped<ICompressionLowService, CompressionLowService>();
+builder.Services.AddSingleton<CompressionLowDetectionService>();
+builder.Services.AddSingleton<ICompressionLowDetectionService>(sp =>
+    sp.GetRequiredService<CompressionLowDetectionService>()
+);
+builder.Services.AddHostedService(sp => sp.GetRequiredService<CompressionLowDetectionService>());
+
 // Data source service for services/connectors management
 builder.Services.AddScoped<IDataSourceService, DataSourceService>();
 
@@ -292,7 +306,6 @@ if (IsConnectorEnabled(builder.Configuration, "LibreLinkUp"))
     builder.Services.AddHostedService<FreeStyleConnectorBackgroundService>();
 if (IsConnectorEnabled(builder.Configuration, "MyLife"))
     builder.Services.AddHostedService<MyLifeConnectorBackgroundService>();
-
 
 // Configure JWT authentication
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName);
@@ -396,6 +409,7 @@ builder.Services.AddScoped<
     MyFitnessPalMatchingSettingsService
 >();
 builder.Services.AddScoped<IClockFaceService, ClockFaceService>();
+builder.Services.AddScoped<IChartDataService, ChartDataService>();
 
 // Note: Processing status service is registered by AddNocturneMemoryCache
 
