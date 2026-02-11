@@ -20,6 +20,7 @@ using Nocturne.Connectors.Dexcom;
 using Nocturne.Connectors.FreeStyle;
 using Nocturne.Connectors.Glooko;
 using Nocturne.Connectors.MyLife;
+using Nocturne.Connectors.Tidepool;
 using Nocturne.Core.Constants;
 using Nocturne.Core.Contracts;
 using Nocturne.Core.Contracts.Alerts;
@@ -288,6 +289,7 @@ builder.Services.AddDexcomConnector(builder.Configuration);
 builder.Services.AddGlookoConnector(builder.Configuration);
 builder.Services.AddLibreLinkUpConnector(builder.Configuration);
 builder.Services.AddMyLifeConnector(builder.Configuration);
+builder.Services.AddTidepoolConnector(builder.Configuration);
 
 static bool IsConnectorEnabled(IConfiguration configuration, string connectorName)
 {
@@ -306,6 +308,8 @@ if (IsConnectorEnabled(builder.Configuration, "LibreLinkUp"))
     builder.Services.AddHostedService<FreeStyleConnectorBackgroundService>();
 if (IsConnectorEnabled(builder.Configuration, "MyLife"))
     builder.Services.AddHostedService<MyLifeConnectorBackgroundService>();
+if (IsConnectorEnabled(builder.Configuration, "Tidepool"))
+    builder.Services.AddHostedService<TidepoolConnectorBackgroundService>();
 
 // Configure JWT authentication
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName);

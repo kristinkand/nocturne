@@ -92,6 +92,7 @@
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.Glooko\Nocturne.Connectors.Glooko.csproj" />
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.FreeStyle\Nocturne.Connectors.FreeStyle.csproj" />
     <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.MyLife\Nocturne.Connectors.MyLife.csproj" />
+    <ProjectReference Include="..\..\Connectors\Nocturne.Connectors.Tidepool\Nocturne.Connectors.Tidepool.csproj" />
   </ItemGroup>
   <!-- NSwag TypeScript Client Generation -->
   <!-- Runs automatically after build in development mode -->

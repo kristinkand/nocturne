@@ -469,46 +469,55 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
 
         var allProps = configType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
+        // Get connector registration for environment variable prefix (used by ConnectorPropertyAttribute)
+        var registration = configType.GetCustomAttribute<ConnectorRegistrationAttribute>();
+        var envPrefix = registration?.EnvironmentPrefix;
+
         foreach (var property in allProps)
         {
-            var secretAttr = property.GetCustomAttribute<SecretAttribute>();
-            var runtimeAttr = property.GetCustomAttribute<RuntimeConfigurableAttribute>();
+            var connectorPropAttr = property.GetCustomAttribute<ConnectorPropertyAttribute>();
+            if (connectorPropAttr == null)
+                continue;
+
+            var propName = ToCamelCase(property.Name);
 
             // Handle secret fields - include in schema and mark as secret
-            if (secretAttr != null)
+            if (connectorPropAttr.Secret)
             {
-                var envVarAttr = property.GetCustomAttribute<EnvironmentVariableAttribute>();
-                var propName = ToCamelCase(property.Name);
                 secrets.Add(propName);
 
-                // Add secret property schema with title and description
                 var secretSchema = new Dictionary<string, object>
                 {
                     ["type"] = "string",
-                    ["title"] = FormatPropertyNameForDisplay(property.Name)
+                    ["title"] = connectorPropAttr.GetDisplayName()
                 };
 
-                if (envVarAttr != null && !string.IsNullOrEmpty(envVarAttr.Name))
+                if (!string.IsNullOrEmpty(envPrefix))
                 {
-                    secretSchema["x-envVar"] = envVarAttr.Name;
-                    secretSchema["description"] = $"Configure via environment variable: {envVarAttr.Name}";
+                    var envVarName = connectorPropAttr.GetFullEnvVarName(envPrefix);
+                    secretSchema["x-envVar"] = envVarName;
+                    secretSchema["description"] = connectorPropAttr.Description
+                        ?? $"Configure via environment variable: {envVarName}";
                 }
                 else
                 {
-                    secretSchema["description"] = "Sensitive credential (stored encrypted)";
+                    secretSchema["description"] = connectorPropAttr.Description
+                        ?? "Sensitive credential (stored encrypted)";
+                }
+
+                if (connectorPropAttr.Required)
+                {
+                    required.Add(propName);
                 }
 
                 properties[propName] = secretSchema;
                 continue;
             }
 
-            if (runtimeAttr == null)
+            if (!connectorPropAttr.RuntimeConfigurable)
             {
-                continue; // Only include runtime-configurable properties
+                continue;
             }
-
-            var schemaAttr = property.GetCustomAttribute<ConfigSchemaAttribute>();
-            var envVarAttr2 = property.GetCustomAttribute<EnvironmentVariableAttribute>();
 
             // Get default value from instance
             object? defaultValue = null;
@@ -528,14 +537,14 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
                 }
             }
 
-            var propertySchema = GeneratePropertySchema(property.PropertyType, runtimeAttr, schemaAttr, envVarAttr2, defaultValue);
+            var propertySchema = GeneratePropertySchema(
+                property.PropertyType, connectorPropAttr, envPrefix, defaultValue);
 
-            properties[ToCamelCase(property.Name)] = propertySchema;
+            properties[propName] = propertySchema;
 
-            // Check for Required attribute
-            if (property.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>() != null)
+            if (connectorPropAttr.Required)
             {
-                required.Add(ToCamelCase(property.Name));
+                required.Add(propName);
             }
         }
 
@@ -568,12 +577,11 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
 
         foreach (var property in configType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            var runtimeAttr = property.GetCustomAttribute<RuntimeConfigurableAttribute>();
-            if (runtimeAttr == null)
+            var connectorPropAttr = property.GetCustomAttribute<ConnectorPropertyAttribute>();
+            if (connectorPropAttr is not { RuntimeConfigurable: true })
                 continue;
 
-            var secretAttr = property.GetCustomAttribute<SecretAttribute>();
-            if (secretAttr != null)
+            if (connectorPropAttr.Secret)
                 continue;
 
             object? value = null;
@@ -597,22 +605,13 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
         return result;
     }
 
-    private static string FormatPropertyNameForDisplay(string name)
-    {
-        // Convert camelCase/PascalCase to Title Case with spaces
-        var result = System.Text.RegularExpressions.Regex.Replace(name, "([A-Z])", " $1").Trim();
-        return char.ToUpperInvariant(result[0]) + result.Substring(1);
-    }
-
     /// <summary>
-    /// Generates a JSON Schema property definition for a property.
-    /// Includes default value and environment variable name for UI display.
+    /// Generates a JSON Schema property definition from a ConnectorPropertyAttribute.
     /// </summary>
     private static Dictionary<string, object> GeneratePropertySchema(
         Type propertyType,
-        RuntimeConfigurableAttribute runtimeAttr,
-        ConfigSchemaAttribute? schemaAttr,
-        EnvironmentVariableAttribute? envVarAttr,
+        ConnectorPropertyAttribute connectorAttr,
+        string? envPrefix,
         object? defaultValue)
     {
         var schema = new Dictionary<string, object>();
@@ -644,80 +643,63 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
             schema["type"] = "string";
         }
 
-        // Add title/description from RuntimeConfigurable
-        if (!string.IsNullOrEmpty(runtimeAttr.DisplayName))
+        // Title from ConnectorProperty
+        schema["title"] = connectorAttr.GetDisplayName();
+
+        // Description
+        if (!string.IsNullOrEmpty(connectorAttr.Description))
         {
-            schema["title"] = runtimeAttr.DisplayName;
+            schema["description"] = connectorAttr.Description;
         }
 
-        if (!string.IsNullOrEmpty(runtimeAttr.Description))
+        // Category for UI grouping
+        if (!string.IsNullOrEmpty(connectorAttr.Category))
         {
-            schema["description"] = runtimeAttr.Description;
+            schema["x-category"] = connectorAttr.Category;
         }
 
-        // Add category for UI grouping
-        if (!string.IsNullOrEmpty(runtimeAttr.Category))
-        {
-            schema["x-category"] = runtimeAttr.Category;
-        }
-
-        // Add default value if available
+        // Default value: prefer instance default, fall back to attribute DefaultValue
         if (defaultValue != null)
         {
-            // Handle enums specially - convert to string
             if (underlyingType.IsEnum)
             {
-                schema["default"] = defaultValue.ToString();
+                schema["default"] = defaultValue.ToString()!;
             }
             else if (!IsDefaultOrEmpty(defaultValue))
             {
                 schema["default"] = defaultValue;
             }
         }
-
-        // Add environment variable name for UI display
-        if (envVarAttr != null && !string.IsNullOrEmpty(envVarAttr.Name))
+        else if (!string.IsNullOrEmpty(connectorAttr.DefaultValue))
         {
-            schema["x-envVar"] = envVarAttr.Name;
+            schema["default"] = connectorAttr.DefaultValue;
         }
 
-        // Add constraints from ConfigSchema
-        if (schemaAttr != null)
+        // Environment variable name
+        if (!string.IsNullOrEmpty(envPrefix))
         {
-            if (schemaAttr.HasMinimum)
-            {
-                schema["minimum"] = schemaAttr.Minimum;
-            }
+            schema["x-envVar"] = connectorAttr.GetFullEnvVarName(envPrefix);
+        }
 
-            if (schemaAttr.HasMaximum)
-            {
-                schema["maximum"] = schemaAttr.Maximum;
-            }
+        // Constraints
+        if (connectorAttr.HasMinValue)
+        {
+            schema["minimum"] = connectorAttr.MinValue;
+        }
 
-            if (schemaAttr.HasMinLength)
-            {
-                schema["minLength"] = schemaAttr.MinLength;
-            }
+        if (connectorAttr.HasMaxValue)
+        {
+            schema["maximum"] = connectorAttr.MaxValue;
+        }
 
-            if (schemaAttr.HasMaxLength)
-            {
-                schema["maxLength"] = schemaAttr.MaxLength;
-            }
+        if (connectorAttr.AllowedValues != null && connectorAttr.AllowedValues.Length > 0)
+        {
+            schema["enum"] = connectorAttr.AllowedValues;
+        }
 
-            if (!string.IsNullOrEmpty(schemaAttr.Pattern))
-            {
-                schema["pattern"] = schemaAttr.Pattern;
-            }
-
-            if (schemaAttr.Enum != null && schemaAttr.Enum.Length > 0)
-            {
-                schema["enum"] = schemaAttr.Enum;
-            }
-
-            if (!string.IsNullOrEmpty(schemaAttr.Format))
-            {
-                schema["format"] = schemaAttr.Format;
-            }
+        if (!string.IsNullOrEmpty(connectorAttr.Format))
+        {
+            schema["format"] = connectorAttr.Format;
         }
 
         return schema;

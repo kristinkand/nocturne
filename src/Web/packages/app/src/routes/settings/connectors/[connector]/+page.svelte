@@ -141,8 +141,10 @@
       }
 
       // Initialize configuration with existing values or defaults
-      if (existingConfig?.configuration?.rootElement) {
-        configuration = { ...existingConfig.configuration.rootElement };
+      // Handle both NSwag rootElement-wrapped and direct JSON responses
+      const configData = existingConfig?.configuration?.rootElement ?? existingConfig?.configuration;
+      if (configData && typeof configData === "object" && Object.keys(configData).length > 0) {
+        configuration = { ...configData };
       } else {
         // Initialize with schema defaults
         configuration = getDefaultsFromSchema(schema);

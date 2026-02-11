@@ -33,19 +33,16 @@ msgstr "Error ID: {0}"
 
 #: src/lib/components/TreatmentEditModal.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 msgid "Meal Bolus"
 msgstr "Meal Bolus"
 
 #: src/lib/components/TreatmentEditModal.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 msgid "Snack Bolus"
 msgstr "Snack Bolus"
 
 #: src/lib/components/TreatmentEditModal.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 msgid "Correction Bolus"
 msgstr "Correction Bolus"
@@ -70,9 +67,6 @@ msgstr "Exercise"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 #: src/lib/components/reports/SiteChangeImpactChart.svelte
 msgid "Site Change"
@@ -82,9 +76,6 @@ msgstr "Site Change"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 msgid "Insulin Change"
@@ -99,9 +90,6 @@ msgstr "D.A.D. Alert"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 msgid "Sensor Start"
 msgstr "Sensor Start"
@@ -110,9 +98,6 @@ msgstr "Sensor Start"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 msgid "Sensor Change"
 msgstr "Sensor Change"
@@ -121,9 +106,6 @@ msgstr "Sensor Change"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 msgid "Pump Battery Change"
 msgstr "Pump Battery Change"
@@ -491,6 +473,7 @@ msgstr "Expired"
 #: src/lib/stores/settings-store.svelte.ts
 #: src/routes/settings/alarms/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
+#: src/routes/settings/data-quality/+page.svelte
 #: src/routes/settings/features/+page.svelte
 msgid "Failed to load settings"
 msgstr "Failed to load settings"
@@ -654,6 +637,7 @@ msgstr "In Range"
 #: src/lib/components/settings/AlarmProfileDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/calendar/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
@@ -673,6 +657,7 @@ msgstr "Low"
 #: src/lib/components/settings/AlarmProfileDialog.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
 #: src/routes/calendar/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/day-in-review/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 #: src/routes/reports/glucose-distribution/+page.svelte
@@ -1062,6 +1047,7 @@ msgstr "Comparison Error"
 #: src/routes/dashboard/analyses/[id]/+page.svelte
 #: src/routes/reports/battery/+page.svelte
 #: src/routes/reports/battery/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/treatments/+page.svelte
 #: src/routes/reports/treatments/+page.svelte
 #: src/routes/settings/appearance/+page.svelte
@@ -1424,6 +1410,8 @@ msgstr "Method"
 #: src/routes/compatibility/+page.svelte
 #: src/routes/compatibility/+page.svelte
 #: src/routes/meals/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "All"
 msgstr "All"
 
@@ -2867,7 +2855,6 @@ msgstr "Temp Basal"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartTooltip.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/widgets/TddWidget.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 #: src/lib/components/reports/InsulinDeliveryChart.svelte
@@ -2877,19 +2864,15 @@ msgid "Bolus"
 msgstr "Bolus"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 msgid "Bolus Wizard"
 msgstr "Bolus Wizard"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 msgid "Combo Bolus"
 msgstr "Combo Bolus"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/DeviceEventIcon.svelte
 msgid "Sensor Stop"
 msgstr "Sensor Stop"
@@ -2899,9 +2882,6 @@ msgstr "Sensor Stop"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 #: src/routes/settings/trackers/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
@@ -2911,7 +2891,6 @@ msgstr "Sensor"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 msgid "Site"
 msgstr "Site"
@@ -2919,7 +2898,6 @@ msgstr "Site"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/routes/settings/trackers/+page.svelte
 #: src/routes/settings/trackers/+page.svelte
 msgid "Reservoir"
@@ -2928,7 +2906,6 @@ msgstr "Reservoir"
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/TreatmentTypeIcon.svelte
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/routes/settings/trackers/+page.svelte
@@ -2938,6 +2915,8 @@ msgstr "Battery"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
 #: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/icons/PumpModeIcon.svelte
@@ -2945,7 +2924,6 @@ msgid "Automatic"
 msgstr "Automatic"
 
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/settings/AlarmProfileDialog.svelte
 #: src/lib/components/settings/AlarmProfileDialog.svelte
 #: src/routes/settings/trackers/+page.svelte
@@ -2956,7 +2934,6 @@ msgstr "Custom"
 #: src/lib/components/clock-builder/ElementInspector.svelte
 #: src/lib/components/clock/ClockFaceRenderer.svelte
 #: src/lib/components/dashboard/GlucoseChartCard.svelte
-#: src/lib/components/dashboard/glucose-chart/GlucoseChartCard.svelte
 #: src/lib/components/status-pills/TrackerPill.svelte
 #: src/lib/components/trackers/TrackerStartDialog.svelte
 msgid "Tracker"
@@ -5864,11 +5841,13 @@ msgstr "<0/> Additional Properties <1/>"
 
 #: src/lib/components/treatments/TreatmentEditDialog.svelte
 #: src/routes/clock/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "<0/> Delete"
 msgstr "<0/> Delete"
 
 #: src/lib/components/clock-builder/TextStyleControls.svelte
 #: src/lib/components/treatments/TreatmentFoodSelectorDialog.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Medium"
 msgstr "Medium"
 
@@ -8066,6 +8045,7 @@ msgstr "Average (mg/dL)"
 msgid "Median (mg/dL)"
 msgstr "Median (mg/dL)"
 
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/reports/executive-summary/+page.svelte
 msgid "Lowest (mg/dL)"
 msgstr "Lowest (mg/dL)"
@@ -9842,6 +9822,7 @@ msgstr "Failed to start migration"
 msgid "Failed to cancel migration"
 msgstr "Failed to cancel migration"
 
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 msgid "Pending"
 msgstr "Pending"
@@ -9946,6 +9927,8 @@ msgstr ""
 "Leave empty to import all data, or specify a range to import\n"
 "partial data."
 
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
 #: src/routes/settings/migration/+page.svelte
 msgid "Start Date"
 msgstr "Start Date"
@@ -13035,5 +13018,273 @@ msgstr "Sync started"
 
 #: src/lib/components/layout/AppSidebar.svelte
 #: src/lib/components/layout/AppSidebar.svelte
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/settings/data-quality/+page.svelte
 msgid "Data Quality"
 msgstr "Data Quality"
+
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "SensorStart"
+msgstr "SensorStart"
+
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "SensorChange"
+msgstr "SensorChange"
+
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "SensorStop"
+msgstr "SensorStop"
+
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "SiteChange"
+msgstr "SiteChange"
+
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "InsulinChange"
+msgstr "InsulinChange"
+
+#: src/lib/components/dashboard/glucose-chart/ChartLegend.svelte
+#: src/lib/components/icons/DeviceEventIcon.svelte
+msgid "PumpBatteryChange"
+msgstr "PumpBatteryChange"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Data Quality - Settings - Nocturne"
+msgstr "Data Quality - Settings - Nocturne"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Configure how Nocturne handles data quality and analysis"
+msgstr "Configure how Nocturne handles data quality and analysis"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "<0/> Sleep Schedule"
+msgstr "<0/> Sleep Schedule"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Your typical sleep times are used for overnight analysis features"
+msgstr "Your typical sleep times are used for overnight analysis features"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Typical bedtime"
+msgstr "Typical bedtime"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Typical wake time"
+msgstr "Typical wake time"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "<0/> Compression Low Detection"
+msgstr "<0/> Compression Low Detection"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Automatically detect potential compression lows during sleep"
+msgstr "Automatically detect potential compression lows during sleep"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Enable automatic detection"
+msgstr "Enable automatic detection"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid ""
+"Nocturne will analyze your overnight data and notify you when potential compression\n"
+"lows are detected"
+msgstr ""
+"Nocturne will analyze your overnight data and notify you when potential compression\n"
+"lows are detected"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid "Exclude from statistics"
+msgstr "Exclude from statistics"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid ""
+"Don't include accepted compression lows when calculating Time in Range and other\n"
+"statistics"
+msgstr ""
+"Don't include accepted compression lows when calculating Time in Range and other\n"
+"statistics"
+
+#: src/routes/settings/data-quality/+page.svelte
+msgid ""
+"Compression lows are falsely low CGM readings caused by sleeping on your sensor. When\n"
+"detected, you'll be notified to review and confirm them."
+msgstr ""
+"Compression lows are falsely low CGM readings caused by sleeping on your sensor. When\n"
+"detected, you'll be notified to review and confirm them."
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Error Loading Data Quality Report"
+msgstr "Error Loading Data Quality Report"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Data Quality - Nocturne"
+msgstr "Data Quality - Nocturne"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Monitor and manage data exclusions"
+msgstr "Monitor and manage data exclusions"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Pending Review"
+msgstr "Pending Review"
+
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Accepted"
+msgstr "Accepted"
+
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Dismissed"
+msgstr "Dismissed"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Data Quality Categories"
+msgstr "Data Quality Categories"
+
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Compression Lows"
+msgstr "Compression Lows"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Falsely low readings from sleeping on sensor"
+msgstr "Falsely low readings from sleeping on sensor"
+
+#. placeholder {0}: pendingCount
+#: src/routes/reports/data-quality/+page.svelte
+msgid "{0} pending"
+msgstr "{0} pending"
+
+#. placeholder {0}: acceptedCount
+#: src/routes/reports/data-quality/+page.svelte
+msgid "{0} events"
+msgstr "{0} events"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Additional data quality categories coming soon"
+msgstr "Additional data quality categories coming soon"
+
+#. placeholder {0}: pendingCount
+#. placeholder {1}: pendingCount !== 1 ? 's' : ''
+#: src/routes/reports/data-quality/+page.svelte
+msgid "You have {0} item{1} waiting for review"
+msgstr "You have {0} item{1} waiting for review"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Review detected compression lows to improve your statistics accuracy"
+msgstr "Review detected compression lows to improve your statistics accuracy"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Review Now"
+msgstr "Review Now"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Run Detection"
+msgstr "Run Detection"
+
+#: src/routes/reports/data-quality/+page.svelte
+msgid "Manually scan a date range for compression lows"
+msgstr "Manually scan a date range for compression lows"
+
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "End Date (optional)"
+msgstr "End Date (optional)"
+
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "<0/> Run Detection"
+msgstr "<0/> Run Detection"
+
+#. placeholder {0}: detectionResult.totalSuggestionsCreated
+#. placeholder {1}: detectionResult.nightsProcessed
+#. placeholder {0}: detectionResult.totalSuggestionsCreated
+#. placeholder {1}: detectionResult.nightsProcessed
+#: src/routes/reports/data-quality/+page.svelte
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Found {0} compression low(s) across {1} night(s)"
+msgstr "Found {0} compression low(s) across {1} night(s)"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Error Loading Compression Low History"
+msgstr "Error Loading Compression Low History"
+
+#. placeholder {0}: dateStr
+#. placeholder {1}: nextDayStr
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Night of {0}-{1}"
+msgstr "Night of {0}-{1}"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Compression Lows - Nocturne"
+msgstr "Compression Lows - Nocturne"
+
+#. placeholder {0}: pendingCount
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "{0} pending review"
+msgstr "{0} pending review"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Review history and manage exclusions"
+msgstr "Review history and manage exclusions"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Status:"
+msgstr "Status:"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "No compression lows detected yet"
+msgstr "No compression lows detected yet"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "When compression lows are detected during your sleep, they will appear here."
+msgstr "When compression lows are detected during your sleep, they will appear here."
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "No matching results"
+msgstr "No matching results"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Try changing your filter criteria."
+msgstr "Try changing your filter criteria."
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Unknown date"
+msgstr "Unknown date"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Drop Rate (mg/dL/min)"
+msgstr "Drop Rate (mg/dL/min)"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Recovery (min)"
+msgstr "Recovery (min)"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Selected Range"
+msgstr "Selected Range"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Exclusion Range"
+msgstr "Exclusion Range"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Drag the handles on the chart to adjust"
+msgstr "Drag the handles on the chart to adjust"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "<0/> Accept"
+msgstr "<0/> Accept"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "<0/> Dismiss"
+msgstr "<0/> Dismiss"
+
+#: src/routes/reports/data-quality/compression-lows/+page.svelte
+msgid "Select a compression low to view details"
+msgstr "Select a compression low to view details"

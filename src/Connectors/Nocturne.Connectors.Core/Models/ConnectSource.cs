@@ -11,5 +11,6 @@ public enum ConnectSource
     Dexcom,
     LibreLinkUp,
     Glooko,
-    MyLife
+    MyLife,
+    Tidepool
 }

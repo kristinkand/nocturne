@@ -28,8 +28,12 @@ public abstract class BaseConnectorConfiguration : IConnectorConfiguration
     ///     Can be set via environment variable: CONNECT_{CONNECTORNAME}_TIMEZONE_OFFSET
     ///     or appsettings: {Configuration}:TimezoneOffset
     /// </summary>
-    [RuntimeConfigurable("Timezone Offset", "General")]
-    [ConfigSchema(Minimum = -12, Maximum = 14)]
+    [ConnectorProperty("TimezoneOffset",
+        RuntimeConfigurable = true,
+        DisplayName = "Timezone Offset",
+        Category = "General",
+        MinValue = -12,
+        MaxValue = 14)]
     public double TimezoneOffset { get; set; } = 0;
 
     [Required] public ConnectSource ConnectSource { get; set; }
@@ -38,19 +42,34 @@ public abstract class BaseConnectorConfiguration : IConnectorConfiguration
     ///     Whether the connector is enabled and should sync data.
     ///     When disabled, the connector enters standby mode.
     /// </summary>
-    [RuntimeConfigurable("Enabled", "General")]
+    [ConnectorProperty("Enabled",
+        RuntimeConfigurable = true,
+        DisplayName = "Enabled",
+        Category = "General")]
     public bool Enabled { get; set; } = true;
 
-    [RuntimeConfigurable("Max Retry Attempts", "Advanced")]
-    [ConfigSchema(Minimum = 0, Maximum = 10)]
+    [ConnectorProperty("MaxRetryAttempts",
+        RuntimeConfigurable = true,
+        DisplayName = "Max Retry Attempts",
+        Category = "Advanced",
+        MinValue = 0,
+        MaxValue = 10)]
     public int MaxRetryAttempts { get; set; } = 3;
 
-    [RuntimeConfigurable("Batch Size", "Advanced")]
-    [ConfigSchema(Minimum = 1, Maximum = 500)]
+    [ConnectorProperty("BatchSize",
+        RuntimeConfigurable = true,
+        DisplayName = "Batch Size",
+        Category = "Advanced",
+        MinValue = 1,
+        MaxValue = 500)]
     public int BatchSize { get; set; } = 50;
 
-    [RuntimeConfigurable("Sync Interval (Minutes)", "Sync")]
-    [ConfigSchema(Minimum = 1, Maximum = 60)]
+    [ConnectorProperty("SyncIntervalMinutes",
+        RuntimeConfigurable = true,
+        DisplayName = "Sync Interval (Minutes)",
+        Category = "Sync",
+        MinValue = 1,
+        MaxValue = 60)]
     public int SyncIntervalMinutes { get; set; } = 5;
 
     public virtual void Validate()
