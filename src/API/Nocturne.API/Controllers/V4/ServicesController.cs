@@ -20,6 +20,7 @@ public class ServicesController : ControllerBase
     private readonly IDataSourceService _dataSourceService;
     private readonly IPostgreSqlService _postgreSqlService;
     private readonly IConnectorHealthService _connectorHealthService;
+    private readonly IConnectorSyncService _connectorSyncService;
     private readonly ILogger<ServicesController> _logger;
     private readonly IConfiguration _configuration;
 
@@ -27,6 +28,7 @@ public class ServicesController : ControllerBase
         IDataSourceService dataSourceService,
         IPostgreSqlService postgreSqlService,
         IConnectorHealthService connectorHealthService,
+        IConnectorSyncService connectorSyncService,
         ILogger<ServicesController> logger,
         IConfiguration configuration
     )
@@ -34,6 +36,7 @@ public class ServicesController : ControllerBase
         _dataSourceService = dataSourceService;
         _postgreSqlService = postgreSqlService;
         _connectorHealthService = connectorHealthService;
+        _connectorSyncService = connectorSyncService;
         _logger = logger;
         _configuration = configuration;
     }
@@ -307,7 +310,6 @@ public class ServicesController : ControllerBase
             }
             return Ok(result);
         }
-
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting data for data source: {Id}", id);
@@ -334,7 +336,10 @@ public class ServicesController : ControllerBase
 
         try
         {
-            var summary = await _dataSourceService.GetConnectorDataSummaryAsync(id, cancellationToken);
+            var summary = await _dataSourceService.GetConnectorDataSummaryAsync(
+                id,
+                cancellationToken
+            );
             return Ok(summary);
         }
         catch (Exception ex)
@@ -385,27 +390,29 @@ public class ServicesController : ControllerBase
     }
 
     /// <summary>
-    /// Manual connector sync is currently disabled.
+    /// Trigger a manual sync for a specific connector.
     /// </summary>
-    /// <param name="id">Connector ID</param>
-    /// <param name="request">Sync request parameters</param>
-    /// <returns>Not implemented</returns>
+    /// <param name="id">Connector ID (e.g., "dexcom", "tidepool")</param>
+    /// <param name="request">Sync request parameters (date range and data types)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Sync result with success status and details</returns>
     [HttpPost("connectors/{id}/sync")]
-    [ProducesResponseType(typeof(Nocturne.Connectors.Core.Models.SyncResult), 501)]
-    public ActionResult<Nocturne.Connectors.Core.Models.SyncResult> TriggerConnectorSync(
+    [ProducesResponseType(typeof(Nocturne.Connectors.Core.Models.SyncResult), 200)]
+    [ProducesResponseType(400)]
+    public async Task<
+        ActionResult<Nocturne.Connectors.Core.Models.SyncResult>
+    > TriggerConnectorSync(
         string id,
-        [FromBody] Nocturne.Connectors.Core.Models.SyncRequest request)
+        [FromBody] Nocturne.Connectors.Core.Models.SyncRequest request,
+        CancellationToken cancellationToken
+    )
     {
-        return StatusCode(
-            501,
-            new Nocturne.Connectors.Core.Models.SyncResult
-            {
-                Success = false,
-                Message = "Manual connector sync is disabled."
-            }
-        );
-    }
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest(new { error = "Connector ID is required" });
 
+        var result = await _connectorSyncService.TriggerSyncAsync(id, request, cancellationToken);
+        return Ok(result);
+    }
 
     /// <summary>
     /// Get sync status for a specific connector, including latest timestamps and connector state.
@@ -441,41 +448,49 @@ public class ServicesController : ControllerBase
                 cancellationToken
             );
 
-            var oldestEntryTimestamp = await _postgreSqlService.GetOldestEntryTimestampBySourceAsync(
-                dataSource,
-                cancellationToken
-            );
+            var oldestEntryTimestamp =
+                await _postgreSqlService.GetOldestEntryTimestampBySourceAsync(
+                    dataSource,
+                    cancellationToken
+                );
 
-            var treatmentTimestamp = await _postgreSqlService.GetLatestTreatmentTimestampBySourceAsync(
-                dataSource,
-                cancellationToken
-            );
+            var treatmentTimestamp =
+                await _postgreSqlService.GetLatestTreatmentTimestampBySourceAsync(
+                    dataSource,
+                    cancellationToken
+                );
 
-            var oldestTreatmentTimestamp = await _postgreSqlService.GetOldestTreatmentTimestampBySourceAsync(
-                dataSource,
-                cancellationToken
-            );
+            var oldestTreatmentTimestamp =
+                await _postgreSqlService.GetOldestTreatmentTimestampBySourceAsync(
+                    dataSource,
+                    cancellationToken
+                );
 
             // Get connector health/state
-            var connectorStatuses = await _connectorHealthService.GetConnectorStatusesAsync(cancellationToken);
+            var connectorStatuses = await _connectorHealthService.GetConnectorStatusesAsync(
+                cancellationToken
+            );
             var connectorStatus = connectorStatuses.FirstOrDefault(c =>
-                c.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                c.Id.Equals(id, StringComparison.OrdinalIgnoreCase)
+            );
 
-            return Ok(new ConnectorSyncStatus
-            {
-                ConnectorId = id,
-                DataSource = dataSource,
-                LatestEntryTimestamp = entryTimestamp,
-                OldestEntryTimestamp = oldestEntryTimestamp,
-                LatestTreatmentTimestamp = treatmentTimestamp,
-                OldestTreatmentTimestamp = oldestTreatmentTimestamp,
-                HasEntries = entryTimestamp.HasValue,
-                HasTreatments = treatmentTimestamp.HasValue,
-                State = connectorStatus?.State ?? "Unknown",
-                StateMessage = connectorStatus?.StateMessage,
-                IsHealthy = connectorStatus?.IsHealthy ?? false,
-                QueriedAt = DateTime.UtcNow
-            });
+            return Ok(
+                new ConnectorSyncStatus
+                {
+                    ConnectorId = id,
+                    DataSource = dataSource,
+                    LatestEntryTimestamp = entryTimestamp,
+                    OldestEntryTimestamp = oldestEntryTimestamp,
+                    LatestTreatmentTimestamp = treatmentTimestamp,
+                    OldestTreatmentTimestamp = oldestTreatmentTimestamp,
+                    HasEntries = entryTimestamp.HasValue,
+                    HasTreatments = treatmentTimestamp.HasValue,
+                    State = connectorStatus?.State ?? "Unknown",
+                    StateMessage = connectorStatus?.StateMessage,
+                    IsHealthy = connectorStatus?.IsHealthy ?? false,
+                    QueriedAt = DateTime.UtcNow,
+                }
+            );
         }
         catch (Exception ex)
         {
@@ -499,7 +514,7 @@ public class ServicesController : ControllerBase
             "carelink" => "carelink-connector",
             "myfitnesspal" => "myfitnesspal-connector",
             "tidepool" => "tidepool-connector",
-            _ => $"{connectorId.ToLowerInvariant()}-connector"
+            _ => $"{connectorId.ToLowerInvariant()}-connector",
         };
     }
 

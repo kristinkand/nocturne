@@ -6911,14 +6911,14 @@
         "tags": [
           "Services"
         ],
-        "summary": "Manual connector sync is currently disabled.",
+        "summary": "Trigger a manual sync for a specific connector.",
         "operationId": "Services_TriggerConnectorSync",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Connector ID",
+            "description": "Connector ID (e.g., \"dexcom\", \"tidepool\")",
             "schema": {
               "type": "string"
             },
@@ -6927,7 +6927,7 @@
         ],
         "requestBody": {
           "x-name": "request",
-          "description": "Sync request parameters",
+          "description": "Sync request parameters (date range and data types)",
           "content": {
             "application/json": {
               "schema": {
@@ -6939,12 +6939,22 @@
           "x-position": 2
         },
         "responses": {
-          "501": {
-            "description": "",
+          "200": {
+            "description": "Sync result with success status and details",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SyncResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }

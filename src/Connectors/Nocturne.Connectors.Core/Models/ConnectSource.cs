@@ -12,5 +12,6 @@ public enum ConnectSource
     LibreLinkUp,
     Glooko,
     MyLife,
-    Tidepool
+    Tidepool,
+    MyFitnessPal,
 }
