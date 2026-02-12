@@ -14,4 +14,5 @@ public enum ConnectSource
     MyLife,
     Tidepool,
     MyFitnessPal,
+    Nightscout,
 }

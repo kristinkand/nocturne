@@ -523,7 +523,7 @@ public class ConnectorExecutionService(
             sessionStore,
             new MyLifeSyncService(
                 soapClient,
-                new MyLifeArchiveReader()
+                _loggerFactory.CreateLogger<MyLifeSyncService>()
             ),
             _loggerFactory.CreateLogger<MyLifeEventsCache>()
         );
