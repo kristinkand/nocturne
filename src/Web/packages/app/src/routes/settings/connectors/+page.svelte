@@ -1276,41 +1276,16 @@
                           Active
                         </Badge>
                       {/if}
-                      {#if connectorCapabilities &&
-                      (connectorCapabilities.supportsHistoricalSync === false ||
-                        connectorCapabilities.maxHistoricalDays)}
-                        <Tooltip.Root>
-                          <Tooltip.Trigger>
-                            <Badge
-                              variant="secondary"
-                              class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs"
-                            >
-                              Limited
-                            </Badge>
-                          </Tooltip.Trigger>
-                          <Tooltip.Portal>
-                            <Tooltip.Content
-                              class="z-50 overflow-hidden rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
-                            >
-                              {#if connectorCapabilities.supportsHistoricalSync ===
-                              false}
-                                Historical sync not supported.
-                              {:else if connectorCapabilities.maxHistoricalDays}
-                                Historical sync limited to {connectorCapabilities.maxHistoricalDays} days.
-                              {/if}
-                            </Tooltip.Content>
-                          </Tooltip.Portal>
-                        </Tooltip.Root>
-                      {/if}
                     </div>
                     <p class="text-sm text-muted-foreground">
-                      {connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0} records
-                      (24h)
+                      {connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0} records in the last 24 hours
                     </p>
                   </div>
-                  <ChevronRight
-                    class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors"
-                  />
+                  {#if !canQuickSync}
+                    <ChevronRight
+                      class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                    />
+                  {/if}
                 </button>
                 {#if connector.id && canQuickSync}
                   <Button
@@ -1396,37 +1371,11 @@
                       <Database class="h-3 w-3 mr-1" />
                       Has Data
                     </Badge>
-                    {#if connectorCapabilities &&
-                    (connectorCapabilities.supportsHistoricalSync === false ||
-                      connectorCapabilities.maxHistoricalDays)}
-                      <Tooltip.Root>
-                        <Tooltip.Trigger>
-                          <Badge
-                            variant="secondary"
-                            class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs"
-                          >
-                            Limited
-                          </Badge>
-                        </Tooltip.Trigger>
-                        <Tooltip.Portal>
-                          <Tooltip.Content
-                            class="z-50 overflow-hidden rounded-md bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
-                          >
-                            {#if connectorCapabilities.supportsHistoricalSync ===
-                            false}
-                              Historical sync not supported.
-                            {:else if connectorCapabilities.maxHistoricalDays}
-                              Historical sync limited to {connectorCapabilities.maxHistoricalDays} days.
-                            {/if}
-                          </Tooltip.Content>
-                        </Tooltip.Portal>
-                      </Tooltip.Root>
-                    {/if}
                   </div>
                   <p class="text-sm text-muted-foreground">
                     {entryCount?.toLocaleString() ?? 0} records
                     {#if entries24h > 0}
-                      ({entries24h.toLocaleString()} in 24h)
+                      ({entries24h.toLocaleString()} in last 24 hours)
                     {/if}
                     • Last seen {formatLastSeen(lastSeen)}
                   </p>

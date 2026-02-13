@@ -3214,8 +3214,6 @@ msgid "Automatic"
 msgstr ""
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
 msgid "Limited"
 msgstr ""
 
@@ -12006,7 +12004,6 @@ msgid "<0/> Disabled"
 msgstr ""
 
 #. placeholder {0}: entries24h.toLocaleString()
-#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid "({0} in 24h)"
 msgstr ""
@@ -12307,7 +12304,6 @@ msgid "{0} records (24h)"
 msgstr ""
 
 #. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
-#: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/services/+page.svelte
 msgid ""
 "{0} records\n"
@@ -15022,17 +15018,11 @@ msgstr ""
 msgid "Send alert events to external services"
 msgstr ""
 
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
-msgid "Historical sync not supported."
-msgstr ""
+#~ msgid "Historical sync not supported."
+#~ msgstr ""
 
-#. placeholder {0}: connectorCapabilities.maxHistoricalDays
-#. placeholder {0}: connectorCapabilities.maxHistoricalDays
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
-msgid "Historical sync limited to {0} days."
-msgstr ""
+#~ msgid "Historical sync limited to {0} days."
+#~ msgstr ""
 
 #: src/routes/settings/connectors/+page.svelte
 msgid "Loading connector capabilities..."
@@ -15391,4 +15381,14 @@ msgstr ""
 
 #: src/routes/reports/data-quality/+page.svelte
 msgid "Manually scan a date range for compression lows"
+msgstr ""
+
+#. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
+msgid "{0} records in the last 24 hours"
+msgstr ""
+
+#. placeholder {0}: entries24h.toLocaleString()
+#: src/routes/settings/connectors/+page.svelte
+msgid "({0} in last 24 hours)"
 msgstr ""

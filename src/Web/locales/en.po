@@ -3225,8 +3225,6 @@ msgid "Suspended"
 msgstr "Suspended"
 
 #: src/lib/components/icons/PumpModeIcon.svelte
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
 msgid "Limited"
 msgstr "Limited"
 
@@ -10767,14 +10765,12 @@ msgstr "<0/> Backing Off"
 msgid "<0/> Error"
 msgstr "<0/> Error"
 
-#. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
-#: src/routes/settings/connectors/+page.svelte
-msgid ""
-"{0} records\n"
-"(24h)"
-msgstr ""
-"{0} records\n"
-"(24h)"
+#~ msgid ""
+#~ "{0} records\n"
+#~ "(24h)"
+#~ msgstr ""
+#~ "{0} records\n"
+#~ "(24h)"
 
 #: src/routes/settings/connectors/+page.svelte
 #: src/routes/settings/connectors/+page.svelte
@@ -10798,10 +10794,8 @@ msgstr "<0/> Offline"
 msgid "<0/> Has Data"
 msgstr "<0/> Has Data"
 
-#. placeholder {0}: entries24h.toLocaleString()
-#: src/routes/settings/connectors/+page.svelte
-msgid "({0} in 24h)"
-msgstr "({0} in 24h)"
+#~ msgid "({0} in 24h)"
+#~ msgstr "({0} in 24h)"
 
 #. placeholder {0}: entryCount?.toLocaleString() ?? 0
 #. placeholder {1}: formatLastSeen(lastSeen)
@@ -12905,17 +12899,11 @@ msgstr "Webhooks"
 msgid "Send alert events to external services"
 msgstr "Send alert events to external services"
 
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
-msgid "Historical sync not supported."
-msgstr "Historical sync not supported."
+#~ msgid "Historical sync not supported."
+#~ msgstr "Historical sync not supported."
 
-#. placeholder {0}: connectorCapabilities.maxHistoricalDays
-#. placeholder {0}: connectorCapabilities.maxHistoricalDays
-#: src/routes/settings/connectors/+page.svelte
-#: src/routes/settings/connectors/+page.svelte
-msgid "Historical sync limited to {0} days."
-msgstr "Historical sync limited to {0} days."
+#~ msgid "Historical sync limited to {0} days."
+#~ msgstr "Historical sync limited to {0} days."
 
 #: src/routes/settings/connectors/+page.svelte
 msgid "Loading connector capabilities..."
@@ -13288,3 +13276,13 @@ msgstr "<0/> Dismiss"
 #: src/routes/reports/data-quality/compression-lows/+page.svelte
 msgid "Select a compression low to view details"
 msgstr "Select a compression low to view details"
+
+#. placeholder {0}: connectorStatus.entriesLast24Hours?.toLocaleString() ?? 0
+#: src/routes/settings/connectors/+page.svelte
+msgid "{0} records in the last 24 hours"
+msgstr "{0} records in the last 24 hours"
+
+#. placeholder {0}: entries24h.toLocaleString()
+#: src/routes/settings/connectors/+page.svelte
+msgid "({0} in last 24 hours)"
+msgstr "({0} in last 24 hours)"
