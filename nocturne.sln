@@ -124,6 +124,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nocturne.Connectors.Tidepoo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nocturne.Connectors.MyFitnessPal", "src\Connectors\Nocturne.Connectors.MyFitnessPal\Nocturne.Connectors.MyFitnessPal.csproj", "{0950185D-7962-4480-875C-F09E4054FD78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nocturne.Connectors.Nightscout", "src\Connectors\Nocturne.Connectors.Nightscout\Nocturne.Connectors.Nightscout.csproj", "{DCED5314-B57E-4884-B7CA-A7303E1D0C72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -578,6 +580,18 @@ Global
 		{0950185D-7962-4480-875C-F09E4054FD78}.Release|x64.Build.0 = Release|Any CPU
 		{0950185D-7962-4480-875C-F09E4054FD78}.Release|x86.ActiveCfg = Release|Any CPU
 		{0950185D-7962-4480-875C-F09E4054FD78}.Release|x86.Build.0 = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|x64.Build.0 = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Debug|x86.Build.0 = Debug|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|x64.ActiveCfg = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|x64.Build.0 = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|x86.ActiveCfg = Release|Any CPU
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -629,5 +643,6 @@ Global
 		{B9C6EBFB-C42D-451D-A772-0530E38474CE} = {237CDB4C-E7C4-795B-969A-4CCB7C8B335B}
 		{BAE3D776-11C3-412C-8627-D7BE19EC4A84} = {237CDB4C-E7C4-795B-969A-4CCB7C8B335B}
 		{0950185D-7962-4480-875C-F09E4054FD78} = {237CDB4C-E7C4-795B-969A-4CCB7C8B335B}
+		{DCED5314-B57E-4884-B7CA-A7303E1D0C72} = {237CDB4C-E7C4-795B-969A-4CCB7C8B335B}
 	EndGlobalSection
 EndGlobal

@@ -225,6 +225,9 @@ class Program
         // Add api-secret parameter for authentication (needed by connectors)
         var apiSecret = builder.AddParameter(ServiceNames.Parameters.ApiSecret, secret: true);
 
+        // Connectors now run inside the API and need the api-secret for secret encryption
+        api.WithEnvironment(ServiceNames.ConfigKeys.ApiSecret, apiSecret);
+
         // Connectors now run inside the API (single executable)
 
         // Add Demo Data Service (optional, for demonstrations and testing)

@@ -10,6 +10,8 @@ using Nocturne.Connectors.Glooko.Configurations;
 using Nocturne.Connectors.Glooko.Services;
 using Nocturne.Connectors.MyFitnessPal.Configurations;
 using Nocturne.Connectors.MyFitnessPal.Services;
+using Nocturne.Connectors.Nightscout.Configurations;
+using Nocturne.Connectors.Nightscout.Services;
 using Nocturne.Connectors.MyLife.Configurations;
 using Nocturne.Connectors.MyLife.Services;
 using Nocturne.Connectors.Tidepool.Configurations;
@@ -84,6 +86,10 @@ public class ConnectorSyncService : IConnectorSyncService
                     MyFitnessPalConnectorService,
                     MyFitnessPalConnectorConfiguration
                 >("MyFitnessPal", request, ct),
+                "nightscout" => await ExecuteSyncAsync<
+                    NightscoutConnectorService,
+                    NightscoutConnectorConfiguration
+                >("Nightscout", request, ct),
                 _ => new SyncResult
                 {
                     Success = false,
