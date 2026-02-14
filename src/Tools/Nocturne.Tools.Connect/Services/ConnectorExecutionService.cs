@@ -458,8 +458,8 @@ public class ConnectorExecutionService(
             _loggerFactory.CreateLogger<GlookoConnectorService>(),
             new ProductionRetryDelayStrategy(),
             new ProductionRateLimitingStrategy(_loggerFactory.CreateLogger<ProductionRateLimitingStrategy>()),
-            null, // IConnectorFileService
-            null  // IApiDataSubmitter
+            null!, // IConnectorFileService
+            null!  // IApiDataSubmitter
         );
         return new ConnectorServiceWrapper<GlookoConnectorConfiguration>(service);
     }
@@ -474,7 +474,7 @@ public class ConnectorExecutionService(
             _loggerFactory.CreateLogger<CareLinkConnectorService>(),
             new ProductionRetryDelayStrategy(),
             new ProductionRateLimitingStrategy(_loggerFactory.CreateLogger<ProductionRateLimitingStrategy>()),
-            null  // IApiDataSubmitter
+            null!  // IApiDataSubmitter
         );
         return new ConnectorServiceWrapper<CareLinkConnectorConfiguration>(service);
     }
@@ -489,7 +489,7 @@ public class ConnectorExecutionService(
             _loggerFactory.CreateLogger<DexcomConnectorService>(),
             new ProductionRetryDelayStrategy(),
             new ProductionRateLimitingStrategy(_loggerFactory.CreateLogger<ProductionRateLimitingStrategy>()),
-            null  // IApiDataSubmitter
+            null!  // IApiDataSubmitter
         );
         return new ConnectorServiceWrapper<DexcomConnectorConfiguration>(service);
     }
@@ -504,7 +504,7 @@ public class ConnectorExecutionService(
             _loggerFactory.CreateLogger<LibreConnectorService>(),
             new ProductionRetryDelayStrategy(),
             new ProductionRateLimitingStrategy(_loggerFactory.CreateLogger<ProductionRateLimitingStrategy>()),
-            null  // IApiDataSubmitter
+            null!  // IApiDataSubmitter
         );
         return new ConnectorServiceWrapper<LibreLinkUpConnectorConfiguration>(service);
     }

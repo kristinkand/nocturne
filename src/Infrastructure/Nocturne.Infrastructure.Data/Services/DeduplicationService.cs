@@ -47,6 +47,7 @@ public class DeduplicationService : IDeduplicationService
         { "Basal", 0 }       // Lower priority - generic
     };
 
+    /// <inheritdoc cref="IDeduplicationService" />
     public DeduplicationService(
         NocturneDbContext context,
         IServiceScopeFactory scopeFactory,

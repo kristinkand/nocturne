@@ -57,6 +57,8 @@ public interface IStatisticsService
     );
 
     // Glycemic Variability
+
+    /// <exception cref="ArgumentException">Thrown when there are fewer than 2 data points.</exception>
     GlycemicVariability CalculateGlycemicVariability(
         IEnumerable<double> values,
         IEnumerable<Entry> entries
@@ -65,10 +67,14 @@ public interface IStatisticsService
     double CalculateMAGE(IEnumerable<double> values);
     double CalculateCONGA(IEnumerable<double> values, int hours = 2);
     double CalculateADRR(IEnumerable<double> values);
+    /// <exception cref="ArgumentException">Thrown when there are fewer than 2 entries.</exception>
     double CalculateLabilityIndex(IEnumerable<Entry> entries);
     double CalculateJIndex(IEnumerable<double> values, double mean);
+    /// <exception cref="ArgumentException">Thrown when the values collection is empty.</exception>
     double CalculateHBGI(IEnumerable<double> values);
+    /// <exception cref="ArgumentException">Thrown when the values collection is empty.</exception>
     double CalculateLBGI(IEnumerable<double> values);
+    /// <exception cref="ArgumentException">Thrown when there are fewer than 2 values or entries.</exception>
     double CalculateGVI(IEnumerable<double> values, IEnumerable<Entry> entries);
     double CalculatePGS(IEnumerable<double> values, double gvi, double meanGlucose);
 

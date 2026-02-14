@@ -646,7 +646,7 @@ public class ConnectorConfigurationService : IConnectorConfigurationService
             // Handle enums specially - convert to string
             if (underlyingType.IsEnum)
             {
-                schema["default"] = defaultValue.ToString();
+                schema["default"] = defaultValue.ToString()!;
             }
             else if (!IsDefaultOrEmpty(defaultValue))
             {

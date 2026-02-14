@@ -58,7 +58,7 @@ public class DeviceStatusController : BaseV3Controller<DeviceStatus>
             // Determine sort direction from sort$desc query parameter
             // Nightscout V3: sort$desc=field means descending (newest first)
             // reverseResults=false means descending, reverseResults=true means ascending
-            var query = HttpContext.Request.Query;
+            var query = HttpContext!.Request.Query;
             var hasSortDesc = query.ContainsKey("sort$desc");
             var reverseResults = !hasSortDesc && ExtractSortDirection(parameters.Sort);
 
@@ -500,6 +500,7 @@ public class DeviceStatusController : BaseV3Controller<DeviceStatus>
     /// Parse create request from JsonElement for DeviceStatus objects
     /// </summary>
     /// <param name="jsonElement">JsonElement containing device status data (single object or array)</param>
+    /// <param name="validationError">When validation fails, contains the error result to return</param>
     /// <returns>Collection of DeviceStatus objects</returns>
     private IEnumerable<DeviceStatus> ParseCreateRequestFromJsonElement(
         JsonElement jsonElement,
