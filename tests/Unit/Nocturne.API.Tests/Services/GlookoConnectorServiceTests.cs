@@ -46,6 +46,25 @@ namespace Nocturne.API.Tests.Services
                 _mockTokenLogger.Object
             );
 
+            // Set up classification service with standard rules:
+            // Carbs > 0 AND Insulin > 0 → Meal Bolus
+            // Carbs > 0 AND Insulin ≤ 0 → Carb Correction
+            // Insulin > 0 AND Carbs ≤ 0 → Correction Bolus
+            _mockClassificationService
+                .Setup(s => s.ClassifyTreatment(It.IsAny<double?>(), It.IsAny<double?>()))
+                .Returns((double? carbs, double? insulin) =>
+                {
+                    var hasCarbs = carbs.HasValue && carbs.Value > 0;
+                    var hasInsulin = insulin.HasValue && insulin.Value > 0;
+                    return (hasCarbs, hasInsulin) switch
+                    {
+                        (true, true) => "Meal Bolus",
+                        (true, false) => "Carb Correction",
+                        (false, true) => "Correction Bolus",
+                        _ => "Note"
+                    };
+                });
+
             return new GlookoConnectorService(
                 _httpClient,
                 _mockOptions.Object,
