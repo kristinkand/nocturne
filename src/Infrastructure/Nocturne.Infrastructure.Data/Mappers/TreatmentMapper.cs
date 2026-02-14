@@ -84,6 +84,21 @@ public static class TreatmentMapper
             BloodGlucoseInput = treatment.BloodGlucoseInput,
             BloodGlucoseInputSource = treatment.BloodGlucoseInputSource,
             CalculationType = treatment.CalculationType?.ToString(),
+            DurationInMilliseconds = treatment.DurationInMilliseconds,
+            PumpId = treatment.PumpId,
+            PumpSerial = treatment.PumpSerial,
+            PumpType = treatment.PumpType,
+            EndId = treatment.EndId,
+            IsValid = treatment.IsValid,
+            IsReadOnly = treatment.IsReadOnly,
+            IsBasalInsulin = treatment.IsBasalInsulin,
+            BolusCalculatorResult = treatment.BolusCalculatorResult,
+            OriginalDuration = treatment.OriginalDuration,
+            OriginalProfileName = treatment.OriginalProfileName,
+            OriginalPercentage = treatment.OriginalPercentage,
+            OriginalTimeshift = treatment.OriginalTimeshift,
+            OriginalCustomizedName = treatment.OriginalCustomizedName,
+            OriginalEnd = treatment.OriginalEnd,
             AdditionalPropertiesJson =
                 treatment.AdditionalProperties != null
                     ? JsonSerializer.Serialize(treatment.AdditionalProperties)
@@ -162,6 +177,27 @@ public static class TreatmentMapper
             BloodGlucoseInput = entity.BloodGlucoseInput,
             BloodGlucoseInputSource = entity.BloodGlucoseInputSource,
             CalculationType = Enum.TryParse<CalculationType>(entity.CalculationType, out var calcType) ? calcType : null,
+            DurationInMilliseconds = entity.DurationInMilliseconds,
+            PumpId = entity.PumpId,
+            PumpSerial = entity.PumpSerial,
+            PumpType = entity.PumpType,
+            EndId = entity.EndId,
+            IsValid = entity.IsValid,
+            IsReadOnly = entity.IsReadOnly,
+            IsBasalInsulin = entity.IsBasalInsulin,
+            BolusCalculatorResult = entity.BolusCalculatorResult,
+            OriginalDuration = entity.OriginalDuration,
+            OriginalProfileName = entity.OriginalProfileName,
+            OriginalPercentage = entity.OriginalPercentage,
+            OriginalTimeshift = entity.OriginalTimeshift,
+            OriginalCustomizedName = entity.OriginalCustomizedName,
+            OriginalEnd = entity.OriginalEnd,
+            SrvModified = entity.SysUpdatedAt != default
+                ? new DateTimeOffset(entity.SysUpdatedAt, TimeSpan.Zero).ToUnixTimeMilliseconds()
+                : null,
+            SrvCreated = entity.SysCreatedAt != default
+                ? new DateTimeOffset(entity.SysCreatedAt, TimeSpan.Zero).ToUnixTimeMilliseconds()
+                : null,
             AdditionalProperties = DeserializeJsonProperty<Dictionary<string, object>>(
                 entity.AdditionalPropertiesJson
             ),
@@ -236,6 +272,21 @@ public static class TreatmentMapper
         entity.BloodGlucoseInput = treatment.BloodGlucoseInput;
         entity.BloodGlucoseInputSource = treatment.BloodGlucoseInputSource;
         entity.CalculationType = treatment.CalculationType?.ToString();
+        entity.DurationInMilliseconds = treatment.DurationInMilliseconds;
+        entity.PumpId = treatment.PumpId;
+        entity.PumpSerial = treatment.PumpSerial;
+        entity.PumpType = treatment.PumpType;
+        entity.EndId = treatment.EndId;
+        entity.IsValid = treatment.IsValid;
+        entity.IsReadOnly = treatment.IsReadOnly;
+        entity.IsBasalInsulin = treatment.IsBasalInsulin;
+        entity.BolusCalculatorResult = treatment.BolusCalculatorResult;
+        entity.OriginalDuration = treatment.OriginalDuration;
+        entity.OriginalProfileName = treatment.OriginalProfileName;
+        entity.OriginalPercentage = treatment.OriginalPercentage;
+        entity.OriginalTimeshift = treatment.OriginalTimeshift;
+        entity.OriginalCustomizedName = treatment.OriginalCustomizedName;
+        entity.OriginalEnd = treatment.OriginalEnd;
         entity.AdditionalPropertiesJson =
             treatment.AdditionalProperties != null
                 ? JsonSerializer.Serialize(treatment.AdditionalProperties)

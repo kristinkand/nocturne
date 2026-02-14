@@ -462,6 +462,102 @@ public class TreatmentEntity
     [Column("sys_updated_at")]
     public DateTime SysUpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // === AAPS (AndroidAPS) Fields ===
+
+    /// <summary>
+    /// Treatment duration in milliseconds (AAPS uses this alongside the minutes-based Duration field)
+    /// </summary>
+    [Column("duration_in_milliseconds")]
+    public long? DurationInMilliseconds { get; set; }
+
+    /// <summary>
+    /// AAPS internal pump identifier for linking treatments to pump events
+    /// </summary>
+    [Column("pump_id")]
+    public long? PumpId { get; set; }
+
+    /// <summary>
+    /// Serial number of the insulin pump that created this treatment
+    /// </summary>
+    [Column("pump_serial")]
+    [MaxLength(255)]
+    public string? PumpSerial { get; set; }
+
+    /// <summary>
+    /// Type of insulin pump (e.g., "ACCU_CHEK_COMBO", "OMNIPOD_DASH", "VIRTUAL")
+    /// </summary>
+    [Column("pump_type")]
+    [MaxLength(100)]
+    public string? PumpType { get; set; }
+
+    /// <summary>
+    /// AAPS internal identifier linking to the end event of a duration-based treatment (e.g., temp basal end)
+    /// </summary>
+    [Column("end_id")]
+    public long? EndId { get; set; }
+
+    /// <summary>
+    /// Whether the treatment is valid. AAPS sets this to false for soft-deleted records.
+    /// </summary>
+    [Column("is_valid")]
+    public bool? IsValid { get; set; }
+
+    /// <summary>
+    /// Whether the treatment is read-only and should not be modified by the client
+    /// </summary>
+    [Column("is_read_only")]
+    public bool? IsReadOnly { get; set; }
+
+    /// <summary>
+    /// Whether this insulin treatment represents basal insulin delivery (vs. bolus)
+    /// </summary>
+    [Column("is_basal_insulin")]
+    public bool? IsBasalInsulin { get; set; }
+
+    /// <summary>
+    /// JSON-serialized bolus calculator result from AAPS containing wizard inputs and outputs
+    /// </summary>
+    [Column("bolus_calculator_result")]
+    public string? BolusCalculatorResult { get; set; }
+
+    /// <summary>
+    /// Original duration before AAPS modified this treatment (for tracking changes to temp basals/profile switches)
+    /// </summary>
+    [Column("original_duration")]
+    public int? OriginalDuration { get; set; }
+
+    /// <summary>
+    /// Original profile name before a profile switch modification
+    /// </summary>
+    [Column("original_profile_name")]
+    [MaxLength(255)]
+    public string? OriginalProfileName { get; set; }
+
+    /// <summary>
+    /// Original basal percentage before modification
+    /// </summary>
+    [Column("original_percentage")]
+    public int? OriginalPercentage { get; set; }
+
+    /// <summary>
+    /// Original timeshift value in hours before modification
+    /// </summary>
+    [Column("original_timeshift")]
+    public int? OriginalTimeshift { get; set; }
+
+    /// <summary>
+    /// Original customized profile name before modification
+    /// </summary>
+    [Column("original_customized_name")]
+    [MaxLength(255)]
+    public string? OriginalCustomizedName { get; set; }
+
+    /// <summary>
+    /// Original end timestamp in milliseconds before modification
+    /// </summary>
+    [Column("original_end")]
+    public long? OriginalEnd { get; set; }
+
     /// <summary>
     /// Additional properties from import (stored as JSON)
     /// </summary>
