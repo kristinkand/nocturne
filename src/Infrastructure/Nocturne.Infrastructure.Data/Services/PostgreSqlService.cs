@@ -304,7 +304,8 @@ public class PostgreSqlService : IPostgreSqlService
             var match = System.Text.RegularExpressions.Regex.Match(
                 decodedQuery,
                 @"find\[eventType\]=([^&]+)",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
 
             if (match.Success)
             {
@@ -466,8 +467,17 @@ public class PostgreSqlService : IPostgreSqlService
         CancellationToken cancellationToken = default
     )
     {
-        _logger.LogDebug("Getting treatments by time range: {Start} to {End}", startMills, endMills);
-        return await _treatmentRepository.GetTreatmentsByTimeRangeAsync(startMills, endMills, count, cancellationToken);
+        _logger.LogDebug(
+            "Getting treatments by time range: {Start} to {End}",
+            startMills,
+            endMills
+        );
+        return await _treatmentRepository.GetTreatmentsByTimeRangeAsync(
+            startMills,
+            endMills,
+            count,
+            cancellationToken
+        );
     }
 
     /// <summary>
@@ -1300,7 +1310,7 @@ public class PostgreSqlService : IPostgreSqlService
                 TotalEntries = g.LongCount(),
                 EntriesLast24Hours = g.Count(e => e.Mills >= oneDayAgo),
                 LastEntryMills = g.Max(e => (long?)e.Mills),
-                FirstEntryMills = g.Min(e => (long?)e.Mills)
+                FirstEntryMills = g.Min(e => (long?)e.Mills),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -1313,26 +1323,65 @@ public class PostgreSqlService : IPostgreSqlService
                 TotalTreatments = g.LongCount(),
                 TreatmentsLast24Hours = g.Count(t => t.Mills >= oneDayAgo),
                 LastTreatmentMills = g.Max(t => (long?)t.Mills),
-                FirstTreatmentMills = g.Min(t => (long?)t.Mills)
+                FirstTreatmentMills = g.Min(t => (long?)t.Mills),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Query state span stats
+        var stateSpanStats = await _context
+            .StateSpans.Where(s => s.Source == dataSource)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalStateSpans = g.LongCount(),
+                StateSpansLast24Hours = g.Count(s => s.StartMills >= oneDayAgo),
+                LastStateSpanMills = g.Max(s => (long?)s.StartMills),
+                FirstStateSpanMills = g.Min(s => (long?)s.StartMills),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
         // Convert timestamps
-        var lastEntryTime = entryStats?.LastEntryMills.HasValue == true
-            ? DateTimeOffset.FromUnixTimeMilliseconds(entryStats.LastEntryMills.Value).UtcDateTime
-            : (DateTime?)null;
+        var lastEntryTime =
+            entryStats?.LastEntryMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(entryStats.LastEntryMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
 
-        var firstEntryTime = entryStats?.FirstEntryMills.HasValue == true
-            ? DateTimeOffset.FromUnixTimeMilliseconds(entryStats.FirstEntryMills.Value).UtcDateTime
-            : (DateTime?)null;
+        var firstEntryTime =
+            entryStats?.FirstEntryMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(entryStats.FirstEntryMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
 
-        var lastTreatmentTime = treatmentStats?.LastTreatmentMills.HasValue == true
-            ? DateTimeOffset.FromUnixTimeMilliseconds(treatmentStats.LastTreatmentMills.Value).UtcDateTime
-            : (DateTime?)null;
+        var lastTreatmentTime =
+            treatmentStats?.LastTreatmentMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(treatmentStats.LastTreatmentMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
 
-        var firstTreatmentTime = treatmentStats?.FirstTreatmentMills.HasValue == true
-            ? DateTimeOffset.FromUnixTimeMilliseconds(treatmentStats.FirstTreatmentMills.Value).UtcDateTime
-            : (DateTime?)null;
+        var firstTreatmentTime =
+            treatmentStats?.FirstTreatmentMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(treatmentStats.FirstTreatmentMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
+
+        var lastStateSpanTime =
+            stateSpanStats?.LastStateSpanMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(stateSpanStats.LastStateSpanMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
+
+        var firstStateSpanTime =
+            stateSpanStats?.FirstStateSpanMills.HasValue == true
+                ? DateTimeOffset
+                    .FromUnixTimeMilliseconds(stateSpanStats.FirstStateSpanMills.Value)
+                    .UtcDateTime
+                : (DateTime?)null;
 
         return new DataSourceStats(
             dataSource,
@@ -1343,7 +1392,11 @@ public class PostgreSqlService : IPostgreSqlService
             treatmentStats?.TotalTreatments ?? 0,
             treatmentStats?.TreatmentsLast24Hours ?? 0,
             lastTreatmentTime,
-            firstTreatmentTime
+            firstTreatmentTime,
+            stateSpanStats?.TotalStateSpans ?? 0,
+            stateSpanStats?.StateSpansLast24Hours ?? 0,
+            lastStateSpanTime,
+            firstStateSpanTime
         );
     }
 

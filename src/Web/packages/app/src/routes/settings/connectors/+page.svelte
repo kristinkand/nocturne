@@ -486,7 +486,7 @@
       };
 
       if (successes > 0) {
-        await loadServices();
+        await Promise.all([loadServices(), loadConnectorStatuses()]);
       }
     } catch (e) {
       manualSyncResult = {

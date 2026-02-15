@@ -9,8 +9,8 @@ public class ConnectorHealthService(
     IConfiguration configuration,
     IPostgreSqlService postgreSqlService,
     IConnectorConfigurationService connectorConfigService,
-    ILogger<ConnectorHealthService> logger)
-    : IConnectorHealthService
+    ILogger<ConnectorHealthService> logger
+) : IConnectorHealthService
 {
     private record ConnectorDefinition(
         string Id, // Matches AvailableConnector.Id and health check name
@@ -20,7 +20,8 @@ public class ConnectorHealthService(
 
     private static IReadOnlyList<ConnectorDefinition> GetConnectorDefinitions()
     {
-        return ConnectorMetadataService.GetAll()
+        return ConnectorMetadataService
+            .GetAll()
             .Select(connector => new ConnectorDefinition(
                 connector.ConnectorName.ToLowerInvariant(),
                 connector.ConnectorName,
@@ -60,28 +61,53 @@ public class ConnectorHealthService(
         CancellationToken cancellationToken
     )
     {
-        var enabledConfig = await GetConnectorEnabledConfigAsync(connector.Id, connector.ConfigKey, cancellationToken);
+        var enabledConfig = await GetConnectorEnabledConfigAsync(
+            connector.Id,
+            connector.ConfigKey,
+            cancellationToken
+        );
 
-        // Always get database stats for historical data (entries + treatments)
+        // Always get database stats for historical data (entries + treatments + state spans)
         var dbStats = await postgreSqlService.GetEntryStatsBySourceAsync(
             connector.DataSourceId,
             cancellationToken
         );
 
         logger.LogInformation(
-            "Connector {Id}: EnabledConfig={EnabledConfig}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}",
+            "Connector {Id}: EnabledConfig={EnabledConfig}, DataSourceId={DataSourceId}, TotalEntries={TotalEntries}, TotalTreatments={TotalTreatments}, TotalStateSpans={TotalStateSpans}",
             connector.Id,
             enabledConfig?.ToString() ?? "not configured",
             connector.DataSourceId,
             dbStats.TotalEntries,
-            dbStats.TotalTreatments
+            dbStats.TotalTreatments,
+            dbStats.TotalStateSpans
         );
+
+        // Build breakdown dictionaries
+        var totalBreakdown = new Dictionary<string, long>();
+        var last24HBreakdown = new Dictionary<string, int>();
+
+        if (dbStats.TotalEntries > 0)
+        {
+            totalBreakdown["Entries"] = dbStats.TotalEntries;
+            last24HBreakdown["Entries"] = dbStats.EntriesLast24Hours;
+        }
+        if (dbStats.TotalTreatments > 0)
+        {
+            totalBreakdown["Treatments"] = dbStats.TotalTreatments;
+            last24HBreakdown["Treatments"] = dbStats.TreatmentsLast24Hours;
+        }
+        if (dbStats.TotalStateSpans > 0)
+        {
+            totalBreakdown["StateSpans"] = dbStats.TotalStateSpans;
+            last24HBreakdown["StateSpans"] = dbStats.StateSpansLast24Hours;
+        }
 
         // If explicitly disabled, return disabled status without checking health
         if (enabledConfig == false)
         {
             // Connector is explicitly disabled - return database-only stats
-            // Use TotalItems which combines entries + treatments
+            // Use TotalItems which combines entries + treatments + state spans
             return new ConnectorStatusDto
             {
                 Id = connector.Id,
@@ -92,6 +118,8 @@ public class ConnectorHealthService(
                 EntriesLast24Hours = dbStats.ItemsLast24Hours,
                 State = "Disabled",
                 IsHealthy = false,
+                TotalItemsBreakdown = totalBreakdown.Count > 0 ? totalBreakdown : null,
+                ItemsLast24HoursBreakdown = last24HBreakdown.Count > 0 ? last24HBreakdown : null,
             };
         }
 
@@ -106,7 +134,9 @@ public class ConnectorHealthService(
             // DB is the single source of truth for how much data exists
             TotalEntries = dbStats.TotalItems,
             LastEntryTime = dbStats.LastItemTime,
-            EntriesLast24Hours = dbStats.ItemsLast24Hours
+            EntriesLast24Hours = dbStats.ItemsLast24Hours,
+            TotalItemsBreakdown = totalBreakdown.Count > 0 ? totalBreakdown : null,
+            ItemsLast24HoursBreakdown = last24HBreakdown.Count > 0 ? last24HBreakdown : null,
         };
 
         return liveStatus;
@@ -119,11 +149,17 @@ public class ConnectorHealthService(
     /// should be running at all. Database config can only enable a connector that is available in the environment.
     /// Returns true if explicitly enabled, false if explicitly disabled, null if not configured.
     /// </summary>
-    private async Task<bool?> GetConnectorEnabledConfigAsync(string connectorId, string configKey, CancellationToken cancellationToken)
+    private async Task<bool?> GetConnectorEnabledConfigAsync(
+        string connectorId,
+        string configKey,
+        CancellationToken cancellationToken
+    )
     {
         // First check environment configuration: Parameters:Connectors:{ConfigKey}:Enabled
         // This determines if the connector is even available/running in Aspire
-        var envEnabled = configuration.GetValue<bool?>($"Parameters:Connectors:{configKey}:Enabled");
+        var envEnabled = configuration.GetValue<bool?>(
+            $"Parameters:Connectors:{configKey}:Enabled"
+        );
 
         // If environment config explicitly disables the connector, it's not running in Aspire
         // so we shouldn't try to reach it regardless of DB config
@@ -134,8 +170,10 @@ public class ConnectorHealthService(
 
         // Now check database-stored runtime configuration
         // This is where the UI stores the enabled state
-        var dbConfig = await connectorConfigService.GetConfigurationAsync(connectorId, cancellationToken);
+        var dbConfig = await connectorConfigService.GetConfigurationAsync(
+            connectorId,
+            cancellationToken
+        );
         return dbConfig?.IsActive ?? envEnabled;
     }
-
 }
